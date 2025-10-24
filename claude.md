@@ -1,4 +1,68 @@
-# Skeleton + Svelte Styling Guide
+# QA Studio - Test Reporting Platform
+
+## Project Overview
+
+QA Studio is a comprehensive test management and reporting platform inspired by Allure TestOps and TestRail. It enables teams to organize, execute, and track testing activities across projects.
+
+### Core Features (Phase 1)
+
+- **Project Management**: Organize testing by projects with unique keys
+- **Test Organization**: Create hierarchical test suites and test cases
+- **Test Execution**: Plan and execute test runs across different environments
+- **Results Tracking**: Record detailed test results with steps, attachments, and metrics
+- **Milestone Planning**: Track testing progress against release milestones
+- **Rich Reporting**: Capture screenshots, logs, and stack traces for failures
+
+### Tech Stack
+
+- **Frontend**: SvelteKit 2, Svelte 5, Skeleton UI, Tailwind 4
+- **Backend**: SvelteKit API routes
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: Clerk (with SSO support for enterprise)
+- **Storage**: File attachments (screenshots, logs, videos)
+- **Syntax Highlighting**: Shiki (for API documentation)
+
+## Database Schema
+
+The database is organized into logical sections:
+
+### Projects & Organization
+- **Project**: Top-level container with unique key (e.g., "PROJ")
+- **Milestone**: Release milestones for tracking progress
+- **Environment**: Testing environments (Production, Staging, QA, etc.)
+
+### Test Suites & Cases
+- **TestSuite**: Hierarchical organization of tests (supports nesting)
+- **TestCase**: Individual test cases with steps, priorities, types, and automation status
+  - Supports multiple test types: Functional, Regression, Smoke, Integration, Performance, Security, UI, API, Unit, E2E
+  - Priorities: Critical, High, Medium, Low
+  - Automation tracking: Automated, Not Automated, Candidate
+
+### Test Runs & Results
+- **TestRun**: Test execution session linked to project, milestone, and environment
+- **TestResult**: Individual test case execution results with status, duration, errors
+- **TestStepResult**: Granular step-by-step execution tracking
+- **TestStatus**: Passed, Failed, Blocked, Skipped, Retest, Untested
+
+### Attachments
+- **Attachment**: Store screenshots, logs, videos linked to test cases or results
+
+## API Documentation
+
+The platform includes a comprehensive, public-facing API documentation page at `/docs`.
+
+### Features
+- **Interactive Examples**: All code examples use Shiki syntax highlighting with light/dark theme support
+- **Copy-to-Clipboard**: One-click copying for all code snippets
+- **Organized by Resource**: Projects, Milestones, Environments, Test Suites, Test Cases, Test Runs, Test Results, Attachments
+- **Collapsible Responses**: Accordion-based response examples with status codes
+- **Parameter Tables**: Clear documentation of path, query, and body parameters
+- **Getting Started Guide**: Quick examples for common use cases
+
+### Maintaining API Docs
+To update API documentation, edit [src/lib/api-docs.ts](src/lib/api-docs.ts) by adding or modifying entries in the `apiDocumentation` array. The page will automatically reflect changes.
+
+## Skeleton + Svelte Styling Guide
 
 This project uses Skeleton UI library with Svelte 5 and Tailwind 4.
 
@@ -154,3 +218,85 @@ Skeleton includes optional **preset classes** for buttons, badges, cards, and ot
   </Button>
 </div>
 ```
+
+## Authentication
+
+QA Studio uses **Clerk** for authentication, providing enterprise-ready features including SSO/SAML support.
+
+### Setup
+
+1. **Environment Variables**: Create `.env.local` with your Clerk keys:
+```bash
+PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+CLERK_SECRET_KEY=sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+DATABASE_URL="postgresql://user:password@localhost:5432/qa_studio?schema=public"
+```
+
+2. **Get Clerk Keys**:
+   - Sign up at https://clerk.com
+   - Create a new application
+   - Choose "SvelteKit" as framework
+   - Copy keys from dashboard
+
+### Architecture
+
+**Server-Side Integration**:
+- `src/hooks.server.ts`: Clerk middleware integrated with SvelteKit hooks
+- `src/lib/server/auth.ts`: Helper functions for protecting API routes
+- Session data available via `event.locals.clerk.session`
+
+**Client-Side Components**:
+- `<ClerkProvider>`: Wraps entire app in layout
+- `<SignIn>`, `<SignUp>`, `<UserProfile>`: Pre-built auth UI
+- `<SignedIn>`, `<SignedOut>`: Conditional rendering components
+- `<UserButton>`: User menu with profile and sign-out
+
+### Protecting API Routes
+
+Use the `requireAuth` helper to protect API endpoints:
+
+```typescript
+import { requireAuth } from '$lib/server/auth';
+import type { RequestHandler } from './$types';
+
+export const POST: RequestHandler = async (event) => {
+  // Throws 401 if not authenticated
+  const userId = requireAuth(event);
+
+  // Create resource with userId
+  const project = await db.project.create({
+    data: {
+      name: 'Project',
+      createdBy: userId
+    }
+  });
+
+  return json(project);
+};
+```
+
+### User Tracking
+
+The Prisma schema tracks user actions:
+- `Project.createdBy`: User who created the project
+- `TestCase.createdBy`: User who created the test case
+- `TestRun.createdBy`: User who created the test run
+- `TestResult.executedBy`: User who executed the test
+
+All user fields store Clerk user IDs and are indexed for performance.
+
+### Enterprise Features
+
+Clerk supports:
+- **SSO/SAML**: Okta, Azure AD, Google Workspace (Business plan)
+- **Organizations**: Multi-tenant workspace support
+- **RBAC**: Role-based access control
+- **Directory Sync (SCIM)**: Automatic user provisioning
+- **Audit Logs**: Security and compliance tracking
+
+### Routes
+
+- `/sign-in`: Sign in page
+- `/sign-up`: Sign up page
+- `/user-profile`: User profile management
+- API routes automatically protected via `requireAuth()`

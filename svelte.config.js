@@ -1,6 +1,12 @@
 import { mdsvex } from 'mdsvex';
 import adapter from '@sveltejs/adapter-vercel';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+import { webcrypto } from 'node:crypto';
+
+// Polyfill Web Crypto API for Clerk authentication
+if (!globalThis.crypto) {
+	globalThis.crypto = webcrypto;
+}
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {

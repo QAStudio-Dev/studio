@@ -1,0 +1,588 @@
+// API Documentation Data Structure
+
+export type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE';
+
+export interface ApiEndpoint {
+	method: HttpMethod;
+	path: string;
+	description: string;
+	parameters?: {
+		name: string;
+		type: 'path' | 'query' | 'body';
+		required: boolean;
+		description: string;
+		example?: string;
+	}[];
+	requestBody?: {
+		contentType: string;
+		example: string;
+	};
+	responses: {
+		status: number;
+		description: string;
+		example: string;
+	}[];
+}
+
+export interface ApiSection {
+	title: string;
+	description: string;
+	endpoints: ApiEndpoint[];
+}
+
+export const apiDocumentation: ApiSection[] = [
+	{
+		title: 'Projects',
+		description: 'Manage test projects - the top-level container for organizing your testing activities.',
+		endpoints: [
+			{
+				method: 'GET',
+				path: '/api/projects',
+				description: 'List all projects with test case, test run, and test suite counts.',
+				responses: [
+					{
+						status: 200,
+						description: 'Success',
+						example: `[
+  {
+    "id": "clx1a2b3c4d5e6f7g8h9i0j1",
+    "name": "E-Commerce Platform",
+    "description": "Main e-commerce application testing",
+    "key": "ECOM",
+    "createdAt": "2024-01-15T10:30:00Z",
+    "updatedAt": "2024-01-15T10:30:00Z",
+    "_count": {
+      "testCases": 125,
+      "testRuns": 42,
+      "testSuites": 15
+    }
+  }
+]`
+					}
+				]
+			},
+			{
+				method: 'POST',
+				path: '/api/projects',
+				description: 'Create a new project.',
+				requestBody: {
+					contentType: 'application/json',
+					example: `{
+  "name": "E-Commerce Platform",
+  "description": "Main e-commerce application testing",
+  "key": "ECOM"
+}`
+				},
+				responses: [
+					{
+						status: 201,
+						description: 'Project created successfully',
+						example: `{
+  "id": "clx1a2b3c4d5e6f7g8h9i0j1",
+  "name": "E-Commerce Platform",
+  "description": "Main e-commerce application testing",
+  "key": "ECOM",
+  "createdAt": "2024-01-15T10:30:00Z",
+  "updatedAt": "2024-01-15T10:30:00Z"
+}`
+					},
+					{
+						status: 400,
+						description: 'Name and key are required',
+						example: `{ "error": "Name and key are required" }`
+					},
+					{
+						status: 409,
+						description: 'Project key already exists',
+						example: `{ "error": "Project key already exists" }`
+					}
+				]
+			},
+			{
+				method: 'GET',
+				path: '/api/projects/:id',
+				description: 'Get detailed information about a specific project.',
+				parameters: [
+					{
+						name: 'id',
+						type: 'path',
+						required: true,
+						description: 'Project ID',
+						example: 'clx1a2b3c4d5e6f7g8h9i0j1'
+					}
+				],
+				responses: [
+					{
+						status: 200,
+						description: 'Success',
+						example: `{
+  "id": "clx1a2b3c4d5e6f7g8h9i0j1",
+  "name": "E-Commerce Platform",
+  "key": "ECOM",
+  "milestones": [...],
+  "environments": [...],
+  "_count": {
+    "testCases": 125,
+    "testRuns": 42
+  }
+}`
+					},
+					{
+						status: 404,
+						description: 'Project not found',
+						example: `{ "error": "Project not found" }`
+					}
+				]
+			},
+			{
+				method: 'PATCH',
+				path: '/api/projects/:id',
+				description: 'Update an existing project.',
+				parameters: [
+					{
+						name: 'id',
+						type: 'path',
+						required: true,
+						description: 'Project ID',
+						example: 'clx1a2b3c4d5e6f7g8h9i0j1'
+					}
+				],
+				requestBody: {
+					contentType: 'application/json',
+					example: `{
+  "name": "E-Commerce Platform v2",
+  "description": "Updated description"
+}`
+				},
+				responses: [
+					{
+						status: 200,
+						description: 'Project updated successfully',
+						example: `{
+  "id": "clx1a2b3c4d5e6f7g8h9i0j1",
+  "name": "E-Commerce Platform v2",
+  "description": "Updated description",
+  "key": "ECOM",
+  "updatedAt": "2024-01-16T14:20:00Z"
+}`
+					},
+					{
+						status: 404,
+						description: 'Project not found',
+						example: `{ "error": "Project not found" }`
+					}
+				]
+			},
+			{
+				method: 'DELETE',
+				path: '/api/projects/:id',
+				description: 'Delete a project and all its associated data (cascading delete).',
+				parameters: [
+					{
+						name: 'id',
+						type: 'path',
+						required: true,
+						description: 'Project ID',
+						example: 'clx1a2b3c4d5e6f7g8h9i0j1'
+					}
+				],
+				responses: [
+					{
+						status: 200,
+						description: 'Project deleted successfully',
+						example: `{ "success": true }`
+					},
+					{
+						status: 404,
+						description: 'Project not found',
+						example: `{ "error": "Project not found" }`
+					}
+				]
+			}
+		]
+	},
+	{
+		title: 'Milestones',
+		description: 'Manage release milestones for tracking testing progress.',
+		endpoints: [
+			{
+				method: 'GET',
+				path: '/api/projects/:projectId/milestones',
+				description: 'List all milestones for a project.',
+				parameters: [
+					{
+						name: 'projectId',
+						type: 'path',
+						required: true,
+						description: 'Project ID',
+						example: 'clx1a2b3c4d5e6f7g8h9i0j1'
+					}
+				],
+				responses: [
+					{
+						status: 200,
+						description: 'Success',
+						example: `[
+  {
+    "id": "clx2b3c4d5e6f7g8h9i0j1k2",
+    "name": "Release 1.0",
+    "description": "Initial release",
+    "dueDate": "2024-03-01T00:00:00Z",
+    "status": "ACTIVE",
+    "_count": { "testRuns": 5 }
+  }
+]`
+					}
+				]
+			},
+			{
+				method: 'POST',
+				path: '/api/projects/:projectId/milestones',
+				description: 'Create a new milestone.',
+				parameters: [
+					{
+						name: 'projectId',
+						type: 'path',
+						required: true,
+						description: 'Project ID',
+						example: 'clx1a2b3c4d5e6f7g8h9i0j1'
+					}
+				],
+				requestBody: {
+					contentType: 'application/json',
+					example: `{
+  "name": "Release 1.0",
+  "description": "Initial release",
+  "dueDate": "2024-03-01T00:00:00Z",
+  "status": "ACTIVE"
+}`
+				},
+				responses: [
+					{
+						status: 201,
+						description: 'Milestone created',
+						example: `{
+  "id": "clx2b3c4d5e6f7g8h9i0j1k2",
+  "name": "Release 1.0",
+  "status": "ACTIVE"
+}`
+					}
+				]
+			}
+		]
+	},
+	{
+		title: 'Test Cases',
+		description: 'Manage individual test cases with steps, priorities, and types.',
+		endpoints: [
+			{
+				method: 'GET',
+				path: '/api/projects/:projectId/test-cases',
+				description: 'List test cases with optional filtering.',
+				parameters: [
+					{
+						name: 'projectId',
+						type: 'path',
+						required: true,
+						description: 'Project ID',
+						example: 'clx1a2b3c4d5e6f7g8h9i0j1'
+					},
+					{
+						name: 'suiteId',
+						type: 'query',
+						required: false,
+						description: 'Filter by test suite',
+						example: 'clx3c4d5e6f7g8h9i0j1k2l3'
+					},
+					{
+						name: 'priority',
+						type: 'query',
+						required: false,
+						description: 'Filter by priority (CRITICAL, HIGH, MEDIUM, LOW)',
+						example: 'HIGH'
+					},
+					{
+						name: 'type',
+						type: 'query',
+						required: false,
+						description: 'Filter by type (FUNCTIONAL, REGRESSION, SMOKE, etc.)',
+						example: 'REGRESSION'
+					},
+					{
+						name: 'automationStatus',
+						type: 'query',
+						required: false,
+						description: 'Filter by automation status',
+						example: 'AUTOMATED'
+					},
+					{
+						name: 'tags',
+						type: 'query',
+						required: false,
+						description: 'Filter by tags (comma-separated)',
+						example: 'auth,login'
+					}
+				],
+				responses: [
+					{
+						status: 200,
+						description: 'Success',
+						example: `[
+  {
+    "id": "clx4d5e6f7g8h9i0j1k2l3m4",
+    "title": "User can log in with valid credentials",
+    "priority": "CRITICAL",
+    "type": "FUNCTIONAL",
+    "automationStatus": "AUTOMATED",
+    "tags": ["auth", "login"]
+  }
+]`
+					}
+				]
+			},
+			{
+				method: 'POST',
+				path: '/api/projects/:projectId/test-cases',
+				description: 'Create a new test case.',
+				parameters: [
+					{
+						name: 'projectId',
+						type: 'path',
+						required: true,
+						description: 'Project ID',
+						example: 'clx1a2b3c4d5e6f7g8h9i0j1'
+					}
+				],
+				requestBody: {
+					contentType: 'application/json',
+					example: `{
+  "title": "User can log in with valid credentials",
+  "description": "Verify successful login flow",
+  "preconditions": "User account exists",
+  "steps": [
+    {
+      "action": "Navigate to login page",
+      "expected": "Login form is displayed"
+    },
+    {
+      "action": "Enter valid credentials",
+      "expected": "Credentials are accepted"
+    }
+  ],
+  "expectedResult": "User is logged in successfully",
+  "priority": "CRITICAL",
+  "type": "FUNCTIONAL",
+  "automationStatus": "AUTOMATED",
+  "tags": ["auth", "login"],
+  "suiteId": "clx3c4d5e6f7g8h9i0j1k2l3"
+}`
+				},
+				responses: [
+					{
+						status: 201,
+						description: 'Test case created',
+						example: `{
+  "id": "clx4d5e6f7g8h9i0j1k2l3m4",
+  "title": "User can log in with valid credentials",
+  "priority": "CRITICAL"
+}`
+					}
+				]
+			}
+		]
+	},
+	{
+		title: 'Test Runs',
+		description: 'Execute and track test runs across different environments.',
+		endpoints: [
+			{
+				method: 'GET',
+				path: '/api/projects/:projectId/test-runs/:id',
+				description: 'Get detailed test run with results and statistics.',
+				parameters: [
+					{
+						name: 'projectId',
+						type: 'path',
+						required: true,
+						description: 'Project ID',
+						example: 'clx1a2b3c4d5e6f7g8h9i0j1'
+					},
+					{
+						name: 'id',
+						type: 'path',
+						required: true,
+						description: 'Test Run ID',
+						example: 'clx5e6f7g8h9i0j1k2l3m4n5'
+					}
+				],
+				responses: [
+					{
+						status: 200,
+						description: 'Success with statistics',
+						example: `{
+  "id": "clx5e6f7g8h9i0j1k2l3m4n5",
+  "name": "Regression Test - Sprint 23",
+  "status": "COMPLETED",
+  "results": [...],
+  "stats": {
+    "total": 100,
+    "passed": 85,
+    "failed": 10,
+    "blocked": 3,
+    "skipped": 2
+  }
+}`
+					}
+				]
+			},
+			{
+				method: 'POST',
+				path: '/api/projects/:projectId/test-runs',
+				description: 'Create a new test run.',
+				parameters: [
+					{
+						name: 'projectId',
+						type: 'path',
+						required: true,
+						description: 'Project ID',
+						example: 'clx1a2b3c4d5e6f7g8h9i0j1'
+					}
+				],
+				requestBody: {
+					contentType: 'application/json',
+					example: `{
+  "name": "Regression Test - Sprint 23",
+  "description": "Full regression suite",
+  "milestoneId": "clx2b3c4d5e6f7g8h9i0j1k2",
+  "environmentId": "clx6f7g8h9i0j1k2l3m4n5o6",
+  "status": "PLANNED"
+}`
+				},
+				responses: [
+					{
+						status: 201,
+						description: 'Test run created',
+						example: `{
+  "id": "clx5e6f7g8h9i0j1k2l3m4n5",
+  "name": "Regression Test - Sprint 23",
+  "status": "PLANNED"
+}`
+					}
+				]
+			}
+		]
+	},
+	{
+		title: 'Test Results',
+		description: 'Record and manage test execution results with detailed step tracking.',
+		endpoints: [
+			{
+				method: 'POST',
+				path: '/api/projects/:projectId/test-runs/:runId/results',
+				description: 'Create a test result for a test run.',
+				parameters: [
+					{
+						name: 'projectId',
+						type: 'path',
+						required: true,
+						description: 'Project ID',
+						example: 'clx1a2b3c4d5e6f7g8h9i0j1'
+					},
+					{
+						name: 'runId',
+						type: 'path',
+						required: true,
+						description: 'Test Run ID',
+						example: 'clx5e6f7g8h9i0j1k2l3m4n5'
+					}
+				],
+				requestBody: {
+					contentType: 'application/json',
+					example: `{
+  "testCaseId": "clx4d5e6f7g8h9i0j1k2l3m4",
+  "status": "FAILED",
+  "comment": "Login button not responding",
+  "duration": 15000,
+  "errorMessage": "Element not found: #login-btn",
+  "stackTrace": "at LoginPage.clickLogin()...",
+  "steps": [
+    {
+      "description": "Navigate to login page",
+      "status": "PASSED"
+    },
+    {
+      "description": "Click login button",
+      "status": "FAILED",
+      "comment": "Button not clickable"
+    }
+  ]
+}`
+				},
+				responses: [
+					{
+						status: 201,
+						description: 'Test result created',
+						example: `{
+  "id": "clx7g8h9i0j1k2l3m4n5o6p7",
+  "status": "FAILED",
+  "duration": 15000
+}`
+					}
+				]
+			}
+		]
+	},
+	{
+		title: 'Attachments',
+		description: 'Upload and manage screenshots, logs, and other test artifacts.',
+		endpoints: [
+			{
+				method: 'POST',
+				path: '/api/attachments',
+				description: 'Upload an attachment (screenshot, log, video, etc.).',
+				requestBody: {
+					contentType: 'multipart/form-data',
+					example: `FormData:
+  - file: [File]
+  - testCaseId: "clx4d5e6f7g8h9i0j1k2l3m4" (optional)
+  - testResultId: "clx7g8h9i0j1k2l3m4n5o6p7" (optional)`
+				},
+				responses: [
+					{
+						status: 201,
+						description: 'Attachment uploaded',
+						example: `{
+  "id": "clx8h9i0j1k2l3m4n5o6p7q8",
+  "filename": "abc123def456.png",
+  "originalName": "login-error.png",
+  "mimeType": "image/png",
+  "size": 245678,
+  "url": "/uploads/attachments/abc123def456.png"
+}`
+					}
+				]
+			},
+			{
+				method: 'DELETE',
+				path: '/api/attachments/:id',
+				description: 'Delete an attachment.',
+				parameters: [
+					{
+						name: 'id',
+						type: 'path',
+						required: true,
+						description: 'Attachment ID',
+						example: 'clx8h9i0j1k2l3m4n5o6p7q8'
+					}
+				],
+				responses: [
+					{
+						status: 200,
+						description: 'Attachment deleted',
+						example: `{ "success": true }`
+					}
+				]
+			}
+		]
+	}
+];

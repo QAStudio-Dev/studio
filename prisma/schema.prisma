@@ -1,0 +1,314 @@
+// QA Studio - Test Reporting Platform Schema
+// Inspired by Allure TestOps and TestRail
+
+generator client {
+  provider = "prisma-client"
+  output   = "../../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USERS & TEAMS
+// ============================================
+
+model User {
+  id            String   @id // Clerk user ID
+  email         String   @unique
+  firstName     String?
+  lastName      String?
+  imageUrl      String?
+  role          UserRole @default(TESTER)
+
+  // Team membership
+  teamId        String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  team          Team?     @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  createdProjects  Project[]  @relation("ProjectCreator")
+  createdTestCases TestCase[] @relation("TestCaseCreator")
+  createdTestRuns  TestRun[]  @relation("TestRunCreator")
+  executedResults  TestResult[] @relation("TestResultExecutor")
+
+  @@index([email])
+  @@index([teamId])
+  @@index([role])
+}
+
+model Team {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  members     User[]
+  projects    Project[]
+
+  @@index([name])
+}
+
+enum UserRole {
+  ADMIN      // Full system access
+  MANAGER    // Can manage projects and teams
+  TESTER     // Can create and execute tests
+  VIEWER     // Read-only access
+}
+
+// ============================================
+// PROJECTS & ORGANIZATION
+// ============================================
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  key         String   @unique // Short identifier like "PROJ"
+  createdBy   String   // Clerk user ID
+  teamId      String?  // Optional team ownership
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  creator     User     @relation("ProjectCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  team        Team?    @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  testSuites  TestSuite[]
+  testCases   TestCase[]
+  testRuns    TestRun[]
+  milestones  Milestone[]
+  environments Environment[]
+
+  @@index([createdBy])
+  @@index([teamId])
+}
+
+model Milestone {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  dueDate     DateTime?
+  status      MilestoneStatus @default(ACTIVE)
+  projectId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  testRuns    TestRun[]
+
+  @@index([projectId])
+}
+
+enum MilestoneStatus {
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+model Environment {
+  id          String   @id @default(cuid())
+  name        String   // e.g., "Production", "Staging", "QA"
+  description String?
+  projectId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  testRuns    TestRun[]
+
+  @@index([projectId])
+  @@unique([projectId, name])
+}
+
+// ============================================
+// TEST SUITES & CASES
+// ============================================
+
+model TestSuite {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  projectId   String
+  parentId    String?  // For nested suites
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parent      TestSuite?  @relation("SuiteHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    TestSuite[] @relation("SuiteHierarchy")
+  testCases   TestCase[]
+
+  @@index([projectId])
+  @@index([parentId])
+}
+
+model TestCase {
+  id            String   @id @default(cuid())
+  title         String
+  description   String?
+  preconditions String?  // Setup requirements
+  steps         Json?    // Array of test steps
+  expectedResult String?
+  priority      Priority @default(MEDIUM)
+  type          TestType @default(FUNCTIONAL)
+  automationStatus AutomationStatus @default(NOT_AUTOMATED)
+  tags          String[] // For categorization
+  projectId     String
+  suiteId       String?
+  createdBy     String   // Clerk user ID
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  creator       User      @relation("TestCaseCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  suite         TestSuite? @relation(fields: [suiteId], references: [id], onDelete: SetNull)
+  results       TestResult[]
+  attachments   Attachment[]
+
+  @@index([projectId])
+  @@index([suiteId])
+  @@index([priority])
+  @@index([type])
+  @@index([createdBy])
+}
+
+enum Priority {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum TestType {
+  FUNCTIONAL
+  REGRESSION
+  SMOKE
+  INTEGRATION
+  PERFORMANCE
+  SECURITY
+  UI
+  API
+  UNIT
+  E2E
+}
+
+enum AutomationStatus {
+  AUTOMATED
+  NOT_AUTOMATED
+  CANDIDATE
+}
+
+// ============================================
+// TEST RUNS & RESULTS
+// ============================================
+
+model TestRun {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  projectId     String
+  milestoneId   String?
+  environmentId String?
+  status        RunStatus @default(PLANNED)
+  createdBy     String   // Clerk user ID
+  startedAt     DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  creator       User         @relation("TestRunCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  project       Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  milestone     Milestone?   @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+  environment   Environment? @relation(fields: [environmentId], references: [id], onDelete: SetNull)
+  results       TestResult[]
+
+  @@index([projectId])
+  @@index([milestoneId])
+  @@index([environmentId])
+  @@index([status])
+  @@index([createdBy])
+}
+
+enum RunStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  ABORTED
+}
+
+model TestResult {
+  id          String   @id @default(cuid())
+  testCaseId  String
+  testRunId   String
+  status      TestStatus
+  comment     String?  // Tester notes
+  duration    Int?     // Duration in milliseconds
+  stackTrace  String?  // For failures
+  errorMessage String? // For failures
+  executedBy  String   // Clerk user ID
+  executedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  executor    User       @relation("TestResultExecutor", fields: [executedBy], references: [id], onDelete: Cascade)
+  testCase    TestCase   @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+  testRun     TestRun    @relation(fields: [testRunId], references: [id], onDelete: Cascade)
+  attachments Attachment[]
+  steps       TestStepResult[]
+
+  @@index([testCaseId])
+  @@index([testRunId])
+  @@index([status])
+  @@index([executedAt])
+  @@index([executedBy])
+}
+
+enum TestStatus {
+  PASSED
+  FAILED
+  BLOCKED
+  SKIPPED
+  RETEST
+  UNTESTED
+}
+
+model TestStepResult {
+  id           String   @id @default(cuid())
+  testResultId String
+  stepNumber   Int
+  description  String
+  status       TestStatus
+  comment      String?
+  createdAt    DateTime @default(now())
+
+  testResult   TestResult @relation(fields: [testResultId], references: [id], onDelete: Cascade)
+
+  @@index([testResultId])
+}
+
+// ============================================
+// ATTACHMENTS & MEDIA
+// ============================================
+
+model Attachment {
+  id           String   @id @default(cuid())
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int      // Size in bytes
+  url          String   // Storage location (S3, local, etc.)
+  testCaseId   String?
+  testResultId String?
+  createdAt    DateTime @default(now())
+
+  testCase     TestCase?   @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+  testResult   TestResult? @relation(fields: [testResultId], references: [id], onDelete: Cascade)
+
+  @@index([testCaseId])
+  @@index([testResultId])
+}

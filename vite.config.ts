@@ -14,6 +14,12 @@ export default defineConfig({
 			outdir: './src/lib/paraglide'
 		})
 	],
+	ssr: {
+		noExternal: ['svelte-clerk']
+	},
+	optimizeDeps: {
+		include: ['@clerk/backend']
+	},
 	test: {
 		expect: { requireAssertions: true },
 		projects: [
