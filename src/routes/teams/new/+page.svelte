@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { Button } from '@skeletonlabs/skeleton-svelte';
 	import { Check } from 'lucide-svelte';
 
 	let teamName = $state('');
@@ -250,9 +249,15 @@
 
 	<!-- Action Buttons -->
 	<div class="flex items-center justify-between">
-		<Button href="/teams" class="preset-outlined" disabled={loading}>Cancel</Button>
+		<a href="/teams" class="btn preset-outlined-surface-500" class:opacity-50={loading} class:pointer-events-none={loading}>
+			Cancel
+		</a>
 
-		<Button onclick={handleCreateTeam} class="preset-filled" disabled={loading || !teamName.trim()}>
+		<button
+			onclick={handleCreateTeam}
+			class="btn preset-filled-primary-500"
+			disabled={loading || !teamName.trim()}
+		>
 			{#if loading}
 				Creating...
 			{:else if selectedPlan === 'pro'}
@@ -260,7 +265,7 @@
 			{:else}
 				Create Free Team
 			{/if}
-		</Button>
+		</button>
 	</div>
 
 	<!-- Info -->

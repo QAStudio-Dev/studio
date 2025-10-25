@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button, Avatar } from '@skeletonlabs/skeleton-svelte';
+	import { Avatar } from '@skeletonlabs/skeleton-svelte';
 	import { CreditCard, Users, Settings, CheckCircle, AlertCircle } from 'lucide-svelte';
 	import { page } from '$app/stores';
 
@@ -74,10 +74,10 @@
 			</div>
 
 			{#if currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'}
-				<Button href="/teams/{team.id}/settings" class="preset-outlined">
+				<a href="/teams/{team.id}/settings" class="btn preset-outlined">
 					<Settings class="w-4 h-4 mr-2" />
 					Settings
-				</Button>
+				</a>
 			{/if}
 		</div>
 	</div>
@@ -144,22 +144,22 @@
 						{/if}
 
 						{#if currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'}
-							<Button
+							<button
 								onclick={openBillingPortal}
-								class="preset-filled w-full"
+								class="btn preset-filled w-full"
 								disabled={loading}
 							>
 								{loading ? 'Loading...' : 'Manage Billing'}
-							</Button>
+							</button>
 						{/if}
 					</div>
 				{:else}
 					<div class="text-center py-8">
 						<p class="text-surface-600-300 mb-4">No active subscription</p>
 						{#if currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'}
-							<Button href="/teams/new" class="preset-filled">
+							<a href="/teams/new" class="btn preset-filled">
 								Upgrade to Pro
-							</Button>
+							</a>
 						{/if}
 					</div>
 				{/if}
@@ -169,9 +169,9 @@
 			<div class="card p-6">
 				<div class="flex items-center justify-between mb-4">
 					<h2 class="h3">Recent Projects</h2>
-					<Button href="/projects/new" class="preset-filled-primary" size="sm">
+					<a href="/projects/new" class="btn btn-sm preset-filled-primary">
 						New Project
-					</Button>
+					</a>
 				</div>
 
 				{#if team.projects.length > 0}
@@ -238,9 +238,9 @@
 				</div>
 
 				{#if currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'}
-					<Button href="/teams/{team.id}/members/invite" class="preset-outlined w-full mt-4">
+					<a href="/teams/{team.id}/members/invite" class="btn preset-outlined w-full mt-4">
 						Invite Members
-					</Button>
+					</a>
 				{/if}
 			</div>
 
