@@ -49,10 +49,44 @@ model Team {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  members     User[]
-  projects    Project[]
+  members      User[]
+  projects     Project[]
+  subscription Subscription?
 
   @@index([name])
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  teamId               String             @unique
+  stripeCustomerId     String             @unique
+  stripeSubscriptionId String?            @unique
+  stripePriceId        String?
+  status               SubscriptionStatus @default(TRIALING)
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  seats                Int                @default(1)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  // Relations
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
+  @@index([status])
+}
+
+enum SubscriptionStatus {
+  TRIALING      // Free trial period
+  ACTIVE        // Paid and active
+  PAST_DUE      // Payment failed
+  CANCELED      // Subscription canceled
+  INCOMPLETE    // Initial payment pending
+  INCOMPLETE_EXPIRED // Initial payment failed
+  UNPAID        // Payment failed, subscription ended
 }
 
 enum UserRole {
