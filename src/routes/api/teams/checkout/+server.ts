@@ -63,14 +63,21 @@ export const POST: RequestHandler = async (event) => {
 	const baseUrl = PUBLIC_BASE_URL || event.url.origin;
 
 	// Create Stripe Checkout Session
-	const session = await createCheckoutSession({
-		teamId: team.id,
-		teamName: team.name,
-		priceId,
-		customerEmail: user.email,
-		successUrl: `${baseUrl}/teams/${team.id}?checkout=success`,
-		cancelUrl: `${baseUrl}/teams/${team.id}?checkout=canceled`
-	});
+	try {
+		const session = await createCheckoutSession({
+			teamId: team.id,
+			teamName: team.name,
+			priceId,
+			customerEmail: user.email,
+			successUrl: `${baseUrl}/teams/${team.id}?checkout=success`,
+			cancelUrl: `${baseUrl}/teams/${team.id}?checkout=canceled`
+		});
 
-	return json({ url: session.url });
+		return json({ url: session.url });
+	} catch (err: any) {
+		console.error('Stripe checkout error:', err);
+		throw error(500, {
+			message: `Stripe error: ${err.message}. Please check your Stripe Price IDs are configured correctly.`
+		});
+	}
 };

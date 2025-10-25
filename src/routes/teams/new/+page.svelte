@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { Check } from 'lucide-svelte';
+	import { Check, Sparkles, Users, Zap } from 'lucide-svelte';
 
 	let teamName = $state('');
 	let teamDescription = $state('');
-	let selectedPlan: 'free' | 'pro' = $state('free');
-	let billingPeriod: 'monthly' | 'yearly' = $state('monthly');
+	let selectedPlan: 'free' | 'pro' = $state('pro');
+	let billingPeriod: 'monthly' | 'yearly' = $state('yearly');
 	let loading = $state(false);
 	let error = $state('');
 
@@ -19,7 +19,8 @@
 		free: {
 			name: 'Free',
 			price: 0,
-			description: 'Perfect for individuals getting started',
+			description: 'Perfect for individuals',
+			tagline: 'Get started for free',
 			features: [
 				'1 user (you)',
 				'Unlimited projects',
@@ -29,9 +30,11 @@
 		},
 		pro: {
 			name: 'Pro',
-			priceMonthly: 15,
-			priceYearly: 12,
-			description: 'For teams that need collaboration',
+			priceMonthly: 10,
+			priceYearly: 8.33, // $100/year = $8.33/month
+			yearlyTotal: 100,
+			description: 'For teams that ship fast',
+			tagline: 'Most popular',
 			features: [
 				'Up to 10 team members',
 				'Unlimited projects',
@@ -103,181 +106,242 @@
 	}
 </script>
 
-<div class="container mx-auto max-w-6xl p-8">
-	<div class="mb-8">
-		<h1 class="text-3xl font-bold mb-2">Create Your Team</h1>
-		<p class="text-surface-600-300">Start collaborating with your team on test management</p>
+<div class="container mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+	<!-- Header -->
+	<div class="text-center mb-12">
+		<h1 class="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-primary-500 to-secondary-500 bg-clip-text text-transparent">
+			Create Your Team
+		</h1>
+		<p class="text-lg text-surface-600-300 max-w-2xl mx-auto">
+			Start collaborating with your team on test management. Choose the plan that fits your needs.
+		</p>
 	</div>
 
 	{#if error}
-		<div class="alert preset-filled-error mb-6">
+		<div class="alert preset-filled-error mb-8 max-w-3xl mx-auto">
 			<p>{error}</p>
 		</div>
 	{/if}
 
-	<!-- Team Details -->
-	<div class="card p-6 mb-8">
-		<h2 class="h3 mb-4">Team Details</h2>
-
-		<label class="label mb-4">
-			<span class="mb-2 block">Team Name *</span>
-			<input
-				type="text"
-				class="input"
-				placeholder="Acme QA Team"
-				bind:value={teamName}
-				disabled={loading}
-			/>
-		</label>
-
-		<label class="label">
-			<span class="mb-2 block">Description (optional)</span>
-			<textarea
-				class="textarea"
-				rows="3"
-				placeholder="What does your team work on?"
-				bind:value={teamDescription}
-				disabled={loading}
-			></textarea>
-		</label>
+	<!-- Billing Period Toggle -->
+	<div class="flex items-center justify-center gap-3 mb-12">
+		<button
+			class="btn {billingPeriod === 'monthly' ? 'preset-filled-primary-500' : 'preset-outlined-surface-500'}"
+			onclick={() => (billingPeriod = 'monthly')}
+			disabled={loading}
+		>
+			Monthly
+		</button>
+		<button
+			class="btn {billingPeriod === 'yearly' ? 'preset-filled-primary-500' : 'preset-outlined-surface-500'}"
+			onclick={() => (billingPeriod = 'yearly')}
+			disabled={loading}
+		>
+			Yearly
+			<span class="badge preset-filled-success-500 ml-2 text-xs">Save 17%</span>
+		</button>
 	</div>
 
-	<!-- Pricing Plans -->
-	<div class="mb-8">
-		<h2 class="h3 mb-4">Choose Your Plan</h2>
-
-		<!-- Billing Period Toggle (for Pro) -->
-		{#if selectedPlan === 'pro'}
-			<div class="flex items-center justify-center gap-4 mb-6">
-				<button
-					class="btn {billingPeriod === 'monthly' ? 'preset-filled' : 'preset-outlined'}"
-					onclick={() => (billingPeriod = 'monthly')}
-					disabled={loading}
-				>
-					Monthly
-				</button>
-				<button
-					class="btn {billingPeriod === 'yearly' ? 'preset-filled' : 'preset-outlined'}"
-					onclick={() => (billingPeriod = 'yearly')}
-					disabled={loading}
-				>
-					Yearly
-					<span class="badge preset-filled-success ml-2">Save 20%</span>
-				</button>
-			</div>
-		{/if}
-
-		<div class="grid md:grid-cols-2 gap-6">
-			<!-- Free Plan -->
-			<button
-				class="card p-6 text-left transition-all {selectedPlan === 'free'
-					? 'ring-2 ring-primary-500'
-					: 'hover:ring-1 hover:ring-surface-300-600'}"
-				onclick={() => (selectedPlan = 'free')}
-				disabled={loading}
-			>
-				<div class="flex items-start justify-between mb-4">
-					<div>
-						<h3 class="h4 mb-1">{plans.free.name}</h3>
-						<p class="text-sm text-surface-600-300">{plans.free.description}</p>
+	<!-- Pricing Cards -->
+	<div class="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto mb-12">
+		<!-- Free Plan -->
+		<button
+			class="card p-8 text-left transition-all duration-200 hover:scale-[1.02] {selectedPlan === 'free'
+				? 'ring-2 ring-primary-500 shadow-xl'
+				: 'hover:shadow-lg'}"
+			onclick={() => (selectedPlan = 'free')}
+			disabled={loading}
+		>
+			<div class="flex items-start justify-between mb-6">
+				<div>
+					<div class="inline-flex items-center gap-2 mb-2">
+						<Users class="w-5 h-5 text-surface-600-300" />
+						<h3 class="text-2xl font-bold">{plans.free.name}</h3>
 					</div>
-					{#if selectedPlan === 'free'}
-						<div class="badge preset-filled-primary">Selected</div>
-					{/if}
+					<p class="text-sm text-surface-600-300">{plans.free.description}</p>
 				</div>
+				{#if selectedPlan === 'free'}
+					<div class="badge preset-filled-primary-500">Selected</div>
+				{/if}
+			</div>
 
-				<div class="mb-6">
-					<span class="text-4xl font-bold">${plans.free.price}</span>
+			<div class="mb-8">
+				<div class="flex items-baseline gap-2">
+					<span class="text-5xl font-bold">${plans.free.price}</span>
 					<span class="text-surface-600-300">/month</span>
 				</div>
+				<p class="text-sm text-surface-600-300 mt-2">{plans.free.tagline}</p>
+			</div>
 
-				<ul class="space-y-3">
-					{#each plans.free.features as feature}
-						<li class="flex items-start gap-2">
-							<Check class="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" />
-							<span class="text-sm">{feature}</span>
-						</li>
-					{/each}
-				</ul>
-			</button>
+			<ul class="space-y-4">
+				{#each plans.free.features as feature}
+					<li class="flex items-start gap-3">
+						<Check class="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" />
+						<span>{feature}</span>
+					</li>
+				{/each}
+			</ul>
+		</button>
 
-			<!-- Pro Plan -->
-			<button
-				class="card p-6 text-left transition-all relative {selectedPlan === 'pro'
-					? 'ring-2 ring-primary-500'
-					: 'hover:ring-1 hover:ring-surface-300-600'}"
-				onclick={() => (selectedPlan = 'pro')}
-				disabled={loading}
-			>
-				<div class="absolute -top-3 right-6">
-					<span class="badge preset-filled-primary">Popular</span>
-				</div>
+		<!-- Pro Plan -->
+		<button
+			class="card p-8 text-left transition-all duration-200 hover:scale-[1.02] relative bg-gradient-to-br from-primary-500/10 to-secondary-500/10 {selectedPlan === 'pro'
+				? 'ring-2 ring-primary-500 shadow-xl'
+				: 'hover:shadow-lg'}"
+			onclick={() => (selectedPlan = 'pro')}
+			disabled={loading}
+		>
+			<div class="absolute -top-4 left-1/2 -translate-x-1/2">
+				<span class="badge preset-filled-primary-500 px-4 py-2 text-sm font-semibold shadow-lg">
+					<Sparkles class="w-4 h-4 inline mr-1" />
+					{plans.pro.tagline}
+				</span>
+			</div>
 
-				<div class="flex items-start justify-between mb-4">
-					<div>
-						<h3 class="h4 mb-1">{plans.pro.name}</h3>
-						<p class="text-sm text-surface-600-300">{plans.pro.description}</p>
+			<div class="flex items-start justify-between mb-6 mt-2">
+				<div>
+					<div class="inline-flex items-center gap-2 mb-2">
+						<Zap class="w-5 h-5 text-primary-500" />
+						<h3 class="text-2xl font-bold">{plans.pro.name}</h3>
 					</div>
-					{#if selectedPlan === 'pro'}
-						<div class="badge preset-filled-primary">Selected</div>
-					{/if}
+					<p class="text-sm text-surface-600-300">{plans.pro.description}</p>
 				</div>
+				{#if selectedPlan === 'pro'}
+					<div class="badge preset-filled-primary-500">Selected</div>
+				{/if}
+			</div>
 
-				<div class="mb-6">
-					<span class="text-4xl font-bold">
+			<div class="mb-8">
+				<div class="flex items-baseline gap-2">
+					<span class="text-5xl font-bold">
 						${billingPeriod === 'monthly' ? plans.pro.priceMonthly : plans.pro.priceYearly}
 					</span>
 					<span class="text-surface-600-300">/user/month</span>
-					{#if billingPeriod === 'yearly'}
-						<p class="text-sm text-success-500 mt-1">
-							Billed ${plans.pro.priceYearly * 12}/user/year
-						</p>
-					{/if}
 				</div>
+				{#if billingPeriod === 'yearly'}
+					<p class="text-sm text-success-500 mt-2 font-medium">
+						Billed ${plans.pro.yearlyTotal}/user/year · Save $20/year
+					</p>
+				{:else}
+					<p class="text-sm text-surface-600-300 mt-2">Billed monthly</p>
+				{/if}
+			</div>
 
-				<ul class="space-y-3">
-					{#each plans.pro.features as feature}
-						<li class="flex items-start gap-2">
-							<Check class="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" />
-							<span class="text-sm">{feature}</span>
-						</li>
-					{/each}
-				</ul>
-			</button>
+			<ul class="space-y-4">
+				{#each plans.pro.features as feature}
+					<li class="flex items-start gap-3">
+						<Check class="w-5 h-5 text-primary-500 flex-shrink-0 mt-0.5" />
+						<span>{feature}</span>
+					</li>
+				{/each}
+			</ul>
+		</button>
+	</div>
+
+	<!-- Team Details Form -->
+	<div class="card p-8 max-w-3xl mx-auto mb-8">
+		<div class="flex items-center gap-3 mb-6">
+			<Users class="w-6 h-6 text-primary-500" />
+			<h2 class="text-2xl font-bold">Team Details</h2>
+		</div>
+
+		<div class="space-y-6">
+			<label class="label">
+				<span class="text-base font-medium mb-2 block">Team Name *</span>
+				<input
+					type="text"
+					class="input text-lg"
+					placeholder="Acme QA Team"
+					bind:value={teamName}
+					disabled={loading}
+				/>
+			</label>
+
+			<label class="label">
+				<span class="text-base font-medium mb-2 block">Description (optional)</span>
+				<textarea
+					class="textarea"
+					rows="3"
+					placeholder="Tell us about your team and what you'll be testing..."
+					bind:value={teamDescription}
+					disabled={loading}
+				></textarea>
+			</label>
 		</div>
 	</div>
 
 	<!-- Action Buttons -->
-	<div class="flex items-center justify-between">
-		<a href="/teams" class="btn preset-outlined-surface-500" class:opacity-50={loading} class:pointer-events-none={loading}>
+	<div class="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-3xl mx-auto">
+		<a
+			href="/teams"
+			class="btn preset-outlined-surface-500 w-full sm:w-auto"
+			class:opacity-50={loading}
+			class:pointer-events-none={loading}
+		>
 			Cancel
 		</a>
 
 		<button
 			onclick={handleCreateTeam}
-			class="btn preset-filled-primary-500"
+			class="btn preset-filled-primary-500 w-full sm:w-auto text-lg px-8 py-4"
 			disabled={loading || !teamName.trim()}
 		>
 			{#if loading}
-				Creating...
+				<span class="inline-flex items-center gap-2">
+					<span class="animate-spin">⏳</span>
+					Creating...
+				</span>
 			{:else if selectedPlan === 'pro'}
-				Continue to Payment
+				<span class="inline-flex items-center gap-2">
+					Continue to Payment
+					<span>→</span>
+				</span>
 			{:else}
 				Create Free Team
 			{/if}
 		</button>
 	</div>
 
-	<!-- Info -->
-	<div class="mt-8 p-4 bg-surface-100-800 rounded-container text-sm">
-		<p class="text-surface-600-300">
-			{#if selectedPlan === 'free'}
-				Start for free - no credit card required. Upgrade to Pro anytime to unlock team
-				collaboration and AI features.
-			{:else}
-				You'll be redirected to Stripe to complete payment. You can cancel anytime from your team
-				settings.
-			{/if}
-		</p>
+	<!-- Info Footer -->
+	<div class="mt-12 max-w-3xl mx-auto">
+		<div class="card p-6 bg-surface-50-900/50 border border-surface-200-700">
+			<div class="flex items-start gap-4">
+				<div class="text-2xl">
+					{selectedPlan === 'pro' ? '💳' : '🎉'}
+				</div>
+				<div class="flex-1">
+					{#if selectedPlan === 'free'}
+						<p class="font-medium mb-1">Start for free - no credit card required</p>
+						<p class="text-sm text-surface-600-300">
+							Upgrade to Pro anytime to unlock team collaboration and AI-powered features.
+						</p>
+					{:else}
+						<p class="font-medium mb-1">Secure payment powered by Stripe</p>
+						<p class="text-sm text-surface-600-300">
+							You'll be redirected to Stripe to complete payment. Cancel anytime from your team settings.
+						</p>
+					{/if}
+				</div>
+			</div>
+		</div>
+
+		<!-- Trust Signals -->
+		<div class="mt-8 text-center">
+			<p class="text-sm text-surface-600-300 mb-3">Trusted by QA teams worldwide</p>
+			<div class="flex items-center justify-center gap-6 text-xs text-surface-500-400">
+				<div class="flex items-center gap-2">
+					<Check class="w-4 h-4 text-success-500" />
+					<span>14-day money back</span>
+				</div>
+				<div class="flex items-center gap-2">
+					<Check class="w-4 h-4 text-success-500" />
+					<span>Cancel anytime</span>
+				</div>
+				<div class="flex items-center gap-2">
+					<Check class="w-4 h-4 text-success-500" />
+					<span>No setup fees</span>
+				</div>
+			</div>
+		</div>
 	</div>
 </div>
