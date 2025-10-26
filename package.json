@@ -55,6 +55,7 @@
 		"vitest-browser-svelte": "^1.1.0"
 	},
 	"dependencies": {
+		"@neodrag/svelte": "^2.3.3",
 		"@prisma/client": "^6.18.0",
 		"@stripe/stripe-js": "^8.1.0",
 		"dotenv": "^17.2.3",

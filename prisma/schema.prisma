@@ -169,6 +169,7 @@ model TestSuite {
   description String?
   projectId   String
   parentId    String?  // For nested suites
+  order       Int      @default(0) // For drag-and-drop ordering
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -195,6 +196,7 @@ model TestCase {
   projectId     String
   suiteId       String?
   createdBy     String   // Clerk user ID
+  order         Int      @default(0) // For drag-and-drop ordering
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -209,6 +211,7 @@ model TestCase {
   @@index([priority])
   @@index([type])
   @@index([createdBy])
+  @@index([order])
 }
 
 enum Priority {
