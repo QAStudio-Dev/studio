@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { FolderPlus, AlertCircle } from 'lucide-svelte';
+	import { FolderPlus, AlertCircle, Sparkles } from 'lucide-svelte';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
 
 	let name = $state('');
 	let key = $state('');
@@ -83,8 +86,51 @@
 		</div>
 	{/if}
 
+	{#if !data.canCreateProject}
+		<div class="card p-8 bg-gradient-to-br from-primary-500/10 to-secondary-500/10 border-2 border-primary-500/20 mb-6">
+			<div class="flex items-start gap-4">
+				<div class="p-3 bg-primary-500/20 rounded-lg">
+					<Sparkles class="w-8 h-8 text-primary-500" />
+				</div>
+				<div class="flex-1">
+					<h2 class="text-2xl font-bold mb-2">Upgrade to Create More Projects</h2>
+					<p class="text-surface-600-300 mb-4">
+						You've reached the free plan limit of 1 project. Upgrade to Pro to create unlimited
+						projects and unlock powerful features:
+					</p>
+					<ul class="space-y-2 mb-6 text-surface-700-200">
+						<li class="flex items-center gap-2">
+							<div class="w-1.5 h-1.5 rounded-full bg-primary-500"></div>
+							<span>Unlimited projects</span>
+						</li>
+						<li class="flex items-center gap-2">
+							<div class="w-1.5 h-1.5 rounded-full bg-primary-500"></div>
+							<span>AI-powered failure analysis</span>
+						</li>
+						<li class="flex items-center gap-2">
+							<div class="w-1.5 h-1.5 rounded-full bg-primary-500"></div>
+							<span>Advanced reporting and analytics</span>
+						</li>
+						<li class="flex items-center gap-2">
+							<div class="w-1.5 h-1.5 rounded-full bg-primary-500"></div>
+							<span>Custom integrations</span>
+						</li>
+					</ul>
+					<div class="flex gap-3">
+						<a href="/teams/new" class="btn preset-filled-primary-500">
+							Upgrade to Pro
+						</a>
+						<a href="/projects" class="btn preset-outlined-surface-500">
+							View My Projects
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	{/if}
+
 	<!-- Form -->
-	<div class="card p-8">
+	<div class="card p-8" class:opacity-50={!data.canCreateProject} class:pointer-events-none={!data.canCreateProject}>
 		<form onsubmit={(e) => { e.preventDefault(); handleSubmit(); }} class="space-y-6">
 			<!-- Project Name -->
 			<label class="label">

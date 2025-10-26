@@ -59,50 +59,51 @@
 
 				<!-- Main Navigation -->
 				<nav class="hidden items-center gap-1 md:flex">
-					<a
-						href="/dashboard"
-						class="rounded-base px-4 py-2 transition-colors {isActive('/dashboard')
-							? 'bg-primary-500 text-white'
-							: 'hover:bg-surface-200-800'}"
-					>
-						Dashboard
-					</a>
-					<a
-						href="/projects"
-						class="rounded-base px-4 py-2 transition-colors {isActive('/projects')
-							? 'bg-primary-500 text-white'
-							: 'hover:bg-surface-200-800'}"
-					>
-						Projects
-					</a>
-
-					<!-- Project Selector (only when signed in) -->
+					<!-- Only show these navigation items when signed in -->
 					<SignedIn>
+						<a
+							href="/dashboard"
+							class="rounded-base px-4 py-2 transition-colors {isActive('/dashboard')
+								? 'bg-primary-500 text-white'
+								: 'hover:bg-surface-200-800'}"
+						>
+							Dashboard
+						</a>
+						<a
+							href="/projects"
+							class="rounded-base px-4 py-2 transition-colors {isActive('/projects')
+								? 'bg-primary-500 text-white'
+								: 'hover:bg-surface-200-800'}"
+						>
+							Projects
+						</a>
+
+						<!-- Project Selector -->
 						<div class="px-2">
 							<ProjectSelector {projects} />
 						</div>
-					</SignedIn>
 
-					<!-- Project-specific navigation (only when project selected) -->
-					{#if currentProject}
-						<div class="h-6 w-px bg-surface-300-700 mx-2"></div>
-						<a
-							href="/projects/{currentProject.id}"
-							class="rounded-base px-4 py-2 transition-colors {isActive(`/projects/${currentProject.id}`)
-								? 'bg-primary-500 text-white'
-								: 'hover:bg-surface-200-800'}"
-						>
-							Test Cases
-						</a>
-						<a
-							href="/projects/{currentProject.id}/runs"
-							class="rounded-base px-4 py-2 transition-colors {isActive(`/projects/${currentProject.id}/runs`)
-								? 'bg-primary-500 text-white'
-								: 'hover:bg-surface-200-800'}"
-						>
-							Test Runs
-						</a>
-					{/if}
+						<!-- Project-specific navigation (only when project selected) -->
+						{#if currentProject}
+							<div class="h-6 w-px bg-surface-300-700 mx-2"></div>
+							<a
+								href="/projects/{currentProject.id}"
+								class="rounded-base px-4 py-2 transition-colors {isActive(`/projects/${currentProject.id}`)
+									? 'bg-primary-500 text-white'
+									: 'hover:bg-surface-200-800'}"
+							>
+								Test Cases
+							</a>
+							<a
+								href="/projects/{currentProject.id}/runs"
+								class="rounded-base px-4 py-2 transition-colors {isActive(`/projects/${currentProject.id}/runs`)
+									? 'bg-primary-500 text-white'
+									: 'hover:bg-surface-200-800'}"
+							>
+								Test Runs
+							</a>
+						{/if}
+					</SignedIn>
 				</nav>
 			</div>
 
