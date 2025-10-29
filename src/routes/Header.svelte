@@ -97,6 +97,19 @@
 								Test Cases
 							</a>
 						{/if}
+
+						<!-- Divider -->
+						<div class="mx-1 h-6 w-px bg-surface-300-700"></div>
+
+						<!-- Settings -->
+						<a
+							href="/settings"
+							class="rounded-base px-4 py-2 transition-colors {isActive('/settings')
+								? 'bg-primary-500 text-white'
+								: 'hover:bg-surface-200-800'}"
+						>
+							Settings
+						</a>
 					</SignedIn>
 				</nav>
 			</div>
