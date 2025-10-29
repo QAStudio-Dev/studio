@@ -25,6 +25,19 @@ export const load: PageServerLoad = async ({ locals }) => {
 							role: true,
 							createdAt: true
 						}
+					},
+					integrations: {
+						select: {
+							id: true,
+							type: true,
+							name: true,
+							status: true,
+							config: true,
+							installedBy: true,
+							lastSyncedAt: true,
+							createdAt: true
+						},
+						orderBy: { createdAt: 'desc' }
 					}
 				}
 			},

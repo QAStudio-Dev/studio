@@ -71,6 +71,7 @@ model Team {
   members      User[]
   projects     Project[]
   subscription Subscription?
+  integrations Integration[]
 
   @@index([name])
 }
@@ -367,4 +368,97 @@ model Attachment {
 
   @@index([testCaseId])
   @@index([testResultId])
+}
+
+// ============================================
+// INTEGRATIONS
+// ============================================
+
+model Integration {
+  id              String            @id @default(cuid())
+  teamId          String
+  type            IntegrationType
+  name            String            // User-friendly name like "Engineering Slack"
+  status          IntegrationStatus @default(ACTIVE)
+
+  // OAuth & Connection Data (encrypted in production)
+  accessToken     String?           // OAuth access token
+  refreshToken    String?           // OAuth refresh token
+  tokenExpiresAt  DateTime?
+  webhookUrl      String?           // For incoming webhooks
+  webhookSecret   String?           // For verifying webhook signatures
+
+  // Integration-specific configuration (JSON)
+  config          Json?             // Channel IDs, preferences, etc.
+
+  // Metadata
+  installedBy     String            // User ID who installed
+  lastSyncedAt    DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  // Relations
+  team            Team              @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  notifications   IntegrationNotification[]
+
+  @@index([teamId])
+  @@index([type])
+  @@index([status])
+}
+
+enum IntegrationType {
+  SLACK
+  DISCORD
+  TEAMS
+  JIRA
+  GITHUB
+  GITLAB
+  WEBHOOK
+}
+
+enum IntegrationStatus {
+  ACTIVE
+  INACTIVE
+  ERROR
+  EXPIRED
+}
+
+model IntegrationNotification {
+  id            String           @id @default(cuid())
+  integrationId String
+  eventType     NotificationEvent
+  status        NotificationStatus @default(PENDING)
+  payload       Json              // Event data to send
+  response      Json?             // Response from integration
+  error         String?
+  attempts      Int               @default(0)
+  maxAttempts   Int               @default(3)
+  nextRetryAt   DateTime?
+  sentAt        DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  integration   Integration       @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@index([integrationId])
+  @@index([status])
+  @@index([eventType])
+  @@index([nextRetryAt])
+}
+
+enum NotificationEvent {
+  TEST_RUN_STARTED
+  TEST_RUN_COMPLETED
+  TEST_RUN_FAILED
+  TEST_CASE_FAILED
+  TEST_CASE_PASSED
+  MILESTONE_DUE
+  PROJECT_CREATED
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  RETRYING
 }
