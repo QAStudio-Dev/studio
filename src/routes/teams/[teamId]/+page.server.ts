@@ -53,8 +53,13 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	// Check if user is a member
 	const isMember = team.members.some((member) => member.id === userId);
 	if (!isMember) {
+		console.error('[Team Page] Access denied:', {
+			teamId: params.teamId,
+			userId,
+			teamMemberIds: team.members.map((m) => m.id)
+		});
 		throw error(403, {
-			message: 'You are not a member of this team'
+			message: 'You are not a member of this team. Please check that you completed team creation successfully.'
 		});
 	}
 

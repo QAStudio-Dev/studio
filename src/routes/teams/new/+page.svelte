@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { Check, Sparkles, Users, Zap } from 'lucide-svelte';
+	import { env } from '$env/dynamic/public';
 
 	let teamName = $state('');
 	let teamDescription = $state('');
@@ -11,8 +12,8 @@
 
 	// These should match your Stripe Price IDs from .env
 	const PRICE_IDS = {
-		pro_monthly: import.meta.env.PUBLIC_STRIPE_PRICE_ID_PRO_MONTHLY || 'price_test_monthly',
-		pro_yearly: import.meta.env.PUBLIC_STRIPE_PRICE_ID_PRO_YEARLY || 'price_test_yearly'
+		pro_monthly: env.PUBLIC_STRIPE_PRICE_ID_PRO_MONTHLY || import.meta.env.PUBLIC_STRIPE_PRICE_ID_PRO_MONTHLY,
+		pro_yearly: env.PUBLIC_STRIPE_PRICE_ID_PRO_YEARLY || import.meta.env.PUBLIC_STRIPE_PRICE_ID_PRO_YEARLY
 	};
 
 	const plans = {
@@ -77,6 +78,15 @@
 			if (selectedPlan === 'pro') {
 				const priceId =
 					billingPeriod === 'monthly' ? PRICE_IDS.pro_monthly : PRICE_IDS.pro_yearly;
+
+				// Validate price ID is set
+				if (!priceId) {
+					throw new Error(
+						'Stripe price ID not configured. Please contact support or check your environment variables.'
+					);
+				}
+
+				console.log('Using Stripe Price ID:', priceId); // Debug log
 
 				const checkoutRes = await fetch('/api/teams/checkout', {
 					method: 'POST',

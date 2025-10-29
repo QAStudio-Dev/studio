@@ -171,9 +171,14 @@
 	async function handleLeaveTeam() {
 		if (!user.team) return;
 
-		const confirmed = confirm(
-			`Are you sure you want to leave "${user.team.name}"?\n\nThis will remove you from the team and all associated projects. This action cannot be undone.`
-		);
+		// Check if user is the only member
+		const isOnlyMember = user.team.members.length === 1;
+
+		const message = isOnlyMember
+			? `Are you sure you want to delete "${user.team.name}"?\n\nYou are the only member, so leaving will permanently delete the team and all associated data (projects, test cases, test runs, etc.). This action cannot be undone.`
+			: `Are you sure you want to leave "${user.team.name}"?\n\nThis will remove you from the team and all associated projects. This action cannot be undone.`;
+
+		const confirmed = confirm(message);
 
 		if (!confirmed) return;
 
@@ -189,8 +194,9 @@
 				throw new Error(data.message || 'Failed to leave team');
 			}
 
+			const data = await res.json();
 			await invalidateAll();
-			alert('Successfully left the team');
+			alert(data.message || 'Successfully left the team');
 		} catch (err: any) {
 			alert('Error: ' + err.message);
 		} finally {
@@ -629,10 +635,16 @@
 						<h3 class="mb-4 text-xl font-bold text-error-500">Danger Zone</h3>
 						<div class="flex items-start justify-between gap-4">
 							<div>
-								<h4 class="mb-1 font-semibold">Leave Team</h4>
+								<h4 class="mb-1 font-semibold">
+									{user.team.members.length === 1 ? 'Delete Team' : 'Leave Team'}
+								</h4>
 								<p class="text-surface-600-300 text-sm">
-									Remove yourself from this team and all associated projects. This action cannot be
-									undone.
+									{#if user.team.members.length === 1}
+										You are the only member. Leaving will permanently delete the team and all associated data (projects, test cases, test runs, etc.).
+									{:else}
+										Remove yourself from this team and all associated projects.
+									{/if}
+									This action cannot be undone.
 								</p>
 							</div>
 							<button
@@ -641,10 +653,10 @@
 								class="btn preset-filled-error-500 whitespace-nowrap"
 							>
 								{#if leavingTeam}
-									<span>Leaving...</span>
+									<span>{user.team.members.length === 1 ? 'Deleting...' : 'Leaving...'}</span>
 								{:else}
 									<LogOut class="mr-2 h-4 w-4" />
-									<span>Leave Team</span>
+									<span>{user.team.members.length === 1 ? 'Delete Team' : 'Leave Team'}</span>
 								{/if}
 							</button>
 						</div>

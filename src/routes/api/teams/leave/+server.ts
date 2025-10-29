@@ -17,7 +17,8 @@ export const POST: RequestHandler = async (event) => {
 			include: {
 				team: {
 					include: {
-						members: true
+						members: true,
+						subscription: true
 					}
 				}
 			}
@@ -27,23 +28,47 @@ export const POST: RequestHandler = async (event) => {
 			return json({ message: 'You are not part of a team' }, { status: 400 });
 		}
 
-		// Check if user is the last member
+		// If user is the last member, soft delete the team
 		if (user.team && user.team.members.length === 1) {
-			return json(
-				{
-					message:
-						'Cannot leave team as you are the only member. Please contact support to delete the team.'
-				},
-				{ status: 400 }
-			);
+			// Cancel subscription if it exists
+			if (user.team.subscription?.stripeSubscriptionId) {
+				try {
+					// Note: In production, you should actually cancel the Stripe subscription here
+					// For now, just mark it as canceled in the database
+					await db.subscription.update({
+						where: { id: user.team.subscription.id },
+						data: {
+							status: 'CANCELED',
+							cancelAtPeriodEnd: true
+						}
+					});
+				} catch (subError) {
+					console.error('Error canceling subscription:', subError);
+					// Continue with team deletion even if subscription update fails
+				}
+			}
+
+			// Remove user from team
+			await db.user.update({
+				where: { id: userId },
+				data: {
+					teamId: null
+				}
+			});
+
+			// Delete the team and all related data (cascade deletes will handle related records)
+			await db.team.delete({
+				where: { id: user.teamId }
+			});
+
+			return json({ message: 'Successfully deleted team and left' });
 		}
 
 		// Remove user from team by setting teamId to null
 		await db.user.update({
 			where: { id: userId },
 			data: {
-				teamId: null,
-				role: 'MEMBER' // Reset role when leaving team
+				teamId: null
 			}
 		});
 

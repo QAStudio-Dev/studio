@@ -2,8 +2,27 @@
 	import { ClerkProvider } from 'svelte-clerk';
 	import Header from './Header.svelte';
 	import '../app.css';
+	import { clearSelectedProject } from '$lib/stores/projectStore';
+	import { browser } from '$app/environment';
 
 	let { children, data } = $props();
+
+	// Track the current user ID to detect user changes
+	let previousUserId = $state<string | null>(null);
+
+	// Clear selected project when user changes (sign out/switch account)
+	$effect(() => {
+		if (browser) {
+			const currentUserId = data?.userId || null;
+
+			// If user changed (including sign out), clear the selected project
+			if (previousUserId !== null && previousUserId !== currentUserId) {
+				clearSelectedProject();
+			}
+
+			previousUserId = currentUserId;
+		}
+	});
 </script>
 
 <svelte:head>
