@@ -45,11 +45,12 @@
 
 		if (!clientId) {
 			console.error('SLACK_CLIENT_ID not configured');
-			alert('Slack integration is not configured. Please contact your administrator.');
 			return '#';
 		}
 
-		const redirectUri = `${window.location.origin}/api/integrations/slack/callback`;
+		// Use window.location if available (browser), fallback to placeholder for SSR
+		const origin = typeof window !== 'undefined' ? window.location.origin : 'https://qastudio.dev';
+		const redirectUri = `${origin}/api/integrations/slack/callback`;
 		const scopes = [
 			'incoming-webhook',
 			'chat:write',
@@ -646,6 +647,13 @@
 									href={getSlackOAuthUrl()}
 									class="btn w-full preset-filled-primary-500"
 									target="_blank"
+									onclick={(e) => {
+										const url = getSlackOAuthUrl();
+										if (url === '#') {
+											e.preventDefault();
+											alert('Slack integration is not configured. Please contact your administrator.');
+										}
+									}}
 								>
 									<ExternalLink class="mr-2 h-4 w-4" />
 									Connect Slack
