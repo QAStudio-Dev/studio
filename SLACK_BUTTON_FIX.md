@@ -18,23 +18,38 @@ The endpoint has already been created at:
 
 File location: [src/routes/api/integrations/slack/interactions/+server.ts](src/routes/api/integrations/slack/interactions/+server.ts)
 
-### Step 2: Configure Your Slack App
+### Step 2: Add Signing Secret to Environment Variables
 
 1. Go to https://api.slack.com/apps
-2. Select your "QA Studio" app (or whatever you named it)
-3. In the left sidebar, click **"Interactivity & Shortcuts"**
-4. Toggle **"Interactivity"** to **On**
-5. Set the **Request URL** to:
+2. Select your "QA Studio" app
+3. Click **"Basic Information"** in the left sidebar
+4. Scroll to **"App Credentials"**
+5. Copy the **"Signing Secret"** (click "Show" to reveal it)
+6. Add it to your `.env` file:
+   ```bash
+   SLACK_SIGNING_SECRET=your_signing_secret_here
+   ```
+7. Also add it to **Vercel** environment variables:
+   - Go to your Vercel project settings
+   - Navigate to "Environment Variables"
+   - Add `SLACK_SIGNING_SECRET` with the value
+   - Redeploy your app
+
+### Step 3: Configure Interactivity URL
+
+1. Still in your Slack app settings, click **"Interactivity & Shortcuts"** in the left sidebar
+2. Toggle **"Interactivity"** to **On**
+3. Set the **Request URL** to:
    ```
    https://qastudio.dev/api/integrations/slack/interactions
    ```
-6. Click **"Save Changes"**
+4. Click **"Save Changes"**
 
-### Step 3: Verify the Setup
+### Step 4: Verify the Setup
 
 Slack will immediately verify the endpoint by sending a test request. If everything is set up correctly, you'll see a green checkmark next to the URL.
 
-### Step 4: Test the Fix
+### Step 5: Test the Fix
 
 1. Run a new Playwright test to trigger a notification:
    ```bash
@@ -71,8 +86,14 @@ The `/api/integrations/slack/interactions` endpoint:
 
 **Interactivity URL verification fails**
 - Check that the endpoint is deployed and accessible
+- Verify `SLACK_SIGNING_SECRET` is set in your environment variables
 - Use `curl` to test: `curl -X POST https://qastudio.dev/api/integrations/slack/interactions`
 - Check server logs for any errors
+
+**403 Status Code Error**
+- This means the `SLACK_SIGNING_SECRET` is not configured
+- Make sure you've added it to both `.env` and Vercel environment variables
+- Redeploy your app after adding the variable
 
 ## Additional Resources
 
