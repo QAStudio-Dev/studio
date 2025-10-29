@@ -21,6 +21,7 @@
 	import { Tabs } from '@skeletonlabs/skeleton-svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { UserProfile } from 'svelte-clerk/client';
+	import { env } from '$env/dynamic/public';
 
 	let { data } = $props();
 	let { user } = $derived(data);
@@ -40,11 +41,12 @@
 
 	// Get Slack OAuth URL
 	function getSlackOAuthUrl() {
-		// SvelteKit requires PUBLIC_ prefix for browser-accessible env vars
-		const clientId = import.meta.env.PUBLIC_SLACK_CLIENT_ID;
+		// Try both methods - SvelteKit's $env and Vite's import.meta.env
+		const clientId = env.PUBLIC_SLACK_CLIENT_ID || import.meta.env.PUBLIC_SLACK_CLIENT_ID;
 
 		if (!clientId) {
 			console.error('SLACK_CLIENT_ID not configured');
+			console.log('Available env:', { env, importMeta: import.meta.env });
 			return '#';
 		}
 
