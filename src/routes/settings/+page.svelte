@@ -40,7 +40,7 @@
 
 	// Get Slack OAuth URL
 	function getSlackOAuthUrl() {
-		const clientId = 'YOUR_SLACK_CLIENT_ID'; // This will come from env in production
+		const clientId = process.env.SLACK_CLIENT_ID; // This will come from env in production
 		const redirectUri = `${window.location.origin}/api/integrations/slack/callback`;
 		const scopes = [
 			'incoming-webhook',
@@ -239,10 +239,10 @@
 
 	<!-- Tabs -->
 	<Tabs defaultValue="profile">
-		<Tabs.List class="mb-6 flex gap-2 border-b border-surface-200-700">
+		<Tabs.List class="border-surface-200-700 mb-6 flex gap-2 border-b">
 			<Tabs.Trigger
 				value="profile"
-				class="flex items-center gap-2 rounded-t-base px-4 py-3 transition-colors data-[state=active]:bg-primary-500 data-[state=active]:text-white hover:bg-surface-100-800"
+				class="hover:bg-surface-100-800 flex items-center gap-2 rounded-t-base px-4 py-3 transition-colors data-[state=active]:bg-primary-500 data-[state=active]:text-white"
 			>
 				<User class="h-4 w-4" />
 				<span>Profile</span>
@@ -250,7 +250,7 @@
 
 			<Tabs.Trigger
 				value="api-keys"
-				class="flex items-center gap-2 rounded-t-base px-4 py-3 transition-colors data-[state=active]:bg-primary-500 data-[state=active]:text-white hover:bg-surface-100-800"
+				class="hover:bg-surface-100-800 flex items-center gap-2 rounded-t-base px-4 py-3 transition-colors data-[state=active]:bg-primary-500 data-[state=active]:text-white"
 			>
 				<Key class="h-4 w-4" />
 				<span>API Keys</span>
@@ -259,7 +259,7 @@
 			{#if user.team}
 				<Tabs.Trigger
 					value="team"
-					class="flex items-center gap-2 rounded-t-base px-4 py-3 transition-colors data-[state=active]:bg-primary-500 data-[state=active]:text-white hover:bg-surface-100-800"
+					class="hover:bg-surface-100-800 flex items-center gap-2 rounded-t-base px-4 py-3 transition-colors data-[state=active]:bg-primary-500 data-[state=active]:text-white"
 				>
 					<Users class="h-4 w-4" />
 					<span>Team</span>
@@ -268,7 +268,7 @@
 
 			<Tabs.Trigger
 				value="integrations"
-				class="flex items-center gap-2 rounded-t-base px-4 py-3 transition-colors data-[state=active]:bg-primary-500 data-[state=active]:text-white hover:bg-surface-100-800"
+				class="hover:bg-surface-100-800 flex items-center gap-2 rounded-t-base px-4 py-3 transition-colors data-[state=active]:bg-primary-500 data-[state=active]:text-white"
 			>
 				<Plug class="h-4 w-4" />
 				<span>Integrations</span>
@@ -345,7 +345,7 @@
 
 				<!-- New Key Display Modal -->
 				{#if newKeyData}
-					<div class="bg-warning-500/10 mb-6 rounded-container border border-warning-500 p-6">
+					<div class="mb-6 rounded-container border border-warning-500 bg-warning-500/10 p-6">
 						<div class="mb-4 flex items-start gap-3">
 							<Shield class="mt-1 h-6 w-6 text-warning-500" />
 							<div>
@@ -358,7 +358,7 @@
 
 						<div class="mb-4">
 							<label class="mb-2 block text-sm font-medium">Key Name</label>
-							<div class="input mb-3 bg-surface-100-800 font-mono">{newKeyData.name}</div>
+							<div class="bg-surface-100-800 input mb-3 font-mono">{newKeyData.name}</div>
 
 							<label class="mb-2 block text-sm font-medium">API Key</label>
 							<div class="flex gap-2">
@@ -366,10 +366,10 @@
 									type="text"
 									value={newKeyData.key}
 									readonly
-									class="input flex-1 bg-surface-100-800 font-mono text-sm"
+									class="bg-surface-100-800 input flex-1 font-mono text-sm"
 								/>
 								<button
-									onclick={() => copyApiKey(newKeyData.key)}
+									onclick={() => copyApiKey(newKeyData?.key || '')}
 									class="btn preset-filled-primary-500"
 									title="Copy to clipboard"
 								>
@@ -405,7 +405,7 @@
 								<button
 									onclick={() => handleDeleteApiKey(apiKey.id, apiKey.name)}
 									disabled={deletingKeyId === apiKey.id}
-									class="absolute right-4 top-4 rounded-container p-2 text-surface-600-300 opacity-0 transition-all hover:bg-error-500/10 hover:text-error-500 group-hover:opacity-100"
+									class="text-surface-600-300 absolute top-4 right-4 rounded-container p-2 opacity-0 transition-all group-hover:opacity-100 hover:bg-error-500/10 hover:text-error-500"
 									title="Delete API key"
 								>
 									{#if deletingKeyId === apiKey.id}
@@ -417,11 +417,11 @@
 
 								<div class="pr-12">
 									<h3 class="mb-2 font-bold">{apiKey.name}</h3>
-									<div class="mb-3 font-mono text-sm text-surface-600-300">
+									<div class="text-surface-600-300 mb-3 font-mono text-sm">
 										{apiKey.prefix}••••••••••••••••
 									</div>
 
-									<div class="flex items-center gap-4 text-xs text-surface-600-300">
+									<div class="text-surface-600-300 flex items-center gap-4 text-xs">
 										<div>Created: {formatDate(apiKey.createdAt)}</div>
 										{#if apiKey.lastUsedAt}
 											<div>• Last used: {formatDate(apiKey.lastUsedAt)}</div>
@@ -478,9 +478,7 @@
 								{#if user.team.subscription.currentPeriodEnd}
 									<div>
 										<div class="text-surface-600-300 text-sm">
-											{user.team.subscription.cancelAtPeriodEnd
-												? 'Cancels On'
-												: 'Renews On'}
+											{user.team.subscription.cancelAtPeriodEnd ? 'Cancels On' : 'Renews On'}
 										</div>
 										<div class="font-semibold">
 											{formatDate(user.team.subscription.currentPeriodEnd)}
@@ -497,7 +495,9 @@
 
 						<div class="space-y-3">
 							{#each user.team.members as member}
-								<div class="border-surface-200-700 flex items-center gap-4 rounded-container border p-4">
+								<div
+									class="border-surface-200-700 flex items-center gap-4 rounded-container border p-4"
+								>
 									<div class="flex-1">
 										<div class="font-semibold">
 											{member.firstName
@@ -563,8 +563,8 @@
 					</div>
 					<h2 class="mb-2 text-3xl font-bold">Unlock Team Features</h2>
 					<p class="text-surface-600-300 mx-auto mb-8 max-w-2xl text-lg">
-						Create a team to collaborate with others, manage unlimited projects, and access
-						advanced features.
+						Create a team to collaborate with others, manage unlimited projects, and access advanced
+						features.
 					</p>
 
 					<div class="mx-auto mb-8 max-w-md">
@@ -588,7 +588,7 @@
 						</div>
 					</div>
 
-					<a href="/teams/new" class="btn preset-filled-primary-500 inline-flex items-center gap-2">
+					<a href="/teams/new" class="btn inline-flex items-center gap-2 preset-filled-primary-500">
 						<Crown class="h-4 w-4" />
 						Create a Team
 					</a>
@@ -652,7 +652,9 @@
 						<!-- More integrations coming soon -->
 						<div class="border-surface-200-700 rounded-container border p-4 opacity-50">
 							<div class="mb-3 flex items-start gap-3">
-								<div class="flex h-12 w-12 items-center justify-center rounded-container bg-surface-200-800">
+								<div
+									class="flex h-12 w-12 items-center justify-center rounded-container bg-surface-200-800"
+								>
 									<Plug class="h-6 w-6" />
 								</div>
 								<div class="flex-1">
@@ -662,9 +664,7 @@
 									</p>
 								</div>
 							</div>
-							<button class="btn w-full preset-outlined-surface-500" disabled>
-								Coming Soon
-							</button>
+							<button class="btn w-full preset-outlined-surface-500" disabled> Coming Soon </button>
 						</div>
 					</div>
 				</div>
@@ -682,7 +682,7 @@
 									<button
 										onclick={() => handleDeleteIntegration(integration.id, integration.name)}
 										disabled={deletingIntegrationId === integration.id}
-										class="absolute right-4 top-4 rounded-container p-2 text-surface-600-300 opacity-0 transition-all hover:bg-error-500/10 hover:text-error-500 group-hover:opacity-100"
+										class="text-surface-600-300 absolute top-4 right-4 rounded-container p-2 opacity-0 transition-all group-hover:opacity-100 hover:bg-error-500/10 hover:text-error-500"
 										title="Remove integration"
 									>
 										{#if deletingIntegrationId === integration.id}
@@ -697,25 +697,25 @@
 											<h4 class="font-bold">{integration.name}</h4>
 											<StatusIcon class="h-4 w-4 {getStatusColor(integration.status)}" />
 											<span
-												class="rounded-base px-2 py-0.5 text-xs {getStatusColor(integration.status)}"
+												class="rounded-base px-2 py-0.5 text-xs {getStatusColor(
+													integration.status
+												)}"
 											>
 												{integration.status}
 											</span>
 										</div>
 
-										<div class="mb-2 text-sm text-surface-600-300">
+										<div class="text-surface-600-300 mb-2 text-sm">
 											Type: {integration.type}
 										</div>
 
-										<div class="flex items-center gap-4 text-xs text-surface-600-300">
+										<div class="text-surface-600-300 flex items-center gap-4 text-xs">
 											<div>
 												Connected: {new Date(integration.createdAt).toLocaleDateString()}
 											</div>
 											{#if integration.lastSyncedAt}
 												<div>
-													• Last synced: {new Date(
-														integration.lastSyncedAt
-													).toLocaleDateString()}
+													• Last synced: {new Date(integration.lastSyncedAt).toLocaleDateString()}
 												</div>
 											{/if}
 										</div>
