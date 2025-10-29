@@ -155,54 +155,67 @@ async function sendSlackNotification(integrationId: string, payload: Notificatio
 		throw new Error('Slack webhook URL not configured');
 	}
 
-	// Format message for Slack
-	const slackMessage = {
-		text: payload.title,
-		blocks: [
-			{
-				type: 'header',
-				text: {
-					type: 'plain_text',
-					text: payload.title
-				}
-			},
-			{
-				type: 'section',
-				text: {
-					type: 'mrkdwn',
-					text: payload.message
-				}
+	// Build blocks for Slack message with improved formatting
+	const blocks: any[] = [
+		{
+			type: 'header',
+			text: {
+				type: 'plain_text',
+				text: payload.title,
+				emoji: true
 			}
-		],
-		attachments: payload.fields
-			? [
-					{
-						color: payload.color || '#36a64f',
-						fields: payload.fields.map((f) => ({
-							title: f.name,
-							value: f.value,
-							short: f.inline ?? true
-						}))
-					}
-				]
-			: []
-	};
+		},
+		{
+			type: 'section',
+			text: {
+				type: 'mrkdwn',
+				text: payload.message
+			}
+		}
+	];
 
+	// Add fields as a rich section if provided
+	if (payload.fields && payload.fields.length > 0) {
+		blocks.push({
+			type: 'section',
+			fields: payload.fields.map((f) => ({
+				type: 'mrkdwn',
+				text: `*${f.name}*\n${f.value}`
+			}))
+		});
+	}
+
+	// Add divider before button
 	if (payload.url) {
-		slackMessage.blocks.push({
+		blocks.push({ type: 'divider' });
+		blocks.push({
 			type: 'actions',
 			elements: [
 				{
 					type: 'button',
 					text: {
 						type: 'plain_text',
-						text: 'View Details'
+						text: '🔍 View Details',
+						emoji: true
 					},
-					url: payload.url
+					url: payload.url,
+					style: payload.color === '#ff0000' ? 'danger' : 'primary'
 				}
 			]
-		} as any);
+		});
 	}
+
+	// Format message for Slack with color-coded attachment
+	const slackMessage: any = {
+		text: payload.title,
+		blocks,
+		attachments: [
+			{
+				color: payload.color || '#36a64f',
+				blocks: []
+			}
+		]
+	};
 
 	// Send to Slack
 	const response = await fetch(webhookUrl, {
@@ -214,7 +227,8 @@ async function sendSlackNotification(integrationId: string, payload: Notificatio
 	});
 
 	if (!response.ok) {
-		throw new Error(`Slack API error: ${response.status} ${response.statusText}`);
+		const errorText = await response.text();
+		throw new Error(`Slack API error: ${response.status} ${response.statusText} - ${errorText}`);
 	}
 
 	return { status: response.status, statusText: response.statusText };
@@ -310,18 +324,20 @@ export async function notifyTestRunCompleted(
 	}
 ) {
 	const color = testRun.passRate === 100 ? '#36a64f' : testRun.passRate >= 80 ? '#ffa500' : '#ff0000';
+	const emoji = testRun.passRate === 100 ? '✅' : testRun.passRate >= 80 ? '⚠️' : '❌';
+	const baseUrl = process.env.PUBLIC_BASE_URL || 'https://qastudio.dev';
 
 	await sendNotification(teamId, {
 		event: 'TEST_RUN_COMPLETED',
-		title: `Test Run Completed: ${testRun.name}`,
-		message: `*${testRun.projectName}*\nTest run "${testRun.name}" has completed.`,
-		url: `${process.env.PUBLIC_BASE_URL || 'http://localhost:5173'}/test-runs/${testRun.id}`,
+		title: `${emoji} Test Run Completed: ${testRun.name}`,
+		message: `*Project:* ${testRun.projectName}\n*Status:* ${testRun.passRate === 100 ? 'All tests passed' : `${testRun.failed} test(s) failed`}`,
+		url: `${baseUrl}/test-runs/${testRun.id}`,
 		color,
 		fields: [
-			{ name: 'Pass Rate', value: `${testRun.passRate}%`, inline: true },
-			{ name: 'Total Tests', value: testRun.total.toString(), inline: true },
-			{ name: 'Passed', value: testRun.passed.toString(), inline: true },
-			{ name: 'Failed', value: testRun.failed.toString(), inline: true }
+			{ name: '📊 Pass Rate', value: `${testRun.passRate}%`, inline: true },
+			{ name: '📝 Total Tests', value: testRun.total.toString(), inline: true },
+			{ name: '✅ Passed', value: testRun.passed.toString(), inline: true },
+			{ name: '❌ Failed', value: testRun.failed.toString(), inline: true }
 		]
 	});
 }
@@ -335,12 +351,17 @@ export async function notifyTestRunFailed(
 		failedCount: number;
 	}
 ) {
+	const baseUrl = process.env.PUBLIC_BASE_URL || 'https://qastudio.dev';
+
 	await sendNotification(teamId, {
 		event: 'TEST_RUN_FAILED',
-		title: `⚠️ Test Run Failed: ${testRun.name}`,
-		message: `*${testRun.projectName}*\nTest run "${testRun.name}" has failed with ${testRun.failedCount} failures.`,
-		url: `${process.env.PUBLIC_BASE_URL || 'http://localhost:5173'}/test-runs/${testRun.id}`,
-		color: '#ff0000'
+		title: `❌ Test Run Failed: ${testRun.name}`,
+		message: `*Project:* ${testRun.projectName}\n*Failures:* ${testRun.failedCount} test(s) failed\n\n⚠️ Immediate attention required`,
+		url: `${baseUrl}/test-runs/${testRun.id}`,
+		color: '#ff0000',
+		fields: [
+			{ name: '🔴 Failed Tests', value: testRun.failedCount.toString(), inline: true }
+		]
 	});
 }
 
@@ -354,10 +375,15 @@ export async function notifyMilestoneDue(
 		daysUntilDue: number;
 	}
 ) {
+	const baseUrl = process.env.PUBLIC_BASE_URL || 'https://qastudio.dev';
+
 	await sendNotification(teamId, {
 		event: 'MILESTONE_DUE',
 		title: `📅 Milestone Due Soon: ${milestone.name}`,
-		message: `*${milestone.projectName}*\nMilestone "${milestone.name}" is due in ${milestone.daysUntilDue} days.`,
-		color: milestone.daysUntilDue <= 3 ? '#ff0000' : '#ffa500'
+		message: `*Project:* ${milestone.projectName}\n*Due Date:* ${milestone.dueDate.toLocaleDateString()}\n*Days Remaining:* ${milestone.daysUntilDue}`,
+		color: milestone.daysUntilDue <= 3 ? '#ff0000' : '#ffa500',
+		fields: [
+			{ name: '⏰ Days Until Due', value: milestone.daysUntilDue.toString(), inline: true }
+		]
 	});
 }

@@ -50,7 +50,20 @@ QA Studio supports integrations with popular tools to send notifications about t
 1. Go to "Incoming Webhooks"
 2. Toggle "Activate Incoming Webhooks" to **On**
 
-#### 4. Configure Environment Variables
+#### 4. Configure Interactivity
+
+This step is required to prevent the warning icon when users click buttons in Slack notifications.
+
+1. Go to "Interactivity & Shortcuts"
+2. Toggle "Interactivity" to **On**
+3. Set the **Request URL** to:
+   - Development: `http://localhost:5173/api/integrations/slack/interactions`
+   - Production: `https://yourdomain.com/api/integrations/slack/interactions`
+4. Click "Save Changes"
+
+**Note:** This endpoint handles callbacks when users interact with buttons in notifications. Even though our "View Details" buttons simply navigate to URLs, Slack requires this configuration.
+
+#### 5. Configure Environment Variables
 
 Add these to your `.env` or `.env.local` file:
 
@@ -70,7 +83,7 @@ You can find these values in your Slack app settings:
 - **Client ID**: Under "Basic Information" → "App Credentials"
 - **Client Secret**: Under "Basic Information" → "App Credentials"
 
-#### 5. Install the Integration
+#### 6. Install the Integration
 
 1. Log in to QA Studio
 2. Go to Settings → Integrations
@@ -107,6 +120,13 @@ You can configure which notifications to receive by editing the integration sett
 - Check that the integration status is "ACTIVE" in Settings → Integrations
 - Verify that notifications are enabled for your team
 - Check the Slack app has permission to post in the selected channel
+
+**Warning icon when clicking notification buttons**
+- This means the Interactivity URL is not configured in your Slack app
+- Go to your Slack app settings → "Interactivity & Shortcuts"
+- Set the Request URL to: `https://yourdomain.com/api/integrations/slack/interactions`
+- Click "Save Changes"
+- Test by clicking a button in a new notification (old messages will still show the error)
 
 ## API Usage
 
