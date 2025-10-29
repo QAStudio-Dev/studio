@@ -16,7 +16,10 @@
 		ExternalLink,
 		AlertCircle,
 		CheckCircle,
-		XCircle
+		XCircle,
+		X,
+		ChevronDown,
+		ChevronUp
 	} from 'lucide-svelte';
 	import { Tabs } from '@skeletonlabs/skeleton-svelte';
 	import { invalidateAll } from '$app/navigation';
@@ -38,6 +41,19 @@
 
 	// Integration state
 	let deletingIntegrationId = $state<string | null>(null);
+	let configuringIntegrationId = $state<string | null>(null);
+	let savingSettings = $state(false);
+
+	// Notification settings for the integration being configured
+	let notificationSettings = $state<Record<string, boolean>>({
+		TEST_RUN_STARTED: true,
+		TEST_RUN_COMPLETED: true,
+		TEST_RUN_FAILED: true,
+		TEST_CASE_FAILED: true,
+		TEST_CASE_PASSED: false,
+		MILESTONE_DUE: true,
+		PROJECT_CREATED: false
+	});
 
 	// Get Slack OAuth URL
 	function getSlackOAuthUrl() {
@@ -238,6 +254,78 @@
 			default:
 				return 'text-surface-500';
 		}
+	}
+
+	// Open configuration modal
+	async function handleConfigureIntegration(integrationId: string, currentConfig: any) {
+		configuringIntegrationId = integrationId;
+
+		// Load current settings
+		const notifications = currentConfig?.notifications || {};
+		notificationSettings = {
+			TEST_RUN_STARTED: notifications.TEST_RUN_STARTED ?? true,
+			TEST_RUN_COMPLETED: notifications.TEST_RUN_COMPLETED ?? true,
+			TEST_RUN_FAILED: notifications.TEST_RUN_FAILED ?? true,
+			TEST_CASE_FAILED: notifications.TEST_CASE_FAILED ?? true,
+			TEST_CASE_PASSED: notifications.TEST_CASE_PASSED ?? false,
+			MILESTONE_DUE: notifications.MILESTONE_DUE ?? true,
+			PROJECT_CREATED: notifications.PROJECT_CREATED ?? false
+		};
+	}
+
+	// Save integration settings
+	async function handleSaveIntegrationSettings() {
+		if (!configuringIntegrationId) return;
+
+		savingSettings = true;
+
+		try {
+			const res = await fetch(`/api/integrations/${configuringIntegrationId}/settings`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ notifications: notificationSettings })
+			});
+
+			if (!res.ok) {
+				const data = await res.json();
+				throw new Error(data.message || 'Failed to save settings');
+			}
+
+			await invalidateAll();
+			configuringIntegrationId = null;
+		} catch (err: any) {
+			alert('Error: ' + err.message);
+		} finally {
+			savingSettings = false;
+		}
+	}
+
+	// Get notification event label
+	function getEventLabel(event: string): string {
+		const labels: Record<string, string> = {
+			TEST_RUN_STARTED: 'Test Run Started',
+			TEST_RUN_COMPLETED: 'Test Run Completed',
+			TEST_RUN_FAILED: 'Test Run Failed',
+			TEST_CASE_FAILED: 'Test Case Failed',
+			TEST_CASE_PASSED: 'Test Case Passed',
+			MILESTONE_DUE: 'Milestone Due Soon',
+			PROJECT_CREATED: 'Project Created'
+		};
+		return labels[event] || event;
+	}
+
+	// Get notification event description
+	function getEventDescription(event: string): string {
+		const descriptions: Record<string, string> = {
+			TEST_RUN_STARTED: 'When a test run begins execution',
+			TEST_RUN_COMPLETED: 'When a test run finishes (pass or fail)',
+			TEST_RUN_FAILED: 'When a test run has failures',
+			TEST_CASE_FAILED: 'When an individual test case fails',
+			TEST_CASE_PASSED: 'When an individual test case passes',
+			MILESTONE_DUE: 'When a milestone is approaching its due date',
+			PROJECT_CREATED: 'When a new project is created'
+		};
+		return descriptions[event] || '';
 	}
 </script>
 
@@ -625,7 +713,8 @@
 
 					<div class="grid gap-4 md:grid-cols-2">
 						<!-- Slack Integration -->
-						<div class="border-surface-200-700 rounded-container border p-4">
+						{#if !user.team?.integrations?.some((i) => i.type === 'SLACK')}
+							<div class="border-surface-200-700 rounded-container border p-4">
 							<div class="mb-3 flex items-start gap-3">
 								<div
 									class="flex h-12 w-12 items-center justify-center rounded-container bg-[#4A154B]"
@@ -665,7 +754,8 @@
 									Requires Team
 								</button>
 							{/if}
-						</div>
+							</div>
+						{/if}
 
 						<!-- More integrations coming soon -->
 						<div class="border-surface-200-700 rounded-container border p-4 opacity-50">
@@ -696,21 +786,33 @@
 							{#each user.team.integrations as integration}
 								{@const StatusIcon = getStatusIcon(integration.status)}
 								<div class="border-surface-200-700 group relative rounded-container border p-4">
-									<!-- Delete button -->
-									<button
-										onclick={() => handleDeleteIntegration(integration.id, integration.name)}
-										disabled={deletingIntegrationId === integration.id}
-										class="text-surface-600-300 absolute top-4 right-4 rounded-container p-2 opacity-0 transition-all group-hover:opacity-100 hover:bg-error-500/10 hover:text-error-500"
-										title="Remove integration"
-									>
-										{#if deletingIntegrationId === integration.id}
-											<span class="text-xs">Removing...</span>
-										{:else}
-											<Trash2 class="h-4 w-4" />
-										{/if}
-									</button>
+									<!-- Action buttons -->
+									<div class="absolute top-4 right-4 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+										<!-- Configure button -->
+										<button
+											onclick={() => handleConfigureIntegration(integration.id, integration.config)}
+											class="text-surface-600-300 rounded-container p-2 transition-colors hover:bg-primary-500/10 hover:text-primary-500"
+											title="Configure notifications"
+										>
+											<SettingsIcon class="h-4 w-4" />
+										</button>
 
-									<div class="pr-12">
+										<!-- Delete button -->
+										<button
+											onclick={() => handleDeleteIntegration(integration.id, integration.name)}
+											disabled={deletingIntegrationId === integration.id}
+											class="text-surface-600-300 rounded-container p-2 transition-colors hover:bg-error-500/10 hover:text-error-500"
+											title="Remove integration"
+										>
+											{#if deletingIntegrationId === integration.id}
+												<span class="text-xs">Removing...</span>
+											{:else}
+												<Trash2 class="h-4 w-4" />
+											{/if}
+										</button>
+									</div>
+
+									<div class="pr-24">
 										<div class="mb-2 flex items-center gap-2">
 											<h4 class="font-bold">{integration.name}</h4>
 											<StatusIcon class="h-4 w-4 {getStatusColor(integration.status)}" />
@@ -747,3 +849,72 @@
 		</Tabs.Content>
 	</Tabs>
 </div>
+
+<!-- Integration Configuration Modal -->
+{#if configuringIntegrationId}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+		onclick={(e) => {
+			if (e.target === e.currentTarget) configuringIntegrationId = null;
+		}}
+	>
+		<div class="card w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 bg-surface-50-950 shadow-2xl">
+			<!-- Header -->
+			<div class="mb-6 flex items-center justify-between">
+				<h2 class="text-2xl font-bold">Notification Settings</h2>
+				<button
+					onclick={() => (configuringIntegrationId = null)}
+					class="rounded-container p-2 transition-colors hover:bg-surface-200-800"
+					aria-label="Close"
+				>
+					<X class="h-5 w-5" />
+				</button>
+			</div>
+
+			<!-- Description -->
+			<p class="text-surface-600-300 mb-6">
+				Configure which events trigger notifications. Notifications will be sent to your configured
+				channel or webhook.
+			</p>
+
+			<!-- Notification Toggles -->
+			<div class="space-y-3">
+				{#each Object.entries(notificationSettings) as [event, enabled]}
+					<label class="border-surface-200-700 flex items-start gap-3 rounded-container border p-4 cursor-pointer transition-colors hover:bg-surface-100-900">
+						<input
+							type="checkbox"
+							bind:checked={notificationSettings[event]}
+							class="mt-1 h-4 w-4 rounded border-surface-300-700"
+						/>
+						<div class="flex-1">
+							<div class="mb-1 font-semibold">{getEventLabel(event)}</div>
+							<div class="text-surface-600-300 text-sm">{getEventDescription(event)}</div>
+						</div>
+					</label>
+				{/each}
+			</div>
+
+			<!-- Actions -->
+			<div class="mt-6 flex justify-end gap-3">
+				<button
+					onclick={() => (configuringIntegrationId = null)}
+					class="btn preset-outlined-surface-500"
+					disabled={savingSettings}
+				>
+					Cancel
+				</button>
+				<button
+					onclick={handleSaveIntegrationSettings}
+					class="btn preset-filled-primary-500"
+					disabled={savingSettings}
+				>
+					{#if savingSettings}
+						Saving...
+					{:else}
+						Save Settings
+					{/if}
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}

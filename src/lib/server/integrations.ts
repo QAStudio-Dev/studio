@@ -33,8 +33,30 @@ export async function sendNotification(teamId: string, payload: NotificationPayl
 			return;
 		}
 
-		// Send to each integration
-		const promises = integrations.map((integration) =>
+		// Filter integrations based on notification preferences
+		const enabledIntegrations = integrations.filter((integration) => {
+			const config = integration.config as any;
+			const notifications = config?.notifications || {};
+
+			// Check if this event type is enabled (default to true if not configured)
+			const isEnabled = notifications[payload.event] ?? true;
+
+			if (!isEnabled) {
+				console.log(
+					`Notification ${payload.event} disabled for integration ${integration.id}`
+				);
+			}
+
+			return isEnabled;
+		});
+
+		if (enabledIntegrations.length === 0) {
+			console.log('No integrations have this notification enabled:', payload.event);
+			return;
+		}
+
+		// Send to each enabled integration
+		const promises = enabledIntegrations.map((integration) =>
 			sendToIntegration(integration.id, integration.type, payload)
 		);
 
