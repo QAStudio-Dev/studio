@@ -80,26 +80,41 @@ export const POST: RequestHandler = async ({ request }) => {
 				// Map Stripe status to our enum
 				const status = mapStripeStatus(subscription.status);
 
+				// Extract period dates from the first subscription item
+				// Stripe stores current_period_start/end in the subscription items, not the subscription itself
+				const subscriptionItem = subscription.items.data[0];
+				const itemData = subscriptionItem as any;
+				const currentPeriodStart = itemData?.current_period_start
+					? new Date(itemData.current_period_start * 1000)
+					: null;
+				const currentPeriodEnd = itemData?.current_period_end
+					? new Date(itemData.current_period_end * 1000)
+					: null;
+
+				// Build update/create data
+				const subscriptionData: any = {
+					status,
+					stripePriceId: subscriptionItem?.price?.id || null,
+					cancelAtPeriodEnd: subscription.cancel_at_period_end,
+					seats: subscriptionItem?.quantity || 1
+				};
+
+				// Only include period dates if they're valid
+				if (currentPeriodStart) {
+					subscriptionData.currentPeriodStart = currentPeriodStart;
+				}
+				if (currentPeriodEnd) {
+					subscriptionData.currentPeriodEnd = currentPeriodEnd;
+				}
+
 				await db.subscription.upsert({
 					where: { stripeSubscriptionId: subscription.id },
-					update: {
-						status,
-						stripePriceId: subscription.items.data[0]?.price.id || null,
-						currentPeriodStart: new Date(subscription.current_period_start * 1000),
-						currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-						cancelAtPeriodEnd: subscription.cancel_at_period_end,
-						seats: subscription.items.data[0]?.quantity || 1
-					},
+					update: subscriptionData,
 					create: {
 						teamId,
 						stripeCustomerId: subscription.customer as string,
 						stripeSubscriptionId: subscription.id,
-						stripePriceId: subscription.items.data[0]?.price.id || null,
-						status,
-						currentPeriodStart: new Date(subscription.current_period_start * 1000),
-						currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-						cancelAtPeriodEnd: subscription.cancel_at_period_end,
-						seats: subscription.items.data[0]?.quantity || 1
+						...subscriptionData
 					}
 				});
 
@@ -126,15 +141,23 @@ export const POST: RequestHandler = async ({ request }) => {
 			case 'invoice.payment_succeeded': {
 				const invoice = event.data.object as Stripe.Invoice;
 
-				if (invoice.subscription) {
+				// Extract subscription ID from parent subscription details
+				const subscriptionId =
+					invoice.parent?.type === 'subscription_details' && invoice.parent.subscription_details?.subscription
+						? typeof invoice.parent.subscription_details.subscription === 'string'
+							? invoice.parent.subscription_details.subscription
+							: invoice.parent.subscription_details.subscription.id
+						: null;
+
+				if (subscriptionId) {
 					await db.subscription.update({
-						where: { stripeSubscriptionId: invoice.subscription as string },
+						where: { stripeSubscriptionId: subscriptionId },
 						data: {
 							status: 'ACTIVE'
 						}
 					});
 
-					console.log(`✅ Payment succeeded for subscription: ${invoice.subscription}`);
+					console.log(`✅ Payment succeeded for subscription: ${subscriptionId}`);
 				}
 				break;
 			}
@@ -143,15 +166,23 @@ export const POST: RequestHandler = async ({ request }) => {
 			case 'invoice.payment_failed': {
 				const invoice = event.data.object as Stripe.Invoice;
 
-				if (invoice.subscription) {
+				// Extract subscription ID from parent subscription details
+				const subscriptionId =
+					invoice.parent?.type === 'subscription_details' && invoice.parent.subscription_details?.subscription
+						? typeof invoice.parent.subscription_details.subscription === 'string'
+							? invoice.parent.subscription_details.subscription
+							: invoice.parent.subscription_details.subscription.id
+						: null;
+
+				if (subscriptionId) {
 					await db.subscription.update({
-						where: { stripeSubscriptionId: invoice.subscription as string },
+						where: { stripeSubscriptionId: subscriptionId },
 						data: {
 							status: 'PAST_DUE'
 						}
 					});
 
-					console.log(`❌ Payment failed for subscription: ${invoice.subscription}`);
+					console.log(`❌ Payment failed for subscription: ${subscriptionId}`);
 				}
 				break;
 			}
