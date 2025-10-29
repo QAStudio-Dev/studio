@@ -13,6 +13,7 @@
 		ArrowLeft
 	} from 'lucide-svelte';
 	import { Avatar } from '@skeletonlabs/skeleton-svelte';
+	import AttachmentViewer from '$lib/components/AttachmentViewer.svelte';
 
 	let { data } = $props();
 	let { testCase } = $derived(data);
@@ -189,6 +190,12 @@
 								{#if result.errorMessage}
 									<div class="mt-2 p-3 bg-error-500/10 rounded-base">
 										<p class="text-sm text-error-500">{result.errorMessage}</p>
+									</div>
+								{/if}
+
+								{#if result.attachments && result.attachments.length > 0}
+									<div class="mt-3 pt-3 border-t border-surface-200-700">
+										<AttachmentViewer attachments={result.attachments} />
 									</div>
 								{/if}
 							</div>

@@ -49,6 +49,20 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 							id: true,
 							name: true
 						}
+					},
+					attachments: {
+						select: {
+							id: true,
+							filename: true,
+							originalName: true,
+							mimeType: true,
+							size: true,
+							url: true,
+							createdAt: true
+						},
+						orderBy: {
+							createdAt: 'asc'
+						}
 					}
 				},
 				orderBy: {

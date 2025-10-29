@@ -33,4 +33,10 @@ test.describe('Projects', () => {
 		// Just verify the page loads
 		await expect(page.locator('h1')).toBeVisible();
 	});
+
+	test('should fail to demonstrate attachments', async ({ page }) => {
+		await page.goto('/');
+		// This test will fail to trigger screenshot capture
+		await expect(page.locator('h1')).toHaveText('This Text Does Not Exist');
+	});
 });

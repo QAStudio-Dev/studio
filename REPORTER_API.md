@@ -71,7 +71,14 @@ Submit results for multiple test cases in a single request. This is the format u
       "duration": 1523,
       "errorMessage": "Expected 200 but got 404",  // optional, for failures
       "stackTrace": "at line 42...",              // optional
-      "attachments": []                            // optional
+      "attachments": [                             // optional - screenshots, videos, traces
+        {
+          "name": "screenshot.png",
+          "contentType": "image/png",
+          "body": "base64EncodedData...",
+          "type": "screenshot"
+        }
+      ]
     }
   ]
 }
@@ -85,6 +92,11 @@ Submit results for multiple test cases in a single request. This is the format u
   - Create the test case in the appropriate suite
 - Test cases are marked as `AUTOMATED` automatically
 - Suites are reused if they already exist (no duplicates)
+- **Attachments are automatically uploaded** to Vercel Blob storage
+  - Supports screenshots (PNG, JPG)
+  - Supports videos (WebM, MP4)
+  - Supports trace files (ZIP)
+  - Files are stored with unique paths and linked to test results
 
 **Status Values:**
 - `PASSED` - Test passed
@@ -102,7 +114,8 @@ Submit results for multiple test cases in a single request. This is the format u
       "testResultId": "clxdef...",
       "title": "should login successfully",
       "status": "PASSED",
-      "created": true  // true if test case was auto-created, false if existed
+      "created": true,       // true if test case was auto-created, false if existed
+      "attachmentCount": 2   // number of attachments uploaded
     }
   ],
   "errors": []  // Array of any errors that occurred during processing

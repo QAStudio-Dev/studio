@@ -1,5 +1,6 @@
 test-results
 node_modules
+uploads
 
 # Output
 .output

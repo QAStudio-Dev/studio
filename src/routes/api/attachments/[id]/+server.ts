@@ -1,19 +1,30 @@
-import { json } from '@sveltejs/kit';
+import { json, error as svelteError } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import type { RequestHandler } from './$types';
 import { unlink } from 'fs/promises';
 import { join } from 'path';
+import { requireAuth } from '$lib/server/auth';
 
-// GET /api/attachments/[id] - Get attachment metadata
-export const GET: RequestHandler = async ({ params }) => {
+// GET /api/attachments/[id] - Download/view attachment
+// GET /api/attachments/[id]?metadata=true - Get attachment metadata only
+export const GET: RequestHandler = async (event) => {
+	const userId = await requireAuth(event);
+	const { id } = event.params;
+	const metadata = event.url.searchParams.get('metadata') === 'true';
+
 	try {
 		const attachment = await db.attachment.findUnique({
-			where: { id: params.id },
+			where: { id },
 			include: {
 				testCase: {
 					select: {
 						id: true,
-						title: true
+						title: true,
+						project: {
+							include: {
+								team: true
+							}
+						}
 					}
 				},
 				testResult: {
@@ -23,6 +34,15 @@ export const GET: RequestHandler = async ({ params }) => {
 							select: {
 								title: true
 							}
+						},
+						testRun: {
+							include: {
+								project: {
+									include: {
+										team: true
+									}
+								}
+							}
 						}
 					}
 				}
@@ -30,13 +50,55 @@ export const GET: RequestHandler = async ({ params }) => {
 		});
 
 		if (!attachment) {
-			return json({ error: 'Attachment not found' }, { status: 404 });
+			throw svelteError(404, { message: 'Attachment not found' });
 		}
 
-		return json(attachment);
-	} catch (error) {
-		console.error('Error fetching attachment:', error);
-		return json({ error: 'Failed to fetch attachment' }, { status: 500 });
+		// Check access control
+		const user = await db.user.findUnique({
+			where: { id: userId }
+		});
+
+		const project = attachment.testResult?.testRun.project || attachment.testCase?.project;
+
+		if (!project) {
+			throw svelteError(404, { message: 'Associated project not found' });
+		}
+
+		const hasAccess =
+			project.createdBy === userId || (project.teamId && user?.teamId === project.teamId);
+
+		if (!hasAccess) {
+			throw svelteError(403, { message: 'You do not have access to this attachment' });
+		}
+
+		// If metadata only, return JSON
+		if (metadata) {
+			return json(attachment);
+		}
+
+		// For file download/view:
+		// If it's a Vercel Blob URL (production), redirect to it
+		if (attachment.url.startsWith('https://')) {
+			return new Response(null, {
+				status: 302,
+				headers: {
+					Location: attachment.url,
+					'Cache-Control': 'public, max-age=31536000'
+				}
+			});
+		}
+
+		// For local development mock URLs, return a placeholder
+		return new Response('Attachment preview not available in local development mode', {
+			status: 200,
+			headers: {
+				'Content-Type': 'text/plain'
+			}
+		});
+	} catch (err: any) {
+		console.error('Error fetching attachment:', err);
+		if (err.status) throw err;
+		throw svelteError(500, { message: 'Failed to fetch attachment' });
 	}
 };
 
