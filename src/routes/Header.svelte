@@ -49,18 +49,24 @@
 	<div class="container mx-auto px-4">
 		<div class="flex h-16 items-center justify-between">
 			<!-- Logo/Brand -->
-			<div class="flex items-center gap-4">
+			<div class="flex items-center gap-6">
 				<a href="/" class="flex items-center gap-2 transition-opacity hover:opacity-80">
-					<div class="flex h-8 w-8 items-center justify-center rounded-base">
-						<span class="text-lg font-bold text-white">✅</span>
-					</div>
-					<span class="text-xl font-bold">QA Studio</span>
+					<img src="/full.svg" alt="QA Studio Logo" class="h-8" />
 				</a>
 
 				<!-- Main Navigation -->
-				<nav class="hidden items-center gap-1 md:flex">
+				<nav class="hidden items-center gap-2 md:flex">
 					<!-- Only show these navigation items when signed in -->
 					<SignedIn>
+						<!-- Project Selector First -->
+						<div class="mr-2">
+							<ProjectSelector {projects} />
+						</div>
+
+						<!-- Divider -->
+						<div class="mx-1 h-6 w-px bg-surface-300-700"></div>
+
+						<!-- Main Navigation Links -->
 						<a
 							href="/dashboard"
 							class="rounded-base px-4 py-2 transition-colors {isActive('/dashboard')
@@ -70,37 +76,25 @@
 							Dashboard
 						</a>
 						<a
-							href="/projects"
-							class="rounded-base px-4 py-2 transition-colors {isActive('/projects')
+							href="/test-runs"
+							class="rounded-base px-4 py-2 transition-colors {isActive('/test-runs')
 								? 'bg-primary-500 text-white'
 								: 'hover:bg-surface-200-800'}"
 						>
-							Projects
+							Test Runs
 						</a>
 
-						<!-- Project Selector -->
-						<div class="px-2">
-							<ProjectSelector {projects} />
-						</div>
-
-						<!-- Project-specific navigation (only when project selected) -->
+						<!-- Test Cases (only when project selected) -->
 						{#if currentProject}
-							<div class="h-6 w-px bg-surface-300-700 mx-2"></div>
 							<a
 								href="/projects/{currentProject.id}"
-								class="rounded-base px-4 py-2 transition-colors {isActive(`/projects/${currentProject.id}`)
+								class="rounded-base px-4 py-2 transition-colors {isActive(
+									`/projects/${currentProject.id}`
+								)
 									? 'bg-primary-500 text-white'
 									: 'hover:bg-surface-200-800'}"
 							>
 								Test Cases
-							</a>
-							<a
-								href="/projects/{currentProject.id}/runs"
-								class="rounded-base px-4 py-2 transition-colors {isActive(`/projects/${currentProject.id}/runs`)
-									? 'bg-primary-500 text-white'
-									: 'hover:bg-surface-200-800'}"
-							>
-								Test Runs
 							</a>
 						{/if}
 					</SignedIn>

@@ -10,7 +10,8 @@
 		CheckCircle2,
 		AlertCircle,
 		MoreVertical,
-		GripVertical
+		GripVertical,
+		Play
 	} from 'lucide-svelte';
 	import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
 	import { invalidateAll } from '$app/navigation';
@@ -449,6 +450,12 @@
 				{#if project.description}
 					<p class="text-surface-600-300 text-lg">{project.description}</p>
 				{/if}
+			</div>
+			<div>
+				<a href="/test-runs?projectId={project.id}" class="btn preset-filled-primary-500">
+					<Play class="mr-2 h-4 w-4" />
+					View Test Runs
+				</a>
 			</div>
 		</div>
 

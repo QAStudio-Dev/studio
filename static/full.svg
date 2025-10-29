@@ -1,0 +1,18 @@
+<svg viewBox="0 0 500 120" xmlns="http://www.w3.org/2000/svg">
+    <!-- Checkmark connecting bottom of Q to left side of A -->
+  <path d="M 60 75 L 85 105 L 125 35" 
+        stroke="#53f286" 
+        stroke-width="20" 
+        stroke-linecap="round" 
+        stroke-linejoin="round" 
+        fill="none"/>
+  
+  <!-- Q letter -->
+  <text x="20" y="95" font-family="Inter, Arial, sans-serif" font-size="100" font-weight="bold" fill="#5865f3">Q</text>
+  
+
+  <!-- A letter -->
+  <text x="95" y="95" font-family="Inter, Arial, sans-serif" font-size="100" font-weight="bold" fill="#5865f3">A</text>
+
+    <text x="180" y="95" font-family="Inter, Arial, sans-serif" font-size="100" font-weight="bold" fill="#5865f3">Studio</text>
+</svg>

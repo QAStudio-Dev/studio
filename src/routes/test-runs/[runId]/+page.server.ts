@@ -1,0 +1,99 @@
+import { error, redirect } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
+import { db } from '$lib/server/db';
+
+export const load: PageServerLoad = async ({ locals, params }) => {
+	const { userId } = locals.auth() || {};
+
+	if (!userId) {
+		throw redirect(302, '/sign-in');
+	}
+
+	const { runId } = params;
+
+	// Fetch test run with related data
+	const testRun = await db.testRun.findUnique({
+		where: { id: runId },
+		include: {
+			project: {
+				select: {
+					id: true,
+					name: true,
+					key: true,
+					createdBy: true,
+					teamId: true
+				}
+			},
+			environment: {
+				select: {
+					id: true,
+					name: true,
+					description: true
+				}
+			},
+			milestone: {
+				select: {
+					id: true,
+					name: true,
+					dueDate: true,
+					status: true
+				}
+			},
+			creator: {
+				select: {
+					id: true,
+					firstName: true,
+					lastName: true,
+					email: true
+				}
+			}
+		}
+	});
+
+	if (!testRun) {
+		throw error(404, { message: 'Test run not found' });
+	}
+
+	// Get user with team info
+	const user = await db.user.findUnique({
+		where: { id: userId }
+	});
+
+	// Check access
+	const hasAccess =
+		testRun.project.createdBy === userId ||
+		(testRun.project.teamId && user?.teamId === testRun.project.teamId);
+
+	if (!hasAccess) {
+		throw error(403, { message: 'You do not have access to this test run' });
+	}
+
+	// Get statistics
+	const stats = await db.testResult.groupBy({
+		by: ['status'],
+		where: { testRunId: runId },
+		_count: true
+	});
+
+	const statusCounts = stats.reduce((acc, stat) => {
+		acc[stat.status] = stat._count;
+		return acc;
+	}, {} as Record<string, number>);
+
+	const totalResults = await db.testResult.count({
+		where: { testRunId: runId }
+	});
+
+	return {
+		testRun,
+		stats: {
+			total: totalResults,
+			passed: statusCounts.PASSED || 0,
+			failed: statusCounts.FAILED || 0,
+			blocked: statusCounts.BLOCKED || 0,
+			skipped: statusCounts.SKIPPED || 0,
+			retest: statusCounts.RETEST || 0,
+			untested: statusCounts.UNTESTED || 0
+		}
+	};
+};
