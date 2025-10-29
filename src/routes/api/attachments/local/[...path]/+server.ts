@@ -45,11 +45,17 @@ export const GET: RequestHandler = async ({ params }) => {
 			jpg: 'image/jpeg',
 			jpeg: 'image/jpeg',
 			gif: 'image/gif',
+			webp: 'image/webp',
 			webm: 'video/webm',
 			mp4: 'video/mp4',
+			mov: 'video/quicktime',
 			zip: 'application/zip',
 			json: 'application/json',
-			txt: 'text/plain'
+			txt: 'text/plain',
+			md: 'text/markdown',
+			html: 'text/html',
+			css: 'text/css',
+			js: 'application/javascript'
 		};
 
 		const contentType = contentTypes[ext || ''] || 'application/octet-stream';

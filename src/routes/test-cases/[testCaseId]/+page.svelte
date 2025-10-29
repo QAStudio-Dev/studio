@@ -14,9 +14,39 @@
 	} from 'lucide-svelte';
 	import { Avatar } from '@skeletonlabs/skeleton-svelte';
 	import AttachmentViewer from '$lib/components/AttachmentViewer.svelte';
+	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
 
 	let { data } = $props();
 	let { testCase } = $derived(data);
+
+	// Pagination state for execution history
+	let allResults = $state(testCase.results);
+	let resultsPage = $state(1);
+	let loadingMore = $state(false);
+	let hasMoreResults = $state(testCase.results.length === 10); // Initial load is 10
+
+	async function loadMoreResults() {
+		if (loadingMore || !hasMoreResults) return;
+
+		loadingMore = true;
+		try {
+			const nextPage = resultsPage + 1;
+			const response = await fetch(
+				`/api/test-cases/${testCase.id}/results?page=${nextPage}&limit=10`
+			);
+
+			if (response.ok) {
+				const data = await response.json();
+				allResults = [...allResults, ...data.data];
+				hasMoreResults = data.pagination.hasMore;
+				resultsPage = nextPage;
+			}
+		} catch (error) {
+			console.error('Failed to load more results:', error);
+		} finally {
+			loadingMore = false;
+		}
+	}
 
 	function getStatusColor(status: string) {
 		const colors: Record<string, string> = {
@@ -154,9 +184,9 @@
 			<div class="card p-6">
 				<h2 class="font-bold text-lg mb-4">Execution History</h2>
 
-				{#if testCase.results.length > 0}
+				{#if allResults.length > 0}
 					<div class="space-y-3">
-						{#each testCase.results as result}
+						{#each allResults as result}
 							{@const StatusIcon = getStatusIcon(result.status)}
 							<div
 								class="p-4 rounded-container border border-surface-200-700 hover:border-primary-500 transition-colors"
@@ -200,6 +230,15 @@
 								{/if}
 							</div>
 						{/each}
+					</div>
+
+					<!-- Load More Button -->
+					<div class="mt-4">
+						<LoadMoreButton
+							loading={loadingMore}
+							hasMore={hasMoreResults}
+							onLoadMore={loadMoreResults}
+						/>
 					</div>
 				{:else}
 					<div class="text-center py-8 text-surface-600-300">

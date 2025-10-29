@@ -8,36 +8,54 @@ export const GET: RequestHandler = async ({ params, url }) => {
 		const milestoneId = url.searchParams.get('milestoneId');
 		const environmentId = url.searchParams.get('environmentId');
 		const status = url.searchParams.get('status');
+		const page = parseInt(url.searchParams.get('page') || '1');
+		const limit = parseInt(url.searchParams.get('limit') || '20');
+		const skip = (page - 1) * limit;
 
 		const where: any = { projectId: params.projectId };
 		if (milestoneId) where.milestoneId = milestoneId;
 		if (environmentId) where.environmentId = environmentId;
 		if (status) where.status = status;
 
-		const testRuns = await db.testRun.findMany({
-			where,
-			orderBy: { createdAt: 'desc' },
-			include: {
-				milestone: {
-					select: {
-						id: true,
-						name: true
-					}
-				},
-				environment: {
-					select: {
-						id: true,
-						name: true
-					}
-				},
-				_count: {
-					select: {
-						results: true
+		const [testRuns, total] = await Promise.all([
+			db.testRun.findMany({
+				where,
+				orderBy: { createdAt: 'desc' },
+				skip,
+				take: limit,
+				include: {
+					milestone: {
+						select: {
+							id: true,
+							name: true
+						}
+					},
+					environment: {
+						select: {
+							id: true,
+							name: true
+						}
+					},
+					_count: {
+						select: {
+							results: true
+						}
 					}
 				}
+			}),
+			db.testRun.count({ where })
+		]);
+
+		return json({
+			data: testRuns,
+			pagination: {
+				page,
+				limit,
+				total,
+				totalPages: Math.ceil(total / limit),
+				hasMore: skip + testRuns.length < total
 			}
 		});
-		return json(testRuns);
 	} catch (error) {
 		console.error('Error fetching test runs:', error);
 		return json({ error: 'Failed to fetch test runs' }, { status: 500 });

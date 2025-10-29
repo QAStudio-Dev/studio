@@ -6,37 +6,55 @@ import type { RequestHandler } from './$types';
 export const GET: RequestHandler = async ({ params, url }) => {
 	try {
 		const status = url.searchParams.get('status');
+		const page = parseInt(url.searchParams.get('page') || '1');
+		const limit = parseInt(url.searchParams.get('limit') || '50');
+		const skip = (page - 1) * limit;
 
 		const where: any = { testRunId: params.runId };
 		if (status) where.status = status;
 
-		const results = await db.testResult.findMany({
-			where,
-			orderBy: { executedAt: 'desc' },
-			include: {
-				testCase: {
-					select: {
-						id: true,
-						title: true,
-						priority: true,
-						type: true,
-						suite: {
-							select: {
-								id: true,
-								name: true
+		const [results, total] = await Promise.all([
+			db.testResult.findMany({
+				where,
+				orderBy: { executedAt: 'desc' },
+				skip,
+				take: limit,
+				include: {
+					testCase: {
+						select: {
+							id: true,
+							title: true,
+							priority: true,
+							type: true,
+							suite: {
+								select: {
+									id: true,
+									name: true
+								}
 							}
 						}
-					}
-				},
-				_count: {
-					select: {
-						attachments: true,
-						steps: true
+					},
+					_count: {
+						select: {
+							attachments: true,
+							steps: true
+						}
 					}
 				}
+			}),
+			db.testResult.count({ where })
+		]);
+
+		return json({
+			data: results,
+			pagination: {
+				page,
+				limit,
+				total,
+				totalPages: Math.ceil(total / limit),
+				hasMore: skip + results.length < total
 			}
 		});
-		return json(results);
 	} catch (error) {
 		console.error('Error fetching test results:', error);
 		return json({ error: 'Failed to fetch test results' }, { status: 500 });

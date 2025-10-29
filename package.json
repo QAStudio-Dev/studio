@@ -63,6 +63,7 @@
 		"@vercel/blob": "^2.0.0",
 		"dotenv": "^17.2.3",
 		"lucide-svelte": "^0.548.0",
+		"marked": "^16.4.1",
 		"prisma": "^6.18.0",
 		"shiki": "^3.13.0",
 		"stripe": "^19.1.0",

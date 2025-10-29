@@ -1,5 +1,7 @@
 <script lang="ts">
-	import { Download, FileImage, FileVideo, FileArchive, File, X, Maximize2 } from 'lucide-svelte';
+	import { Download, FileImage, FileVideo, FileArchive, File, X, Maximize2, ChevronDown, ChevronUp } from 'lucide-svelte';
+	import { marked } from 'marked';
+	import { onMount } from 'svelte';
 
 	interface Props {
 		attachments: Array<{
@@ -10,11 +12,44 @@
 			size: number;
 			url: string;
 		}>;
-		inline?: boolean; // Show inline previews by default
+		inline?: boolean; // Show inline previews when expanded
+		defaultExpanded?: boolean; // Whether attachments are shown by default
 	}
 
-	let { attachments, inline = true }: Props = $props();
+	let { attachments, inline = true, defaultExpanded = false }: Props = $props();
 	let expandedAttachment = $state<string | null>(null);
+	let isExpanded = $state(defaultExpanded);
+	let markdownContents = $state<Record<string, string>>({});
+	let loadingMarkdown = $state<Record<string, boolean>>({});
+
+	// Configure marked for safe HTML rendering
+	onMount(() => {
+		marked.setOptions({
+			breaks: true,
+			gfm: true
+		});
+	});
+
+	// Load markdown content when attachments are expanded and visible
+	$effect(() => {
+		if (isExpanded && inline) {
+			attachments.forEach(attachment => {
+				if (isMarkdown(attachment.mimeType) && !markdownContents[attachment.id] && !loadingMarkdown[attachment.id]) {
+					loadMarkdownContent(attachment.id);
+				}
+			});
+		}
+	});
+
+	// Load markdown content when modal is opened for a markdown file
+	$effect(() => {
+		if (expandedAttachment) {
+			const attachment = attachments.find(a => a.id === expandedAttachment);
+			if (attachment && isMarkdown(attachment.mimeType) && !markdownContents[attachment.id] && !loadingMarkdown[attachment.id]) {
+				loadMarkdownContent(attachment.id);
+			}
+		}
+	});
 
 	function formatBytes(bytes: number): string {
 		if (bytes === 0) return '0 Bytes';
@@ -28,6 +63,7 @@
 		if (mimeType.startsWith('image/')) return FileImage;
 		if (mimeType.startsWith('video/')) return FileVideo;
 		if (mimeType.includes('zip') || mimeType.includes('archive')) return FileArchive;
+		if (mimeType.startsWith('text/')) return File;
 		return File;
 	}
 
@@ -35,6 +71,8 @@
 		if (mimeType.startsWith('image/')) return 'Screenshot';
 		if (mimeType.startsWith('video/')) return 'Video';
 		if (mimeType.includes('zip')) return 'Trace';
+		if (mimeType === 'text/markdown') return 'Error Context';
+		if (mimeType.startsWith('text/')) return 'Text File';
 		return 'File';
 	}
 
@@ -46,8 +84,31 @@
 		return mimeType.startsWith('video/');
 	}
 
+	function isMarkdown(mimeType: string): boolean {
+		return mimeType === 'text/markdown' || mimeType === 'text/x-markdown';
+	}
+
 	function isViewable(mimeType: string): boolean {
-		return isImage(mimeType) || isVideo(mimeType);
+		return isImage(mimeType) || isVideo(mimeType) || isMarkdown(mimeType);
+	}
+
+	async function loadMarkdownContent(attachmentId: string) {
+		if (markdownContents[attachmentId] || loadingMarkdown[attachmentId]) {
+			return;
+		}
+
+		loadingMarkdown[attachmentId] = true;
+		try {
+			const response = await fetch(`/api/attachments/${attachmentId}`);
+			if (response.ok) {
+				const text = await response.text();
+				markdownContents[attachmentId] = text;
+			}
+		} catch (error) {
+			console.error('Failed to load markdown:', error);
+		} finally {
+			loadingMarkdown[attachmentId] = false;
+		}
 	}
 
 	function expandAttachment(attachmentId: string) {
@@ -61,10 +122,22 @@
 
 {#if attachments && attachments.length > 0}
 	<div class="space-y-3">
-		<h4 class="text-sm font-semibold">Attachments ({attachments.length})</h4>
+		<!-- Toggle Header -->
+		<button
+			onclick={() => isExpanded = !isExpanded}
+			class="flex items-center gap-2 text-sm font-semibold hover:text-primary-500 transition-colors w-full"
+		>
+			{#if isExpanded}
+				<ChevronUp class="w-4 h-4" />
+			{:else}
+				<ChevronDown class="w-4 h-4" />
+			{/if}
+			<span>Attachments ({attachments.length})</span>
+		</button>
 
-		<div class="space-y-4">
-			{#each attachments as attachment}
+		{#if isExpanded}
+			<div class="space-y-4">
+				{#each attachments as attachment}
 				<div class="card p-4">
 					<!-- Header -->
 					<div class="flex items-start justify-between gap-3 mb-3">
@@ -126,6 +199,19 @@
 								Your browser does not support the video tag.
 							</video>
 						</div>
+					{:else if inline && isMarkdown(attachment.mimeType)}
+						<div class="rounded-container overflow-hidden bg-surface-900-50 border border-surface-200-700 p-4">
+							{#if loadingMarkdown[attachment.id]}
+								<div class="text-center py-4 text-surface-600-300">
+									<div class="inline-block animate-spin w-5 h-5 border-2 border-current border-t-transparent rounded-full"></div>
+									<span class="ml-2">Loading...</span>
+								</div>
+							{:else if markdownContents[attachment.id]}
+								<div class="prose prose-sm dark:prose-invert max-w-none">
+									{@html marked.parse(markdownContents[attachment.id])}
+								</div>
+							{/if}
+						</div>
 					{:else if !isViewable(attachment.mimeType)}
 						<a
 							href="/api/attachments/{attachment.id}"
@@ -142,7 +228,8 @@
 					{/if}
 				</div>
 			{/each}
-		</div>
+			</div>
+		{/if}
 	</div>
 
 	<!-- Expanded View Modal -->
@@ -186,6 +273,19 @@
 								<track kind="captions" />
 								Your browser does not support the video tag.
 							</video>
+						{:else if isMarkdown(attachment.mimeType)}
+							<div class="max-h-[85vh] max-w-4xl overflow-auto p-8">
+								{#if loadingMarkdown[attachment.id]}
+									<div class="text-center py-8 text-surface-600-300">
+										<div class="inline-block animate-spin w-6 h-6 border-2 border-current border-t-transparent rounded-full"></div>
+										<span class="ml-2">Loading markdown...</span>
+									</div>
+								{:else if markdownContents[attachment.id]}
+									<div class="prose prose-sm dark:prose-invert max-w-none">
+										{@html marked.parse(markdownContents[attachment.id])}
+									</div>
+								{/if}
+							</div>
 						{/if}
 
 						<!-- Info Bar -->
@@ -220,5 +320,119 @@
 		align-items: center;
 		justify-content: center;
 		gap: 0.5rem;
+	}
+
+	/* Basic prose styling for markdown with light/dark mode support */
+	.prose {
+		line-height: 1.75;
+		color: light-dark(rgb(var(--color-surface-900)), rgb(var(--color-surface-50)));
+	}
+
+	.prose :global(h1),
+	.prose :global(h2),
+	.prose :global(h3),
+	.prose :global(h4) {
+		font-weight: 600;
+		margin-top: 1.5em;
+		margin-bottom: 0.5em;
+		line-height: 1.25;
+		color: light-dark(rgb(var(--color-surface-950)), rgb(var(--color-surface-50)));
+	}
+
+	.prose :global(h1) {
+		font-size: 1.5em;
+	}
+	.prose :global(h2) {
+		font-size: 1.25em;
+	}
+	.prose :global(h3) {
+		font-size: 1.125em;
+	}
+
+	.prose :global(p) {
+		margin-top: 0.75em;
+		margin-bottom: 0.75em;
+	}
+
+	.prose :global(code) {
+		background-color: light-dark(rgb(var(--color-surface-100)), rgb(var(--color-surface-800)));
+		color: light-dark(rgb(var(--color-error-600)), rgb(var(--color-error-400)));
+		padding: 0.125rem 0.375rem;
+		border-radius: 0.25rem;
+		font-size: 0.875em;
+		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+	}
+
+	.prose :global(pre) {
+		background-color: light-dark(rgb(var(--color-surface-100)), rgb(var(--color-surface-800)));
+		color: light-dark(rgb(var(--color-surface-900)), rgb(var(--color-surface-100)));
+		padding: 1rem;
+		border-radius: 0.5rem;
+		overflow-x: auto;
+		margin: 1rem 0;
+		border: 1px solid light-dark(rgb(var(--color-surface-200)), rgb(var(--color-surface-700)));
+	}
+
+	.prose :global(pre code) {
+		background-color: transparent;
+		padding: 0;
+		font-size: 0.875em;
+		color: inherit;
+	}
+
+	.prose :global(ul),
+	.prose :global(ol) {
+		margin: 1rem 0;
+		padding-left: 1.5rem;
+	}
+
+	.prose :global(li) {
+		margin: 0.25rem 0;
+	}
+
+	.prose :global(a) {
+		color: rgb(var(--color-primary-500));
+		text-decoration: underline;
+	}
+
+	.prose :global(a:hover) {
+		color: rgb(var(--color-primary-600));
+	}
+
+	.prose :global(blockquote) {
+		border-left: 4px solid light-dark(rgb(var(--color-surface-300)), rgb(var(--color-surface-600)));
+		padding-left: 1rem;
+		margin: 1rem 0;
+		font-style: italic;
+		color: light-dark(rgb(var(--color-surface-600)), rgb(var(--color-surface-400)));
+	}
+
+	.prose :global(hr) {
+		border: 0;
+		border-top: 1px solid light-dark(rgb(var(--color-surface-300)), rgb(var(--color-surface-700)));
+		margin: 2rem 0;
+	}
+
+	.prose :global(strong) {
+		font-weight: 600;
+		color: light-dark(rgb(var(--color-surface-950)), rgb(var(--color-surface-50)));
+	}
+
+	.prose :global(table) {
+		width: 100%;
+		margin: 1rem 0;
+		border-collapse: collapse;
+	}
+
+	.prose :global(th),
+	.prose :global(td) {
+		padding: 0.5rem;
+		border: 1px solid light-dark(rgb(var(--color-surface-300)), rgb(var(--color-surface-700)));
+		text-align: left;
+	}
+
+	.prose :global(th) {
+		background-color: light-dark(rgb(var(--color-surface-100)), rgb(var(--color-surface-800)));
+		font-weight: 600;
 	}
 </style>
