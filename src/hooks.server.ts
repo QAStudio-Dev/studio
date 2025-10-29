@@ -12,7 +12,29 @@ const handleParaglide: Handle = ({ event, resolve }) =>
 		});
 	});
 
-export const handle: Handle = sequence(
-	withClerkHandler(), // Automatically reads from environment variables
-	handleParaglide
-);
+// Public routes that don't require Clerk authentication
+// These routes handle their own authentication (API keys, Slack signatures, etc.)
+const publicRoutes = [
+	'/api/integrations/slack/interactions',
+	'/api/integrations/slack/webhook',
+	'/api/test-results',
+	'/api/test-runs'
+];
+
+const handleClerkWithPublicRoutes: Handle = async ({ event, resolve }) => {
+	const { pathname } = event.url;
+
+	// Check if this is a public route
+	const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
+
+	if (isPublicRoute) {
+		// Skip Clerk authentication for public routes
+		return resolve(event);
+	}
+
+	// Apply Clerk authentication for all other routes
+	const clerkHandler = withClerkHandler();
+	return clerkHandler({ event, resolve });
+};
+
+export const handle: Handle = sequence(handleClerkWithPublicRoutes, handleParaglide);
