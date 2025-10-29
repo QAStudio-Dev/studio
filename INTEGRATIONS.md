@@ -52,14 +52,19 @@ QA Studio supports integrations with popular tools to send notifications about t
 
 #### 4. Configure Environment Variables
 
-Add these to your `.env` file:
+Add these to your `.env` or `.env.local` file:
 
 ```bash
 # Slack Integration
-SLACK_CLIENT_ID=your_client_id_here
-SLACK_CLIENT_SECRET=your_client_secret_here
-PUBLIC_BASE_URL=https://yourdomain.com  # Used for notification links
+PUBLIC_SLACK_CLIENT_ID=your_client_id_here  # PUBLIC_ prefix required for browser access
+SLACK_CLIENT_SECRET=your_client_secret_here  # No prefix - server-only
+PUBLIC_BASE_URL=https://yourdomain.com       # Used for notification links
 ```
+
+**Important for Vercel/Production:**
+- `PUBLIC_SLACK_CLIENT_ID` - Must have `PUBLIC_` prefix to be accessible in the browser
+- `SLACK_CLIENT_SECRET` - Should NOT have `PUBLIC_` prefix (server-only, keep secret!)
+- In Vercel, add these as environment variables in your project settings
 
 You can find these values in your Slack app settings:
 - **Client ID**: Under "Basic Information" → "App Credentials"

@@ -40,7 +40,15 @@
 
 	// Get Slack OAuth URL
 	function getSlackOAuthUrl() {
-		const clientId = process.env.SLACK_CLIENT_ID; // This will come from env in production
+		// SvelteKit requires PUBLIC_ prefix for browser-accessible env vars
+		const clientId = import.meta.env.PUBLIC_SLACK_CLIENT_ID;
+
+		if (!clientId) {
+			console.error('SLACK_CLIENT_ID not configured');
+			alert('Slack integration is not configured. Please contact your administrator.');
+			return '#';
+		}
+
 		const redirectUri = `${window.location.origin}/api/integrations/slack/callback`;
 		const scopes = [
 			'incoming-webhook',
