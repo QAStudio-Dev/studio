@@ -7,6 +7,13 @@ import { ensureUser } from './users';
  * Ensures user exists in database
  */
 export async function requireAuth(event: RequestEvent) {
+	// Check if Clerk auth is available
+	if (!event.locals.auth || typeof event.locals.auth !== 'function') {
+		throw error(401, {
+			message: 'Unauthorized - Authentication required'
+		});
+	}
+
 	const { userId } = event.locals.auth() || {};
 
 	if (!userId) {
@@ -25,6 +32,9 @@ export async function requireAuth(event: RequestEvent) {
  * Get current user ID if authenticated, otherwise returns null
  */
 export function getCurrentUserId(event: RequestEvent): string | null {
+	if (!event.locals.auth || typeof event.locals.auth !== 'function') {
+		return null;
+	}
 	const { userId } = event.locals.auth() || {};
 	return userId || null;
 }
@@ -33,6 +43,9 @@ export function getCurrentUserId(event: RequestEvent): string | null {
  * Get current user session data
  */
 export function getCurrentSession(event: RequestEvent) {
+	if (!event.locals.auth || typeof event.locals.auth !== 'function') {
+		return null;
+	}
 	return event.locals.auth();
 }
 

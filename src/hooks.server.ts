@@ -12,28 +12,47 @@ const handleParaglide: Handle = ({ event, resolve }) =>
 		});
 	});
 
-// Public routes that don't require Clerk authentication
+// Public API routes that don't require Clerk authentication
 // These routes handle their own authentication (API keys, Slack signatures, etc.)
-const publicRoutes = [
+const publicApiRoutes = [
 	'/api/integrations/slack/interactions',
 	'/api/integrations/slack/webhook',
-	'/api/test-results',
-	'/api/test-runs'
+	'/api/test-results'
 ];
+
+// Function to check if a path is a public API route
+function isPublicApiRoute(pathname: string): boolean {
+	// Exact matches for specific routes
+	if (publicApiRoutes.includes(pathname)) {
+		return true;
+	}
+
+	// Pattern matches for dynamic routes
+	// Match /api/test-runs/{id}/complete
+	if (/^\/api\/test-runs\/[^/]+\/complete$/.test(pathname)) {
+		return true;
+	}
+
+	// Match /api/test-runs (POST only - for creating test runs via API)
+	// This is checked in the endpoint itself, but we need Clerk context for session auth
+	// so we don't skip it here
+
+	return false;
+}
+
+// Create Clerk handler once
+const clerkHandler = withClerkHandler();
 
 const handleClerkWithPublicRoutes: Handle = async ({ event, resolve }) => {
 	const { pathname } = event.url;
 
 	// Check if this is a public route
-	const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
-
-	if (isPublicRoute) {
+	if (isPublicApiRoute(pathname)) {
 		// Skip Clerk authentication for public routes
 		return resolve(event);
 	}
 
 	// Apply Clerk authentication for all other routes
-	const clerkHandler = withClerkHandler();
 	return clerkHandler({ event, resolve });
 };
 

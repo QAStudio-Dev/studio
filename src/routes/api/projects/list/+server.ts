@@ -2,6 +2,11 @@ import { json, type RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 
 export const GET: RequestHandler = async (event) => {
+	// Check if Clerk auth is available
+	if (!event.locals.auth || typeof event.locals.auth !== 'function') {
+		return json({ error: 'Unauthorized' }, { status: 401 });
+	}
+
 	const { userId } = event.locals.auth() || {};
 
 	if (!userId) {

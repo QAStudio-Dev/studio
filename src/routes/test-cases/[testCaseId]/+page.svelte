@@ -19,6 +19,13 @@
 	let { data } = $props();
 	let { testCase } = $derived(data);
 
+	// Strip ANSI escape codes from text (color codes, formatting, etc.)
+	function stripAnsi(text: string | null): string {
+		if (!text) return '';
+		// Remove ANSI escape codes: \x1b[...m or \u001b[...m
+		return text.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '').replace(/\u001b\[[0-9;]*[a-zA-Z]/g, '');
+	}
+
 	// Pagination state for execution history
 	let allResults = $state(testCase.results);
 	let resultsPage = $state(1);
@@ -219,7 +226,7 @@
 
 								{#if result.errorMessage}
 									<div class="mt-2 p-3 bg-error-500/10 rounded-base">
-										<p class="text-sm text-error-500">{result.errorMessage}</p>
+										<p class="text-sm text-error-500 whitespace-pre-wrap break-words">{stripAnsi(result.errorMessage)}</p>
 									</div>
 								{/if}
 

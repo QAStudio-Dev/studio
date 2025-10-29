@@ -9,15 +9,20 @@ Some API endpoints need to be publicly accessible because they're called by exte
 **File**: [src/hooks.server.ts](src/hooks.server.ts)
 
 ```typescript
-withClerkHandler({
-  publicRoutes: [
-    '/api/integrations/slack/interactions',  // Slack button callbacks
-    '/api/integrations/slack/webhook',       // Slack events
-    '/api/test-results',                     // Playwright reporter (uses API key auth)
-    '/api/test-runs/(.*)/complete'           // Test run completion (uses API key auth)
-  ]
-})
+// Exact matches
+const publicApiRoutes = [
+  '/api/integrations/slack/interactions',  // Slack button callbacks
+  '/api/integrations/slack/webhook',       // Slack events
+  '/api/test-results'                      // Playwright reporter (uses API key auth)
+];
+
+// Regex pattern matches
+if (/^\/api\/test-runs\/[^/]+\/complete$/.test(pathname)) {
+  // Test run completion (uses API key auth)
+}
 ```
+
+**Important**: Only **API routes** (starting with `/api/`) are made public. Page routes like `/test-runs` still require Clerk authentication.
 
 ## Public Routes
 
