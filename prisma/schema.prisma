@@ -35,10 +35,29 @@ model User {
   createdTestCases TestCase[] @relation("TestCaseCreator")
   createdTestRuns  TestRun[]  @relation("TestRunCreator")
   executedResults  TestResult[] @relation("TestResultExecutor")
+  apiKeys       ApiKey[]
 
   @@index([email])
   @@index([teamId])
   @@index([role])
+}
+
+model ApiKey {
+  id          String   @id @default(cuid())
+  name        String   // User-friendly name like "CI/CD Pipeline"
+  key         String   @unique // The actual API key (hashed)
+  prefix      String   // First 8 chars for display (e.g., "qas_1234...")
+  userId      String
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([key])
+  @@index([prefix])
 }
 
 model Team {

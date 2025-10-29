@@ -17,6 +17,8 @@
 	import DraggableTestCase from '$lib/components/DraggableTestCase.svelte';
 	import TestCaseDropZone from '$lib/components/TestCaseDropZone.svelte';
 	import TestCaseInsertionZone from '$lib/components/TestCaseInsertionZone.svelte';
+	import NestedTestSuite from '$lib/components/NestedTestSuite.svelte';
+	import NestedSuiteTestCases from '$lib/components/NestedSuiteTestCases.svelte';
 	import { setSelectedProject } from '$lib/stores/projectStore';
 
 	let { data } = $props();
@@ -40,6 +42,9 @@
 	let selectedTestCase = $state<any | null>(null);
 	let showTestCaseModal = $state(false);
 
+	// Get only root-level suites (those without a parent)
+	let rootSuites = $derived(project.testSuites.filter(s => !s.parentId));
+
 	// Initialize all suites as expanded by default
 	$effect(() => {
 		if (project && expandedSuites.size === 0) {
@@ -58,7 +63,7 @@
 			// Collapse all
 			expandedSuites = new Set();
 		} else {
-			// Expand all
+			// Expand all (including nested suites)
 			expandedSuites = new Set(['root', ...project.testSuites.map(s => s.id)]);
 		}
 	}
@@ -243,6 +248,29 @@
 	function handleSuiteDragEnd() {
 		draggedSuite = null;
 		dragOverSuitePosition = null;
+	}
+
+	async function handleDropSuiteOnSuite(draggedSuiteId: string, targetSuiteId: string) {
+		// Move suite to be a child of target suite
+		try {
+			const res = await fetch(`/api/test-suites/${draggedSuiteId}/move-to-parent`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					parentId: targetSuiteId
+				})
+			});
+
+			if (!res.ok) {
+				throw new Error('Failed to move suite');
+			}
+
+			// Refresh data
+			await invalidateAll();
+		} catch (err) {
+			console.error(err);
+			alert('Failed to move suite');
+		}
 	}
 
 	function handleSuiteDragOver(event: DragEvent, index: number) {
@@ -498,71 +526,19 @@
 			{/if}
 
 			<div class="space-y-1">
-				<!-- Test Suites -->
-				{#each project.testSuites as suite, index}
-					<!-- Insertion zone before suite -->
-					<!-- svelte-ignore a11y_no_static_element_interactions -->
-					<div
-						ondragover={(e) => handleSuiteDragOver(e, index)}
-						ondragleave={handleSuiteDragLeave}
-						ondrop={(e) => handleSuiteDrop(e, index)}
-						class="h-1 transition-all {!!draggedSuite
-							? 'opacity-100'
-							: 'opacity-0'} {dragOverSuitePosition === index ? 'h-6 bg-primary-500/20' : ''}"
-					>
-						{#if dragOverSuitePosition === index}
-							<div class="mx-2 h-0.5 bg-primary-500"></div>
-						{/if}
-					</div>
-
-					<!-- svelte-ignore a11y_no_static_element_interactions -->
-					<div
-						draggable="true"
-						ondragstart={(e) => handleSuiteDragStart(e, suite)}
-						ondragend={handleSuiteDragEnd}
-						class={draggedSuite?.id === suite.id ? 'opacity-50' : ''}
-					>
-						<button
-							onclick={() => toggleSuite(suite.id)}
-							class="hover:bg-surface-100-800 flex w-full items-center gap-2 rounded-base px-3 py-2 text-left transition-colors"
-						>
-							<GripVertical
-								class="h-3.5 w-3.5 flex-shrink-0 cursor-grab text-surface-400 hover:text-primary-500 active:cursor-grabbing"
-							/>
-							{#if expandedSuites.has(suite.id)}
-								<ChevronDown class="h-4 w-4" />
-							{:else}
-								<ChevronRight class="h-4 w-4" />
-							{/if}
-							<FolderOpen class="h-4 w-4 text-primary-500" />
-							<span class="flex-1">{suite.name}</span>
-							<span class="badge preset-filled-surface-500 text-xs">
-								{suite.testCases?.length || 0}
-							</span>
-						</button>
-					</div>
-
-					{#if expandedSuites.has(suite.id) && suite.children?.length > 0}
-						<div class="ml-6 space-y-1">
-							{#each suite.children as childSuite}
-								<button
-									onclick={() => toggleSuite(childSuite.id)}
-									class="hover:bg-surface-100-800 flex w-full items-center gap-2 rounded-base px-3 py-2 text-left text-sm transition-colors"
-								>
-									{#if expandedSuites.has(childSuite.id)}
-										<ChevronDown class="h-3 w-3" />
-									{:else}
-										<ChevronRight class="h-3 w-3" />
-									{/if}
-									<FolderOpen class="h-3 w-3 text-secondary-500" />
-									<span>{childSuite.name}</span>
-									<span class="ml-auto badge preset-filled-surface-500 text-xs">
-										{childSuite.testCases?.length || 0}
-									</span>
-								</button>
-							{/each}
-						</div>
-					{/if}
+				<!-- Test Suites - Recursive rendering -->
+				{#each rootSuites as suite (suite.id)}
+					<NestedTestSuite
+						{suite}
+						expandedSuites={expandedSuites}
+						toggleSuite={toggleSuite}
+						onDragStart={handleSuiteDragStart}
+						onDragEnd={handleSuiteDragEnd}
+						onDropOnSuite={handleDropSuiteOnSuite}
+						draggedSuite={draggedSuite}
+						allSuites={project.testSuites}
+						level={0}
+					/>
 				{/each}
 
 				<!-- Final insertion zone at the end -->
@@ -611,117 +587,31 @@
 				</button>
 			</div>
 
-			<!-- Display test cases based on expanded suites -->
-			<!-- Suites -->
-			{#each project.testSuites as suite}
-				{#if expandedSuites.has(suite.id)}
-					<div class="mb-8">
-						<h3 class="mb-4 flex items-center gap-2 text-lg font-bold">
-							<FolderOpen class="h-5 w-5 text-primary-500" />
-							{suite.name}
-						</h3>
-
-						{#if creatingTestCase === suite.id}
-							<form
-								onsubmit={(e) => {
-									e.preventDefault();
-									handleCreateTestCase(suite.id);
-								}}
-								class="bg-surface-50-900 mb-3 rounded-container border border-primary-500 p-3"
-							>
-								<div class="mb-2 flex gap-2">
-									<input
-										type="text"
-										class="input-sm input flex-1"
-										placeholder="Test case title (press Enter to create)"
-										bind:value={newTestCaseTitle}
-										disabled={loading}
-										autofocus
-									/>
-									<button
-										type="submit"
-										class="btn preset-filled-success-500 btn-sm"
-										disabled={loading || !newTestCaseTitle.trim()}
-									>
-										Add
-									</button>
-								</div>
-								<div class="flex gap-2">
-									<input
-										type="text"
-										class="input-sm input flex-1"
-										placeholder="Description (optional)"
-										bind:value={newTestCaseDescription}
-										disabled={loading}
-										onkeydown={(e) => {
-											if (e.key === 'Enter') {
-												e.preventDefault();
-												if (newTestCaseTitle.trim()) handleCreateTestCase(suite.id);
-											}
-										}}
-									/>
-									<button
-										type="button"
-										onclick={() => handleCreateTestCase(suite.id, false)}
-										class="btn preset-outlined-surface-500 btn-sm"
-										disabled={loading}
-									>
-										Done
-									</button>
-								</div>
-							</form>
-						{/if}
-
-						<TestCaseDropZone
-							ondrop={(e: DragEvent) => handleDrop(e, suite.id, suite.testCases || [])}
-							ondragover={(e: DragEvent) => handleDragOver(e, suite.id)}
-							ondragleave={handleDragLeave}
-							onCreate={() => startCreatingTestCase(suite.id)}
-							isOver={dragOverSuite === suite.id && !!draggedTestCase}
-							isEmpty={!suite.testCases?.length && creatingTestCase !== suite.id}
-							isDragging={!!draggedTestCase}
-						>
-							<div>
-								{#each suite.testCases || [] as testCase, index}
-									<TestCaseInsertionZone
-										ondragover={(e) => handleInsertionDragOver(e, suite.id, index)}
-										ondragleave={handleInsertionDragLeave}
-										ondrop={(e) => handleInsertionDrop(e, suite.id, index)}
-										isOver={dragOverPosition?.suiteId === suite.id &&
-											dragOverPosition?.index === index}
-										isDragging={!!draggedTestCase && draggedTestCase.id !== testCase.id}
-									/>
-									<DraggableTestCase
-										{testCase}
-										onDragStart={handleDragStart}
-										onDragEnd={handleDragEnd}
-										onOpenModal={openTestCaseModal}
-										isDragging={draggedTestCase?.id === testCase.id}
-									/>
-								{/each}
-								<TestCaseInsertionZone
-									ondragover={(e) =>
-										handleInsertionDragOver(e, suite.id, suite.testCases?.length || 0)}
-									ondragleave={handleInsertionDragLeave}
-									ondrop={(e) => handleInsertionDrop(e, suite.id, suite.testCases?.length || 0)}
-									isOver={dragOverPosition?.suiteId === suite.id &&
-										dragOverPosition?.index === (suite.testCases?.length || 0)}
-									isDragging={!!draggedTestCase}
-								/>
-
-								{#if suite.testCases?.length && creatingTestCase !== suite.id}
-									<button
-										onclick={() => startCreatingTestCase(suite.id)}
-										class="hover:bg-surface-100-800 text-surface-600-300 mt-1 flex w-full items-center justify-center gap-2 rounded-base p-2 text-sm transition-colors hover:text-primary-500"
-									>
-										<Plus class="h-4 w-4" />
-										<span>Add test case</span>
-									</button>
-								{/if}
-							</div>
-						</TestCaseDropZone>
-					</div>
-				{/if}
+			<!-- Display test cases based on expanded suites - Recursive rendering -->
+			{#each rootSuites as suite (suite.id)}
+				<NestedSuiteTestCases
+					{suite}
+					{expandedSuites}
+					allSuites={project.testSuites}
+					{creatingTestCase}
+					{newTestCaseTitle}
+					{newTestCaseDescription}
+					{loading}
+					{draggedTestCase}
+					{dragOverSuite}
+					{dragOverPosition}
+					onCreateTestCase={handleCreateTestCase}
+					onStartCreatingTestCase={startCreatingTestCase}
+					onDragStart={handleDragStart}
+					onDragEnd={handleDragEnd}
+					onDrop={handleDrop}
+					onDragOver={handleDragOver}
+					onDragLeave={handleDragLeave}
+					onInsertionDragOver={handleInsertionDragOver}
+					onInsertionDragLeave={handleInsertionDragLeave}
+					onInsertionDrop={handleInsertionDrop}
+					onOpenModal={openTestCaseModal}
+				/>
 			{/each}
 
 			<!-- Uncategorized - at the bottom -->
@@ -740,7 +630,7 @@
 							}}
 							class="bg-surface-50-900 mb-3 rounded-container border border-primary-500 p-3"
 						>
-							<div class="mb-2 flex gap-2">
+							<div class="flex gap-2">
 								<input
 									type="text"
 									class="input-sm input flex-1"
@@ -755,29 +645,6 @@
 									disabled={loading || !newTestCaseTitle.trim()}
 								>
 									Add
-								</button>
-							</div>
-							<div class="flex gap-2">
-								<input
-									type="text"
-									class="input-sm input flex-1"
-									placeholder="Description (optional)"
-									bind:value={newTestCaseDescription}
-									disabled={loading}
-									onkeydown={(e) => {
-										if (e.key === 'Enter') {
-											e.preventDefault();
-											if (newTestCaseTitle.trim()) handleCreateTestCase(null);
-										}
-									}}
-								/>
-								<button
-									type="button"
-									onclick={() => handleCreateTestCase(null, false)}
-									class="btn preset-outlined-surface-500 btn-sm"
-									disabled={loading}
-								>
-									Done
 								</button>
 							</div>
 						</form>

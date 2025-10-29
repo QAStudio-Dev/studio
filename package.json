@@ -15,7 +15,8 @@
 		"lint": "prettier --check . && eslint .",
 		"test:unit": "vitest",
 		"test": "npm run test:unit -- --run && npm run test:e2e",
-		"test:e2e": "playwright test"
+		"test:e2e": "playwright test",
+		"test:e2e:headless": "playwright test --headed=false"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.4.0",
@@ -24,6 +25,7 @@
 		"@inlang/paraglide-js": "^2.3.2",
 		"@neoconfetti/svelte": "^2.2.2",
 		"@playwright/test": "^1.55.1",
+		"@qastudio-dev/playwright": "^1.0.7",
 		"@skeletonlabs/skeleton": "^4.1.4",
 		"@skeletonlabs/skeleton-svelte": "^4.1.4",
 		"@sveltejs/adapter-vercel": "^5.10.2",

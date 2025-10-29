@@ -26,23 +26,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 				}
 			},
 			testSuites: {
-				where: {
-					parentId: null // Only get root level suites
-				},
+				// Get ALL suites (we'll handle hierarchy on client)
 				include: {
-					children: {
-						include: {
-							testCases: {
-								orderBy: {
-									order: 'asc'
-								}
-							},
-							children: true
-						},
-						orderBy: {
-							order: 'asc'
-						}
-					},
 					testCases: {
 						orderBy: {
 							order: 'asc'
