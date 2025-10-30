@@ -14,7 +14,7 @@ export async function hasActiveSubscription(teamId: string): Promise<boolean> {
 		return false;
 	}
 
-	return subscription.status === 'ACTIVE' || subscription.status === 'TRIALING';
+	return subscription.status === 'ACTIVE';
 }
 
 /**
@@ -95,7 +95,7 @@ export async function isFeatureAvailable(
 	});
 
 	// Free teams don't have access to premium features
-	if (!subscription || (subscription.status !== 'ACTIVE' && subscription.status !== 'TRIALING')) {
+	if (!subscription || subscription.status !== 'ACTIVE') {
 		return false;
 	}
 

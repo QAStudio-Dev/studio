@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { requireAuth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
+import { stripe } from '$lib/server/stripe';
 
 /**
  * POST /api/teams/leave
@@ -33,18 +34,22 @@ export const POST: RequestHandler = async (event) => {
 			// Cancel subscription if it exists
 			if (user.team.subscription?.stripeSubscriptionId) {
 				try {
-					// Note: In production, you should actually cancel the Stripe subscription here
-					// For now, just mark it as canceled in the database
+					// Cancel the Stripe subscription immediately
+					await stripe.subscriptions.cancel(user.team.subscription.stripeSubscriptionId);
+
+					// Update database to reflect cancellation
 					await db.subscription.update({
 						where: { id: user.team.subscription.id },
 						data: {
 							status: 'CANCELED',
-							cancelAtPeriodEnd: true
+							cancelAtPeriodEnd: false // Already canceled
 						}
 					});
+
+					console.log(`✅ Canceled subscription ${user.team.subscription.stripeSubscriptionId}`);
 				} catch (subError) {
 					console.error('Error canceling subscription:', subError);
-					// Continue with team deletion even if subscription update fails
+					// Continue with team deletion even if subscription cancellation fails
 				}
 			}
 

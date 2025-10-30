@@ -38,6 +38,7 @@
 
 	// Team state
 	let leavingTeam = $state(false);
+	let loadingBillingPortal = $state(false);
 
 	// Integration state
 	let deletingIntegrationId = $state<string | null>(null);
@@ -181,6 +182,29 @@
 		return 'Pro';
 	}
 
+	// Manage billing via Stripe Customer Portal
+	async function handleManageBilling() {
+		loadingBillingPortal = true;
+
+		try {
+			const res = await fetch('/api/billing/portal', {
+				method: 'POST'
+			});
+
+			if (!res.ok) {
+				const data = await res.json();
+				throw new Error(data.error || 'Failed to open billing portal');
+			}
+
+			const data = await res.json();
+			// Redirect to Stripe Customer Portal
+			window.location.href = data.url;
+		} catch (err: any) {
+			alert('Error: ' + err.message);
+			loadingBillingPortal = false;
+		}
+	}
+
 	// Leave team
 	async function handleLeaveTeam() {
 		if (!user.team) return;
@@ -188,9 +212,16 @@
 		// Check if user is the only member
 		const isOnlyMember = user.team.members.length === 1;
 
-		const message = isOnlyMember
-			? `Are you sure you want to delete "${user.team.name}"?\n\nYou are the only member, so leaving will permanently delete the team and all associated data (projects, test cases, test runs, etc.). This action cannot be undone.`
-			: `Are you sure you want to leave "${user.team.name}"?\n\nThis will remove you from the team and all associated projects. This action cannot be undone.`;
+		let message = isOnlyMember
+			? `Are you sure you want to delete "${user.team.name}"?\n\nYou are the only member, so leaving will permanently delete the team and all associated data (projects, test cases, test runs, etc.).`
+			: `Are you sure you want to leave "${user.team.name}"?\n\nThis will remove you from the team and all associated projects.`;
+
+		// Add subscription warning if user is deleting team and has active subscription
+		if (isOnlyMember && user.team.subscription) {
+			message += '\n\nYour subscription will also be canceled immediately.';
+		}
+
+		message += '\n\nThis action cannot be undone.';
 
 		const confirmed = confirm(message);
 
@@ -632,15 +663,24 @@
 					</div>
 
 					<!-- Billing Card -->
-					{#if user.team.subscription && user.team.subscription.status === 'ACTIVE'}
+					{#if user.team.subscription}
 						<div class="card p-6">
 							<h3 class="mb-4 text-xl font-bold">Billing</h3>
 							<p class="text-surface-600-300 mb-4">
-								Manage your subscription, payment methods, and invoices.
+								Manage your subscription, update payment methods, and view invoices through the Stripe Customer Portal.
 							</p>
-							<a href="/teams/{user.team.id}/billing" class="btn preset-filled-primary-500">
-								Manage Billing
-							</a>
+							<button
+								onclick={handleManageBilling}
+								disabled={loadingBillingPortal}
+								class="btn preset-filled-primary-500"
+							>
+								{#if loadingBillingPortal}
+									Opening Portal...
+								{:else}
+									<ExternalLink class="mr-2 h-4 w-4" />
+									Manage Billing
+								{/if}
+							</button>
 						</div>
 					{/if}
 
@@ -655,6 +695,9 @@
 								<p class="text-surface-600-300 text-sm">
 									{#if user.team.members.length === 1}
 										You are the only member. Leaving will permanently delete the team and all associated data (projects, test cases, test runs, etc.).
+										{#if user.team.subscription}
+											Your subscription will also be canceled immediately.
+										{/if}
 									{:else}
 										Remove yourself from this team and all associated projects.
 									{/if}

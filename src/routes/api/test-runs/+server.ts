@@ -2,6 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
+import type { TestRunResponse, CreateTestRunBody } from '$lib/api/schemas';
 
 /**
  * Create a new test run
@@ -104,14 +105,22 @@ export const POST: RequestHandler = async (event) => {
 	});
 
 	// Return in format expected by Playwright reporter (needs top-level id)
-	return json({
+	const response: TestRunResponse = {
 		id: testRun.id,
 		name: testRun.name,
+		description: testRun.description,
 		status: testRun.status,
 		projectId: testRun.projectId,
+		environmentId: testRun.environmentId,
+		milestoneId: testRun.milestoneId,
+		createdBy: testRun.createdBy,
 		startedAt: testRun.startedAt,
+		completedAt: testRun.completedAt,
+		createdAt: testRun.createdAt,
+		updatedAt: testRun.updatedAt,
 		project: testRun.project,
 		environment: testRun.environment,
 		milestone: testRun.milestone
-	});
+	};
+	return json(response);
 };

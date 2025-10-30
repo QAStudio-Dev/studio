@@ -58,6 +58,8 @@
 				<nav class="hidden items-center gap-2 md:flex">
 					<!-- Only show these navigation items when signed in -->
 					<SignedIn>
+						<!-- Divider -->
+						<div class="mx-1 h-6 w-px bg-surface-300-700"></div>
 						<!-- Project Selector First -->
 						<div class="mr-2">
 							<ProjectSelector {projects} />
@@ -109,6 +111,16 @@
 								: 'hover:bg-surface-200-800'}"
 						>
 							Settings
+						</a>
+
+						<!-- API Docs -->
+						<a
+							href="/docs"
+							class="rounded-base px-4 py-2 transition-colors {isActive('/docs')
+								? 'bg-primary-500 text-white'
+								: 'hover:bg-surface-200-800'}"
+						>
+							API Docs
 						</a>
 					</SignedIn>
 				</nav>

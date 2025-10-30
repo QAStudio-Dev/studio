@@ -2,6 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { requireAuth } from '$lib/server/auth';
+import type { CreateTestCaseBody } from '$lib/api/schemas';
 
 /**
  * Create a new test case

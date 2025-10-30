@@ -63,7 +63,7 @@ export const POST: RequestHandler = async (event) => {
 	// Check project limits for free users
 	const hasActiveSubscription =
 		user.team?.subscription?.status === 'ACTIVE' ||
-		user.team?.subscription?.status === 'TRIALING';
+		user.team?.subscription?.status === 'ACTIVE';
 
 	if (!hasActiveSubscription) {
 		// Free users can only create 1 project

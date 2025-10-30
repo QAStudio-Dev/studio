@@ -300,3 +300,112 @@ Clerk supports:
 - `/sign-up`: Sign up page
 - `/user-profile`: User profile management
 - API routes automatically protected via `requireAuth()`
+
+## API Documentation System
+
+QA Studio uses a TypeScript-based API documentation system that keeps docs in sync with actual endpoints.
+
+### Architecture
+
+The system consists of three parts:
+
+1. **Type Definitions** (`src/lib/api/schemas.ts`): Define API request/response types and schemas
+2. **Doc Generator** (`src/lib/api/generate-docs.ts`): Converts schemas to documentation format
+3. **Docs Page** (`src/routes/docs/+page.svelte`): Displays auto-generated + manual docs
+
+### Adding a New API Endpoint
+
+**Step 1: Define Schema** in `src/lib/api/schemas.ts`:
+
+```typescript
+// Define types
+export type MyResourceResponse = {
+  id: string;
+  name: string;
+  createdAt: Date | string;
+};
+
+export type MyResourceCreateBody = {
+  name: string;
+};
+
+// Define schema
+export const MyResourceApi = {
+  list: {
+    method: 'GET',
+    path: '/api/my-resources',
+    description: 'List all resources',
+    tags: ['My Resources'],
+    responses: {
+      200: {
+        description: 'Success',
+        example: [...] as MyResourceResponse[]
+      }
+    }
+  } satisfies ApiSchema
+} as const;
+
+// Add to exports
+export const ApiSchemas = {
+  projects: ProjectsApi,
+  myResources: MyResourceApi, // <-- Add here
+} as const;
+```
+
+**Step 2: Use Types in Endpoint**:
+
+```typescript
+import type { MyResourceResponse } from '$lib/api/schemas';
+
+export const GET: RequestHandler = async () => {
+  const resources = await db.myResource.findMany();
+  const response: MyResourceResponse[] = resources;
+  return json(response);
+};
+```
+
+**Step 3: Docs Auto-Update!** Visit `/docs` to see the new endpoint.
+
+### Schema Options
+
+```typescript
+{
+  method: 'GET' | 'POST' | 'PATCH' | 'DELETE' | 'PUT',
+  path: '/api/path/:param',
+  description: 'Endpoint description',
+  tags: ['Category'], // For grouping
+  params: {
+    id: { type: 'string', description: '...', required: true, example: '123' }
+  },
+  query: {
+    filter: { type: 'string', description: '...', required: false }
+  },
+  body: {
+    description: 'Request body',
+    example: {...} as MyRequestType
+  },
+  responses: {
+    200: { description: 'Success', example: {...} as MyResponseType },
+    400: { description: 'Error', example: {...} as ErrorResponse }
+  }
+}
+```
+
+### Benefits
+
+- **Type Safety**: Endpoints use same types as docs
+- **Auto-Sync**: Docs automatically update when schemas change
+- **Single Source of Truth**: Define once, use everywhere
+- **TypeScript Autocomplete**: Full IDE support in endpoints
+- **Gradual Migration**: Old manual docs work alongside new system
+
+### Migration Strategy
+
+The system supports both auto-generated and manual docs simultaneously:
+
+1. Auto-generated docs (from `schemas.ts`) appear first in `/docs`
+2. Manual docs (from `api-docs.ts`) appear after
+3. Migrate one API group at a time to schemas
+4. Remove from manual docs once migrated
+
+See `src/lib/api/README.md` for detailed examples and best practices.
