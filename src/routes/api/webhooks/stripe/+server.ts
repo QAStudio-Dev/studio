@@ -208,7 +208,7 @@ function mapStripeStatus(stripeStatus: Stripe.Subscription.Status): string {
 		canceled: 'CANCELED',
 		incomplete: 'INCOMPLETE',
 		incomplete_expired: 'INCOMPLETE_EXPIRED',
-		trialing: 'TRIALING',
+		trialing: 'ACTIVE', // No trials - treat as active
 		unpaid: 'UNPAID',
 		paused: 'CANCELED'
 	};

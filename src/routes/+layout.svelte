@@ -4,19 +4,48 @@
 	import '../app.css';
 	import { clearSelectedProject } from '$lib/stores/projectStore';
 	import { browser } from '$app/environment';
+	import { onMount } from 'svelte';
 
 	let { children, data } = $props();
 
-	// Track the current user ID to detect user changes
-	let previousUserId = $state<string | null>(null);
+	// Clear localStorage on sign out
+	onMount(() => {
+		if (browser) {
+			// Listen for sign out event from Clerk
+			window.addEventListener('clerk:signedOut', () => {
+				console.log('[Layout] User signed out - clearing all localStorage');
+				clearSelectedProject();
+			});
+
+			// Also clear on beforeunload if user is not signed in
+			// This handles the case where user signs out in another tab
+			const handleStorageChange = (e: StorageEvent) => {
+				// If Clerk session is cleared, clear our data too
+				if (e.key && e.key.includes('clerk') && !e.newValue) {
+					console.log('[Layout] Clerk session cleared - clearing project');
+					clearSelectedProject();
+				}
+			};
+			window.addEventListener('storage', handleStorageChange);
+
+			return () => {
+				window.removeEventListener('clerk:signedOut', () => {});
+				window.removeEventListener('storage', handleStorageChange);
+			};
+		}
+	});
+
+	// Track the current user ID to detect user changes (as backup)
+	let previousUserId = $state<string | undefined>(undefined);
 
 	// Clear selected project when user changes (sign out/switch account)
 	$effect(() => {
 		if (browser) {
 			const currentUserId = data?.userId || null;
 
-			// If user changed (including sign out), clear the selected project
-			if (previousUserId !== null && previousUserId !== currentUserId) {
+			// If we've seen a user before and it changed, clear the selected project
+			if (previousUserId !== undefined && previousUserId !== currentUserId) {
+				console.log('[Layout] User changed from', previousUserId, 'to', currentUserId, '- clearing project');
 				clearSelectedProject();
 			}
 

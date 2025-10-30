@@ -82,7 +82,7 @@ model Subscription {
   stripeCustomerId     String             @unique
   stripeSubscriptionId String?            @unique
   stripePriceId        String?
-  status               SubscriptionStatus @default(TRIALING)
+  status               SubscriptionStatus @default(INCOMPLETE)
   currentPeriodStart   DateTime?
   currentPeriodEnd     DateTime?
   cancelAtPeriodEnd    Boolean            @default(false)
@@ -100,7 +100,6 @@ model Subscription {
 }
 
 enum SubscriptionStatus {
-  TRIALING      // Free trial period
   ACTIVE        // Paid and active
   PAST_DUE      // Payment failed
   CANCELED      // Subscription canceled

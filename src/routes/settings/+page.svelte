@@ -160,11 +160,25 @@
 	function getSubscriptionBadge(status: string) {
 		const badges: Record<string, { text: string; class: string }> = {
 			ACTIVE: { text: 'Active', class: 'preset-filled-success-500' },
-			TRIALING: { text: 'Trial', class: 'preset-filled-primary-500' },
 			PAST_DUE: { text: 'Past Due', class: 'preset-filled-warning-500' },
-			CANCELED: { text: 'Canceled', class: 'preset-filled-error-500' }
+			CANCELED: { text: 'Canceled', class: 'preset-filled-error-500' },
+			INCOMPLETE: { text: 'Setup Pending', class: 'preset-filled-warning-500' },
+			INCOMPLETE_EXPIRED: { text: 'Setup Failed', class: 'preset-filled-error-500' },
+			UNPAID: { text: 'Unpaid', class: 'preset-filled-error-500' }
 		};
 		return badges[status] || { text: status, class: 'preset-filled-surface-500' };
+	}
+
+	// Get subscription plan name
+	function getSubscriptionPlanName(status: string) {
+		// All paid statuses show "Pro" plan
+		if (status === 'ACTIVE') return 'Pro';
+		if (status === 'PAST_DUE') return 'Pro';
+		if (status === 'CANCELED') return 'Pro (Canceled)';
+		if (status === 'INCOMPLETE') return 'Pro (Setup Required)';
+		if (status === 'INCOMPLETE_EXPIRED') return 'Pro (Setup Failed)';
+		if (status === 'UNPAID') return 'Pro (Unpaid)';
+		return 'Pro';
 	}
 
 	// Leave team
@@ -573,7 +587,7 @@
 								<div>
 									<div class="text-surface-600-300 text-sm">Plan</div>
 									<div class="font-semibold">
-										{user.team.subscription.status === 'ACTIVE' ? 'Pro' : 'Free Trial'}
+										{getSubscriptionPlanName(user.team.subscription.status)}
 									</div>
 								</div>
 								<div>
