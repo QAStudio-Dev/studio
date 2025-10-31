@@ -7,6 +7,12 @@ import { readFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import { sendNotification, notifyTestRunCompleted } from '$lib/server/integrations';
 import type { SubmitTestResultsResponse } from '$lib/api/schemas';
+import {
+	generateTestCaseId,
+	generateTestResultId,
+	generateTestSuiteId,
+	generateAttachmentId
+} from '$lib/server/ids';
 
 /**
  * Get file extension from MIME type
@@ -116,6 +122,7 @@ async function processAttachments(
 			// Create attachment record
 			await db.attachment.create({
 				data: {
+					id: generateAttachmentId(),
 					filename,
 					originalName: nameWithExt,
 					mimeType: attachment.contentType,
@@ -174,6 +181,7 @@ async function findOrCreateSuiteHierarchy(
 
 			suite = await db.testSuite.create({
 				data: {
+					id: generateTestSuiteId(),
 					name: suiteName,
 					projectId,
 					parentId,
@@ -313,6 +321,7 @@ export const POST: RequestHandler = async (event) => {
 				// Create a new test case if it doesn't exist
 				const newTestCase = await db.testCase.create({
 					data: {
+						id: generateTestCaseId(),
 						title: testTitle,
 						projectId: testRun.projectId,
 						suiteId: suiteId,
@@ -326,6 +335,7 @@ export const POST: RequestHandler = async (event) => {
 				// Create test result
 				const testResult = await db.testResult.create({
 					data: {
+						id: generateTestResultId(),
 						testCaseId: newTestCase.id,
 						testRunId,
 						status,
@@ -359,6 +369,7 @@ export const POST: RequestHandler = async (event) => {
 				// Create test result for existing test case
 				const testResult = await db.testResult.create({
 					data: {
+						id: generateTestResultId(),
 						testCaseId: testCase.id,
 						testRunId,
 						status,

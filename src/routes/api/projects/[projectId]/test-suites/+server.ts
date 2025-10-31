@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import type { RequestHandler } from './$types';
+import { generateTestSuiteId } from '$lib/server/ids';
 
 // GET /api/projects/[projectId]/test-suites - List test suites for project
 export const GET: RequestHandler = async ({ params, url }) => {
@@ -58,6 +59,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
 
 		const testSuite = await db.testSuite.create({
 			data: {
+				id: generateTestSuiteId(),
 				name,
 				description,
 				projectId: params.projectId,

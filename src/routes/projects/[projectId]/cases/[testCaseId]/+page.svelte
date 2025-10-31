@@ -12,9 +12,11 @@
 		Edit,
 		ArrowLeft,
 		Sparkles,
-		Loader2
+		Loader2,
+		ChevronDown,
+		ChevronRight
 	} from 'lucide-svelte';
-	import { Avatar } from '@skeletonlabs/skeleton-svelte';
+	import { Avatar, Accordion } from '@skeletonlabs/skeleton-svelte';
 	import AttachmentViewer from '$lib/components/AttachmentViewer.svelte';
 	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
 
@@ -37,7 +39,6 @@
 	// AI Diagnosis state
 	let aiDiagnoses = $state<Map<string, { diagnosis: string; generatedAt?: Date; cached?: boolean }>>(new Map());
 	let loadingDiagnosis = $state<Set<string>>(new Set());
-	let expandedResults = $state<Set<string>>(new Set());
 
 	async function loadMoreResults() {
 		if (loadingMore || !hasMoreResults) return;
@@ -105,15 +106,6 @@
 		return colors[priority] || 'preset-filled-surface-500';
 	}
 
-	function toggleResult(resultId: string) {
-		if (expandedResults.has(resultId)) {
-			expandedResults.delete(resultId);
-		} else {
-			expandedResults.add(resultId);
-		}
-		expandedResults = new Set(expandedResults);
-	}
-
 	// AI Diagnosis for failed tests
 	async function getDiagnosis(resultId: string, regenerate = false) {
 		if (aiDiagnoses.has(resultId) && !regenerate) return;
@@ -146,7 +138,7 @@
 	}
 </script>
 
-<div class="container mx-auto max-w-6xl px-4 py-8">
+<div class="container mx-auto max-w-[1600px] px-4 py-8">
 	<!-- Header -->
 	<div class="mb-8">
 		<a
@@ -239,96 +231,132 @@
 				<h2 class="font-bold text-lg mb-4">Execution History</h2>
 
 				{#if allResults.length > 0}
-					<div class="space-y-3">
+					<Accordion>
 						{#each allResults as result}
 							{@const StatusIcon = getStatusIcon(result.status)}
-							<div
-								class="p-4 rounded-container border border-surface-200-700 hover:border-primary-500 transition-colors"
-							>
-								<div class="flex items-start justify-between mb-2">
-									<div class="flex items-center gap-3">
-										<span class="badge {getStatusColor(result.status)}">
-											<StatusIcon class="w-3 h-3 mr-1" />
-											{result.status}
-										</span>
-										<span class="text-sm font-medium">{result.testRun.name}</span>
+							<Accordion.Item value={result.id}>
+								<Accordion.ItemTrigger class="w-full p-4 rounded-container border border-surface-200-700 hover:border-primary-500 transition-colors">
+									<div class="flex items-start justify-between w-full">
+										<div class="flex items-center gap-3">
+											<ChevronRight class="w-4 h-4 transition-transform group-data-[state=open]:rotate-90" />
+											<span class="badge {getStatusColor(result.status)}">
+												<StatusIcon class="w-3 h-3 mr-1" />
+												{result.status}
+											</span>
+											<span class="text-sm font-medium">{result.testRun.name}</span>
+										</div>
+										<div class="flex items-center gap-4">
+											{#if result.duration}
+												<span class="text-sm text-surface-600-300">
+													{Math.round(result.duration / 1000)}s
+												</span>
+											{/if}
+											<span class="text-sm text-surface-600-300">{formatDate(result.executedAt)}</span>
+										</div>
 									</div>
-									{#if result.duration}
-										<span class="text-sm text-surface-600-300">
-											{Math.round(result.duration / 1000)}s
-										</span>
+								</Accordion.ItemTrigger>
+
+								<Accordion.ItemContent class="px-4 pb-4">
+									<div class="text-sm text-surface-600-300 mb-2">
+										Executed by: {result.executor.firstName || result.executor.email}
+									</div>
+
+									{#if result.comment}
+										<p class="text-sm text-surface-600-300 mt-2">{result.comment}</p>
 									{/if}
-								</div>
 
-								<div class="text-sm text-surface-600-300 flex items-center gap-4">
-									<span>
-										{result.executor.firstName || result.executor.email}
-									</span>
-									<span>{formatDate(result.executedAt)}</span>
-								</div>
+									<!-- Error/Stack Trace in nested accordion -->
+									{#if result.errorMessage || result.stackTrace}
+										<div class="mt-3">
+											<Accordion>
+												{#if result.errorMessage}
+													<Accordion.Item value="error">
+														<Accordion.ItemTrigger class="p-2 bg-error-500/10 rounded-base hover:bg-error-500/20 transition-colors w-full">
+															<div class="flex items-center gap-2 text-sm font-medium text-error-500">
+																<ChevronRight class="w-3 h-3 transition-transform group-data-[state=open]:rotate-90" />
+																Error Message
+															</div>
+														</Accordion.ItemTrigger>
+														<Accordion.ItemContent class="px-2 pb-2">
+															<div class="mt-2 p-3 bg-error-500/5 rounded-base">
+																<p class="text-sm text-error-500 whitespace-pre-wrap break-words font-mono">{stripAnsi(result.errorMessage)}</p>
+															</div>
+														</Accordion.ItemContent>
+													</Accordion.Item>
+												{/if}
 
-								{#if result.comment}
-									<p class="text-sm text-surface-600-300 mt-2">{result.comment}</p>
-								{/if}
+												{#if result.stackTrace}
+													<Accordion.Item value="stack">
+														<Accordion.ItemTrigger class="p-2 bg-surface-200-800 rounded-base hover:bg-surface-300-700 transition-colors w-full mt-2">
+															<div class="flex items-center gap-2 text-sm font-medium">
+																<ChevronRight class="w-3 h-3 transition-transform group-data-[state=open]:rotate-90" />
+																Stack Trace
+															</div>
+														</Accordion.ItemTrigger>
+														<Accordion.ItemContent class="px-2 pb-2">
+															<div class="mt-2 p-3 bg-surface-100-900 rounded-base">
+																<pre class="text-xs whitespace-pre-wrap break-words font-mono">{stripAnsi(result.stackTrace)}</pre>
+															</div>
+														</Accordion.ItemContent>
+													</Accordion.Item>
+												{/if}
+											</Accordion>
+										</div>
+									{/if}
 
-								{#if result.errorMessage}
-									<div class="mt-2 p-3 bg-error-500/10 rounded-base">
-										<p class="text-sm text-error-500 whitespace-pre-wrap break-words">{stripAnsi(result.errorMessage)}</p>
-									</div>
-								{/if}
-
-								<!-- AI Diagnosis for Failed Tests -->
-								{#if result.status === 'FAILED'}
-									<div class="mt-3 pt-3 border-t border-surface-200-700">
-										{#if !aiDiagnoses.has(result.id) && !loadingDiagnosis.has(result.id)}
-											<button
-												onclick={() => getDiagnosis(result.id)}
-												class="btn preset-tonal-primary-500 btn-sm"
-											>
-												<Sparkles class="h-4 w-4" />
-												Get AI Diagnosis
-											</button>
-										{:else if loadingDiagnosis.has(result.id)}
-											<div class="flex items-center gap-2 text-sm text-primary-500">
-												<Loader2 class="h-4 w-4 animate-spin" />
-												<span>Analyzing failure with AI...</span>
-											</div>
-										{:else if aiDiagnoses.has(result.id)}
-											<div class="rounded-container border-2 border-primary-500 bg-primary-50-950 p-3">
-												<div class="mb-2 flex items-center justify-between gap-2">
-													<div class="flex items-center gap-2">
-														<Sparkles class="h-4 w-4 text-primary-500" />
-														<h5 class="text-sm font-semibold text-primary-500">AI Diagnosis</h5>
-														{#if aiDiagnoses.get(result.id)?.cached}
-															<span class="text-xs text-surface-500">(cached)</span>
-														{/if}
+									<!-- AI Diagnosis for Failed Tests -->
+									{#if result.status === 'FAILED'}
+										<div class="mt-3 pt-3 border-t border-surface-200-700">
+											{#if !aiDiagnoses.has(result.id) && !loadingDiagnosis.has(result.id)}
+												<button
+													onclick={() => getDiagnosis(result.id)}
+													class="btn preset-tonal-primary-500 btn-sm"
+												>
+													<Sparkles class="h-4 w-4" />
+													Get AI Diagnosis
+												</button>
+											{:else if loadingDiagnosis.has(result.id)}
+												<div class="flex items-center gap-2 text-sm text-primary-500">
+													<Loader2 class="h-4 w-4 animate-spin" />
+													<span>Analyzing failure with AI...</span>
+												</div>
+											{:else if aiDiagnoses.has(result.id)}
+												<div class="rounded-container border-2 border-primary-500 bg-primary-50-950 p-3">
+													<div class="mb-2 flex items-center justify-between gap-2">
+														<div class="flex items-center gap-2">
+															<Sparkles class="h-4 w-4 text-primary-500" />
+															<h5 class="text-sm font-semibold text-primary-500">AI Diagnosis</h5>
+															{#if aiDiagnoses.get(result.id)?.cached}
+																<span class="text-xs text-surface-500">(cached)</span>
+															{/if}
+														</div>
+														<button
+															onclick={() => getDiagnosis(result.id, true)}
+															class="btn btn-sm preset-tonal-primary-500"
+															title="Regenerate diagnosis"
+															disabled={loadingDiagnosis.has(result.id)}
+														>
+															<Sparkles class="h-3 w-3" />
+															Regenerate
+														</button>
 													</div>
-													<button
-														onclick={() => getDiagnosis(result.id, true)}
-														class="btn btn-sm preset-tonal-primary-500"
-														title="Regenerate diagnosis"
-														disabled={loadingDiagnosis.has(result.id)}
-													>
-														<Sparkles class="h-3 w-3" />
-														Regenerate
-													</button>
+													<div class="prose prose-sm max-w-none whitespace-pre-wrap text-xs">
+														{aiDiagnoses.get(result.id)?.diagnosis}
+													</div>
 												</div>
-												<div class="prose prose-sm max-w-none whitespace-pre-wrap text-xs">
-													{aiDiagnoses.get(result.id)?.diagnosis}
-												</div>
-											</div>
-										{/if}
-									</div>
-								{/if}
+											{/if}
+										</div>
+									{/if}
 
-								{#if result.attachments && result.attachments.length > 0}
-									<div class="mt-3 pt-3 border-t border-surface-200-700">
-										<AttachmentViewer attachments={result.attachments} />
-									</div>
-								{/if}
-							</div>
+									{#if result.attachments && result.attachments.length > 0}
+										<div class="mt-3 pt-3 border-t border-surface-200-700">
+											<AttachmentViewer attachments={result.attachments} />
+										</div>
+									{/if}
+								</Accordion.ItemContent>
+							</Accordion.Item>
 						{/each}
-					</div>
+					</Accordion>
 
 					<!-- Load More Button -->
 					<div class="mt-4">

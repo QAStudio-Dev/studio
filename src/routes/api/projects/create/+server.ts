@@ -2,6 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { requireAuth } from '$lib/server/auth';
+import { generateProjectId } from '$lib/server/ids';
 
 /**
  * Create a new project
@@ -86,9 +87,10 @@ export const POST: RequestHandler = async (event) => {
 		}
 	}
 
-	// Create the project
+	// Create the project with short ID
 	const project = await db.project.create({
 		data: {
+			id: generateProjectId(),
 			name,
 			description,
 			key,

@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import type { RequestHandler } from './$types';
+import { generateTestRunId } from '$lib/server/ids';
 
 // GET /api/projects/[projectId]/test-runs - List test runs for project
 export const GET: RequestHandler = async ({ params, url }) => {
@@ -74,6 +75,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
 
 		const testRun = await db.testRun.create({
 			data: {
+				id: generateTestRunId(),
 				name,
 				description,
 				projectId: params.projectId,

@@ -9,13 +9,33 @@ import type {
 	ErrorResponse
 } from '$lib/api/schemas';
 
-// GET /api/projects - List all projects
+// GET /api/projects - List all projects the user has access to
 export const GET: RequestHandler = async (event) => {
 	try {
 		// Require authentication
-		await requireAuth(event);
+		const userId = await requireAuth(event);
 
+		// Get user with team info to determine access
+		const user = await db.user.findUnique({
+			where: { id: userId },
+			select: { teamId: true }
+		});
+
+		if (!user) {
+			const errorResponse: ErrorResponse = { error: 'User not found' };
+			return json(errorResponse, { status: 404 });
+		}
+
+		// Get projects the user has access to:
+		// - Projects created by the user
+		// - Projects belonging to the user's team (if they have one)
 		const projects = await db.project.findMany({
+			where: {
+				OR: [
+					{ createdBy: userId },
+					...(user.teamId ? [{ teamId: user.teamId }] : [])
+				]
+			},
 			orderBy: { createdAt: 'desc' },
 			include: {
 				_count: {

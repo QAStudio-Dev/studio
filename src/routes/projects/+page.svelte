@@ -177,7 +177,7 @@
 						{/if}
 					</button>
 
-					<a href="/projects/{project.id}" class="block">
+					<a href="/projects/{project.id}/runs" class="block">
 						<div class="flex items-start justify-between mb-4">
 							<div class="flex items-center gap-3">
 								<div class="p-2 rounded-container bg-primary-500/10 group-hover:bg-primary-500/20 transition-colors">

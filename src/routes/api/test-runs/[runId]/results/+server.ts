@@ -132,6 +132,7 @@ export const GET: RequestHandler = async (event) => {
 					email: true
 				}
 			},
+			attachments: true,
 			_count: {
 				select: {
 					attachments: true

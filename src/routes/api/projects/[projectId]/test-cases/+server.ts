@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { requireAuth } from '$lib/server/auth';
 import type { CreateTestCaseBody } from '$lib/api/schemas';
+import { generateTestCaseId } from '$lib/server/ids';
 
 /**
  * Create a new test case
@@ -68,9 +69,10 @@ export const POST: RequestHandler = async (event) => {
 		}
 	}
 
-	// Create the test case
+	// Create the test case with short ID
 	const testCase = await db.testCase.create({
 		data: {
+			id: generateTestCaseId(),
 			title,
 			description,
 			preconditions,

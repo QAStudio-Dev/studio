@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import type { RequestHandler } from './$types';
+import { generateEnvironmentId } from '$lib/server/ids';
 
 // GET /api/projects/[projectId]/environments - List environments for project
 export const GET: RequestHandler = async ({ params }) => {
@@ -33,6 +34,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
 
 		const environment = await db.environment.create({
 			data: {
+				id: generateEnvironmentId(),
 				name,
 				description,
 				projectId: params.projectId

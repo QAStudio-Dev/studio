@@ -24,27 +24,6 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 				include: {
 					members: true
 				}
-			},
-			testSuites: {
-				// Get ALL suites (we'll handle hierarchy on client)
-				include: {
-					testCases: {
-						orderBy: {
-							order: 'asc'
-						}
-					}
-				},
-				orderBy: {
-					order: 'asc'
-				}
-			},
-			testCases: {
-				where: {
-					suiteId: null // Cases without a suite
-				},
-				orderBy: {
-					order: 'asc'
-				}
 			}
 		}
 	});
@@ -80,21 +59,100 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	}
 
 	// Get stats
+	const totalTestRuns = await db.testRun.count({
+		where: { projectId: project.id }
+	});
+
+	// Calculate pass rate based on completed runs
+	const completedRuns = await db.testRun.findMany({
+		where: {
+			projectId: project.id,
+			status: 'COMPLETED'
+		},
+		include: {
+			_count: {
+				select: {
+					results: true
+				}
+			}
+		}
+	});
+
+	let totalResults = 0;
+	let passedResults = 0;
+
+	for (const run of completedRuns) {
+		const runPassedCount = await db.testResult.count({
+			where: {
+				testRunId: run.id,
+				status: 'PASSED'
+			}
+		});
+		totalResults += run._count.results;
+		passedResults += runPassedCount;
+	}
+
 	const stats = {
 		totalTestCases: await db.testCase.count({
 			where: { projectId: project.id }
 		}),
-		totalTestRuns: await db.testRun.count({
-			where: { projectId: project.id }
-		}),
+		totalTestRuns,
+		passedResults,
+		totalResults,
 		totalSuites: await db.testSuite.count({
 			where: { projectId: project.id }
 		})
 	};
 
+	// Get recent test runs
+	const recentRuns = await db.testRun.findMany({
+		where: { projectId: project.id },
+		include: {
+			environment: true,
+			milestone: true,
+			_count: {
+				select: {
+					results: true
+				}
+			}
+		},
+		orderBy: { createdAt: 'desc' },
+		take: 5
+	});
+
+	// Calculate passed/failed counts for each run
+	const recentRunsWithCounts = await Promise.all(
+		recentRuns.map(async (run) => {
+			const passedResults = await db.testResult.count({
+				where: {
+					testRunId: run.id,
+					status: 'PASSED'
+				}
+			});
+
+			const failedResults = await db.testResult.count({
+				where: {
+					testRunId: run.id,
+					status: 'FAILED'
+				}
+			});
+
+			return {
+				...run,
+				_count: {
+					...run._count,
+					totalResults: run._count.results,
+					passedResults,
+					failedResults
+				}
+			};
+		})
+	);
+
 	return {
 		project,
 		stats,
+		recentRuns: recentRunsWithCounts,
 		currentUser: user
 	};
 };

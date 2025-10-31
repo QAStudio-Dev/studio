@@ -26,9 +26,13 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import ErrorDisplay from '$lib/components/ErrorDisplay.svelte';
+	import AttachmentViewer from '$lib/components/AttachmentViewer.svelte';
 
 	let { data } = $props();
 	let { testRun, stats } = $derived(data);
+
+	// Get projectId from URL (reactively)
+	let projectId = $derived($page.params.projectId);
 
 	// State
 	let testResults = $state<any[]>([]);
@@ -322,7 +326,7 @@
 	<!-- Back Button -->
 	<button
 		class="text-surface-600-300 hover:text-primary-500 mb-4 flex items-center gap-2 transition-colors"
-		onclick={() => goto('/test-runs')}
+		onclick={() => goto(`/projects/${projectId}/runs`)}
 	>
 		<ArrowLeft class="h-4 w-4" />
 		<span>Back to Test Runs</span>
@@ -689,50 +693,67 @@
 													</div>
 												{/if}
 
-												<!-- AI Diagnosis (only for failed tests) - Show BEFORE error details -->
+												<!-- Action Buttons Row (for failed tests) -->
 												{#if result.status === 'FAILED'}
-													<div>
+													<div class="flex gap-2">
 														{#if !aiDiagnoses.has(result.id) && !loadingDiagnosis.has(result.id)}
 															<button
 																onclick={() => getDiagnosis(result.id)}
-																class="btn preset-filled-primary-500 w-full"
+																class="btn preset-tonal-primary flex-1"
 															>
-																<Sparkles class="h-5 w-5" />
-																<span class="font-semibold">Get AI Diagnosis</span>
+																<Sparkles class="h-4 w-4" />
+																Get AI Diagnosis
 															</button>
-														{:else if loadingDiagnosis.has(result.id)}
-															<div class="rounded-container border border-primary-200-800 bg-primary-50-950 p-4">
-																<div class="flex items-center gap-3 text-primary-500">
-																	<Loader2 class="h-5 w-5 animate-spin" />
-																	<span class="font-medium">Analyzing failure with AI...</span>
-																</div>
-															</div>
-														{:else if aiDiagnoses.has(result.id)}
-															<div class="rounded-container border-2 border-primary-500 bg-primary-50-950 p-4">
-																<div class="mb-3 flex items-center justify-between gap-2">
-																	<div class="flex items-center gap-2">
-																		<Sparkles class="h-5 w-5 text-primary-500" />
-																		<h5 class="font-semibold text-primary-500">AI Diagnosis</h5>
-																		{#if aiDiagnoses.get(result.id)?.cached}
-																			<span class="text-xs text-surface-500">(cached)</span>
-																		{/if}
-																	</div>
-																	<button
-																		onclick={() => getDiagnosis(result.id, true)}
-																		class="btn btn-sm preset-tonal-primary-500"
-																		title="Regenerate diagnosis"
-																		disabled={loadingDiagnosis.has(result.id)}
-																	>
-																		<Sparkles class="h-4 w-4" />
-																		Regenerate
-																	</button>
-																</div>
-																<div class="prose prose-sm max-w-none whitespace-pre-wrap text-sm">
-																	{aiDiagnoses.get(result.id)?.diagnosis}
-																</div>
+														{/if}
+														{#if result.attachments && result.attachments.length > 0}
+															<div class="flex-1">
+																<AttachmentViewer attachments={result.attachments} />
 															</div>
 														{/if}
+														<a
+															href="/projects/{projectId}/cases/{result.testCase.id}"
+															class="btn preset-tonal-tertiary flex-1"
+														>
+															<FileText class="h-4 w-4" />
+															View Test Case
+														</a>
 													</div>
+												{/if}
+
+												<!-- AI Diagnosis Display (when loaded) -->
+												{#if result.status === 'FAILED'}
+													{#if loadingDiagnosis.has(result.id)}
+														<div class="rounded-container border border-primary-200-800 bg-primary-50-950 p-4">
+															<div class="flex items-center gap-3 text-primary-500">
+																<Loader2 class="h-5 w-5 animate-spin" />
+																<span class="font-medium">Analyzing failure with AI...</span>
+															</div>
+														</div>
+													{:else if aiDiagnoses.has(result.id)}
+														<div class="rounded-container border-2 border-primary-500 bg-primary-50-950 p-4">
+															<div class="mb-3 flex items-center justify-between gap-2">
+																<div class="flex items-center gap-2">
+																	<Sparkles class="h-5 w-5 text-primary-500" />
+																	<h5 class="font-semibold text-primary-500">AI Diagnosis</h5>
+																	{#if aiDiagnoses.get(result.id)?.cached}
+																		<span class="text-xs text-surface-500">(cached)</span>
+																	{/if}
+																</div>
+																<button
+																	onclick={() => getDiagnosis(result.id, true)}
+																	class="btn btn-sm preset-tonal-primary-500"
+																	title="Regenerate diagnosis"
+																	disabled={loadingDiagnosis.has(result.id)}
+																>
+																	<Sparkles class="h-4 w-4" />
+																	Regenerate
+																</button>
+															</div>
+															<div class="prose prose-sm max-w-none whitespace-pre-wrap text-sm">
+																{aiDiagnoses.get(result.id)?.diagnosis}
+															</div>
+														</div>
+													{/if}
 												{/if}
 
 												<!-- Error Details -->
@@ -760,15 +781,23 @@
 													<span>• {formatDate(result.executedAt)}</span>
 												</div>
 
-												<!-- View Full Details Button -->
-												<div class="flex gap-2">
-													<a
-														href="/test-cases/{result.testCase.id}"
-														class="btn preset-filled-surface-500 btn-sm"
-													>
-														View Test Case
-													</a>
-												</div>
+												<!-- View Test Case Button (for non-failed tests) -->
+												{#if result.status !== 'FAILED'}
+													<div class="flex gap-2">
+														{#if result.attachments && result.attachments.length > 0}
+															<div class="flex-1">
+																<AttachmentViewer attachments={result.attachments} />
+															</div>
+														{/if}
+														<a
+															href="/projects/{projectId}/cases/{result.testCase.id}"
+															class="btn preset-tonal-tertiary flex-1"
+														>
+															<FileText class="h-4 w-4" />
+															View Test Case
+														</a>
+													</div>
+												{/if}
 											</div>
 										</div>
 									{/if}

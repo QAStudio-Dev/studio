@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { Download, FileImage, FileVideo, FileArchive, File, X, Maximize2, ChevronDown, ChevronUp } from 'lucide-svelte';
+	import { Download, FileImage, FileVideo, FileArchive, File, Image as ImageIcon } from 'lucide-svelte';
+	import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
 	import { marked } from 'marked';
 	import { onMount } from 'svelte';
 
@@ -12,13 +13,10 @@
 			size: number;
 			url: string;
 		}>;
-		inline?: boolean; // Show inline previews when expanded
-		defaultExpanded?: boolean; // Whether attachments are shown by default
 	}
 
-	let { attachments, inline = true, defaultExpanded = false }: Props = $props();
-	let expandedAttachment = $state<string | null>(null);
-	let isExpanded = $state(defaultExpanded);
+	let { attachments }: Props = $props();
+	let selectedAttachment = $state<string | null>(null);
 	let markdownContents = $state<Record<string, string>>({});
 	let loadingMarkdown = $state<Record<string, boolean>>({});
 
@@ -30,21 +28,10 @@
 		});
 	});
 
-	// Load markdown content when attachments are expanded and visible
-	$effect(() => {
-		if (isExpanded && inline) {
-			attachments.forEach(attachment => {
-				if (isMarkdown(attachment.mimeType) && !markdownContents[attachment.id] && !loadingMarkdown[attachment.id]) {
-					loadMarkdownContent(attachment.id);
-				}
-			});
-		}
-	});
-
 	// Load markdown content when modal is opened for a markdown file
 	$effect(() => {
-		if (expandedAttachment) {
-			const attachment = attachments.find(a => a.id === expandedAttachment);
+		if (selectedAttachment) {
+			const attachment = attachments.find(a => a.id === selectedAttachment);
 			if (attachment && isMarkdown(attachment.mimeType) && !markdownContents[attachment.id] && !loadingMarkdown[attachment.id]) {
 				loadMarkdownContent(attachment.id);
 			}
@@ -111,205 +98,146 @@
 		}
 	}
 
-	function expandAttachment(attachmentId: string) {
-		expandedAttachment = attachmentId;
-	}
-
-	function closeExpanded() {
-		expandedAttachment = null;
+	function selectAttachment(attachmentId: string) {
+		selectedAttachment = attachmentId;
 	}
 </script>
 
 {#if attachments && attachments.length > 0}
-	<div class="space-y-3">
-		<!-- Toggle Header -->
-		<button
-			onclick={() => isExpanded = !isExpanded}
-			class="flex items-center gap-2 text-sm font-semibold hover:text-primary-500 transition-colors w-full"
-		>
-			{#if isExpanded}
-				<ChevronUp class="w-4 h-4" />
-			{:else}
-				<ChevronDown class="w-4 h-4" />
-			{/if}
-			<span>Attachments ({attachments.length})</span>
-		</button>
+	<Dialog>
+		<Dialog.Trigger class="btn preset-tonal-secondary w-full">
+			<ImageIcon class="w-4 h-4" />
+			View Attachments ({attachments.length})
+		</Dialog.Trigger>
 
-		{#if isExpanded}
-			<div class="space-y-4">
-				{#each attachments as attachment}
-				<div class="card p-4">
-					<!-- Header -->
-					<div class="flex items-start justify-between gap-3 mb-3">
-						<div class="flex items-center gap-3 flex-1 min-w-0">
-							<div class="text-surface-600-300">
-								<svelte:component this={getAttachmentIcon(attachment.mimeType)} class="w-5 h-5" />
-							</div>
-							<div class="flex-1 min-w-0">
-								<div class="text-sm font-medium truncate" title={attachment.originalName}>
-									{attachment.originalName}
-								</div>
-								<div class="text-xs text-surface-600-300 mt-1">
-									{getAttachmentType(attachment.mimeType)} • {formatBytes(attachment.size)}
-								</div>
-							</div>
-						</div>
+		<Portal>
+			<Dialog.Backdrop class="fixed inset-0 z-50 bg-surface-50-950/80 backdrop-blur-sm" />
+			<Dialog.Positioner class="fixed inset-0 z-50 flex justify-center items-center p-4">
+				<Dialog.Content class="card bg-surface-100-900 w-full max-w-5xl max-h-[90vh] p-6 space-y-4 shadow-xl overflow-hidden flex flex-col">
+					<Dialog.Title class="text-2xl font-bold">Attachments ({attachments.length})</Dialog.Title>
 
-						<!-- Actions -->
-						<div class="flex gap-2">
-							{#if isViewable(attachment.mimeType) && inline}
-								<button
-									onclick={() => expandAttachment(attachment.id)}
-									class="btn btn-sm preset-tonal"
-									title="Expand"
-								>
-									<Maximize2 class="w-4 h-4" />
-								</button>
-							{/if}
-							<a
-								href="/api/attachments/{attachment.id}"
-								download={attachment.originalName}
-								class="btn btn-sm variant-ghost"
-								title="Download {attachment.originalName}"
-							>
-								<Download class="w-4 h-4" />
-							</a>
-						</div>
+					<div class="flex-1 overflow-y-auto space-y-3">
+						{#each attachments as attachment}
+							<div class="card p-4 bg-surface-50-950">
+								<div class="flex items-start justify-between gap-3">
+									<div class="flex items-center gap-3 flex-1 min-w-0">
+										<div class="text-surface-600-300">
+											<svelte:component this={getAttachmentIcon(attachment.mimeType)} class="w-5 h-5" />
+										</div>
+										<div class="flex-1 min-w-0">
+											<div class="text-sm font-medium truncate" title={attachment.originalName}>
+												{attachment.originalName}
+											</div>
+											<div class="text-xs text-surface-600-300 mt-1">
+												{getAttachmentType(attachment.mimeType)} • {formatBytes(attachment.size)}
+											</div>
+										</div>
+									</div>
+
+									<div class="flex gap-2">
+										{#if isViewable(attachment.mimeType)}
+											<button
+												onclick={() => selectAttachment(attachment.id)}
+												class="btn btn-sm preset-tonal-primary-500"
+												title="View {attachment.originalName}"
+											>
+												<ImageIcon class="w-4 h-4" />
+												View
+											</button>
+										{/if}
+										<a
+											href="/api/attachments/{attachment.id}"
+											download={attachment.originalName}
+											class="btn btn-sm preset-tonal-surface-500"
+											title="Download {attachment.originalName}"
+										>
+											<Download class="w-4 h-4" />
+										</a>
+									</div>
+								</div>
+							</div>
+						{/each}
 					</div>
 
-					<!-- Inline Preview -->
-					{#if inline && isImage(attachment.mimeType)}
-						<div class="rounded-container overflow-hidden bg-surface-900-50 border border-surface-200-700">
-							<img
-								src="/api/attachments/{attachment.id}"
-								alt={attachment.originalName}
-								class="w-full h-auto max-h-96 object-contain cursor-pointer"
-								onclick={() => expandAttachment(attachment.id)}
-							/>
-						</div>
-					{:else if inline && isVideo(attachment.mimeType)}
-						<div class="rounded-container overflow-hidden bg-surface-900-50 border border-surface-200-700">
-							<video
-								src="/api/attachments/{attachment.id}"
-								controls
-								class="w-full h-auto max-h-96"
-								preload="metadata"
-							>
-								<track kind="captions" />
-								Your browser does not support the video tag.
-							</video>
-						</div>
-					{:else if inline && isMarkdown(attachment.mimeType)}
-						<div class="rounded-container overflow-hidden bg-surface-900-50 border border-surface-200-700 p-4">
-							{#if loadingMarkdown[attachment.id]}
-								<div class="text-center py-4 text-surface-600-300">
-									<div class="inline-block animate-spin w-5 h-5 border-2 border-current border-t-transparent rounded-full"></div>
-									<span class="ml-2">Loading...</span>
-								</div>
-							{:else if markdownContents[attachment.id]}
-								<div class="prose prose-sm dark:prose-invert max-w-none">
-									{@html marked.parse(markdownContents[attachment.id])}
-								</div>
-							{/if}
-						</div>
-					{:else if !isViewable(attachment.mimeType)}
-						<a
-							href="/api/attachments/{attachment.id}"
-							download={attachment.originalName}
-							class="block p-4 text-center border-2 border-dashed border-surface-300-600 rounded-container hover:border-primary-500 transition-colors"
-						>
-							<div class="text-surface-600-300 mb-2">
-								<svelte:component this={getAttachmentIcon(attachment.mimeType)} class="w-8 h-8 mx-auto" />
-							</div>
-							<div class="text-sm text-surface-600-300">
-								Click to download
-							</div>
-						</a>
-					{/if}
-				</div>
-			{/each}
-			</div>
-		{/if}
-	</div>
+					<Dialog.CloseTrigger class="btn preset-filled-surface-500">Close</Dialog.CloseTrigger>
+				</Dialog.Content>
+			</Dialog.Positioner>
+		</Portal>
+	</Dialog>
 
-	<!-- Expanded View Modal -->
-	{#if expandedAttachment}
-		{@const attachment = attachments.find((a) => a.id === expandedAttachment)}
+	<!-- Full screen attachment viewer -->
+	{#if selectedAttachment}
+		{@const attachment = attachments.find((a) => a.id === selectedAttachment)}
 		{#if attachment}
-			<!-- Backdrop -->
-			<button
-				onclick={closeExpanded}
-				class="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm cursor-pointer"
-				aria-label="Close expanded view"
-			></button>
+			<Dialog open={!!selectedAttachment} onOpenChange={() => selectedAttachment = null}>
+				<Portal>
+					<Dialog.Backdrop class="fixed inset-0 z-[60] bg-black/95 backdrop-blur-sm" />
+					<Dialog.Positioner class="fixed inset-0 z-[60] flex justify-center items-center p-4">
+						<Dialog.Content class="relative max-w-7xl w-full max-h-[95vh] flex flex-col">
+							<div class="bg-surface-50-950 rounded-container shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
+								<!-- Content -->
+								<div class="flex-1 overflow-auto flex items-center justify-center bg-black/50">
+									{#if isImage(attachment.mimeType)}
+										<img
+											src="/api/attachments/{attachment.id}"
+											alt={attachment.originalName}
+											class="max-h-full max-w-full object-contain"
+										/>
+									{:else if isVideo(attachment.mimeType)}
+										<video
+											src="/api/attachments/{attachment.id}"
+											controls
+											autoplay
+											class="max-h-full max-w-full"
+										>
+											<track kind="captions" />
+											Your browser does not support the video tag.
+										</video>
+									{:else if isMarkdown(attachment.mimeType)}
+										<div class="max-w-4xl w-full overflow-auto p-8 bg-surface-100-900">
+											{#if loadingMarkdown[attachment.id]}
+												<div class="text-center py-8 text-surface-600-300">
+													<div class="inline-block animate-spin w-6 h-6 border-2 border-current border-t-transparent rounded-full"></div>
+													<span class="ml-2">Loading markdown...</span>
+												</div>
+											{:else if markdownContents[attachment.id]}
+												<div class="prose prose-sm dark:prose-invert max-w-none">
+													{@html marked.parse(markdownContents[attachment.id])}
+												</div>
+											{/if}
+										</div>
+									{/if}
+								</div>
 
-			<!-- Modal Content -->
-			<div class="fixed inset-0 z-[60] flex items-center justify-center p-4 pointer-events-none">
-				<div class="relative max-w-7xl max-h-full pointer-events-auto">
-					<!-- Close Button -->
-					<button
-						onclick={closeExpanded}
-						class="absolute -top-12 right-0 btn preset-filled text-white hover:bg-white/20"
-						aria-label="Close"
-					>
-						<X class="w-5 h-5" />
-					</button>
-
-					<!-- Content -->
-					<div class="bg-surface-50-950 rounded-container shadow-2xl overflow-hidden">
-						{#if isImage(attachment.mimeType)}
-							<img
-								src="/api/attachments/{attachment.id}"
-								alt={attachment.originalName}
-								class="max-h-[85vh] max-w-full object-contain"
-							/>
-						{:else if isVideo(attachment.mimeType)}
-							<video
-								src="/api/attachments/{attachment.id}"
-								controls
-								autoplay
-								class="max-h-[85vh] max-w-full"
-							>
-								<track kind="captions" />
-								Your browser does not support the video tag.
-							</video>
-						{:else if isMarkdown(attachment.mimeType)}
-							<div class="max-h-[85vh] max-w-4xl overflow-auto p-8">
-								{#if loadingMarkdown[attachment.id]}
-									<div class="text-center py-8 text-surface-600-300">
-										<div class="inline-block animate-spin w-6 h-6 border-2 border-current border-t-transparent rounded-full"></div>
-										<span class="ml-2">Loading markdown...</span>
-									</div>
-								{:else if markdownContents[attachment.id]}
-									<div class="prose prose-sm dark:prose-invert max-w-none">
-										{@html marked.parse(markdownContents[attachment.id])}
-									</div>
-								{/if}
-							</div>
-						{/if}
-
-						<!-- Info Bar -->
-						<div class="p-4 border-t border-surface-200-700">
-							<div class="flex items-center justify-between gap-4">
-								<div class="flex-1 min-w-0">
-									<div class="text-sm font-medium truncate">{attachment.originalName}</div>
-									<div class="text-xs text-surface-600-300">
-										{getAttachmentType(attachment.mimeType)} • {formatBytes(attachment.size)}
+								<!-- Info Bar -->
+								<div class="p-4 border-t border-surface-200-700 bg-surface-100-900">
+									<div class="flex items-center justify-between gap-4">
+										<div class="flex-1 min-w-0">
+											<div class="text-sm font-medium truncate">{attachment.originalName}</div>
+											<div class="text-xs text-surface-600-300">
+												{getAttachmentType(attachment.mimeType)} • {formatBytes(attachment.size)}
+											</div>
+										</div>
+										<div class="flex gap-2">
+											<a
+												href="/api/attachments/{attachment.id}"
+												download={attachment.originalName}
+												class="btn btn-sm preset-filled-primary-500"
+											>
+												<Download class="w-4 h-4" />
+												Download
+											</a>
+											<Dialog.CloseTrigger class="btn btn-sm preset-filled-surface-500">
+												Close
+											</Dialog.CloseTrigger>
+										</div>
 									</div>
 								</div>
-								<a
-									href="/api/attachments/{attachment.id}"
-									download={attachment.originalName}
-									class="btn btn-sm preset-filled-primary-500"
-								>
-									<Download class="w-4 h-4" />
-									Download
-								</a>
 							</div>
-						</div>
-					</div>
-				</div>
-			</div>
+						</Dialog.Content>
+					</Dialog.Positioner>
+				</Portal>
+			</Dialog>
 		{/if}
 	{/if}
 {/if}

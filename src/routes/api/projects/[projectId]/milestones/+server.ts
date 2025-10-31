@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import type { RequestHandler } from './$types';
+import { generateMilestoneId } from '$lib/server/ids';
 
 // GET /api/projects/[projectId]/milestones - List milestones for project
 export const GET: RequestHandler = async ({ params }) => {
@@ -33,6 +34,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
 
 		const milestone = await db.milestone.create({
 			data: {
+				id: generateMilestoneId(),
 				name,
 				description,
 				dueDate: dueDate ? new Date(dueDate) : null,

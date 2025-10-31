@@ -16,9 +16,13 @@
 	import { goto } from '$app/navigation';
 	import { page as pageStore } from '$app/stores';
 
+	// Get projectId from URL (reactively)
+	let projectId = $derived($pageStore.params.projectId);
+
 	// State
 	let testRuns = $state<any[]>([]);
 	let loading = $state(true);
+	let initialLoad = $state(true);
 	let page = $state(1);
 	let limit = $state(20);
 	let total = $state(0);
@@ -81,15 +85,12 @@
 
 	// Load data on mount
 	onMount(() => {
-		// Check for projectId in URL params
-		const urlParams = new URLSearchParams(window.location.search);
-		const projectIdParam = urlParams.get('projectId');
-		if (projectIdParam) {
-			selectedProject = projectIdParam;
-		}
+		// Set selectedProject to the projectId from URL
+		selectedProject = projectId;
 
 		fetchTestRuns();
 		fetchProjects();
+		initialLoad = false;
 	});
 
 	// Watch for filter changes
@@ -103,7 +104,8 @@
 
 	// Watch for page changes
 	$effect(() => {
-		if (page > 1) {
+		// Fetch when page changes (but not on initial load which is handled by onMount)
+		if (!initialLoad && page >= 1) {
 			fetchTestRuns();
 		}
 	});
@@ -119,7 +121,7 @@
 
 	// Navigate to test run detail
 	function viewTestRun(runId: string) {
-		goto(`/test-runs/${runId}`);
+		goto(`/projects/${projectId}/runs/${runId}`);
 	}
 
 	// Pagination
