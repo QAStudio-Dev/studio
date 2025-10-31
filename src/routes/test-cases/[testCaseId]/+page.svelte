@@ -10,7 +10,9 @@
 		XCircle,
 		AlertCircle,
 		Edit,
-		ArrowLeft
+		ArrowLeft,
+		Sparkles,
+		Loader2
 	} from 'lucide-svelte';
 	import { Avatar } from '@skeletonlabs/skeleton-svelte';
 	import AttachmentViewer from '$lib/components/AttachmentViewer.svelte';
@@ -31,6 +33,11 @@
 	let resultsPage = $state(1);
 	let loadingMore = $state(false);
 	let hasMoreResults = $state(testCase.results.length === 10); // Initial load is 10
+
+	// AI Diagnosis state
+	let aiDiagnoses = $state<Map<string, { diagnosis: string; generatedAt?: Date; cached?: boolean }>>(new Map());
+	let loadingDiagnosis = $state<Set<string>>(new Set());
+	let expandedResults = $state<Set<string>>(new Set());
 
 	async function loadMoreResults() {
 		if (loadingMore || !hasMoreResults) return;
@@ -96,6 +103,46 @@
 			LOW: 'preset-filled-surface-500'
 		};
 		return colors[priority] || 'preset-filled-surface-500';
+	}
+
+	function toggleResult(resultId: string) {
+		if (expandedResults.has(resultId)) {
+			expandedResults.delete(resultId);
+		} else {
+			expandedResults.add(resultId);
+		}
+		expandedResults = new Set(expandedResults);
+	}
+
+	// AI Diagnosis for failed tests
+	async function getDiagnosis(resultId: string, regenerate = false) {
+		if (aiDiagnoses.has(resultId) && !regenerate) return;
+
+		loadingDiagnosis.add(resultId);
+		loadingDiagnosis = new Set(loadingDiagnosis);
+
+		try {
+			const res = await fetch('/api/ai/diagnose-test', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ testResultId: resultId, regenerate })
+			});
+
+			if (!res.ok) {
+				const errorData = await res.json();
+				throw new Error(errorData.message || 'Failed to get AI diagnosis');
+			}
+
+			const { diagnosis, generatedAt, cached } = await res.json();
+			aiDiagnoses.set(resultId, { diagnosis, generatedAt, cached });
+			aiDiagnoses = new Map(aiDiagnoses);
+		} catch (err: any) {
+			console.error(err);
+			alert(err.message || 'Failed to get AI diagnosis');
+		} finally {
+			loadingDiagnosis.delete(resultId);
+			loadingDiagnosis = new Set(loadingDiagnosis);
+		}
 	}
 </script>
 
@@ -227,6 +274,50 @@
 								{#if result.errorMessage}
 									<div class="mt-2 p-3 bg-error-500/10 rounded-base">
 										<p class="text-sm text-error-500 whitespace-pre-wrap break-words">{stripAnsi(result.errorMessage)}</p>
+									</div>
+								{/if}
+
+								<!-- AI Diagnosis for Failed Tests -->
+								{#if result.status === 'FAILED'}
+									<div class="mt-3 pt-3 border-t border-surface-200-700">
+										{#if !aiDiagnoses.has(result.id) && !loadingDiagnosis.has(result.id)}
+											<button
+												onclick={() => getDiagnosis(result.id)}
+												class="btn preset-tonal-primary-500 btn-sm"
+											>
+												<Sparkles class="h-4 w-4" />
+												Get AI Diagnosis
+											</button>
+										{:else if loadingDiagnosis.has(result.id)}
+											<div class="flex items-center gap-2 text-sm text-primary-500">
+												<Loader2 class="h-4 w-4 animate-spin" />
+												<span>Analyzing failure with AI...</span>
+											</div>
+										{:else if aiDiagnoses.has(result.id)}
+											<div class="rounded-container border-2 border-primary-500 bg-primary-50-950 p-3">
+												<div class="mb-2 flex items-center justify-between gap-2">
+													<div class="flex items-center gap-2">
+														<Sparkles class="h-4 w-4 text-primary-500" />
+														<h5 class="text-sm font-semibold text-primary-500">AI Diagnosis</h5>
+														{#if aiDiagnoses.get(result.id)?.cached}
+															<span class="text-xs text-surface-500">(cached)</span>
+														{/if}
+													</div>
+													<button
+														onclick={() => getDiagnosis(result.id, true)}
+														class="btn btn-sm preset-tonal-primary-500"
+														title="Regenerate diagnosis"
+														disabled={loadingDiagnosis.has(result.id)}
+													>
+														<Sparkles class="h-3 w-3" />
+														Regenerate
+													</button>
+												</div>
+												<div class="prose prose-sm max-w-none whitespace-pre-wrap text-xs">
+													{aiDiagnoses.get(result.id)?.diagnosis}
+												</div>
+											</div>
+										{/if}
 									</div>
 								{/if}
 

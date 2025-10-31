@@ -15,7 +15,11 @@ import { diagnoseFailedTest } from '$lib/server/openai';
  */
 export const POST: RequestHandler = async (event) => {
 	const userId = await requireAuth(event);
-	const { testResultId, regenerate } = await event.request.json();
+	const body = await event.request.json();
+	const { testResultId, regenerate: regenerateRaw } = body;
+
+	// Ensure regenerate is a boolean (false by default)
+	const regenerate = regenerateRaw === true;
 
 	if (!testResultId) {
 		throw error(400, { message: 'testResultId is required' });
@@ -57,7 +61,8 @@ export const POST: RequestHandler = async (event) => {
 					}
 				}
 			},
-			testRun: true
+			testRun: true,
+			attachments: true
 		}
 	});
 
@@ -100,6 +105,26 @@ export const POST: RequestHandler = async (event) => {
 
 		console.log(`[AI Diagnosis] ${regenerate ? 'Regenerating' : 'Generating'} diagnosis for test result: ${testResultId}`);
 
+		// Check for error-context.md attachment
+		let errorContext: string | undefined;
+		const errorContextAttachment = testResult.attachments?.find(att =>
+			att.originalName === 'error-context.md' || att.filename.includes('error-context')
+		);
+
+		if (errorContextAttachment) {
+			try {
+				console.log(`[AI Diagnosis] Found error-context attachment, fetching...`);
+				// Fetch the content from the URL
+				const response = await fetch(errorContextAttachment.url);
+				if (response.ok) {
+					errorContext = await response.text();
+					console.log(`[AI Diagnosis] Error context loaded: ${errorContext.length} chars`);
+				}
+			} catch (err) {
+				console.error('[AI Diagnosis] Failed to fetch error context:', err);
+			}
+		}
+
 		// Generate AI diagnosis
 		const diagnosis = await diagnoseFailedTest({
 			testCaseTitle: testResult.testCase.title,
@@ -107,7 +132,8 @@ export const POST: RequestHandler = async (event) => {
 			errorMessage: testResult.errorMessage || undefined,
 			stackTrace: testResult.stackTrace || undefined,
 			testType: testResult.testCase.type,
-			priority: testResult.testCase.priority
+			priority: testResult.testCase.priority,
+			errorContext
 		});
 
 		console.log(`[AI Diagnosis] Successfully generated diagnosis for test result: ${testResultId}`);

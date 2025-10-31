@@ -16,12 +16,16 @@ import { summarizeTestRun, analyzeFailurePatterns } from '$lib/server/openai';
 export const POST: RequestHandler = async (event) => {
 	const userId = await requireAuth(event);
 	const body = await event.request.json();
-	const { testRunId, regenerate } = body;
+	const { testRunId, regenerate: regenerateRaw } = body;
 
 	console.log('[AI Summary] Request body:', JSON.stringify(body));
 	console.log('[AI Summary] testRunId:', testRunId);
-	console.log('[AI Summary] regenerate type:', typeof regenerate);
-	console.log('[AI Summary] regenerate value:', regenerate);
+	console.log('[AI Summary] regenerate type:', typeof regenerateRaw);
+	console.log('[AI Summary] regenerate value:', regenerateRaw);
+
+	// Ensure regenerate is a boolean (false by default)
+	const regenerate = regenerateRaw === true;
+	console.log('[AI Summary] regenerate (normalized):', regenerate);
 
 	if (!testRunId) {
 		throw error(400, { message: 'testRunId is required' });

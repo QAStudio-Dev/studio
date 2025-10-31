@@ -16,8 +16,9 @@ export async function diagnoseFailedTest(params: {
 	stackTrace?: string;
 	testType: string;
 	priority: string;
+	errorContext?: string;
 }): Promise<string> {
-	const { testCaseTitle, testCaseDescription, errorMessage, stackTrace, testType, priority } =
+	const { testCaseTitle, testCaseDescription, errorMessage, stackTrace, testType, priority, errorContext } =
 		params;
 
 	const prompt = `You are an expert QA engineer analyzing a failed test. Provide a concise diagnosis of what went wrong and potential fixes.
@@ -29,12 +30,14 @@ Priority: ${priority}
 
 ${errorMessage ? `Error Message:\n${errorMessage}` : ''}
 ${stackTrace ? `\nStack Trace:\n${stackTrace.slice(0, 1000)}` : ''}
+${errorContext ? `\nError Context (Page Snapshot):\n${errorContext.slice(0, 2000)}` : ''}
 
 Provide:
 1. What likely went wrong (2-3 sentences)
 2. Potential root causes (2-3 bullet points)
 3. Suggested fixes (2-3 bullet points)
 
+${errorContext ? 'Use the error context to understand the page state when the failure occurred.' : ''}
 Keep your response concise and actionable.`;
 
 	try {
