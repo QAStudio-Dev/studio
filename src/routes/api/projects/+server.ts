@@ -12,7 +12,7 @@ import type {
 // GET /api/projects - List all projects the user has access to
 export const GET: RequestHandler = async (event) => {
 	try {
-		// Require authentication
+		// Require authentication (this also ensures user exists in DB)
 		const userId = await requireAuth(event);
 
 		// Get user with team info to determine access
@@ -21,21 +21,21 @@ export const GET: RequestHandler = async (event) => {
 			select: { teamId: true }
 		});
 
-		if (!user) {
-			const errorResponse: ErrorResponse = { error: 'User not found' };
-			return json(errorResponse, { status: 404 });
+		// Build the where clause for projects
+		const whereClause: any = {
+			OR: [{ createdBy: userId }]
+		};
+
+		// Add team projects if user has a team
+		if (user?.teamId) {
+			whereClause.OR.push({ teamId: user.teamId });
 		}
 
 		// Get projects the user has access to:
 		// - Projects created by the user
 		// - Projects belonging to the user's team (if they have one)
 		const projects = await db.project.findMany({
-			where: {
-				OR: [
-					{ createdBy: userId },
-					...(user.teamId ? [{ teamId: user.teamId }] : [])
-				]
-			},
+			where: whereClause,
 			orderBy: { createdAt: 'desc' },
 			include: {
 				_count: {

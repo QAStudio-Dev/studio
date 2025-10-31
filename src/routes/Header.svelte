@@ -2,12 +2,12 @@
 	import { page } from '$app/state';
 	import { SignedIn, SignedOut, SignInButton, UserButton } from 'svelte-clerk/client';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
-	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { Popover, usePopover } from '@skeletonlabs/skeleton-svelte';
 
 	let projects = $state<any[]>([]);
 	let selectedProjectId = $state<string | null>(null);
+	let projectsFetched = $state(false);
 
 	// Create popover instance
 	const popover = usePopover({ id: 'project-selector' });
@@ -22,19 +22,30 @@
 		}
 	});
 
-	// Fetch projects when component mounts
-	onMount(async () => {
+	// Fetch projects only when user is signed in
+	async function fetchProjects() {
+		if (projectsFetched) return;
+
 		try {
 			const response = await fetch('/api/projects');
 			if (response.ok) {
 				const data = await response.json();
-				// API returns projects array directly, not wrapped in {projects: [...]}
 				projects = Array.isArray(data) ? data : [];
+				projectsFetched = true;
 			}
 		} catch (error) {
 			console.error('Failed to fetch projects:', error);
+			projectsFetched = true;
 		}
-	});
+	}
+
+	// Svelte action to fetch projects when element mounts (only used within SignedIn)
+	function initProjectFetch(node: HTMLElement) {
+		fetchProjects();
+		return {
+			destroy() {}
+		};
+	}
 
 	function switchProject(projectId: string) {
 		goto(`/projects/${projectId}/runs`);
@@ -68,6 +79,7 @@
 
 				<!-- Project Selector (next to logo) -->
 				<SignedIn>
+					<div use:initProjectFetch>
 					<Popover.Provider value={popover}>
 						<Popover.Trigger
 							class="flex items-center gap-2 rounded-base border border-surface-300-700 px-3 py-1.5 transition-colors hover:bg-surface-200-800"
@@ -130,6 +142,7 @@
 							</Popover.Content>
 						</Popover.Positioner>
 					</Popover.Provider>
+				</div>
 				</SignedIn>
 
 				<!-- Main Navigation -->
@@ -193,21 +206,22 @@
 							Settings
 						</a>
 
-						<!-- API Docs -->
-						<a
-							href="/docs"
-							class="rounded-base px-4 py-2 transition-colors {isActive('/docs')
-								? 'bg-primary-500 text-white'
-								: 'hover:bg-surface-200-800'}"
-						>
-							API Docs
-						</a>
 					</SignedIn>
 				</nav>
 			</div>
 
 			<!-- Right Side Actions -->
 			<div class="flex items-center gap-4">
+				<!-- API Docs -->
+				<a
+					href="/docs"
+					class="rounded-base px-4 py-2 transition-colors {isActive('/docs')
+						? 'bg-primary-500 text-white'
+						: 'hover:bg-surface-200-800'}"
+				>
+					API Docs
+				</a>
+
 				<!-- Theme Toggle -->
 				<ThemeToggle />
 
