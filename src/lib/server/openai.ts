@@ -51,7 +51,6 @@ Keep your response concise and actionable.`;
 					content: prompt
 				}
 			],
-			temperature: 0.7,
 			max_completion_tokens: 500
 		});
 
@@ -119,7 +118,6 @@ Keep your response concise and actionable (under 300 words).`;
 					content: prompt
 				}
 			],
-			temperature: 0.7,
 			max_completion_tokens: 600
 		});
 
@@ -173,7 +171,6 @@ Be concise and focus on actionable insights.`;
 					content: prompt
 				}
 			],
-			temperature: 0.7,
 			max_completion_tokens: 500
 		});
 
