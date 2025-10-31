@@ -52,7 +52,7 @@ Keep your response concise and actionable.`;
 				}
 			],
 			temperature: 0.7,
-			max_tokens: 500
+			max_completion_tokens: 500
 		});
 
 		return completion.choices[0]?.message?.content || 'Unable to generate diagnosis.';
@@ -120,7 +120,7 @@ Keep your response concise and actionable (under 300 words).`;
 				}
 			],
 			temperature: 0.7,
-			max_tokens: 600
+			max_completion_tokens: 600
 		});
 
 		return completion.choices[0]?.message?.content || 'Unable to generate summary.';
@@ -174,7 +174,7 @@ Be concise and focus on actionable insights.`;
 				}
 			],
 			temperature: 0.7,
-			max_tokens: 500
+			max_completion_tokens: 500
 		});
 
 		return completion.choices[0]?.message?.content || 'Unable to analyze patterns.';
