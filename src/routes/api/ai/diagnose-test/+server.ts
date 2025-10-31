@@ -80,6 +80,8 @@ export const POST: RequestHandler = async (event) => {
 	}
 
 	try {
+		console.log(`[AI Diagnosis] Starting diagnosis for test result: ${testResultId}`);
+
 		// Generate AI diagnosis
 		const diagnosis = await diagnoseFailedTest({
 			testCaseTitle: testResult.testCase.title,
@@ -90,9 +92,21 @@ export const POST: RequestHandler = async (event) => {
 			priority: testResult.testCase.priority
 		});
 
-		return json({ diagnosis });
+		console.log(`[AI Diagnosis] Successfully generated diagnosis for test result: ${testResultId}`);
+		console.log(`[AI Diagnosis] Diagnosis length: ${diagnosis?.length || 0} characters`);
+
+		if (!diagnosis) {
+			throw new Error('OpenAI returned empty diagnosis');
+		}
+
+		return json({ diagnosis }, {
+			headers: {
+				'Cache-Control': 'no-cache'
+			}
+		});
 	} catch (err) {
-		console.error('AI diagnosis error:', err);
-		throw error(500, { message: 'Failed to generate AI diagnosis' });
+		console.error('[AI Diagnosis] Error:', err);
+		const errorMessage = err instanceof Error ? err.message : 'Failed to generate AI diagnosis';
+		throw error(500, { message: errorMessage });
 	}
 };

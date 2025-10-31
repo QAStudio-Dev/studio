@@ -54,7 +54,12 @@ Keep your response concise and actionable.`;
 			max_completion_tokens: 500
 		});
 
-		return completion.choices[0]?.message?.content || 'Unable to generate diagnosis.';
+		const diagnosis = completion.choices[0]?.message?.content;
+		if (!diagnosis) {
+			throw new Error('No content in OpenAI response');
+		}
+
+		return diagnosis;
 	} catch (error) {
 		console.error('OpenAI diagnosis error:', error);
 		throw new Error('Failed to generate AI diagnosis');
@@ -121,7 +126,12 @@ Keep your response concise and actionable (under 300 words).`;
 			max_completion_tokens: 600
 		});
 
-		return completion.choices[0]?.message?.content || 'Unable to generate summary.';
+		const summary = completion.choices[0]?.message?.content;
+		if (!summary) {
+			throw new Error('No content in OpenAI response');
+		}
+
+		return summary;
 	} catch (error) {
 		console.error('OpenAI summary error:', error);
 		throw new Error('Failed to generate AI summary');
@@ -174,7 +184,12 @@ Be concise and focus on actionable insights.`;
 			max_completion_tokens: 500
 		});
 
-		return completion.choices[0]?.message?.content || 'Unable to analyze patterns.';
+		const analysis = completion.choices[0]?.message?.content;
+		if (!analysis) {
+			throw new Error('No content in OpenAI response');
+		}
+
+		return analysis;
 	} catch (error) {
 		console.error('OpenAI pattern analysis error:', error);
 		throw new Error('Failed to analyze failure patterns');

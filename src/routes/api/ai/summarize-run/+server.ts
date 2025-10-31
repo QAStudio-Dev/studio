@@ -106,6 +106,8 @@ export const POST: RequestHandler = async (event) => {
 		}));
 
 	try {
+		console.log(`[AI Summary] Starting summary for test run: ${testRunId}`);
+
 		// Generate summary
 		const summary = await summarizeTestRun({
 			testRunName: testRun.name,
@@ -117,9 +119,13 @@ export const POST: RequestHandler = async (event) => {
 			failedTests
 		});
 
+		console.log(`[AI Summary] Generated summary (${summary?.length || 0} chars)`);
+
 		// If there are multiple failures, analyze patterns
 		let patternAnalysis: string | null = null;
 		if (stats.failed >= 3) {
+			console.log(`[AI Summary] Analyzing patterns for ${stats.failed} failures`);
+
 			const failuresForPattern = testRun.testResults
 				.filter((r) => r.status === 'FAILED')
 				.map((r) => ({
@@ -132,15 +138,26 @@ export const POST: RequestHandler = async (event) => {
 			patternAnalysis = await analyzeFailurePatterns({
 				failures: failuresForPattern
 			});
+
+			console.log(`[AI Summary] Pattern analysis complete (${patternAnalysis?.length || 0} chars)`);
+		}
+
+		if (!summary) {
+			throw new Error('OpenAI returned empty summary');
 		}
 
 		return json({
 			summary,
 			patternAnalysis,
 			stats
+		}, {
+			headers: {
+				'Cache-Control': 'no-cache'
+			}
 		});
 	} catch (err) {
-		console.error('AI summary error:', err);
-		throw error(500, { message: 'Failed to generate AI summary' });
+		console.error('[AI Summary] Error:', err);
+		const errorMessage = err instanceof Error ? err.message : 'Failed to generate AI summary';
+		throw error(500, { message: errorMessage });
 	}
 };
