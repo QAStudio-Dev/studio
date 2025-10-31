@@ -96,7 +96,7 @@ export const GET: RequestHandler = async (event) => {
 	// Get total count
 	const total = await db.testResult.count({ where });
 
-	// Get test results
+	// Get test results with nested suite hierarchy
 	const testResults = await db.testResult.findMany({
 		where,
 		skip,
@@ -106,9 +106,20 @@ export const GET: RequestHandler = async (event) => {
 			testCase: {
 				include: {
 					suite: {
-						select: {
-							id: true,
-							name: true
+						include: {
+							parent: {
+								include: {
+									parent: {
+										include: {
+											parent: {
+												include: {
+													parent: true
+												}
+											}
+										}
+									}
+								}
+							}
 						}
 					}
 				}
@@ -129,8 +140,29 @@ export const GET: RequestHandler = async (event) => {
 		}
 	});
 
+	// Build suite path for each result (traverse parent chain)
+	const resultsWithSuitePath = testResults.map((result) => {
+		const suitePath: { id: string; name: string }[] = [];
+
+		if (result.testCase.suite) {
+			let currentSuite: any = result.testCase.suite;
+			while (currentSuite) {
+				suitePath.unshift({ id: currentSuite.id, name: currentSuite.name });
+				currentSuite = currentSuite.parent;
+			}
+		}
+
+		return {
+			...result,
+			testCase: {
+				...result.testCase,
+				suitePath
+			}
+		};
+	});
+
 	return json({
-		testResults,
+		testResults: resultsWithSuitePath,
 		pagination: {
 			page,
 			limit,

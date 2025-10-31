@@ -36,7 +36,7 @@
 	});
 
 	// Track the current user ID to detect user changes (as backup)
-	let previousUserId = $state<string | undefined>(undefined);
+	let previousUserId = $state<string | null | undefined>(undefined);
 
 	// Clear selected project when user changes (sign out/switch account)
 	$effect(() => {

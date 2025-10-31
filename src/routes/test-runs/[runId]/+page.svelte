@@ -9,6 +9,7 @@
 		AlertCircle,
 		ChevronLeft,
 		ChevronRight,
+		ChevronDown,
 		Loader2,
 		ArrowLeft,
 		Calendar,
@@ -17,7 +18,9 @@
 		Target,
 		Image as ImageIcon,
 		FileText,
-		Download
+		Download,
+		Sparkles,
+		TrendingUp
 	} from 'lucide-svelte';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
@@ -44,6 +47,13 @@
 
 	// Expandable test result details
 	let expandedResults = $state<Set<string>>(new Set());
+
+	// AI features
+	let aiDiagnoses = $state<Map<string, string>>(new Map());
+	let loadingDiagnosis = $state<Set<string>>(new Set());
+	let runSummary = $state<string | null>(null);
+	let runPatternAnalysis = $state<string | null>(null);
+	let loadingSummary = $state(false);
 
 	// Fetch test results
 	async function fetchTestResults() {
@@ -191,6 +201,123 @@
 		};
 		return colors[status] || 'preset-filled-surface-500';
 	}
+
+	// Group test results by suite
+	function groupResultsBySuite(results: any[]) {
+		const groups = new Map<string, { suite: { id: string; name: string; path: any[] } | null; results: any[] }>();
+
+		for (const result of results) {
+			let groupKey = 'uncategorized';
+			let suiteInfo: { id: string; name: string; path: any[] } | null = null;
+
+			if (result.testCase.suitePath && result.testCase.suitePath.length > 0) {
+				// Use the immediate parent suite (last in path)
+				const parentSuite = result.testCase.suitePath[result.testCase.suitePath.length - 1];
+				groupKey = parentSuite.id;
+				suiteInfo = {
+					id: parentSuite.id,
+					name: parentSuite.name,
+					path: result.testCase.suitePath
+				};
+			}
+
+			if (!groups.has(groupKey)) {
+				groups.set(groupKey, { suite: suiteInfo, results: [] });
+			}
+			groups.get(groupKey)!.results.push(result);
+		}
+
+		return Array.from(groups.values());
+	}
+
+	// Derived grouped results
+	let groupedResults = $derived(groupResultsBySuite(testResults));
+
+	// Track expanded suites
+	let expandedSuites = $state<Set<string>>(new Set());
+
+	// Initialize all suites as expanded
+	$effect(() => {
+		if (testResults.length > 0) {
+			const allSuiteIds = new Set<string>(['uncategorized']);
+			testResults.forEach(result => {
+				if (result.testCase.suitePath && result.testCase.suitePath.length > 0) {
+					const parentSuite = result.testCase.suitePath[result.testCase.suitePath.length - 1];
+					allSuiteIds.add(parentSuite.id);
+				}
+			});
+			expandedSuites = new Set(allSuiteIds);
+		}
+	});
+
+	function toggleSuite(suiteId: string) {
+		if (expandedSuites.has(suiteId)) {
+			expandedSuites.delete(suiteId);
+		} else {
+			expandedSuites.add(suiteId);
+		}
+		expandedSuites = new Set(expandedSuites);
+	}
+
+	// AI Diagnosis for individual test
+	async function getDiagnosis(resultId: string) {
+		if (aiDiagnoses.has(resultId)) return; // Already loaded
+
+		loadingDiagnosis.add(resultId);
+		loadingDiagnosis = new Set(loadingDiagnosis);
+
+		try {
+			const res = await fetch('/api/ai/diagnose-test', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ testResultId: resultId })
+			});
+
+			if (!res.ok) {
+				const errorData = await res.json();
+				throw new Error(errorData.message || 'Failed to get AI diagnosis');
+			}
+
+			const { diagnosis } = await res.json();
+			aiDiagnoses.set(resultId, diagnosis);
+			aiDiagnoses = new Map(aiDiagnoses);
+		} catch (err: any) {
+			console.error(err);
+			alert(err.message || 'Failed to get AI diagnosis');
+		} finally {
+			loadingDiagnosis.delete(resultId);
+			loadingDiagnosis = new Set(loadingDiagnosis);
+		}
+	}
+
+	// AI Summary for entire test run
+	async function getRunSummary() {
+		if (runSummary) return; // Already loaded
+
+		loadingSummary = true;
+
+		try {
+			const res = await fetch('/api/ai/summarize-run', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ testRunId: testRun.id })
+			});
+
+			if (!res.ok) {
+				const errorData = await res.json();
+				throw new Error(errorData.message || 'Failed to get AI summary');
+			}
+
+			const { summary, patternAnalysis } = await res.json();
+			runSummary = summary;
+			runPatternAnalysis = patternAnalysis;
+		} catch (err: any) {
+			console.error(err);
+			alert(err.message || 'Failed to get AI summary');
+		} finally {
+			loadingSummary = false;
+		}
+	}
 </script>
 
 <div class="container mx-auto max-w-7xl px-4 py-8">
@@ -313,6 +440,53 @@
 				<span class="text-xl font-bold">{stats.total}</span>
 			</div>
 		</div>
+
+		<!-- AI Summary Section -->
+		{#if stats.total > 0}
+			<div class="border-surface-200-700 border-t pt-4">
+				{#if !runSummary && !loadingSummary}
+					<button
+						onclick={getRunSummary}
+						class="btn preset-tonal-primary-500 btn-sm"
+						disabled={loadingSummary}
+					>
+						<Sparkles class="h-4 w-4" />
+						<span>Get AI Summary</span>
+					</button>
+				{:else if loadingSummary}
+					<div class="flex items-center gap-2 text-sm text-primary-500">
+						<Loader2 class="h-4 w-4 animate-spin" />
+						<span>Generating AI insights...</span>
+					</div>
+				{:else if runSummary}
+					<div class="space-y-4">
+						<div class="flex items-center gap-2">
+							<Sparkles class="h-5 w-5 text-primary-500" />
+							<h3 class="font-semibold">AI Summary</h3>
+						</div>
+						<div class="rounded-container bg-primary-50-950 border border-primary-200-800 p-4">
+							<div class="prose prose-sm max-w-none whitespace-pre-wrap text-sm">
+								{runSummary}
+							</div>
+						</div>
+
+						{#if runPatternAnalysis}
+							<div class="space-y-2">
+								<div class="flex items-center gap-2">
+									<TrendingUp class="h-5 w-5 text-warning-500" />
+									<h3 class="font-semibold">Failure Pattern Analysis</h3>
+								</div>
+								<div class="rounded-container bg-warning-50-950 border border-warning-200-800 p-4">
+									<div class="prose prose-sm max-w-none whitespace-pre-wrap text-sm">
+										{runPatternAnalysis}
+									</div>
+								</div>
+							</div>
+						{/if}
+					</div>
+				{/if}
+			</div>
+		{/if}
 	</div>
 
 	<!-- Search and Filters -->
@@ -405,105 +579,175 @@
 			</p>
 		</div>
 	{:else}
-		<div class="space-y-2">
-			{#each testResults as result (result.id)}
-				{@const Icon = getStatusIcon(result.status)}
+		<div class="space-y-4">
+			{#each groupedResults as group}
+				{@const suiteId = group.suite?.id || 'uncategorized'}
+				{@const isExpanded = expandedSuites.has(suiteId)}
+
+				<!-- Suite Group -->
 				<div class="card overflow-hidden">
-					<!-- Main Row (Clickable) -->
+					<!-- Suite Header -->
 					<button
-						class="hover:bg-surface-50-900 flex w-full items-center gap-4 p-4 text-left transition-colors"
-						onclick={() => toggleResult(result.id)}
+						class="hover:bg-surface-50-900 flex w-full items-center gap-3 border-b border-surface-200-700 bg-surface-100-900 px-4 py-3 text-left transition-colors"
+						onclick={() => toggleSuite(suiteId)}
 					>
-						<!-- Status Icon -->
-						<div>
-							<Icon
-								class="h-6 w-6 {result.status === 'PASSED'
-									? 'text-success-500'
-									: result.status === 'FAILED'
-										? 'text-error-500'
-										: result.status === 'BLOCKED'
-											? 'text-warning-500'
-											: 'text-surface-500'}"
-							/>
+						{#if isExpanded}
+							<ChevronDown class="h-5 w-5 text-surface-500" />
+						{:else}
+							<ChevronRight class="h-5 w-5 text-surface-500" />
+						{/if}
+						<Folder class="h-5 w-5 text-primary-500" />
+						<div class="flex-1">
+							{#if group.suite}
+								<div class="flex items-center gap-2">
+									<h3 class="font-semibold">{group.suite.name}</h3>
+									{#if group.suite.path.length > 1}
+										<span class="text-xs text-surface-600-300">
+											({group.suite.path.slice(0, -1).map(s => s.name).join(' > ')})
+										</span>
+									{/if}
+								</div>
+							{:else}
+								<h3 class="font-semibold">Uncategorized</h3>
+							{/if}
 						</div>
-
-						<!-- Test Case Info -->
-						<div class="min-w-0 flex-1">
-							<div class="mb-1 flex items-center gap-2">
-								<h3 class="truncate font-semibold">{result.testCase.title}</h3>
-								{#if result.testCase.suite}
-									<span class="badge preset-outlined-surface-500 text-xs">
-										{result.testCase.suite.name}
-									</span>
-								{/if}
-							</div>
-							<div class="flex items-center gap-3 text-xs text-surface-600-300">
-								<span class={getPriorityColor(result.testCase.priority)}>
-									{result.testCase.priority}
-								</span>
-								<span>• {result.testCase.type}</span>
-								<span>• {formatDuration(result.duration)}</span>
-								{#if result._count.attachments > 0}
-									<span class="flex items-center gap-1">
-										• <ImageIcon class="h-3 w-3" /> {result._count.attachments}
-									</span>
-								{/if}
-							</div>
-						</div>
-
-						<!-- Status Badge -->
-						<span class="badge {getStatusColor(result.status)}">
-							{result.status}
+						<span class="badge preset-outlined-surface-500">
+							{group.results.length} {group.results.length === 1 ? 'test' : 'tests'}
 						</span>
 					</button>
 
-					<!-- Expanded Details -->
-					{#if expandedResults.has(result.id)}
-						<div class="bg-surface-50-900 border-surface-200-700 border-t p-4">
-							<div class="space-y-4">
-								<!-- Test Case Details -->
-								{#if result.testCase.description}
-									<div>
-										<h4 class="mb-1 text-sm font-semibold">Description</h4>
-										<p class="text-surface-600-300 text-sm">{result.testCase.description}</p>
-									</div>
-								{/if}
-
-								<!-- Error Details -->
-								<ErrorDisplay
-									errorMessage={result.errorMessage}
-									stackTrace={result.stackTrace}
-									compact={false}
-								/>
-
-								<!-- Comment -->
-								{#if result.comment}
-									<div>
-										<h4 class="mb-1 text-sm font-semibold">Comment</h4>
-										<p class="text-surface-600-300 text-sm">{result.comment}</p>
-									</div>
-								{/if}
-
-								<!-- Execution Info -->
-								<div class="text-surface-600-300 flex items-center gap-6 text-xs">
-									<span>
-										Executed by: {result.executor.firstName
-											? `${result.executor.firstName} ${result.executor.lastName || ''}`
-											: result.executor.email}
-									</span>
-									<span>• {formatDate(result.executedAt)}</span>
-								</div>
-
-								<!-- View Full Details Button -->
-								<div class="flex gap-2">
-									<a
-										href="/test-cases/{result.testCase.id}"
-										class="btn preset-filled-primary-500 btn-sm"
+					<!-- Test Results in Suite -->
+					{#if isExpanded}
+						<div class="divide-y divide-surface-200-700">
+							{#each group.results as result (result.id)}
+								{@const Icon = getStatusIcon(result.status)}
+								<div>
+									<!-- Main Row (Clickable) -->
+									<button
+										class="hover:bg-surface-50-900 flex w-full items-center gap-4 p-4 text-left transition-colors"
+										onclick={() => toggleResult(result.id)}
 									>
-										View Test Case
-									</a>
+										<!-- Status Icon -->
+										<div>
+											<Icon
+												class="h-6 w-6 {result.status === 'PASSED'
+													? 'text-success-500'
+													: result.status === 'FAILED'
+														? 'text-error-500'
+														: result.status === 'BLOCKED'
+															? 'text-warning-500'
+															: 'text-surface-500'}"
+											/>
+										</div>
+
+										<!-- Test Case Info -->
+										<div class="min-w-0 flex-1">
+											<div class="mb-1">
+												<h4 class="truncate font-medium">{result.testCase.title}</h4>
+											</div>
+											<div class="flex items-center gap-3 text-xs text-surface-600-300">
+												<span class={getPriorityColor(result.testCase.priority)}>
+													{result.testCase.priority}
+												</span>
+												<span>• {result.testCase.type}</span>
+												<span>• {formatDuration(result.duration)}</span>
+												{#if result._count.attachments > 0}
+													<span class="flex items-center gap-1">
+														• <ImageIcon class="h-3 w-3" /> {result._count.attachments}
+													</span>
+												{/if}
+											</div>
+										</div>
+
+										<!-- Status Badge -->
+										<span class="badge {getStatusColor(result.status)}">
+											{result.status}
+										</span>
+									</button>
+
+									<!-- Expanded Details -->
+									{#if expandedResults.has(result.id)}
+										<div class="bg-surface-50-900 border-surface-200-700 border-t p-4">
+											<div class="space-y-4">
+												<!-- Test Case Details -->
+												{#if result.testCase.description}
+													<div>
+														<h4 class="mb-1 text-sm font-semibold">Description</h4>
+														<p class="text-surface-600-300 text-sm">{result.testCase.description}</p>
+													</div>
+												{/if}
+
+												<!-- AI Diagnosis (only for failed tests) - Show BEFORE error details -->
+												{#if result.status === 'FAILED'}
+													<div>
+														{#if !aiDiagnoses.has(result.id) && !loadingDiagnosis.has(result.id)}
+															<button
+																onclick={() => getDiagnosis(result.id)}
+																class="btn preset-filled-primary-500 w-full"
+															>
+																<Sparkles class="h-5 w-5" />
+																<span class="font-semibold">Get AI Diagnosis</span>
+															</button>
+														{:else if loadingDiagnosis.has(result.id)}
+															<div class="rounded-container border border-primary-200-800 bg-primary-50-950 p-4">
+																<div class="flex items-center gap-3 text-primary-500">
+																	<Loader2 class="h-5 w-5 animate-spin" />
+																	<span class="font-medium">Analyzing failure with AI...</span>
+																</div>
+															</div>
+														{:else if aiDiagnoses.has(result.id)}
+															<div class="rounded-container border-2 border-primary-500 bg-primary-50-950 p-4">
+																<div class="mb-3 flex items-center gap-2">
+																	<Sparkles class="h-5 w-5 text-primary-500" />
+																	<h5 class="font-semibold text-primary-500">AI Diagnosis</h5>
+																</div>
+																<div class="prose prose-sm max-w-none whitespace-pre-wrap text-sm">
+																	{aiDiagnoses.get(result.id)}
+																</div>
+															</div>
+														{/if}
+													</div>
+												{/if}
+
+												<!-- Error Details -->
+												<ErrorDisplay
+													errorMessage={result.errorMessage}
+													stackTrace={result.stackTrace}
+													compact={false}
+												/>
+
+												<!-- Comment -->
+												{#if result.comment}
+													<div>
+														<h4 class="mb-1 text-sm font-semibold">Comment</h4>
+														<p class="text-surface-600-300 text-sm">{result.comment}</p>
+													</div>
+												{/if}
+
+												<!-- Execution Info -->
+												<div class="text-surface-600-300 flex items-center gap-6 text-xs">
+													<span>
+														Executed by: {result.executor.firstName
+															? `${result.executor.firstName} ${result.executor.lastName || ''}`
+															: result.executor.email}
+													</span>
+													<span>• {formatDate(result.executedAt)}</span>
+												</div>
+
+												<!-- View Full Details Button -->
+												<div class="flex gap-2">
+													<a
+														href="/test-cases/{result.testCase.id}"
+														class="btn preset-filled-surface-500 btn-sm"
+													>
+														View Test Case
+													</a>
+												</div>
+											</div>
+										</div>
+									{/if}
 								</div>
-							</div>
+							{/each}
 						</div>
 					{/if}
 				</div>
