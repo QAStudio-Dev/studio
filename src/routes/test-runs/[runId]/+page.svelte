@@ -49,10 +49,9 @@
 	let expandedResults = $state<Set<string>>(new Set());
 
 	// AI features
-	let aiDiagnoses = $state<Map<string, string>>(new Map());
+	let aiDiagnoses = $state<Map<string, { diagnosis: string; generatedAt?: Date; cached?: boolean }>>(new Map());
 	let loadingDiagnosis = $state<Set<string>>(new Set());
-	let runSummary = $state<string | null>(null);
-	let runPatternAnalysis = $state<string | null>(null);
+	let runSummary = $state<{ summary: string; patternAnalysis: string | null; generatedAt?: Date; cached?: boolean } | null>(null);
 	let loadingSummary = $state(false);
 
 	// Fetch test results
@@ -260,8 +259,8 @@
 	}
 
 	// AI Diagnosis for individual test
-	async function getDiagnosis(resultId: string) {
-		if (aiDiagnoses.has(resultId)) return; // Already loaded
+	async function getDiagnosis(resultId: string, regenerate = false) {
+		if (aiDiagnoses.has(resultId) && !regenerate) return; // Already loaded
 
 		loadingDiagnosis.add(resultId);
 		loadingDiagnosis = new Set(loadingDiagnosis);
@@ -270,7 +269,7 @@
 			const res = await fetch('/api/ai/diagnose-test', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ testResultId: resultId })
+				body: JSON.stringify({ testResultId: resultId, regenerate })
 			});
 
 			if (!res.ok) {
@@ -278,8 +277,8 @@
 				throw new Error(errorData.message || 'Failed to get AI diagnosis');
 			}
 
-			const { diagnosis } = await res.json();
-			aiDiagnoses.set(resultId, diagnosis);
+			const { diagnosis, generatedAt, cached } = await res.json();
+			aiDiagnoses.set(resultId, { diagnosis, generatedAt, cached });
 			aiDiagnoses = new Map(aiDiagnoses);
 		} catch (err: any) {
 			console.error(err);
@@ -291,8 +290,8 @@
 	}
 
 	// AI Summary for entire test run
-	async function getRunSummary() {
-		if (runSummary) return; // Already loaded
+	async function getRunSummary(regenerate = false) {
+		if (runSummary && !regenerate) return; // Already loaded
 
 		loadingSummary = true;
 
@@ -300,7 +299,7 @@
 			const res = await fetch('/api/ai/summarize-run', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ testRunId: testRun.id })
+				body: JSON.stringify({ testRunId: testRun.id, regenerate })
 			});
 
 			if (!res.ok) {
@@ -308,9 +307,8 @@
 				throw new Error(errorData.message || 'Failed to get AI summary');
 			}
 
-			const { summary, patternAnalysis } = await res.json();
-			runSummary = summary;
-			runPatternAnalysis = patternAnalysis;
+			const { summary, patternAnalysis, generatedAt, cached } = await res.json();
+			runSummary = { summary, patternAnalysis, generatedAt, cached };
 		} catch (err: any) {
 			console.error(err);
 			alert(err.message || 'Failed to get AI summary');
@@ -460,17 +458,31 @@
 					</div>
 				{:else if runSummary}
 					<div class="space-y-4">
-						<div class="flex items-center gap-2">
-							<Sparkles class="h-5 w-5 text-primary-500" />
-							<h3 class="font-semibold">AI Summary</h3>
+						<div class="flex items-center justify-between gap-2">
+							<div class="flex items-center gap-2">
+								<Sparkles class="h-5 w-5 text-primary-500" />
+								<h3 class="font-semibold">AI Summary</h3>
+								{#if runSummary.cached}
+									<span class="text-xs text-surface-500">(cached)</span>
+								{/if}
+							</div>
+							<button
+								onclick={() => getRunSummary(true)}
+								class="btn btn-sm preset-tonal-primary-500"
+								title="Regenerate summary"
+								disabled={loadingSummary}
+							>
+								<Sparkles class="h-4 w-4" />
+								Regenerate
+							</button>
 						</div>
 						<div class="rounded-container bg-primary-50-950 border border-primary-200-800 p-4">
 							<div class="prose prose-sm max-w-none whitespace-pre-wrap text-sm">
-								{runSummary}
+								{runSummary.summary}
 							</div>
 						</div>
 
-						{#if runPatternAnalysis}
+						{#if runSummary.patternAnalysis}
 							<div class="space-y-2">
 								<div class="flex items-center gap-2">
 									<TrendingUp class="h-5 w-5 text-warning-500" />
@@ -478,7 +490,7 @@
 								</div>
 								<div class="rounded-container bg-warning-50-950 border border-warning-200-800 p-4">
 									<div class="prose prose-sm max-w-none whitespace-pre-wrap text-sm">
-										{runPatternAnalysis}
+										{runSummary.patternAnalysis}
 									</div>
 								</div>
 							</div>
@@ -697,12 +709,26 @@
 															</div>
 														{:else if aiDiagnoses.has(result.id)}
 															<div class="rounded-container border-2 border-primary-500 bg-primary-50-950 p-4">
-																<div class="mb-3 flex items-center gap-2">
-																	<Sparkles class="h-5 w-5 text-primary-500" />
-																	<h5 class="font-semibold text-primary-500">AI Diagnosis</h5>
+																<div class="mb-3 flex items-center justify-between gap-2">
+																	<div class="flex items-center gap-2">
+																		<Sparkles class="h-5 w-5 text-primary-500" />
+																		<h5 class="font-semibold text-primary-500">AI Diagnosis</h5>
+																		{#if aiDiagnoses.get(result.id)?.cached}
+																			<span class="text-xs text-surface-500">(cached)</span>
+																		{/if}
+																	</div>
+																	<button
+																		onclick={() => getDiagnosis(result.id, true)}
+																		class="btn btn-sm preset-tonal-primary-500"
+																		title="Regenerate diagnosis"
+																		disabled={loadingDiagnosis.has(result.id)}
+																	>
+																		<Sparkles class="h-4 w-4" />
+																		Regenerate
+																	</button>
 																</div>
 																<div class="prose prose-sm max-w-none whitespace-pre-wrap text-sm">
-																	{aiDiagnoses.get(result.id)}
+																	{aiDiagnoses.get(result.id)?.diagnosis}
 																</div>
 															</div>
 														{/if}

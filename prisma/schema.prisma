@@ -277,6 +277,11 @@ model TestRun {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  // AI-generated content
+  aiSummary     String?  // AI-generated summary of the test run
+  aiPatternAnalysis String? // AI-generated failure pattern analysis
+  aiSummaryGeneratedAt DateTime? // When the AI summary was generated
+
   creator       User         @relation("TestRunCreator", fields: [createdBy], references: [id], onDelete: Cascade)
   project       Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
   milestone     Milestone?   @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
@@ -310,6 +315,10 @@ model TestResult {
   executedAt  DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  // AI-generated content
+  aiDiagnosis String?  // AI-generated diagnosis for failed tests
+  aiDiagnosisGeneratedAt DateTime? // When the AI diagnosis was generated
 
   executor    User       @relation("TestResultExecutor", fields: [executedBy], references: [id], onDelete: Cascade)
   testCase    TestCase   @relation(fields: [testCaseId], references: [id], onDelete: Cascade)

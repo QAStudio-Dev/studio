@@ -15,7 +15,13 @@ import { summarizeTestRun, analyzeFailurePatterns } from '$lib/server/openai';
  */
 export const POST: RequestHandler = async (event) => {
 	const userId = await requireAuth(event);
-	const { testRunId } = await event.request.json();
+	const body = await event.request.json();
+	const { testRunId, regenerate } = body;
+
+	console.log('[AI Summary] Request body:', JSON.stringify(body));
+	console.log('[AI Summary] testRunId:', testRunId);
+	console.log('[AI Summary] regenerate type:', typeof regenerate);
+	console.log('[AI Summary] regenerate value:', regenerate);
 
 	if (!testRunId) {
 		throw error(400, { message: 'testRunId is required' });
@@ -38,11 +44,11 @@ export const POST: RequestHandler = async (event) => {
 		user?.team?.subscription?.status === 'ACTIVE' ||
 		user?.team?.subscription?.status === 'PAST_DUE';
 
-	if (!hasActiveSubscription) {
-		throw error(403, {
-			message: 'AI features require a Pro subscription. Upgrade to access AI-powered insights.'
-		});
-	}
+	// if (!hasActiveSubscription) {
+	// 	throw error(403, {
+	// 		message: 'AI features require a Pro subscription. Upgrade to access AI-powered insights.'
+	// 	});
+	// }
 
 	// Get test run with results
 	const testRun = await db.testRun.findUnique({
@@ -53,7 +59,7 @@ export const POST: RequestHandler = async (event) => {
 					team: true
 				}
 			},
-			testResults: {
+			results: {
 				include: {
 					testCase: {
 						include: {
@@ -88,15 +94,15 @@ export const POST: RequestHandler = async (event) => {
 
 	// Calculate stats
 	const stats = {
-		total: testRun.testResults.length,
-		passed: testRun.testResults.filter((r) => r.status === 'PASSED').length,
-		failed: testRun.testResults.filter((r) => r.status === 'FAILED').length,
-		blocked: testRun.testResults.filter((r) => r.status === 'BLOCKED').length,
-		skipped: testRun.testResults.filter((r) => r.status === 'SKIPPED').length
+		total: testRun.results.length,
+		passed: testRun.results.filter((r) => r.status === 'PASSED').length,
+		failed: testRun.results.filter((r) => r.status === 'FAILED').length,
+		blocked: testRun.results.filter((r) => r.status === 'BLOCKED').length,
+		skipped: testRun.results.filter((r) => r.status === 'SKIPPED').length
 	};
 
 	// Get failed tests for analysis
-	const failedTests = testRun.testResults
+	const failedTests = testRun.results
 		.filter((r) => r.status === 'FAILED')
 		.map((r) => ({
 			title: r.testCase.title,
@@ -106,7 +112,27 @@ export const POST: RequestHandler = async (event) => {
 		}));
 
 	try {
-		console.log(`[AI Summary] Starting summary for test run: ${testRunId}`);
+		console.log(`[AI Summary] Checking cache for test run: ${testRunId}`);
+		console.log(`[AI Summary] Has cached summary: ${!!testRun.aiSummary}`);
+		console.log(`[AI Summary] Regenerate requested: ${regenerate}`);
+
+		// If we have a cached summary and regeneration is not requested, return it
+		if (testRun.aiSummary && !regenerate) {
+			console.log(`[AI Summary] Returning cached summary for test run: ${testRunId}`);
+			return json({
+				summary: testRun.aiSummary,
+				patternAnalysis: testRun.aiPatternAnalysis,
+				generatedAt: testRun.aiSummaryGeneratedAt,
+				stats,
+				cached: true
+			}, {
+				headers: {
+					'Cache-Control': 'no-cache'
+				}
+			});
+		}
+
+		console.log(`[AI Summary] ${regenerate ? 'Regenerating' : 'Generating'} summary for test run: ${testRunId}`);
 
 		// Generate summary
 		const summary = await summarizeTestRun({
@@ -126,7 +152,7 @@ export const POST: RequestHandler = async (event) => {
 		if (stats.failed >= 3) {
 			console.log(`[AI Summary] Analyzing patterns for ${stats.failed} failures`);
 
-			const failuresForPattern = testRun.testResults
+			const failuresForPattern = testRun.results
 				.filter((r) => r.status === 'FAILED')
 				.map((r) => ({
 					testCaseTitle: r.testCase.title,
@@ -146,10 +172,25 @@ export const POST: RequestHandler = async (event) => {
 			throw new Error('OpenAI returned empty summary');
 		}
 
+		// Save the summary to the database
+		const now = new Date();
+		await db.testRun.update({
+			where: { id: testRunId },
+			data: {
+				aiSummary: summary,
+				aiPatternAnalysis: patternAnalysis,
+				aiSummaryGeneratedAt: now
+			}
+		});
+
+		console.log(`[AI Summary] Saved summary to database`);
+
 		return json({
 			summary,
 			patternAnalysis,
-			stats
+			generatedAt: now,
+			stats,
+			cached: false
 		}, {
 			headers: {
 				'Cache-Control': 'no-cache'

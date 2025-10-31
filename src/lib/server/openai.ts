@@ -51,12 +51,12 @@ Keep your response concise and actionable.`;
 					content: prompt
 				}
 			],
-			max_completion_tokens: 500
+			max_completion_tokens: 2000
 		});
 
 		const diagnosis = completion.choices[0]?.message?.content;
 		if (!diagnosis) {
-			throw new Error('No content in OpenAI response');
+			throw new Error(`No content in OpenAI response. Finish reason: ${completion.choices[0]?.finish_reason}`);
 		}
 
 		return diagnosis;
@@ -123,12 +123,12 @@ Keep your response concise and actionable (under 300 words).`;
 					content: prompt
 				}
 			],
-			max_completion_tokens: 600
+			max_completion_tokens: 2000
 		});
 
 		const summary = completion.choices[0]?.message?.content;
 		if (!summary) {
-			throw new Error('No content in OpenAI response');
+			throw new Error(`No content in OpenAI response. Finish reason: ${completion.choices[0]?.finish_reason}`);
 		}
 
 		return summary;
@@ -181,12 +181,12 @@ Be concise and focus on actionable insights.`;
 					content: prompt
 				}
 			],
-			max_completion_tokens: 500
+			max_completion_tokens: 2000
 		});
 
 		const analysis = completion.choices[0]?.message?.content;
 		if (!analysis) {
-			throw new Error('No content in OpenAI response');
+			throw new Error(`No content in OpenAI response. Finish reason: ${completion.choices[0]?.finish_reason}`);
 		}
 
 		return analysis;

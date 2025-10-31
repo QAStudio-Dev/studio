@@ -15,7 +15,7 @@ import { diagnoseFailedTest } from '$lib/server/openai';
  */
 export const POST: RequestHandler = async (event) => {
 	const userId = await requireAuth(event);
-	const { testResultId } = await event.request.json();
+	const { testResultId, regenerate } = await event.request.json();
 
 	if (!testResultId) {
 		throw error(400, { message: 'testResultId is required' });
@@ -38,11 +38,11 @@ export const POST: RequestHandler = async (event) => {
 		user?.team?.subscription?.status === 'ACTIVE' ||
 		user?.team?.subscription?.status === 'PAST_DUE';
 
-	if (!hasActiveSubscription) {
-		throw error(403, {
-			message: 'AI features require a Pro subscription. Upgrade to access AI-powered insights.'
-		});
-	}
+	// if (!hasActiveSubscription) {
+	// 	throw error(403, {
+	// 		message: 'AI features require a Pro subscription. Upgrade to access AI-powered insights.'
+	// 	});
+	// }
 
 	// Get test result with details
 	const testResult = await db.testResult.findUnique({
@@ -80,7 +80,25 @@ export const POST: RequestHandler = async (event) => {
 	}
 
 	try {
-		console.log(`[AI Diagnosis] Starting diagnosis for test result: ${testResultId}`);
+		console.log(`[AI Diagnosis] Checking cache for test result: ${testResultId}`);
+		console.log(`[AI Diagnosis] Has cached diagnosis: ${!!testResult.aiDiagnosis}`);
+		console.log(`[AI Diagnosis] Regenerate requested: ${regenerate}`);
+
+		// If we have a cached diagnosis and regeneration is not requested, return it
+		if (testResult.aiDiagnosis && !regenerate) {
+			console.log(`[AI Diagnosis] Returning cached diagnosis for test result: ${testResultId}`);
+			return json({
+				diagnosis: testResult.aiDiagnosis,
+				generatedAt: testResult.aiDiagnosisGeneratedAt,
+				cached: true
+			}, {
+				headers: {
+					'Cache-Control': 'no-cache'
+				}
+			});
+		}
+
+		console.log(`[AI Diagnosis] ${regenerate ? 'Regenerating' : 'Generating'} diagnosis for test result: ${testResultId}`);
 
 		// Generate AI diagnosis
 		const diagnosis = await diagnoseFailedTest({
@@ -99,7 +117,23 @@ export const POST: RequestHandler = async (event) => {
 			throw new Error('OpenAI returned empty diagnosis');
 		}
 
-		return json({ diagnosis }, {
+		// Save the diagnosis to the database
+		const now = new Date();
+		await db.testResult.update({
+			where: { id: testResultId },
+			data: {
+				aiDiagnosis: diagnosis,
+				aiDiagnosisGeneratedAt: now
+			}
+		});
+
+		console.log(`[AI Diagnosis] Saved diagnosis to database`);
+
+		return json({
+			diagnosis,
+			generatedAt: now,
+			cached: false
+		}, {
 			headers: {
 				'Cache-Control': 'no-cache'
 			}
