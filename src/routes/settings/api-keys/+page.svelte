@@ -7,7 +7,8 @@
 		CheckCircle2,
 		AlertCircle,
 		Calendar,
-		Clock
+		Clock,
+		Code
 	} from 'lucide-svelte';
 	import { invalidateAll } from '$app/navigation';
 
@@ -24,6 +25,10 @@
 	let createdKey = $state<string | null>(null);
 	let showKeyDialog = $state(false);
 	let copied = $state(false);
+
+	// Playwright config example dialog
+	let showPlaywrightDialog = $state(false);
+	let copiedPlaywright = $state(false);
 
 	async function handleCreateKey() {
 		if (!newKeyName.trim()) {
@@ -110,6 +115,112 @@
 		if (!date) return false;
 		return new Date(date) < new Date();
 	}
+
+	function copyPlaywrightConfig() {
+		const exampleKey = apiKeys.length > 0 ? `${apiKeys[0].prefix}...` : 'qas_your_api_key_here';
+		const config = getPlaywrightConfig(exampleKey);
+		navigator.clipboard.writeText(config);
+		copiedPlaywright = true;
+		setTimeout(() => {
+			copiedPlaywright = false;
+		}, 2000);
+	}
+
+	function getPlaywrightConfig(apiKey: string) {
+		const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://qastudio.dev';
+		return `import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  // Test directory
+  testDir: './tests',
+
+  // Run tests in parallel
+  fullyParallel: true,
+
+  // Fail build on CI if you accidentally left test.only
+  forbidOnly: !!process.env.CI,
+
+  // Retry on CI only
+  retries: process.env.CI ? 2 : 0,
+
+  // Opt out of parallel tests on CI
+  workers: process.env.CI ? 1 : undefined,
+
+  // Reporter configuration for QA Studio
+  reporter: [
+    ['list'], // Console output
+    ['html'], // HTML report
+    ['@qa-studio/playwright-reporter', {
+      // QA Studio API configuration
+      apiUrl: '${baseUrl}/api',
+      apiKey: '${apiKey}',
+
+      // Project configuration (required)
+      projectKey: 'YOUR_PROJECT_KEY', // e.g., 'PROJ'
+
+      // Test run configuration (optional)
+      testRun: {
+        name: process.env.TEST_RUN_NAME || 'Automated Test Run',
+        environment: process.env.ENVIRONMENT || 'QA',
+        milestone: process.env.MILESTONE, // Optional
+      },
+
+      // Upload configuration (optional)
+      uploadScreenshots: true, // Upload screenshots for failed tests
+      uploadVideos: true,      // Upload videos for failed tests
+      uploadTraces: true,      // Upload traces for failed tests
+    }]
+  ],
+
+  // Shared settings for all the projects below
+  use: {
+    // Base URL for tests
+    baseURL: process.env.BASE_URL || 'http://localhost:3000',
+
+    // Collect trace when retrying the failed test
+    trace: 'on-first-retry',
+
+    // Screenshot on failure
+    screenshot: 'only-on-failure',
+
+    // Video on failure
+    video: 'retain-on-failure',
+  },
+
+  // Configure projects for major browsers
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
+
+    // Mobile viewports
+    {
+      name: 'Mobile Chrome',
+      use: { ...devices['Pixel 5'] },
+    },
+    {
+      name: 'Mobile Safari',
+      use: { ...devices['iPhone 12'] },
+    },
+  ],
+
+  // Run your local dev server before starting the tests
+  // webServer: {
+  //   command: 'npm run start',
+  //   url: 'http://localhost:3000',
+  //   reuseExistingServer: !process.env.CI,
+  // },
+});`;
+	}
 </script>
 
 <div class="container mx-auto max-w-5xl px-4 py-8">
@@ -120,10 +231,16 @@
 				<h1 class="mb-2 text-4xl font-bold">API Keys</h1>
 				<p class="text-surface-600-300 text-lg">Manage API keys for integrating with QA Studio</p>
 			</div>
-			<button onclick={() => (showCreateDialog = true)} class="btn preset-filled-primary-500">
-				<Plus class="mr-2 h-4 w-4" />
-				Create API Key
-			</button>
+			<div class="flex gap-2">
+				<button onclick={() => (showPlaywrightDialog = true)} class="btn preset-outlined">
+					<Code class="mr-2 h-4 w-4" />
+					Playwright Config
+				</button>
+				<button onclick={() => (showCreateDialog = true)} class="btn preset-filled-primary-500">
+					<Plus class="mr-2 h-4 w-4" />
+					Create API Key
+				</button>
+			</div>
 		</div>
 
 		<!-- Info card -->
@@ -339,7 +456,7 @@
 						class="input flex-1 font-mono"
 						value={createdKey}
 						readonly
-						onclick={(e) => e.target.select()}
+						onclick={(e: MouseEvent) => (e.target as HTMLInputElement).select()}
 					/>
 					<button
 						onclick={() => copyToClipboard(createdKey!)}
@@ -372,6 +489,220 @@
 			>
 				I've Saved My Key
 			</button>
+		</div>
+	</div>
+{/if}
+
+<!-- Playwright Configuration Dialog -->
+{#if showPlaywrightDialog}
+	<!-- Backdrop -->
+	<button
+		onclick={() => (showPlaywrightDialog = false)}
+		class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm"
+		aria-label="Close dialog"
+	></button>
+
+	<!-- Dialog -->
+	<div class="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center p-4">
+		<div
+			class="border-surface-200-700 pointer-events-auto max-h-[90vh] w-full max-w-4xl overflow-y-auto card border bg-surface-50-950 p-8 shadow-2xl"
+		>
+			<div class="mb-6 flex items-start justify-between">
+				<div>
+					<h2 class="mb-2 text-2xl font-bold">Playwright Configuration Example</h2>
+					<p class="text-surface-600-300">
+						Complete <code class="rounded bg-surface-200-800 px-1.5 py-0.5 text-sm"
+							>playwright.config.ts</code
+						> with QA Studio reporter
+					</p>
+				</div>
+				<button
+					onclick={() => copyPlaywrightConfig()}
+					class="btn preset-filled-primary-500"
+					title="Copy configuration"
+				>
+					{#if copiedPlaywright}
+						<CheckCircle2 class="mr-2 h-4 w-4" />
+						Copied!
+					{:else}
+						<Copy class="mr-2 h-4 w-4" />
+						Copy Config
+					{/if}
+				</button>
+			</div>
+
+			<!-- Installation Steps -->
+			<div class="mb-6 space-y-4">
+				<div class="rounded-container border border-primary-500/20 bg-primary-500/5 p-4">
+					<h3 class="mb-3 font-semibold">Quick Setup</h3>
+					<ol class="space-y-2 text-sm">
+						<li class="flex gap-2">
+							<span class="font-bold text-primary-500">1.</span>
+							<div>
+								<p class="mb-1 font-medium">Install the QA Studio Playwright reporter</p>
+								<pre class="overflow-x-auto rounded bg-surface-900 p-2 text-xs"><code
+										>npm install --save-dev @qa-studio/playwright-reporter</code
+									></pre>
+							</div>
+						</li>
+						<li class="flex gap-2">
+							<span class="font-bold text-primary-500">2.</span>
+							<div>
+								<p class="mb-1 font-medium">Create or update <code>playwright.config.ts</code></p>
+								<p class="text-surface-600-300">Copy the configuration below</p>
+							</div>
+						</li>
+						<li class="flex gap-2">
+							<span class="font-bold text-primary-500">3.</span>
+							<div>
+								<p class="mb-1 font-medium">Update the configuration</p>
+								<ul class="text-surface-600-300 mt-1 ml-4 list-disc space-y-1">
+									<li>
+										Replace <code>YOUR_PROJECT_KEY</code> with your project key (e.g., 'PROJ')
+									</li>
+									<li>Replace the API key with your actual key from above</li>
+									<li>Configure test run name and environment as needed</li>
+								</ul>
+							</div>
+						</li>
+						<li class="flex gap-2">
+							<span class="font-bold text-primary-500">4.</span>
+							<div>
+								<p class="font-medium">Run your tests</p>
+								<pre class="mt-1 overflow-x-auto rounded bg-surface-900 p-2 text-xs"><code
+										>npx playwright test</code
+									></pre>
+							</div>
+						</li>
+					</ol>
+				</div>
+			</div>
+
+			<!-- Configuration Code -->
+			<div class="mb-6">
+				<div class="mb-2 flex items-center justify-between">
+					<label class="text-sm font-medium">playwright.config.ts</label>
+					<button
+						onclick={() => copyPlaywrightConfig()}
+						class="btn preset-outlined btn-sm"
+						title="Copy configuration"
+					>
+						<Copy class="mr-1 h-3 w-3" />
+						Copy
+					</button>
+				</div>
+				<div
+					class="max-h-96 overflow-auto rounded-container border border-surface-300-700 bg-surface-900"
+				>
+					<pre class="p-4 text-xs leading-relaxed"><code
+							>{getPlaywrightConfig(
+								apiKeys.length > 0 ? `${apiKeys[0].prefix}...` : 'qas_your_api_key_here'
+							)}</code
+						></pre>
+				</div>
+			</div>
+
+			<!-- Environment Variables Section -->
+			<div class="mb-6 rounded-container border border-surface-300-700 bg-surface-100-900 p-4">
+				<h3 class="mb-3 text-sm font-semibold">Optional: Using Environment Variables</h3>
+				<p class="text-surface-600-300 mb-3 text-sm">
+					For better security, store your API key in environment variables:
+				</p>
+
+				<div class="space-y-3">
+					<div>
+						<p class="mb-1 text-xs font-medium">1. Create <code>.env</code> file:</p>
+						<pre class="overflow-x-auto rounded bg-surface-900 p-2 text-xs"><code
+								>QA_STUDIO_API_KEY={apiKeys.length > 0
+									? apiKeys[0].prefix + '...'
+									: 'qas_your_api_key_here'}
+QA_STUDIO_PROJECT_KEY=YOUR_PROJECT_KEY
+ENVIRONMENT=QA</code
+							></pre>
+					</div>
+
+					<div>
+						<p class="mb-1 text-xs font-medium">2. Update playwright.config.ts:</p>
+						<pre class="overflow-x-auto rounded bg-surface-900 p-2 text-xs"><code
+								>['@qa-studio/playwright-reporter', {'{'}
+  apiUrl: '{typeof window !== 'undefined' ? window.location.origin : 'https://qastudio.dev'}/api',
+  apiKey: process.env.QA_STUDIO_API_KEY,
+  projectKey: process.env.QA_STUDIO_PROJECT_KEY,
+  testRun: {'{'}
+    environment: process.env.ENVIRONMENT || 'QA',
+  {'}'}
+{'}'}]</code
+							></pre>
+					</div>
+
+					<div>
+						<p class="mb-1 text-xs font-medium">
+							3. Add <code>.env</code> to <code>.gitignore</code>:
+						</p>
+						<pre class="overflow-x-auto rounded bg-surface-900 p-2 text-xs"><code
+								># Keep API keys secure
+.env
+.env.local</code
+							></pre>
+					</div>
+				</div>
+			</div>
+
+			<!-- CI/CD Integration -->
+			<div class="mb-6 rounded-container border border-surface-300-700 bg-surface-100-900 p-4">
+				<h3 class="mb-3 text-sm font-semibold">CI/CD Integration Examples</h3>
+
+				<div class="space-y-4">
+					<!-- GitHub Actions -->
+					<div>
+						<p class="mb-2 text-xs font-medium">GitHub Actions (.github/workflows/test.yml):</p>
+						<pre class="overflow-x-auto rounded bg-surface-900 p-2 text-xs"><code
+								>name: Playwright Tests
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - run: npx playwright test
+        env:
+          QA_STUDIO_API_KEY: {'${{ secrets.QA_STUDIO_API_KEY }}'}
+          QA_STUDIO_PROJECT_KEY: YOUR_PROJECT_KEY
+          ENVIRONMENT: CI</code
+							></pre>
+					</div>
+
+					<!-- GitLab CI -->
+					<div>
+						<p class="mb-2 text-xs font-medium">GitLab CI (.gitlab-ci.yml):</p>
+						<pre class="overflow-x-auto rounded bg-surface-900 p-2 text-xs"><code
+								>test:
+  image: mcr.microsoft.com/playwright:latest
+  script:
+    - npm ci
+    - npx playwright test
+  variables:
+    QA_STUDIO_API_KEY: $QA_STUDIO_API_KEY
+    QA_STUDIO_PROJECT_KEY: YOUR_PROJECT_KEY
+    ENVIRONMENT: CI</code
+							></pre>
+					</div>
+				</div>
+			</div>
+
+			<!-- Close Button -->
+			<div class="flex justify-end gap-3">
+				<button
+					onclick={() => (showPlaywrightDialog = false)}
+					class="btn preset-filled-primary-500"
+				>
+					Done
+				</button>
+			</div>
 		</div>
 	</div>
 {/if}

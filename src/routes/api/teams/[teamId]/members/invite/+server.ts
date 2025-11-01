@@ -4,6 +4,7 @@ import { db } from '$lib/server/db';
 import { requireAuth, requireRole } from '$lib/server/auth';
 import { requireAvailableSeats } from '$lib/server/subscriptions';
 import { clerkClient } from 'svelte-clerk/server';
+import crypto from 'crypto';
 
 /**
  * Invite a user to the team by email
@@ -30,9 +31,18 @@ export const POST: RequestHandler = async (event) => {
 		});
 	}
 
+	// Validate email format
+	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+	if (!emailRegex.test(email)) {
+		throw error(400, {
+			message: 'Invalid email format'
+		});
+	}
+
 	// Validate role
 	const validRoles = ['ADMIN', 'MANAGER', 'TESTER', 'VIEWER'];
-	if (role && !validRoles.includes(role)) {
+	const inviteRole = role || 'TESTER';
+	if (!validRoles.includes(inviteRole)) {
 		throw error(400, {
 			message: 'Invalid role'
 		});
@@ -41,76 +51,177 @@ export const POST: RequestHandler = async (event) => {
 	// Check if team has available seats
 	await requireAvailableSeats(teamId);
 
-	// Check if user exists in Clerk
-	let clerkUser;
-	try {
-		const users = await clerkClient.users.getUserList({
-			emailAddress: [email]
-		});
-
-		if (users.data.length === 0) {
-			throw error(404, {
-				message: 'User not found. They must sign up first before being invited.'
-			});
+	// Check if user is already a member of this team
+	const existingMember = await db.user.findFirst({
+		where: {
+			email: email.toLowerCase(),
+			teamId
 		}
-
-		clerkUser = users.data[0];
-	} catch (err: any) {
-		throw error(500, {
-			message: 'Failed to find user'
-		});
-	}
-
-	// Check if user already exists in our database
-	let dbUser = await db.user.findUnique({
-		where: { id: clerkUser.id }
 	});
 
-	// If user doesn't exist in our DB, create them
-	if (!dbUser) {
-		dbUser = await db.user.create({
-			data: {
-				id: clerkUser.id,
-				email: clerkUser.emailAddresses[0]?.emailAddress || email,
-				firstName: clerkUser.firstName,
-				lastName: clerkUser.lastName,
-				imageUrl: clerkUser.imageUrl,
-				role: role || 'TESTER'
-			}
-		});
-	}
-
-	// Check if user is already in a team
-	if (dbUser.teamId) {
-		if (dbUser.teamId === teamId) {
-			throw error(400, {
-				message: 'User is already a member of this team'
-			});
-		}
+	if (existingMember) {
 		throw error(400, {
-			message: 'User is already a member of another team'
+			message: 'User is already a member of this team'
 		});
 	}
 
-	// Add user to team
-	await db.user.update({
-		where: { id: dbUser.id },
+	// Check if there's already a pending invitation
+	const existingInvitation = await db.teamInvitation.findFirst({
+		where: {
+			teamId,
+			email: email.toLowerCase(),
+			status: 'PENDING'
+		}
+	});
+
+	if (existingInvitation) {
+		throw error(400, {
+			message: 'An invitation has already been sent to this email address'
+		});
+	}
+
+	// Generate unique invitation token
+	const token = crypto.randomBytes(32).toString('hex');
+
+	// Create invitation (expires in 7 days)
+	const expiresAt = new Date();
+	expiresAt.setDate(expiresAt.getDate() + 7);
+
+	const invitation = await db.teamInvitation.create({
 		data: {
 			teamId,
-			role: role || dbUser.role
+			email: email.toLowerCase(),
+			role: inviteRole,
+			invitedBy: user.id,
+			token,
+			expiresAt
+		},
+		include: {
+			team: {
+				select: {
+					name: true
+				}
+			}
 		}
 	});
 
-	// TODO: Send invitation email via Clerk or custom email service
+	const inviteUrl = `${event.url.origin}/invitations/${token}`;
+
+	// Send invitation email via Clerk
+	try {
+		await clerkClient.invitations.createInvitation({
+			emailAddress: invitation.email,
+			redirectUrl: inviteUrl,
+			publicMetadata: {
+				teamId,
+				teamName: invitation.team.name,
+				role: invitation.role,
+				invitationId: invitation.id
+			}
+		});
+	} catch (emailError) {
+		console.error('Failed to send Clerk invitation:', emailError);
+		// Continue anyway - invitation is created in DB
+		// User can still use the invite link manually
+	}
 
 	return json({
 		success: true,
-		member: {
-			id: dbUser.id,
-			email: dbUser.email,
-			firstName: dbUser.firstName,
-			lastName: dbUser.lastName,
-			role: role || dbUser.role
+		invitation: {
+			id: invitation.id,
+			email: invitation.email,
+			role: invitation.role,
+			inviteUrl, // Include for development/testing or manual sharing
+			expiresAt: invitation.expiresAt
 		}
 	});
+};
+
+/**
+ * List pending invitations for a team
+ * GET /api/teams/[teamId]/members/invite
+ */
+export const GET: RequestHandler = async (event) => {
+	const { teamId } = event.params;
+
+	// Require ADMIN or MANAGER role
+	const user = await requireRole(event, ['ADMIN', 'MANAGER']);
+
+	// Verify user is in this team
+	if (user.teamId !== teamId) {
+		throw error(403, {
+			message: 'You can only view invitations for your own team'
+		});
+	}
+
+	const invitations = await db.teamInvitation.findMany({
+		where: {
+			teamId,
+			status: 'PENDING'
+		},
+		orderBy: {
+			createdAt: 'desc'
+		},
+		select: {
+			id: true,
+			email: true,
+			role: true,
+			createdAt: true,
+			expiresAt: true,
+			status: true
+		}
+	});
+
+	return json({ invitations });
+};
+
+/**
+ * Cancel/delete a pending invitation
+ * DELETE /api/teams/[teamId]/members/invite
+ */
+export const DELETE: RequestHandler = async (event) => {
+	const { teamId } = event.params;
+
+	// Require ADMIN or MANAGER role
+	const user = await requireRole(event, ['ADMIN', 'MANAGER']);
+
+	// Verify user is in this team
+	if (user.teamId !== teamId) {
+		throw error(403, {
+			message: 'You can only cancel invitations for your own team'
+		});
+	}
+
+	const { invitationId } = await event.request.json();
+
+	if (!invitationId) {
+		throw error(400, {
+			message: 'Invitation ID is required'
+		});
+	}
+
+	// Verify invitation belongs to this team
+	const invitation = await db.teamInvitation.findUnique({
+		where: { id: invitationId }
+	});
+
+	if (!invitation) {
+		throw error(404, {
+			message: 'Invitation not found'
+		});
+	}
+
+	if (invitation.teamId !== teamId) {
+		throw error(403, {
+			message: 'This invitation does not belong to your team'
+		});
+	}
+
+	// Update status to CANCELED instead of deleting
+	await db.teamInvitation.update({
+		where: { id: invitationId },
+		data: { status: 'CANCELED' }
+	});
+
+	return json({ success: true });
 };

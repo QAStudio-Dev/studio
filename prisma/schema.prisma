@@ -72,6 +72,7 @@ model Team {
   projects     Project[]
   subscription Subscription?
   integrations Integration[]
+  invitations  TeamInvitation[]
 
   @@index([name])
 }
@@ -469,4 +470,39 @@ enum NotificationStatus {
   SENT
   FAILED
   RETRYING
+}
+
+// ============================================
+// TEAM INVITATIONS
+// ============================================
+
+model TeamInvitation {
+  id          String           @id @default(cuid())
+  teamId      String
+  email       String
+  role        UserRole         @default(TESTER)
+  status      InvitationStatus @default(PENDING)
+  invitedBy   String           // User ID who sent the invitation
+  token       String           @unique // Unique token for accepting invitation
+  expiresAt   DateTime         // Invitations expire after 7 days
+  acceptedAt  DateTime?
+  declinedAt  DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  team        Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+  @@index([email])
+  @@index([token])
+  @@index([status])
+  @@unique([teamId, email]) // One pending invitation per email per team
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  CANCELED
 }

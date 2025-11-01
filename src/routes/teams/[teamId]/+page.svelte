@@ -235,7 +235,7 @@
 				</div>
 
 				{#if currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'}
-					<a href="/teams/{team.id}/members/invite" class="mt-4 btn w-full preset-outlined">
+					<a href="/teams/{team.id}/invite" class="mt-4 btn w-full preset-outlined">
 						Invite Members
 					</a>
 				{/if}

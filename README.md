@@ -102,9 +102,11 @@ QA Studio is a modern, open-source test management platform built by QA engineer
 - 📚 **[API Documentation](https://qastudio.dev/docs)** - Complete REST API reference
 - 🔧 **[Setup Guides](docs/)** - Detailed setup instructions
   - [Authentication Setup](docs/SETUP_AUTH.md)
-  - [Decap CMS Setup](docs/DECAP_CMS_SETUP.md)
-  - [Stripe Integration](docs/STRIPE_SETUP.md)
-  - [Slack Notifications](docs/INTEGRATIONS.md)
+  - [Team Invitations](docs/TEAM_INVITATIONS.md) - Invite members with role-based access
+  - [Clerk Invitations Setup](docs/CLERK_INVITATIONS_SETUP.md) - Configure email invitations
+  - [Stripe Integration](docs/STRIPE_SETUP.md) - Team billing and subscriptions
+  - [Decap CMS Setup](docs/DECAP_CMS_SETUP.md) - Blog management
+  - [Slack Notifications](docs/INTEGRATIONS.md) - Team notifications
 - 🎨 **[Project Structure](CLAUDE.md)** - Codebase organization and conventions
 
 ## Deployment
