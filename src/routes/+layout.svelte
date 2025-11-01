@@ -144,7 +144,7 @@
 								</a>
 							</li>
 							<li>
-								<a href="#pricing" class="text-surface-600-400 transition-colors hover:text-primary-500">
+								<a href="/" class="text-surface-600-400 transition-colors hover:text-primary-500">
 									Pricing
 								</a>
 							</li>
@@ -166,7 +166,7 @@
 								</a>
 							</li>
 							<li>
-								<a href="#changelog" class="text-surface-600-400 transition-colors hover:text-primary-500">
+								<a href="/blog" class="text-surface-600-400 transition-colors hover:text-primary-500">
 									Changelog
 								</a>
 							</li>
@@ -183,22 +183,22 @@
 						<h3 class="mb-4 text-sm font-bold">Company</h3>
 						<ul class="space-y-2 text-sm">
 							<li>
-								<a href="#about" class="text-surface-600-400 transition-colors hover:text-primary-500">
+								<a href="/" class="text-surface-600-400 transition-colors hover:text-primary-500">
 									About
 								</a>
 							</li>
 							<li>
-								<a href="#contact" class="text-surface-600-400 transition-colors hover:text-primary-500">
+								<a href="/" class="text-surface-600-400 transition-colors hover:text-primary-500">
 									Contact
 								</a>
 							</li>
 							<li>
-								<a href="#privacy" class="text-surface-600-400 transition-colors hover:text-primary-500">
+								<a href="/" class="text-surface-600-400 transition-colors hover:text-primary-500">
 									Privacy Policy
 								</a>
 							</li>
 							<li>
-								<a href="#terms" class="text-surface-600-400 transition-colors hover:text-primary-500">
+								<a href="/" class="text-surface-600-400 transition-colors hover:text-primary-500">
 									Terms of Service
 								</a>
 							</li>
