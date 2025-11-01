@@ -1,12 +1,16 @@
 ---
-title: 'Welcome to QA Studio'
+title: Welcome to QA Studio
 date: 2025-01-15T10:00:00.000Z
-description: 'Introducing QA Studio - modern test management built by QA engineers, for QA engineers.'
-cover: '/images/blog/welcome.jpg'
-category: 'Product Updates'
-tags: ['announcement', 'getting-started', 'qa-engineering']
-author: 'QA Studio Team'
-slug: 'welcome-to-qa-studio'
+description: Introducing QA Studio - modern test management built by QA
+  engineers, for QA engineers.
+cover: ""
+category: Product Updates
+tags:
+  - announcement
+  - getting-started
+  - qa-engineering
+author: QA Studio Team
+slug: welcome-to-qa-studio
 published: true
 ---
 
