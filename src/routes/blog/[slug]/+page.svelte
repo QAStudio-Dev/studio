@@ -39,7 +39,9 @@
 	<header class="mb-8">
 		<!-- Category Badge -->
 		{#if post.category}
-			<span class="mb-4 inline-block rounded-full bg-primary-500/10 px-3 py-1 text-sm font-medium text-primary-500">
+			<span
+				class="mb-4 inline-block rounded-full bg-primary-500/10 px-3 py-1 text-sm font-medium text-primary-500"
+			>
 				{post.category}
 			</span>
 		{/if}
@@ -83,7 +85,7 @@
 	<hr class="mb-8 border-surface-300-700" />
 
 	<!-- Content -->
-	<div class="prose prose-lg prose-slate dark:prose-invert max-w-none">
+	<div class="prose prose-lg max-w-none prose-slate dark:prose-invert">
 		{@html post.html}
 	</div>
 

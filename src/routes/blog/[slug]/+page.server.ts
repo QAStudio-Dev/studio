@@ -12,7 +12,7 @@ export const entries: EntryGenerator = async () => {
 
 	try {
 		const files = await readdir(blogDir);
-		const mdFiles = files.filter(file => file.endsWith('.md'));
+		const mdFiles = files.filter((file) => file.endsWith('.md'));
 
 		const slugs = await Promise.all(
 			mdFiles.map(async (file) => {
@@ -43,7 +43,7 @@ export const load: PageServerLoad = async ({ params }) => {
 
 	try {
 		const files = await readdir(blogDir);
-		const mdFiles = files.filter(file => file.endsWith('.md'));
+		const mdFiles = files.filter((file) => file.endsWith('.md'));
 
 		// Find the file that matches the slug
 		for (const file of mdFiles) {

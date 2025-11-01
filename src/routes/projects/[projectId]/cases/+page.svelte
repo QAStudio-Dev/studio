@@ -44,7 +44,7 @@
 	let showTestCaseModal = $state(false);
 
 	// Get only root-level suites (those without a parent)
-	let rootSuites = $derived(project.testSuites.filter(s => !s.parentId));
+	let rootSuites = $derived(project.testSuites.filter((s) => !s.parentId));
 
 	// Initialize all suites as expanded by default
 	$effect(() => {
@@ -55,8 +55,7 @@
 
 	// Expand/collapse all functionality
 	let allExpanded = $derived(
-		expandedSuites.has('root') &&
-		project.testSuites.every(s => expandedSuites.has(s.id))
+		expandedSuites.has('root') && project.testSuites.every((s) => expandedSuites.has(s.id))
 	);
 
 	function toggleExpandCollapseAll() {
@@ -65,7 +64,7 @@
 			expandedSuites = new Set();
 		} else {
 			// Expand all (including nested suites)
-			expandedSuites = new Set(['root', ...project.testSuites.map(s => s.id)]);
+			expandedSuites = new Set(['root', ...project.testSuites.map((s) => s.id)]);
 		}
 	}
 
@@ -480,13 +479,13 @@
 				<div class="flex items-center gap-2">
 					<button
 						onclick={toggleExpandCollapseAll}
-						class="btn btn-sm preset-outlined-surface-500"
+						class="btn preset-outlined-surface-500 btn-sm"
 						title={allExpanded ? 'Collapse All' : 'Expand All'}
 					>
 						{#if allExpanded}
-							<ChevronRight class="w-4 h-4" />
+							<ChevronRight class="h-4 w-4" />
 						{:else}
-							<ChevronDown class="w-4 h-4" />
+							<ChevronDown class="h-4 w-4" />
 						{/if}
 					</button>
 					<button
@@ -537,12 +536,12 @@
 				{#each rootSuites as suite (suite.id)}
 					<NestedTestSuite
 						{suite}
-						expandedSuites={expandedSuites}
-						toggleSuite={toggleSuite}
+						{expandedSuites}
+						{toggleSuite}
 						onDragStart={handleSuiteDragStart}
 						onDragEnd={handleSuiteDragEnd}
 						onDropOnSuite={handleDropSuiteOnSuite}
-						draggedSuite={draggedSuite}
+						{draggedSuite}
 						allSuites={project.testSuites}
 						level={0}
 					/>

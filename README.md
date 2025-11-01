@@ -5,10 +5,11 @@
 
   <p><strong>Modern Test Management Without the BS</strong></p>
 
-  [![License: Elastic-2.0](https://img.shields.io/badge/License-Elastic--2.0-blue.svg)](LICENSE)
-  [![Discord](https://img.shields.io/discord/DISCORD_ID?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/rw3UfdB9pN)
+[![License: Elastic-2.0](https://img.shields.io/badge/License-Elastic--2.0-blue.svg)](LICENSE)
+[![Discord](https://img.shields.io/discord/DISCORD_ID?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/rw3UfdB9pN)
 
-  [Website](https://qastudio.dev) • [Documentation](https://qastudio.dev/docs) • [Discord](https://discord.gg/rw3UfdB9pN) • [Blog](https://qastudio.dev/blog)
+[Website](https://qastudio.dev) • [Documentation](https://qastudio.dev/docs) • [Discord](https://discord.gg/rw3UfdB9pN) • [Blog](https://qastudio.dev/blog)
+
 </div>
 
 ---
@@ -39,22 +40,26 @@ QA Studio is a modern, open-source test management platform built by QA engineer
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/QAStudio-Dev/studio.git
    cd studio
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Set up environment variables**
+
    ```bash
    cp .env.example .env.local
    ```
 
    Edit `.env.local` with your configuration:
+
    ```env
    # Database
    DATABASE_URL="postgresql://user:password@localhost:5432/qa_studio"
@@ -69,12 +74,14 @@ QA Studio is a modern, open-source test management platform built by QA engineer
    ```
 
 4. **Set up the database**
+
    ```bash
    npx prisma generate
    npx prisma db push
    ```
 
 5. **Start the development server**
+
    ```bash
    npm run dev
    ```
@@ -170,5 +177,6 @@ Copyright © 2025 QA Studio
 <div align="center">
   Built with ❤️ by QA Engineers, for QA Engineers
 
-  [Website](https://qastudio.dev) • [Documentation](https://qastudio.dev/docs) • [Discord](https://discord.gg/rw3UfdB9pN)
+[Website](https://qastudio.dev) • [Documentation](https://qastudio.dev/docs) • [Discord](https://discord.gg/rw3UfdB9pN)
+
 </div>

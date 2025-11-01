@@ -1,5 +1,14 @@
 <script lang="ts">
-	import { Plus, Key, Copy, Trash2, CheckCircle2, AlertCircle, Calendar, Clock } from 'lucide-svelte';
+	import {
+		Plus,
+		Key,
+		Copy,
+		Trash2,
+		CheckCircle2,
+		AlertCircle,
+		Calendar,
+		Clock
+	} from 'lucide-svelte';
 	import { invalidateAll } from '$app/navigation';
 
 	let { data } = $props();
@@ -106,28 +115,26 @@
 <div class="container mx-auto max-w-5xl px-4 py-8">
 	<!-- Header -->
 	<div class="mb-8">
-		<div class="flex items-start justify-between mb-6">
+		<div class="mb-6 flex items-start justify-between">
 			<div>
-				<h1 class="text-4xl font-bold mb-2">API Keys</h1>
-				<p class="text-lg text-surface-600-300">
-					Manage API keys for integrating with QA Studio
-				</p>
+				<h1 class="mb-2 text-4xl font-bold">API Keys</h1>
+				<p class="text-surface-600-300 text-lg">Manage API keys for integrating with QA Studio</p>
 			</div>
 			<button onclick={() => (showCreateDialog = true)} class="btn preset-filled-primary-500">
-				<Plus class="w-4 h-4 mr-2" />
+				<Plus class="mr-2 h-4 w-4" />
 				Create API Key
 			</button>
 		</div>
 
 		<!-- Info card -->
-		<div class="card p-4 bg-primary-500/5 border border-primary-500/20">
+		<div class="card border border-primary-500/20 bg-primary-500/5 p-4">
 			<div class="flex gap-3">
-				<AlertCircle class="w-5 h-5 text-primary-500 flex-shrink-0 mt-0.5" />
+				<AlertCircle class="mt-0.5 h-5 w-5 flex-shrink-0 text-primary-500" />
 				<div class="text-sm">
-					<p class="font-medium mb-1">Security Notice</p>
+					<p class="mb-1 font-medium">Security Notice</p>
 					<p class="text-surface-600-300">
-						API keys provide full access to your account. Keep them secure and never share them in public
-						repositories. You'll only see the full key once when you create it.
+						API keys provide full access to your account. Keep them secure and never share them in
+						public repositories. You'll only see the full key once when you create it.
 					</p>
 				</div>
 			</div>
@@ -137,13 +144,13 @@
 	<!-- API Keys List -->
 	{#if apiKeys.length === 0}
 		<div class="card p-12 text-center">
-			<Key class="w-16 h-16 mx-auto mb-4 text-surface-400" />
-			<h2 class="text-2xl font-bold mb-2">No API keys yet</h2>
+			<Key class="mx-auto mb-4 h-16 w-16 text-surface-400" />
+			<h2 class="mb-2 text-2xl font-bold">No API keys yet</h2>
 			<p class="text-surface-600-300 mb-6">
 				Create an API key to integrate with CI/CD pipelines, test runners, and other tools
 			</p>
 			<button onclick={() => (showCreateDialog = true)} class="btn preset-filled-primary-500">
-				<Plus class="w-4 h-4 mr-2" />
+				<Plus class="mr-2 h-4 w-4" />
 				Create Your First API Key
 			</button>
 		</div>
@@ -153,41 +160,40 @@
 				<div class="card p-6">
 					<div class="flex items-start justify-between">
 						<div class="flex-1">
-							<div class="flex items-center gap-3 mb-2">
-								<Key class="w-5 h-5 text-primary-500" />
+							<div class="mb-2 flex items-center gap-3">
+								<Key class="h-5 w-5 text-primary-500" />
 								<h3 class="text-lg font-bold">{apiKey.name}</h3>
 								{#if apiKey.expiresAt && isExpired(apiKey.expiresAt)}
 									<span class="badge preset-filled-error-500 text-xs">Expired</span>
 								{/if}
 							</div>
 
-							<div class="font-mono text-sm text-surface-600-300 mb-3">
+							<div class="text-surface-600-300 mb-3 font-mono text-sm">
 								{apiKey.prefix}••••••••••••••••••••••••
 							</div>
 
-							<div class="flex flex-wrap gap-4 text-sm text-surface-600-300">
+							<div class="text-surface-600-300 flex flex-wrap gap-4 text-sm">
 								<div class="flex items-center gap-2">
-									<Calendar class="w-4 h-4" />
+									<Calendar class="h-4 w-4" />
 									<span>Created {formatDate(apiKey.createdAt)}</span>
 								</div>
 								{#if apiKey.lastUsedAt}
 									<div class="flex items-center gap-2">
-										<Clock class="w-4 h-4" />
+										<Clock class="h-4 w-4" />
 										<span>Last used {formatDate(apiKey.lastUsedAt)}</span>
 									</div>
 								{:else}
 									<div class="flex items-center gap-2">
-										<Clock class="w-4 h-4" />
+										<Clock class="h-4 w-4" />
 										<span class="text-surface-500">Never used</span>
 									</div>
 								{/if}
 								{#if apiKey.expiresAt}
 									<div class="flex items-center gap-2">
-										<AlertCircle class="w-4 h-4" />
+										<AlertCircle class="h-4 w-4" />
 										<span>
-											{isExpired(apiKey.expiresAt) ? 'Expired' : 'Expires'} {formatDate(
-												apiKey.expiresAt
-											)}
+											{isExpired(apiKey.expiresAt) ? 'Expired' : 'Expires'}
+											{formatDate(apiKey.expiresAt)}
 										</span>
 									</div>
 								{/if}
@@ -199,7 +205,7 @@
 							class="btn preset-outlined-error-500 btn-sm"
 							title="Delete API key"
 						>
-							<Trash2 class="w-4 h-4" />
+							<Trash2 class="h-4 w-4" />
 						</button>
 					</div>
 				</div>
@@ -218,13 +224,15 @@
 	></button>
 
 	<!-- Dialog -->
-	<div class="fixed inset-0 z-[60] flex items-center justify-center p-4 pointer-events-none">
-		<div class="card p-8 w-full max-w-lg shadow-2xl pointer-events-auto bg-surface-50-950 border border-surface-200-700">
-			<h2 class="text-2xl font-bold mb-6">Create API Key</h2>
+	<div class="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center p-4">
+		<div
+			class="border-surface-200-700 pointer-events-auto w-full max-w-lg card border bg-surface-50-950 p-8 shadow-2xl"
+		>
+			<h2 class="mb-6 text-2xl font-bold">Create API Key</h2>
 
 			{#if error}
 				<div class="alert preset-filled-error mb-4">
-					<AlertCircle class="w-5 h-5" />
+					<AlertCircle class="h-5 w-5" />
 					<p>{error}</p>
 				</div>
 			{/if}
@@ -237,7 +245,7 @@
 				class="space-y-4"
 			>
 				<label class="label">
-					<span class="text-base font-medium mb-2 block">Name *</span>
+					<span class="mb-2 block text-base font-medium">Name *</span>
 					<input
 						type="text"
 						class="input"
@@ -247,13 +255,13 @@
 						required
 						maxlength="100"
 					/>
-					<p class="text-sm text-surface-600-300 mt-1">
+					<p class="text-surface-600-300 mt-1 text-sm">
 						A descriptive name to help you identify this key
 					</p>
 				</label>
 
 				<label class="label">
-					<span class="text-base font-medium mb-2 block">Expiration (optional)</span>
+					<span class="mb-2 block text-base font-medium">Expiration (optional)</span>
 					<select class="select" bind:value={newKeyExpireDays} disabled={loading}>
 						<option value={null}>Never expires</option>
 						<option value={30}>30 days</option>
@@ -261,7 +269,7 @@
 						<option value={180}>180 days</option>
 						<option value={365}>1 year</option>
 					</select>
-					<p class="text-sm text-surface-600-300 mt-1">
+					<p class="text-surface-600-300 mt-1 text-sm">
 						For security, consider setting an expiration date
 					</p>
 				</label>
@@ -270,14 +278,14 @@
 					<button
 						type="button"
 						onclick={() => (showCreateDialog = false)}
-						class="btn preset-outlined-surface-500 flex-1"
+						class="btn flex-1 preset-outlined-surface-500"
 						disabled={loading}
 					>
 						Cancel
 					</button>
 					<button
 						type="submit"
-						class="btn preset-filled-primary-500 flex-1"
+						class="btn flex-1 preset-filled-primary-500"
 						disabled={loading || !newKeyName.trim()}
 					>
 						{loading ? 'Creating...' : 'Create API Key'}
@@ -301,18 +309,20 @@
 	></button>
 
 	<!-- Dialog -->
-	<div class="fixed inset-0 z-[60] flex items-center justify-center p-4 pointer-events-none">
-		<div class="card p-8 w-full max-w-2xl shadow-2xl pointer-events-auto bg-surface-50-950 border border-surface-200-700">
-			<div class="flex items-center gap-3 mb-4">
-				<CheckCircle2 class="w-8 h-8 text-success-500" />
+	<div class="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center p-4">
+		<div
+			class="border-surface-200-700 pointer-events-auto w-full max-w-2xl card border bg-surface-50-950 p-8 shadow-2xl"
+		>
+			<div class="mb-4 flex items-center gap-3">
+				<CheckCircle2 class="h-8 w-8 text-success-500" />
 				<h2 class="text-2xl font-bold">API Key Created!</h2>
 			</div>
 
-			<div class="bg-warning-500/10 border border-warning-500/20 rounded-container p-4 mb-4">
+			<div class="mb-4 rounded-container border border-warning-500/20 bg-warning-500/10 p-4">
 				<div class="flex gap-3">
-					<AlertCircle class="w-5 h-5 text-warning-500 flex-shrink-0 mt-0.5" />
+					<AlertCircle class="mt-0.5 h-5 w-5 flex-shrink-0 text-warning-500" />
 					<div class="text-sm">
-						<p class="font-medium mb-1">Important: Save this key now!</p>
+						<p class="mb-1 font-medium">Important: Save this key now!</p>
 						<p class="text-surface-600-300">
 							This is the only time you'll see the full API key. Make sure to copy it and store it
 							securely.
@@ -322,11 +332,11 @@
 			</div>
 
 			<label class="label mb-6">
-				<span class="text-base font-medium mb-2 block">Your API Key</span>
+				<span class="mb-2 block text-base font-medium">Your API Key</span>
 				<div class="flex gap-2">
 					<input
 						type="text"
-						class="input font-mono flex-1"
+						class="input flex-1 font-mono"
 						value={createdKey}
 						readonly
 						onclick={(e) => e.target.select()}
@@ -337,19 +347,20 @@
 						title="Copy to clipboard"
 					>
 						{#if copied}
-							<CheckCircle2 class="w-5 h-5" />
+							<CheckCircle2 class="h-5 w-5" />
 						{:else}
-							<Copy class="w-5 h-5" />
+							<Copy class="h-5 w-5" />
 						{/if}
 					</button>
 				</div>
 			</label>
 
-			<div class="bg-surface-50-900 rounded-container p-4 mb-6">
-				<p class="text-sm font-medium mb-2">Example usage:</p>
-				<pre
-					class="text-xs overflow-x-auto"><code>curl https://qastudio.com/api/test-results \
-  -H "Authorization: Bearer {createdKey}"</code></pre>
+			<div class="bg-surface-50-900 mb-6 rounded-container p-4">
+				<p class="mb-2 text-sm font-medium">Example usage:</p>
+				<pre class="overflow-x-auto text-xs"><code
+						>curl https://qastudio.com/api/test-results \
+  -H "Authorization: Bearer {createdKey}"</code
+					></pre>
 			</div>
 
 			<button
@@ -357,7 +368,7 @@
 					showKeyDialog = false;
 					createdKey = null;
 				}}
-				class="btn preset-filled-primary-500 w-full"
+				class="btn w-full preset-filled-primary-500"
 			>
 				I've Saved My Key
 			</button>

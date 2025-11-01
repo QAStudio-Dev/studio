@@ -37,7 +37,9 @@
 	let hasMoreResults = $state(testCase.results.length === 10); // Initial load is 10
 
 	// AI Diagnosis state
-	let aiDiagnoses = $state<Map<string, { diagnosis: string; generatedAt?: Date; cached?: boolean }>>(new Map());
+	let aiDiagnoses = $state<
+		Map<string, { diagnosis: string; generatedAt?: Date; cached?: boolean }>
+	>(new Map());
 	let loadingDiagnosis = $state<Set<string>>(new Set());
 
 	async function loadMoreResults() {
@@ -76,14 +78,16 @@
 	}
 
 	function getStatusIcon(status: string) {
-		return {
-			PASSED: CheckCircle2,
-			FAILED: XCircle,
-			BLOCKED: AlertCircle,
-			SKIPPED: Clock,
-			RETEST: Clock,
-			UNTESTED: Clock
-		}[status] || Clock;
+		return (
+			{
+				PASSED: CheckCircle2,
+				FAILED: XCircle,
+				BLOCKED: AlertCircle,
+				SKIPPED: Clock,
+				RETEST: Clock,
+				UNTESTED: Clock
+			}[status] || Clock
+		);
 	}
 
 	function formatDate(date: string | Date) {
@@ -143,17 +147,17 @@
 	<div class="mb-8">
 		<a
 			href="/projects/{testCase.project.id}"
-			class="inline-flex items-center gap-2 text-primary-500 hover:underline mb-4"
+			class="mb-4 inline-flex items-center gap-2 text-primary-500 hover:underline"
 		>
-			<ArrowLeft class="w-4 h-4" />
+			<ArrowLeft class="h-4 w-4" />
 			Back to {testCase.project.name}
 		</a>
 
 		<div class="flex items-start justify-between">
 			<div class="flex-1">
-				<div class="flex items-center gap-3 mb-3">
-					<div class="p-3 bg-primary-500/10 rounded-lg">
-						<TestTube2 class="w-8 h-8 text-primary-500" />
+				<div class="mb-3 flex items-center gap-3">
+					<div class="rounded-lg bg-primary-500/10 p-3">
+						<TestTube2 class="h-8 w-8 text-primary-500" />
 					</div>
 					<div>
 						<h1 class="text-3xl font-bold">{testCase.title}</h1>
@@ -169,7 +173,7 @@
 					<span class="badge preset-outlined-surface-500">{testCase.automationStatus}</span>
 					{#each testCase.tags as tag}
 						<span class="badge preset-outlined-primary-500">
-							<Tag class="w-3 h-3 mr-1" />
+							<Tag class="mr-1 h-3 w-3" />
 							{tag}
 						</span>
 					{/each}
@@ -177,19 +181,19 @@
 			</div>
 
 			<button class="btn preset-filled-primary-500">
-				<Edit class="w-4 h-4 mr-2" />
+				<Edit class="mr-2 h-4 w-4" />
 				Edit
 			</button>
 		</div>
 	</div>
 
-	<div class="grid lg:grid-cols-3 gap-6">
+	<div class="grid gap-6 lg:grid-cols-3">
 		<!-- Main Content -->
-		<div class="lg:col-span-2 space-y-6">
+		<div class="space-y-6 lg:col-span-2">
 			<!-- Description -->
 			{#if testCase.description}
 				<div class="card p-6">
-					<h2 class="font-bold text-lg mb-3">Description</h2>
+					<h2 class="mb-3 text-lg font-bold">Description</h2>
 					<p class="text-surface-600-300">{testCase.description}</p>
 				</div>
 			{/if}
@@ -197,7 +201,7 @@
 			<!-- Preconditions -->
 			{#if testCase.preconditions}
 				<div class="card p-6">
-					<h2 class="font-bold text-lg mb-3">Preconditions</h2>
+					<h2 class="mb-3 text-lg font-bold">Preconditions</h2>
 					<p class="text-surface-600-300">{testCase.preconditions}</p>
 				</div>
 			{/if}
@@ -205,9 +209,9 @@
 			<!-- Test Steps -->
 			{#if testCase.steps}
 				<div class="card p-6">
-					<h2 class="font-bold text-lg mb-3">Test Steps</h2>
+					<h2 class="mb-3 text-lg font-bold">Test Steps</h2>
 					{#if Array.isArray(testCase.steps)}
-						<ol class="list-decimal list-inside space-y-2">
+						<ol class="list-inside list-decimal space-y-2">
 							{#each testCase.steps as step}
 								<li class="text-surface-600-300">{step}</li>
 							{/each}
@@ -221,48 +225,54 @@
 			<!-- Expected Result -->
 			{#if testCase.expectedResult}
 				<div class="card p-6">
-					<h2 class="font-bold text-lg mb-3">Expected Result</h2>
+					<h2 class="mb-3 text-lg font-bold">Expected Result</h2>
 					<p class="text-surface-600-300">{testCase.expectedResult}</p>
 				</div>
 			{/if}
 
 			<!-- Execution History -->
 			<div class="card p-6">
-				<h2 class="font-bold text-lg mb-4">Execution History</h2>
+				<h2 class="mb-4 text-lg font-bold">Execution History</h2>
 
 				{#if allResults.length > 0}
 					<Accordion>
 						{#each allResults as result}
 							{@const StatusIcon = getStatusIcon(result.status)}
 							<Accordion.Item value={result.id}>
-								<Accordion.ItemTrigger class="w-full p-4 rounded-container border border-surface-200-700 hover:border-primary-500 transition-colors">
-									<div class="flex items-start justify-between w-full">
+								<Accordion.ItemTrigger
+									class="border-surface-200-700 w-full rounded-container border p-4 transition-colors hover:border-primary-500"
+								>
+									<div class="flex w-full items-start justify-between">
 										<div class="flex items-center gap-3">
-											<ChevronRight class="w-4 h-4 transition-transform group-data-[state=open]:rotate-90" />
+											<ChevronRight
+												class="h-4 w-4 transition-transform group-data-[state=open]:rotate-90"
+											/>
 											<span class="badge {getStatusColor(result.status)}">
-												<StatusIcon class="w-3 h-3 mr-1" />
+												<StatusIcon class="mr-1 h-3 w-3" />
 												{result.status}
 											</span>
 											<span class="text-sm font-medium">{result.testRun.name}</span>
 										</div>
 										<div class="flex items-center gap-4">
 											{#if result.duration}
-												<span class="text-sm text-surface-600-300">
+												<span class="text-surface-600-300 text-sm">
 													{Math.round(result.duration / 1000)}s
 												</span>
 											{/if}
-											<span class="text-sm text-surface-600-300">{formatDate(result.executedAt)}</span>
+											<span class="text-surface-600-300 text-sm"
+												>{formatDate(result.executedAt)}</span
+											>
 										</div>
 									</div>
 								</Accordion.ItemTrigger>
 
 								<Accordion.ItemContent class="px-4 pb-4">
-									<div class="text-sm text-surface-600-300 mb-2">
+									<div class="text-surface-600-300 mb-2 text-sm">
 										Executed by: {result.executor.firstName || result.executor.email}
 									</div>
 
 									{#if result.comment}
-										<p class="text-sm text-surface-600-300 mt-2">{result.comment}</p>
+										<p class="text-surface-600-300 mt-2 text-sm">{result.comment}</p>
 									{/if}
 
 									<!-- Error/Stack Trace in nested accordion -->
@@ -271,15 +281,25 @@
 											<Accordion>
 												{#if result.errorMessage}
 													<Accordion.Item value="error">
-														<Accordion.ItemTrigger class="p-2 bg-error-500/10 rounded-base hover:bg-error-500/20 transition-colors w-full">
-															<div class="flex items-center gap-2 text-sm font-medium text-error-500">
-																<ChevronRight class="w-3 h-3 transition-transform group-data-[state=open]:rotate-90" />
+														<Accordion.ItemTrigger
+															class="w-full rounded-base bg-error-500/10 p-2 transition-colors hover:bg-error-500/20"
+														>
+															<div
+																class="flex items-center gap-2 text-sm font-medium text-error-500"
+															>
+																<ChevronRight
+																	class="h-3 w-3 transition-transform group-data-[state=open]:rotate-90"
+																/>
 																Error Message
 															</div>
 														</Accordion.ItemTrigger>
 														<Accordion.ItemContent class="px-2 pb-2">
-															<div class="mt-2 p-3 bg-error-500/5 rounded-base">
-																<p class="text-sm text-error-500 whitespace-pre-wrap break-words font-mono">{stripAnsi(result.errorMessage)}</p>
+															<div class="mt-2 rounded-base bg-error-500/5 p-3">
+																<p
+																	class="font-mono text-sm break-words whitespace-pre-wrap text-error-500"
+																>
+																	{stripAnsi(result.errorMessage)}
+																</p>
 															</div>
 														</Accordion.ItemContent>
 													</Accordion.Item>
@@ -287,15 +307,22 @@
 
 												{#if result.stackTrace}
 													<Accordion.Item value="stack">
-														<Accordion.ItemTrigger class="p-2 bg-surface-200-800 rounded-base hover:bg-surface-300-700 transition-colors w-full mt-2">
+														<Accordion.ItemTrigger
+															class="mt-2 w-full rounded-base bg-surface-200-800 p-2 transition-colors hover:bg-surface-300-700"
+														>
 															<div class="flex items-center gap-2 text-sm font-medium">
-																<ChevronRight class="w-3 h-3 transition-transform group-data-[state=open]:rotate-90" />
+																<ChevronRight
+																	class="h-3 w-3 transition-transform group-data-[state=open]:rotate-90"
+																/>
 																Stack Trace
 															</div>
 														</Accordion.ItemTrigger>
 														<Accordion.ItemContent class="px-2 pb-2">
-															<div class="mt-2 p-3 bg-surface-100-900 rounded-base">
-																<pre class="text-xs whitespace-pre-wrap break-words font-mono">{stripAnsi(result.stackTrace)}</pre>
+															<div class="mt-2 rounded-base bg-surface-100-900 p-3">
+																<pre
+																	class="font-mono text-xs break-words whitespace-pre-wrap">{stripAnsi(
+																		result.stackTrace
+																	)}</pre>
 															</div>
 														</Accordion.ItemContent>
 													</Accordion.Item>
@@ -306,11 +333,11 @@
 
 									<!-- AI Diagnosis for Failed Tests -->
 									{#if result.status === 'FAILED'}
-										<div class="mt-3 pt-3 border-t border-surface-200-700">
+										<div class="border-surface-200-700 mt-3 border-t pt-3">
 											{#if !aiDiagnoses.has(result.id) && !loadingDiagnosis.has(result.id)}
 												<button
 													onclick={() => getDiagnosis(result.id)}
-													class="btn preset-tonal-primary-500 btn-sm"
+													class="preset-tonal-primary-500 btn btn-sm"
 												>
 													<Sparkles class="h-4 w-4" />
 													Get AI Diagnosis
@@ -321,7 +348,9 @@
 													<span>Analyzing failure with AI...</span>
 												</div>
 											{:else if aiDiagnoses.has(result.id)}
-												<div class="rounded-container border-2 border-primary-500 bg-primary-50-950 p-3">
+												<div
+													class="rounded-container border-2 border-primary-500 bg-primary-50-950 p-3"
+												>
 													<div class="mb-2 flex items-center justify-between gap-2">
 														<div class="flex items-center gap-2">
 															<Sparkles class="h-4 w-4 text-primary-500" />
@@ -332,7 +361,7 @@
 														</div>
 														<button
 															onclick={() => getDiagnosis(result.id, true)}
-															class="btn btn-sm preset-tonal-primary-500"
+															class="preset-tonal-primary-500 btn btn-sm"
 															title="Regenerate diagnosis"
 															disabled={loadingDiagnosis.has(result.id)}
 														>
@@ -340,7 +369,7 @@
 															Regenerate
 														</button>
 													</div>
-													<div class="prose prose-sm max-w-none whitespace-pre-wrap text-xs">
+													<div class="prose prose-sm max-w-none text-xs whitespace-pre-wrap">
 														{aiDiagnoses.get(result.id)?.diagnosis}
 													</div>
 												</div>
@@ -349,7 +378,7 @@
 									{/if}
 
 									{#if result.attachments && result.attachments.length > 0}
-										<div class="mt-3 pt-3 border-t border-surface-200-700">
+										<div class="border-surface-200-700 mt-3 border-t pt-3">
 											<AttachmentViewer attachments={result.attachments} />
 										</div>
 									{/if}
@@ -367,8 +396,8 @@
 						/>
 					</div>
 				{:else}
-					<div class="text-center py-8 text-surface-600-300">
-						<Clock class="w-12 h-12 mx-auto mb-2 opacity-50" />
+					<div class="text-surface-600-300 py-8 text-center">
+						<Clock class="mx-auto mb-2 h-12 w-12 opacity-50" />
 						<p>No execution history yet</p>
 					</div>
 				{/if}
@@ -379,13 +408,13 @@
 		<div class="space-y-6">
 			<!-- Details -->
 			<div class="card p-6">
-				<h2 class="font-bold text-lg mb-4">Details</h2>
+				<h2 class="mb-4 text-lg font-bold">Details</h2>
 
 				<div class="space-y-4 text-sm">
 					<div>
 						<div class="text-surface-600-300 mb-1">Created By</div>
 						<div class="flex items-center gap-2">
-							<Avatar class="w-6 h-6">
+							<Avatar class="h-6 w-6">
 								{#if testCase.creator.imageUrl}
 									<Avatar.Image src={testCase.creator.imageUrl} alt={testCase.creator.email} />
 								{/if}
@@ -407,7 +436,7 @@
 							href="/projects/{testCase.project.id}"
 							class="flex items-center gap-2 text-primary-500 hover:underline"
 						>
-							<FolderOpen class="w-4 h-4" />
+							<FolderOpen class="h-4 w-4" />
 							{testCase.project.name}
 						</a>
 					</div>
@@ -416,7 +445,7 @@
 						<div>
 							<div class="text-surface-600-300 mb-1">Test Suite</div>
 							<div class="flex items-center gap-2">
-								<FolderOpen class="w-4 h-4 text-primary-500" />
+								<FolderOpen class="h-4 w-4 text-primary-500" />
 								{testCase.suite.name}
 							</div>
 						</div>
@@ -425,7 +454,7 @@
 					<div>
 						<div class="text-surface-600-300 mb-1">Created</div>
 						<div class="flex items-center gap-2">
-							<Calendar class="w-4 h-4" />
+							<Calendar class="h-4 w-4" />
 							{formatDate(testCase.createdAt)}
 						</div>
 					</div>
@@ -433,7 +462,7 @@
 					<div>
 						<div class="text-surface-600-300 mb-1">Last Updated</div>
 						<div class="flex items-center gap-2">
-							<Clock class="w-4 h-4" />
+							<Clock class="h-4 w-4" />
 							{formatDate(testCase.updatedAt)}
 						</div>
 					</div>
@@ -442,12 +471,12 @@
 
 			<!-- Quick Stats -->
 			<div class="card p-6">
-				<h2 class="font-bold text-lg mb-4">Statistics</h2>
+				<h2 class="mb-4 text-lg font-bold">Statistics</h2>
 
 				<div class="space-y-3 text-sm">
 					<div class="flex items-center justify-between">
 						<span class="text-surface-600-300">Total Executions</span>
-						<span class="font-bold text-lg">{testCase.results.length}</span>
+						<span class="text-lg font-bold">{testCase.results.length}</span>
 					</div>
 
 					{#if testCase.results.length > 0}
@@ -455,7 +484,7 @@
 						{@const passRate = Math.round((passedCount / testCase.results.length) * 100)}
 						<div class="flex items-center justify-between">
 							<span class="text-surface-600-300">Pass Rate</span>
-							<span class="font-bold text-lg text-success-500">{passRate}%</span>
+							<span class="text-lg font-bold text-success-500">{passRate}%</span>
 						</div>
 					{/if}
 				</div>

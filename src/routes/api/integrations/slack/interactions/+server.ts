@@ -63,7 +63,9 @@ export const POST: RequestHandler = async ({ request }) => {
 				return json({ error: 'Invalid request signature' }, { status: 401 });
 			}
 		} else {
-			console.warn('[Slack Interactions] SLACK_SIGNING_SECRET not configured - skipping verification');
+			console.warn(
+				'[Slack Interactions] SLACK_SIGNING_SECRET not configured - skipping verification'
+			);
 		}
 
 		// Parse the form data

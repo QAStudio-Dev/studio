@@ -9,8 +9,8 @@ import { requireAuth } from '$lib/server/auth';
 
 // Require authentication (throws 401 if not authenticated)
 export const GET: RequestHandler = async (event) => {
-  const userId = requireAuth(event);
-  // userId is guaranteed to be a string here
+	const userId = requireAuth(event);
+	// userId is guaranteed to be a string here
 };
 ```
 
@@ -21,13 +21,13 @@ import { getCurrentUserId } from '$lib/server/auth';
 
 // Get userId if authenticated, null otherwise
 export const GET: RequestHandler = async (event) => {
-  const userId = getCurrentUserId(event);
+	const userId = getCurrentUserId(event);
 
-  if (userId) {
-    // Show user-specific data
-  } else {
-    // Show public data
-  }
+	if (userId) {
+		// Show user-specific data
+	} else {
+		// Show public data
+	}
 };
 ```
 
@@ -37,12 +37,12 @@ export const GET: RequestHandler = async (event) => {
 import { getCurrentSession } from '$lib/server/auth';
 
 export const GET: RequestHandler = async (event) => {
-  const session = getCurrentSession(event);
+	const session = getCurrentSession(event);
 
-  if (session) {
-    const { userId, orgId, orgRole } = session;
-    // Use organization info, roles, etc.
-  }
+	if (session) {
+		const { userId, orgId, orgRole } = session;
+		// Use organization info, roles, etc.
+	}
 };
 ```
 
@@ -55,8 +55,8 @@ export const GET: RequestHandler = async (event) => {
 const userId = requireAuth(event);
 
 const projects = await db.project.findMany({
-  where: { createdBy: userId },
-  orderBy: { createdAt: 'desc' }
+	where: { createdBy: userId },
+	orderBy: { createdAt: 'desc' }
 });
 ```
 
@@ -68,10 +68,10 @@ const userId = requireAuth(event);
 const data = await event.request.json();
 
 const project = await db.project.create({
-  data: {
-    ...data,
-    createdBy: userId
-  }
+	data: {
+		...data,
+		createdBy: userId
+	}
 });
 ```
 
@@ -83,11 +83,11 @@ const userId = requireAuth(event);
 const { id } = event.params;
 
 const project = await db.project.findUnique({
-  where: { id }
+	where: { id }
 });
 
 if (!project || project.createdBy !== userId) {
-  throw error(403, 'Forbidden - You do not own this resource');
+	throw error(403, 'Forbidden - You do not own this resource');
 }
 
 // Now update...
@@ -98,13 +98,13 @@ if (!project || project.createdBy !== userId) {
 ```typescript
 // Public endpoint (no auth required)
 export const GET: RequestHandler = async () => {
-  return json({ status: 'ok' });
+	return json({ status: 'ok' });
 };
 
 // Private endpoint (auth required)
 export const POST: RequestHandler = async (event) => {
-  requireAuth(event);
-  // Handle authenticated request
+	requireAuth(event);
+	// Handle authenticated request
 };
 ```
 
@@ -116,22 +116,22 @@ When you enable Organizations in Clerk:
 import { requireAuth, getCurrentSession } from '$lib/server/auth';
 
 export const GET: RequestHandler = async (event) => {
-  requireAuth(event);
-  const session = getCurrentSession(event);
+	requireAuth(event);
+	const session = getCurrentSession(event);
 
-  // Get organization ID
-  const orgId = session?.orgId;
+	// Get organization ID
+	const orgId = session?.orgId;
 
-  if (!orgId) {
-    throw error(400, 'No organization selected');
-  }
+	if (!orgId) {
+		throw error(400, 'No organization selected');
+	}
 
-  // Filter by organization
-  const projects = await db.project.findMany({
-    where: { organizationId: orgId }
-  });
+	// Filter by organization
+	const projects = await db.project.findMany({
+		where: { organizationId: orgId }
+	});
 
-  return json(projects);
+	return json(projects);
 };
 ```
 
@@ -141,15 +141,15 @@ export const GET: RequestHandler = async (event) => {
 import { requireAuth, getCurrentSession } from '$lib/server/auth';
 
 export const DELETE: RequestHandler = async (event) => {
-  requireAuth(event);
-  const session = getCurrentSession(event);
+	requireAuth(event);
+	const session = getCurrentSession(event);
 
-  // Check organization role
-  if (session?.orgRole !== 'admin') {
-    throw error(403, 'Forbidden - Admin access required');
-  }
+	// Check organization role
+	if (session?.orgRole !== 'admin') {
+		throw error(403, 'Forbidden - Admin access required');
+	}
 
-  // Perform admin action...
+	// Perform admin action...
 };
 ```
 
@@ -168,13 +168,13 @@ Custom error handling:
 
 ```typescript
 try {
-  const userId = requireAuth(event);
-  // ... your code
+	const userId = requireAuth(event);
+	// ... your code
 } catch (err) {
-  if (err.status === 401) {
-    // Custom 401 handling
-  }
-  throw err;
+	if (err.status === 401) {
+		// Custom 401 handling
+	}
+	throw err;
 }
 ```
 
@@ -185,9 +185,9 @@ For testing, you can mock the auth:
 ```typescript
 // In your test file
 event.locals.clerk = {
-  session: {
-    userId: 'test_user_123',
-    orgId: 'test_org_456'
-  }
+	session: {
+		userId: 'test_user_123',
+		orgId: 'test_org_456'
+	}
 };
 ```

@@ -312,9 +312,7 @@ export const POST: RequestHandler = async (event) => {
 
 			// Try to find matching test case by title and suite
 			const testCase = testRun.project.testCases.find(
-				(tc) =>
-					tc.title.toLowerCase() === testTitle.toLowerCase() &&
-					tc.suiteId === suiteId
+				(tc) => tc.title.toLowerCase() === testTitle.toLowerCase() && tc.suiteId === suiteId
 			);
 
 			if (!testCase) {
@@ -350,11 +348,7 @@ export const POST: RequestHandler = async (event) => {
 				// Process attachments if any
 				let attachmentCount = 0;
 				if (result.attachments && Array.isArray(result.attachments)) {
-					attachmentCount = await processAttachments(
-						result.attachments,
-						testRunId,
-						testResult.id
-					);
+					attachmentCount = await processAttachments(result.attachments, testRunId, testResult.id);
 				}
 
 				processedResults.push({
@@ -384,11 +378,7 @@ export const POST: RequestHandler = async (event) => {
 				// Process attachments if any
 				let attachmentCount = 0;
 				if (result.attachments && Array.isArray(result.attachments)) {
-					attachmentCount = await processAttachments(
-						result.attachments,
-						testRunId,
-						testResult.id
-					);
+					attachmentCount = await processAttachments(result.attachments, testRunId, testResult.id);
 				}
 
 				processedResults.push({
@@ -449,9 +439,7 @@ export const POST: RequestHandler = async (event) => {
 					message: `*Project:* ${testRun.project.name}\n*Test Run:* ${testRun.name}\n\n⚠️ This test needs attention`,
 					url: `${baseUrl}/test-runs/${testRun.id}`,
 					color: '#ff0000',
-					fields: [
-						{ name: '🧪 Test Case', value: failedTest.title, inline: false }
-					]
+					fields: [{ name: '🧪 Test Case', value: failedTest.title, inline: false }]
 				});
 			}
 		} catch (notificationError) {

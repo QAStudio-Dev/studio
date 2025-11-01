@@ -55,7 +55,7 @@
 	}: Props = $props();
 
 	let isExpanded = $derived(expandedSuites.has(suite.id));
-	let childSuites = $derived(allSuites.filter(s => s.parentId === suite.id));
+	let childSuites = $derived(allSuites.filter((s) => s.parentId === suite.id));
 	let indentStyle = $derived(`margin-left: ${level * 2}rem`);
 </script>
 
@@ -114,9 +114,9 @@
 					/>
 					<DraggableTestCase
 						{testCase}
-						onDragStart={onDragStart}
-						onDragEnd={onDragEnd}
-						onOpenModal={onOpenModal}
+						{onDragStart}
+						{onDragEnd}
+						{onOpenModal}
 						isDragging={draggedTestCase?.id === testCase.id}
 					/>
 				{/each}

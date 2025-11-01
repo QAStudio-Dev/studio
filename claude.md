@@ -27,11 +27,13 @@ QA Studio is a comprehensive test management and reporting platform inspired by 
 The database is organized into logical sections:
 
 ### Projects & Organization
+
 - **Project**: Top-level container with unique key (e.g., "PROJ")
 - **Milestone**: Release milestones for tracking progress
 - **Environment**: Testing environments (Production, Staging, QA, etc.)
 
 ### Test Suites & Cases
+
 - **TestSuite**: Hierarchical organization of tests (supports nesting)
 - **TestCase**: Individual test cases with steps, priorities, types, and automation status
   - Supports multiple test types: Functional, Regression, Smoke, Integration, Performance, Security, UI, API, Unit, E2E
@@ -39,12 +41,14 @@ The database is organized into logical sections:
   - Automation tracking: Automated, Not Automated, Candidate
 
 ### Test Runs & Results
+
 - **TestRun**: Test execution session linked to project, milestone, and environment
 - **TestResult**: Individual test case execution results with status, duration, errors
 - **TestStepResult**: Granular step-by-step execution tracking
 - **TestStatus**: Passed, Failed, Blocked, Skipped, Retest, Untested
 
 ### Attachments
+
 - **Attachment**: Store screenshots, logs, videos linked to test cases or results
 
 ## API Documentation
@@ -52,6 +56,7 @@ The database is organized into logical sections:
 The platform includes a comprehensive, public-facing API documentation page at `/docs`.
 
 ### Features
+
 - **Interactive Examples**: All code examples use Shiki syntax highlighting with light/dark theme support
 - **Copy-to-Clipboard**: One-click copying for all code snippets
 - **Organized by Resource**: Projects, Milestones, Environments, Test Suites, Test Cases, Test Runs, Test Results, Attachments
@@ -60,6 +65,7 @@ The platform includes a comprehensive, public-facing API documentation page at `
 - **Getting Started Guide**: Quick examples for common use cases
 
 ### Maintaining API Docs
+
 To update API documentation, edit [src/lib/api-docs.ts](src/lib/api-docs.ts) by adding or modifying entries in the `apiDocumentation` array. The page will automatically reflect changes.
 
 ## Skeleton + Svelte Styling Guide
@@ -69,6 +75,7 @@ This project uses Skeleton UI library with Svelte 5 and Tailwind 4.
 ## Installation & Setup
 
 Global stylesheet ([app.css](src/app.css)) should include:
+
 ```css
 @import '@skeletonlabs/skeleton-svelte';
 ```
@@ -79,8 +86,8 @@ Skeleton uses a **composed pattern** with granular components:
 
 ```svelte
 <Avatar>
-  <Avatar.Image src="..." />
-  <Avatar.Fallback>SK</Avatar.Fallback>
+	<Avatar.Image src="..." />
+	<Avatar.Fallback>SK</Avatar.Fallback>
 </Avatar>
 ```
 
@@ -92,18 +99,18 @@ Skeleton uses a **composed pattern** with granular components:
 
 ```svelte
 <Accordion.ItemTrigger>
-  {#snippet element({ attributes })}
-    <button {...attributes}>Custom Button</button>
-  {/snippet}
+	{#snippet element({ attributes })}
+		<button {...attributes}>Custom Button</button>
+	{/snippet}
 </Accordion.ItemTrigger>
 ```
 
 **Provider Pattern**: Components support providers that expose Zag.js APIs:
 
 ```svelte
-const tooltip = useTooltip({ id });
+const tooltip = useTooltip({id});
 <Tooltip.Provider value={tooltip}>
-  <!-- Access state via tooltip().open and tooltip().setOpen() -->
+	<!-- Access state via tooltip().open and tooltip().setOpen() -->
 </Tooltip.Provider>
 ```
 
@@ -120,11 +127,13 @@ const tooltip = useTooltip({ id });
 ### Dark Mode
 
 Skeleton supports three strategies:
+
 1. **Media** (default): Uses `prefers-color-scheme` to match OS settings
 2. **Selector**: Add `.dark` class to `<html>` element
 3. **Data Attribute**: Use `data-mode="dark"` on `<html>`
 
 Apply variants in markup:
+
 ```html
 <div class="bg-white dark:bg-black">Content</div>
 ```
@@ -132,9 +141,10 @@ Apply variants in markup:
 ### Color Scheme Feature
 
 Toggle light or dark rendering at any scope:
+
 ```svelte
 <div class="scheme-light">
-  <div class="bg-primary-50-950">Always light</div>
+	<div class="bg-primary-50-950">Always light</div>
 </div>
 ```
 
@@ -144,13 +154,11 @@ Override component animations using the `element` snippet with Svelte transition
 
 ```svelte
 <Accordion.ItemContent>
-  {#snippet element(attributes)}
-    {#if !attributes.hidden}
-      <div {...attributes} hidden={false} transition:slide>
-        Content
-      </div>
-    {/if}
-  {/snippet}
+	{#snippet element(attributes)}
+		{#if !attributes.hidden}
+			<div {...attributes} hidden={false} transition:slide>Content</div>
+		{/if}
+	{/snippet}
 </Accordion.ItemContent>
 ```
 
@@ -163,20 +171,25 @@ Skeleton requires the **Tailwind Forms Plugin** for semantic form styling. All f
 ## Layout Best Practices
 
 ### Semantic HTML Structure
+
 Use `<header>`, `<main>`, `<footer>`, `<aside>`, and `<article>` elements to properly denote page regions.
 
 ### Sticky Positioning
+
 Combine utilities for persistent headers/sidebars:
+
 - `sticky` + `top-0` + `z-10` for sticky headers
 - Add `backdrop-blur` for glass-morphism effects
 - Use `h-[calc(100vh-{offset}px)]` to account for other sticky elements
 
 ### Responsive Design
+
 Leverage Tailwind's breakpoints:
+
 ```html
 <div class="grid grid-cols-1 md:grid-cols-[auto_1fr]">
-  <aside class="hidden md:block">Sidebar</aside>
-  <main>Content</main>
+	<aside class="hidden md:block">Sidebar</aside>
+	<main>Content</main>
 </div>
 ```
 
@@ -204,18 +217,16 @@ Skeleton includes optional **preset classes** for buttons, badges, cards, and ot
 
 ```svelte
 <script lang="ts">
-  import { Avatar, Button } from '@skeletonlabs/skeleton-svelte';
+	import { Avatar, Button } from '@skeletonlabs/skeleton-svelte';
 </script>
 
-<div class="card p-4 rounded-container">
-  <Avatar class="mb-4">
-    <Avatar.Image src="/avatar.jpg" alt="User" />
-    <Avatar.Fallback>US</Avatar.Fallback>
-  </Avatar>
+<div class="card rounded-container p-4">
+	<Avatar class="mb-4">
+		<Avatar.Image src="/avatar.jpg" alt="User" />
+		<Avatar.Fallback>US</Avatar.Fallback>
+	</Avatar>
 
-  <Button class="preset-filled">
-    Click Me
-  </Button>
+	<Button class="preset-filled">Click Me</Button>
 </div>
 ```
 
@@ -226,6 +237,7 @@ QA Studio uses **Clerk** for authentication, providing enterprise-ready features
 ### Setup
 
 1. **Environment Variables**: Create `.env.local` with your Clerk keys:
+
 ```bash
 PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 CLERK_SECRET_KEY=sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -241,11 +253,13 @@ DATABASE_URL="postgresql://user:password@localhost:5432/qa_studio?schema=public"
 ### Architecture
 
 **Server-Side Integration**:
+
 - `src/hooks.server.ts`: Clerk middleware integrated with SvelteKit hooks
 - `src/lib/server/auth.ts`: Helper functions for protecting API routes
 - Session data available via `event.locals.clerk.session`
 
 **Client-Side Components**:
+
 - `<ClerkProvider>`: Wraps entire app in layout
 - `<SignIn>`, `<SignUp>`, `<UserProfile>`: Pre-built auth UI
 - `<SignedIn>`, `<SignedOut>`: Conditional rendering components
@@ -260,24 +274,25 @@ import { requireAuth } from '$lib/server/auth';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async (event) => {
-  // Throws 401 if not authenticated
-  const userId = requireAuth(event);
+	// Throws 401 if not authenticated
+	const userId = requireAuth(event);
 
-  // Create resource with userId
-  const project = await db.project.create({
-    data: {
-      name: 'Project',
-      createdBy: userId
-    }
-  });
+	// Create resource with userId
+	const project = await db.project.create({
+		data: {
+			name: 'Project',
+			createdBy: userId
+		}
+	});
 
-  return json(project);
+	return json(project);
 };
 ```
 
 ### User Tracking
 
 The Prisma schema tracks user actions:
+
 - `Project.createdBy`: User who created the project
 - `TestCase.createdBy`: User who created the test case
 - `TestRun.createdBy`: User who created the test run
@@ -288,6 +303,7 @@ All user fields store Clerk user IDs and are indexed for performance.
 ### Enterprise Features
 
 Clerk supports:
+
 - **SSO/SAML**: Okta, Azure AD, Google Workspace (Business plan)
 - **Organizations**: Multi-tenant workspace support
 - **RBAC**: Role-based access control
@@ -358,9 +374,9 @@ export const ApiSchemas = {
 import type { MyResourceResponse } from '$lib/api/schemas';
 
 export const GET: RequestHandler = async () => {
-  const resources = await db.myResource.findMany();
-  const response: MyResourceResponse[] = resources;
-  return json(response);
+	const resources = await db.myResource.findMany();
+	const response: MyResourceResponse[] = resources;
+	return json(response);
 };
 ```
 

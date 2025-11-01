@@ -39,7 +39,8 @@ export async function requireApiAuth(event: RequestEvent): Promise<string> {
 
 	// No valid authentication found
 	throw error(401, {
-		message: 'Authentication required. Provide either a valid session or API key in Authorization header.'
+		message:
+			'Authentication required. Provide either a valid session or API key in Authorization header.'
 	});
 }
 

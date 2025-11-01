@@ -10,7 +10,7 @@ export const load: PageServerLoad = async () => {
 
 	try {
 		const files = await readdir(blogDir);
-		const mdFiles = files.filter(file => file.endsWith('.md'));
+		const mdFiles = files.filter((file) => file.endsWith('.md'));
 
 		const posts = await Promise.all(
 			mdFiles.map(async (file) => {
@@ -34,7 +34,7 @@ export const load: PageServerLoad = async () => {
 
 		// Filter published posts and sort by date (newest first)
 		const publishedPosts = posts
-			.filter(post => post.published)
+			.filter((post) => post.published)
 			.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
 		return {

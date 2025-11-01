@@ -121,6 +121,7 @@ Write your blog post content in Markdown...
 ## Categories
 
 Available categories:
+
 - Testing
 - QA Engineering
 - Automation
@@ -132,16 +133,19 @@ Available categories:
 For local development with Decap CMS:
 
 1. Install `decap-server`:
+
    ```bash
    npm install -g decap-server
    ```
 
 2. Uncomment in `/static/admin/config.yml`:
+
    ```yaml
    local_backend: true
    ```
 
 3. Run the local proxy:
+
    ```bash
    decap-server
    ```
@@ -151,15 +155,18 @@ For local development with Decap CMS:
 ## Troubleshooting
 
 ### "Error loading entries"
+
 - Check that your GitHub repo is correct in `config.yml`
 - Verify GitHub OAuth credentials in `.env`
 - Ensure you have write access to the repository
 
 ### "Failed to authenticate"
+
 - Verify the OAuth callback URL matches your deployment
 - Check that environment variables are set in production
 
 ### Posts not showing on blog page
+
 - Ensure `published: true` in frontmatter
 - Check that the file is in `src/md/blog/`
 - Verify the date is not in the future

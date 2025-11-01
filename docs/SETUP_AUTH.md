@@ -113,31 +113,34 @@ When you upgrade to Clerk's Business plan, you get:
 // Then you can check which org a user belongs to:
 
 export const GET: RequestHandler = async (event) => {
-  const userId = requireAuth(event);
-  const { orgId } = event.locals.clerk.session || {};
+	const userId = requireAuth(event);
+	const { orgId } = event.locals.clerk.session || {};
 
-  // Filter projects by organization
-  const projects = await db.project.findMany({
-    where: { organizationId: orgId }
-  });
+	// Filter projects by organization
+	const projects = await db.project.findMany({
+		where: { organizationId: orgId }
+	});
 
-  return json(projects);
+	return json(projects);
 };
 ```
 
 ## Troubleshooting
 
 ### "Invalid publishable key"
+
 - Make sure you created `.env.local` (not `.env`)
 - Check that keys start with `pk_test_` and `sk_test_`
 - Restart dev server after adding keys
 
 ### "Unauthorized" errors on API calls
+
 - Make sure you're signed in
 - Check that `requireAuth()` is being called correctly
 - Look for `event.locals.clerk.session` in server logs
 
 ### Database migration issues
+
 - If you have existing data, you may need to manually set `createdBy` fields
 - Consider running `npx prisma migrate reset` for a fresh start (⚠️ deletes all data)
 

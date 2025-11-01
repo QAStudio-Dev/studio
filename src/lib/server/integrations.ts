@@ -42,9 +42,7 @@ export async function sendNotification(teamId: string, payload: NotificationPayl
 			const isEnabled = notifications[payload.event] ?? true;
 
 			if (!isEnabled) {
-				console.log(
-					`Notification ${payload.event} disabled for integration ${integration.id}`
-				);
+				console.log(`Notification ${payload.event} disabled for integration ${integration.id}`);
 			}
 
 			return isEnabled;
@@ -323,7 +321,8 @@ export async function notifyTestRunCompleted(
 		failed: number;
 	}
 ) {
-	const color = testRun.passRate === 100 ? '#36a64f' : testRun.passRate >= 80 ? '#ffa500' : '#ff0000';
+	const color =
+		testRun.passRate === 100 ? '#36a64f' : testRun.passRate >= 80 ? '#ffa500' : '#ff0000';
 	const emoji = testRun.passRate === 100 ? '✅' : testRun.passRate >= 80 ? '⚠️' : '❌';
 	const baseUrl = process.env.PUBLIC_BASE_URL || 'https://qastudio.dev';
 
@@ -359,9 +358,7 @@ export async function notifyTestRunFailed(
 		message: `*Project:* ${testRun.projectName}\n*Failures:* ${testRun.failedCount} test(s) failed\n\n⚠️ Immediate attention required`,
 		url: `${baseUrl}/test-runs/${testRun.id}`,
 		color: '#ff0000',
-		fields: [
-			{ name: '🔴 Failed Tests', value: testRun.failedCount.toString(), inline: true }
-		]
+		fields: [{ name: '🔴 Failed Tests', value: testRun.failedCount.toString(), inline: true }]
 	});
 }
 
@@ -382,8 +379,6 @@ export async function notifyMilestoneDue(
 		title: `📅 Milestone Due Soon: ${milestone.name}`,
 		message: `*Project:* ${milestone.projectName}\n*Due Date:* ${milestone.dueDate.toLocaleDateString()}\n*Days Remaining:* ${milestone.daysUntilDue}`,
 		color: milestone.daysUntilDue <= 3 ? '#ff0000' : '#ffa500',
-		fields: [
-			{ name: '⏰ Days Until Due', value: milestone.daysUntilDue.toString(), inline: true }
-		]
+		fields: [{ name: '⏰ Days Until Due', value: milestone.daysUntilDue.toString(), inline: true }]
 	});
 }

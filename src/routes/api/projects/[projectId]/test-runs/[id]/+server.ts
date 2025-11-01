@@ -94,7 +94,8 @@ export const PATCH: RequestHandler = async ({ params, request }) => {
 			}
 		}
 		if (startedAt !== undefined) updateData.startedAt = startedAt ? new Date(startedAt) : null;
-		if (completedAt !== undefined) updateData.completedAt = completedAt ? new Date(completedAt) : null;
+		if (completedAt !== undefined)
+			updateData.completedAt = completedAt ? new Date(completedAt) : null;
 
 		const testRun = await db.testRun.update({
 			where: { id: params.id },

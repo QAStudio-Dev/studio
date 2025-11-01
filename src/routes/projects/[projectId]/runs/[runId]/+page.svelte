@@ -53,9 +53,16 @@
 	let expandedResults = $state<Set<string>>(new Set());
 
 	// AI features
-	let aiDiagnoses = $state<Map<string, { diagnosis: string; generatedAt?: Date; cached?: boolean }>>(new Map());
+	let aiDiagnoses = $state<
+		Map<string, { diagnosis: string; generatedAt?: Date; cached?: boolean }>
+	>(new Map());
 	let loadingDiagnosis = $state<Set<string>>(new Set());
-	let runSummary = $state<{ summary: string; patternAnalysis: string | null; generatedAt?: Date; cached?: boolean } | null>(null);
+	let runSummary = $state<{
+		summary: string;
+		patternAnalysis: string | null;
+		generatedAt?: Date;
+		cached?: boolean;
+	} | null>(null);
 	let loadingSummary = $state(false);
 
 	// Fetch test results
@@ -207,7 +214,10 @@
 
 	// Group test results by suite
 	function groupResultsBySuite(results: any[]) {
-		const groups = new Map<string, { suite: { id: string; name: string; path: any[] } | null; results: any[] }>();
+		const groups = new Map<
+			string,
+			{ suite: { id: string; name: string; path: any[] } | null; results: any[] }
+		>();
 
 		for (const result of results) {
 			let groupKey = 'uncategorized';
@@ -243,7 +253,7 @@
 	$effect(() => {
 		if (testResults.length > 0) {
 			const allSuiteIds = new Set<string>(['uncategorized']);
-			testResults.forEach(result => {
+			testResults.forEach((result) => {
 				if (result.testCase.suitePath && result.testCase.suitePath.length > 0) {
 					const parentSuite = result.testCase.suitePath[result.testCase.suitePath.length - 1];
 					allSuiteIds.add(parentSuite.id);
@@ -325,7 +335,7 @@
 <div class="container mx-auto max-w-7xl px-4 py-8">
 	<!-- Back Button -->
 	<button
-		class="text-surface-600-300 hover:text-primary-500 mb-4 flex items-center gap-2 transition-colors"
+		class="text-surface-600-300 mb-4 flex items-center gap-2 transition-colors hover:text-primary-500"
 		onclick={() => goto(`/projects/${projectId}/runs`)}
 	>
 		<ArrowLeft class="h-4 w-4" />
@@ -333,7 +343,7 @@
 	</button>
 
 	<!-- Header -->
-	<div class="card mb-6 p-6">
+	<div class="mb-6 card p-6">
 		<div class="mb-4 flex items-start justify-between">
 			<div class="flex-1">
 				<div class="mb-3 flex items-center gap-3">
@@ -364,24 +374,26 @@
 		</div>
 
 		<!-- Metadata -->
-		<div class="border-surface-200-700 mb-4 grid grid-cols-1 gap-4 border-t pt-4 md:grid-cols-2 lg:grid-cols-4">
+		<div
+			class="border-surface-200-700 mb-4 grid grid-cols-1 gap-4 border-t pt-4 md:grid-cols-2 lg:grid-cols-4"
+		>
 			<div class="flex items-start gap-3">
-				<Folder class="text-surface-500 mt-1 h-5 w-5" />
+				<Folder class="mt-1 h-5 w-5 text-surface-500" />
 				<div>
 					<div class="text-surface-600-300 text-xs">Project</div>
 					<div class="font-semibold">{testRun.project.name}</div>
-					<div class="text-surface-500 text-xs">{testRun.project.key}</div>
+					<div class="text-xs text-surface-500">{testRun.project.key}</div>
 				</div>
 			</div>
 
 			{#if testRun.milestone}
 				<div class="flex items-start gap-3">
-					<Target class="text-surface-500 mt-1 h-5 w-5" />
+					<Target class="mt-1 h-5 w-5 text-surface-500" />
 					<div>
 						<div class="text-surface-600-300 text-xs">Milestone</div>
 						<div class="font-semibold">{testRun.milestone.name}</div>
 						{#if testRun.milestone.dueDate}
-							<div class="text-surface-500 text-xs">
+							<div class="text-xs text-surface-500">
 								Due: {new Date(testRun.milestone.dueDate).toLocaleDateString()}
 							</div>
 						{/if}
@@ -390,7 +402,7 @@
 			{/if}
 
 			<div class="flex items-start gap-3">
-				<User class="text-surface-500 mt-1 h-5 w-5" />
+				<User class="mt-1 h-5 w-5 text-surface-500" />
 				<div>
 					<div class="text-surface-600-300 text-xs">Created By</div>
 					<div class="font-semibold">
@@ -402,12 +414,12 @@
 			</div>
 
 			<div class="flex items-start gap-3">
-				<Clock class="text-surface-500 mt-1 h-5 w-5" />
+				<Clock class="mt-1 h-5 w-5 text-surface-500" />
 				<div>
 					<div class="text-surface-600-300 text-xs">Started</div>
 					<div class="font-semibold">{formatDate(testRun.startedAt)}</div>
 					{#if testRun.completedAt}
-						<div class="text-surface-500 text-xs">
+						<div class="text-xs text-surface-500">
 							Completed: {formatDate(testRun.completedAt)}
 						</div>
 					{/if}
@@ -449,7 +461,7 @@
 				{#if !runSummary && !loadingSummary}
 					<button
 						onclick={getRunSummary}
-						class="btn preset-tonal-primary-500 btn-sm"
+						class="preset-tonal-primary-500 btn btn-sm"
 						disabled={loadingSummary}
 					>
 						<Sparkles class="h-4 w-4" />
@@ -472,7 +484,7 @@
 							</div>
 							<button
 								onclick={() => getRunSummary(true)}
-								class="btn btn-sm preset-tonal-primary-500"
+								class="preset-tonal-primary-500 btn btn-sm"
 								title="Regenerate summary"
 								disabled={loadingSummary}
 							>
@@ -480,8 +492,8 @@
 								Regenerate
 							</button>
 						</div>
-						<div class="rounded-container bg-primary-50-950 border border-primary-200-800 p-4">
-							<div class="prose prose-sm max-w-none whitespace-pre-wrap text-sm">
+						<div class="rounded-container border border-primary-200-800 bg-primary-50-950 p-4">
+							<div class="prose prose-sm max-w-none text-sm whitespace-pre-wrap">
 								{runSummary.summary}
 							</div>
 						</div>
@@ -492,8 +504,8 @@
 									<TrendingUp class="h-5 w-5 text-warning-500" />
 									<h3 class="font-semibold">Failure Pattern Analysis</h3>
 								</div>
-								<div class="rounded-container bg-warning-50-950 border border-warning-200-800 p-4">
-									<div class="prose prose-sm max-w-none whitespace-pre-wrap text-sm">
+								<div class="rounded-container border border-warning-200-800 bg-warning-50-950 p-4">
+									<div class="prose prose-sm max-w-none text-sm whitespace-pre-wrap">
 										{runSummary.patternAnalysis}
 									</div>
 								</div>
@@ -506,11 +518,11 @@
 	</div>
 
 	<!-- Search and Filters -->
-	<div class="card mb-6 p-6">
+	<div class="mb-6 card p-6">
 		<div class="mb-4 flex flex-col gap-4 lg:flex-row lg:items-center">
 			<!-- Search -->
 			<div class="relative flex-1">
-				<Search class="text-surface-500 absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2" />
+				<Search class="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-surface-500" />
 				<input
 					type="text"
 					placeholder="Search test cases..."
@@ -601,10 +613,10 @@
 				{@const isExpanded = expandedSuites.has(suiteId)}
 
 				<!-- Suite Group -->
-				<div class="card overflow-hidden">
+				<div class="overflow-hidden card">
 					<!-- Suite Header -->
 					<button
-						class="hover:bg-surface-50-900 flex w-full items-center gap-3 border-b border-surface-200-700 bg-surface-100-900 px-4 py-3 text-left transition-colors"
+						class="hover:bg-surface-50-900 border-surface-200-700 flex w-full items-center gap-3 border-b bg-surface-100-900 px-4 py-3 text-left transition-colors"
 						onclick={() => toggleSuite(suiteId)}
 					>
 						{#if isExpanded}
@@ -618,8 +630,11 @@
 								<div class="flex items-center gap-2">
 									<h3 class="font-semibold">{group.suite.name}</h3>
 									{#if group.suite.path.length > 1}
-										<span class="text-xs text-surface-600-300">
-											({group.suite.path.slice(0, -1).map(s => s.name).join(' > ')})
+										<span class="text-surface-600-300 text-xs">
+											({group.suite.path
+												.slice(0, -1)
+												.map((s) => s.name)
+												.join(' > ')})
 										</span>
 									{/if}
 								</div>
@@ -628,13 +643,14 @@
 							{/if}
 						</div>
 						<span class="badge preset-outlined-surface-500">
-							{group.results.length} {group.results.length === 1 ? 'test' : 'tests'}
+							{group.results.length}
+							{group.results.length === 1 ? 'test' : 'tests'}
 						</span>
 					</button>
 
 					<!-- Test Results in Suite -->
 					{#if isExpanded}
-						<div class="divide-y divide-surface-200-700">
+						<div class="divide-surface-200-700 divide-y">
 							{#each group.results as result (result.id)}
 								{@const Icon = getStatusIcon(result.status)}
 								<div>
@@ -661,7 +677,7 @@
 											<div class="mb-1">
 												<h4 class="truncate font-medium">{result.testCase.title}</h4>
 											</div>
-											<div class="flex items-center gap-3 text-xs text-surface-600-300">
+											<div class="text-surface-600-300 flex items-center gap-3 text-xs">
 												<span class={getPriorityColor(result.testCase.priority)}>
 													{result.testCase.priority}
 												</span>
@@ -669,7 +685,8 @@
 												<span>• {formatDuration(result.duration)}</span>
 												{#if result._count.attachments > 0}
 													<span class="flex items-center gap-1">
-														• <ImageIcon class="h-3 w-3" /> {result._count.attachments}
+														• <ImageIcon class="h-3 w-3" />
+														{result._count.attachments}
 													</span>
 												{/if}
 											</div>
@@ -689,7 +706,9 @@
 												{#if result.testCase.description}
 													<div>
 														<h4 class="mb-1 text-sm font-semibold">Description</h4>
-														<p class="text-surface-600-300 text-sm">{result.testCase.description}</p>
+														<p class="text-surface-600-300 text-sm">
+															{result.testCase.description}
+														</p>
 													</div>
 												{/if}
 
@@ -699,7 +718,7 @@
 														{#if !aiDiagnoses.has(result.id) && !loadingDiagnosis.has(result.id)}
 															<button
 																onclick={() => getDiagnosis(result.id)}
-																class="btn preset-tonal-primary flex-1"
+																class="btn flex-1 preset-tonal-primary"
 															>
 																<Sparkles class="h-4 w-4" />
 																Get AI Diagnosis
@@ -712,7 +731,7 @@
 														{/if}
 														<a
 															href="/projects/{projectId}/cases/{result.testCase.id}"
-															class="btn preset-tonal-tertiary flex-1"
+															class="btn flex-1 preset-tonal-tertiary"
 														>
 															<FileText class="h-4 w-4" />
 															View Test Case
@@ -723,14 +742,18 @@
 												<!-- AI Diagnosis Display (when loaded) -->
 												{#if result.status === 'FAILED'}
 													{#if loadingDiagnosis.has(result.id)}
-														<div class="rounded-container border border-primary-200-800 bg-primary-50-950 p-4">
+														<div
+															class="rounded-container border border-primary-200-800 bg-primary-50-950 p-4"
+														>
 															<div class="flex items-center gap-3 text-primary-500">
 																<Loader2 class="h-5 w-5 animate-spin" />
 																<span class="font-medium">Analyzing failure with AI...</span>
 															</div>
 														</div>
 													{:else if aiDiagnoses.has(result.id)}
-														<div class="rounded-container border-2 border-primary-500 bg-primary-50-950 p-4">
+														<div
+															class="rounded-container border-2 border-primary-500 bg-primary-50-950 p-4"
+														>
 															<div class="mb-3 flex items-center justify-between gap-2">
 																<div class="flex items-center gap-2">
 																	<Sparkles class="h-5 w-5 text-primary-500" />
@@ -741,7 +764,7 @@
 																</div>
 																<button
 																	onclick={() => getDiagnosis(result.id, true)}
-																	class="btn btn-sm preset-tonal-primary-500"
+																	class="preset-tonal-primary-500 btn btn-sm"
 																	title="Regenerate diagnosis"
 																	disabled={loadingDiagnosis.has(result.id)}
 																>
@@ -749,7 +772,7 @@
 																	Regenerate
 																</button>
 															</div>
-															<div class="prose prose-sm max-w-none whitespace-pre-wrap text-sm">
+															<div class="prose prose-sm max-w-none text-sm whitespace-pre-wrap">
 																{aiDiagnoses.get(result.id)?.diagnosis}
 															</div>
 														</div>
@@ -791,7 +814,7 @@
 														{/if}
 														<a
 															href="/projects/{projectId}/cases/{result.testCase.id}"
-															class="btn preset-tonal-tertiary flex-1"
+															class="btn flex-1 preset-tonal-tertiary"
 														>
 															<FileText class="h-4 w-4" />
 															View Test Case

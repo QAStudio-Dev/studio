@@ -12,22 +12,16 @@
 </script>
 
 {#if hasMore}
-	<button
-		onclick={onLoadMore}
-		disabled={loading}
-		class="btn preset-tonal w-full {className}"
-	>
+	<button onclick={onLoadMore} disabled={loading} class="btn w-full preset-tonal {className}">
 		{#if loading}
-			<Loader2 class="w-4 h-4 animate-spin" />
+			<Loader2 class="h-4 w-4 animate-spin" />
 			<span>Loading...</span>
 		{:else}
 			<span>Load More</span>
 		{/if}
 	</button>
 {:else if !hasMore}
-	<div class="text-center text-sm text-surface-600-300 py-2">
-		No more items to load
-	</div>
+	<div class="text-surface-600-300 py-2 text-center text-sm">No more items to load</div>
 {/if}
 
 <style>

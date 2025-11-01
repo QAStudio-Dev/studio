@@ -15,7 +15,10 @@
 
 <svelte:head>
 	<title>Blog - QA Studio</title>
-	<meta name="description" content="Articles about testing, QA engineering, automation, and best practices from the QA Studio team." />
+	<meta
+		name="description"
+		content="Articles about testing, QA engineering, automation, and best practices from the QA Studio team."
+	/>
 </svelte:head>
 
 <div class="container mx-auto max-w-6xl px-4 py-12">
@@ -37,7 +40,7 @@
 			{#each posts as post}
 				<a
 					href="/blog/{post.slug}"
-					class="card group overflow-hidden transition-all hover:shadow-xl hover:-translate-y-1"
+					class="group overflow-hidden card transition-all hover:-translate-y-1 hover:shadow-xl"
 				>
 					<!-- Cover Image -->
 					{#if post.cover}
@@ -56,19 +59,21 @@
 					<div class="p-6">
 						<!-- Category Badge -->
 						{#if post.category}
-							<span class="mb-3 inline-block rounded-full bg-primary-500/10 px-3 py-1 text-xs font-medium text-primary-500">
+							<span
+								class="mb-3 inline-block rounded-full bg-primary-500/10 px-3 py-1 text-xs font-medium text-primary-500"
+							>
 								{post.category}
 							</span>
 						{/if}
 
 						<!-- Title -->
-						<h2 class="mb-3 text-xl font-bold group-hover:text-primary-500 transition-colors">
+						<h2 class="mb-3 text-xl font-bold transition-colors group-hover:text-primary-500">
 							{post.title}
 						</h2>
 
 						<!-- Description -->
 						{#if post.description}
-							<p class="mb-4 text-sm text-surface-600-400 line-clamp-2">
+							<p class="mb-4 line-clamp-2 text-sm text-surface-600-400">
 								{post.description}
 							</p>
 						{/if}
@@ -91,7 +96,9 @@
 						{#if post.tags && post.tags.length > 0}
 							<div class="mt-4 flex flex-wrap gap-2">
 								{#each post.tags.slice(0, 3) as tag}
-									<span class="flex items-center gap-1 rounded-full bg-surface-200-800 px-2 py-1 text-xs">
+									<span
+										class="flex items-center gap-1 rounded-full bg-surface-200-800 px-2 py-1 text-xs"
+									>
 										<Tag class="h-3 w-3" />
 										{tag}
 									</span>

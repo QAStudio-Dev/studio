@@ -92,23 +92,28 @@ export const POST: RequestHandler = async (event) => {
 		// If we have a cached diagnosis and regeneration is not requested, return it
 		if (testResult.aiDiagnosis && !regenerate) {
 			console.log(`[AI Diagnosis] Returning cached diagnosis for test result: ${testResultId}`);
-			return json({
-				diagnosis: testResult.aiDiagnosis,
-				generatedAt: testResult.aiDiagnosisGeneratedAt,
-				cached: true
-			}, {
-				headers: {
-					'Cache-Control': 'no-cache'
+			return json(
+				{
+					diagnosis: testResult.aiDiagnosis,
+					generatedAt: testResult.aiDiagnosisGeneratedAt,
+					cached: true
+				},
+				{
+					headers: {
+						'Cache-Control': 'no-cache'
+					}
 				}
-			});
+			);
 		}
 
-		console.log(`[AI Diagnosis] ${regenerate ? 'Regenerating' : 'Generating'} diagnosis for test result: ${testResultId}`);
+		console.log(
+			`[AI Diagnosis] ${regenerate ? 'Regenerating' : 'Generating'} diagnosis for test result: ${testResultId}`
+		);
 
 		// Check for error-context.md attachment
 		let errorContext: string | undefined;
-		const errorContextAttachment = testResult.attachments?.find(att =>
-			att.originalName === 'error-context.md' || att.filename.includes('error-context')
+		const errorContextAttachment = testResult.attachments?.find(
+			(att) => att.originalName === 'error-context.md' || att.filename.includes('error-context')
 		);
 
 		if (errorContextAttachment) {
@@ -155,15 +160,18 @@ export const POST: RequestHandler = async (event) => {
 
 		console.log(`[AI Diagnosis] Saved diagnosis to database`);
 
-		return json({
-			diagnosis,
-			generatedAt: now,
-			cached: false
-		}, {
-			headers: {
-				'Cache-Control': 'no-cache'
+		return json(
+			{
+				diagnosis,
+				generatedAt: now,
+				cached: false
+			},
+			{
+				headers: {
+					'Cache-Control': 'no-cache'
+				}
 			}
-		});
+		);
 	} catch (err) {
 		console.error('[AI Diagnosis] Error:', err);
 		const errorMessage = err instanceof Error ? err.message : 'Failed to generate AI diagnosis';

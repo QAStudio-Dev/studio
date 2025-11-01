@@ -48,28 +48,26 @@
 <div class="container mx-auto max-w-7xl px-4 py-8">
 	<!-- Header -->
 	<div class="mb-8">
-		<div class="flex items-start justify-between mb-6">
+		<div class="mb-6 flex items-start justify-between">
 			<div>
-				<h1 class="text-4xl font-bold mb-2">Projects</h1>
-				<p class="text-lg text-surface-600-300">
-					Manage your test projects and suites
-				</p>
+				<h1 class="mb-2 text-4xl font-bold">Projects</h1>
+				<p class="text-surface-600-300 text-lg">Manage your test projects and suites</p>
 			</div>
 			{#if canCreateProject}
 				<a href="/projects/new" class="btn preset-filled-primary-500">
-					<Plus class="w-4 h-4 mr-2" />
+					<Plus class="mr-2 h-4 w-4" />
 					New Project
 				</a>
 			{:else}
 				<div class="text-right">
-					<button disabled class="btn preset-filled-surface-500 opacity-50 cursor-not-allowed">
-						<Plus class="w-4 h-4 mr-2" />
+					<button disabled class="btn cursor-not-allowed preset-filled-surface-500 opacity-50">
+						<Plus class="mr-2 h-4 w-4" />
 						New Project
 					</button>
-					<p class="text-sm text-surface-600-300 mt-2">
+					<p class="text-surface-600-300 mt-2 text-sm">
 						Free plan: {projects.length}/{projectLimit} project used
 					</p>
-					<a href="/teams/new" class="text-primary-500 hover:underline text-sm">
+					<a href="/teams/new" class="text-sm text-primary-500 hover:underline">
 						Upgrade to Pro for unlimited projects
 					</a>
 				</div>
@@ -78,14 +76,14 @@
 
 		<!-- Stats -->
 		{#if projects.length > 0}
-			<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+			<div class="grid grid-cols-1 gap-4 md:grid-cols-4">
 				<div class="card p-4">
 					<div class="flex items-center gap-3">
-						<div class="p-2 rounded-container bg-primary-500/10">
-							<FolderOpen class="w-5 h-5 text-primary-500" />
+						<div class="rounded-container bg-primary-500/10 p-2">
+							<FolderOpen class="h-5 w-5 text-primary-500" />
 						</div>
 						<div>
-							<p class="text-sm text-surface-600-300">Total Projects</p>
+							<p class="text-surface-600-300 text-sm">Total Projects</p>
 							<p class="text-2xl font-bold">{projects.length}</p>
 						</div>
 					</div>
@@ -93,11 +91,11 @@
 
 				<div class="card p-4">
 					<div class="flex items-center gap-3">
-						<div class="p-2 rounded-container bg-secondary-500/10">
-							<TestTube2 class="w-5 h-5 text-secondary-500" />
+						<div class="rounded-container bg-secondary-500/10 p-2">
+							<TestTube2 class="h-5 w-5 text-secondary-500" />
 						</div>
 						<div>
-							<p class="text-sm text-surface-600-300">Total Test Cases</p>
+							<p class="text-surface-600-300 text-sm">Total Test Cases</p>
 							<p class="text-2xl font-bold">
 								{projects.reduce((sum, p) => sum + p._count.testCases, 0)}
 							</p>
@@ -107,11 +105,11 @@
 
 				<div class="card p-4">
 					<div class="flex items-center gap-3">
-						<div class="p-2 rounded-container bg-tertiary-500/10">
-							<PlayCircle class="w-5 h-5 text-tertiary-500" />
+						<div class="rounded-container bg-tertiary-500/10 p-2">
+							<PlayCircle class="h-5 w-5 text-tertiary-500" />
 						</div>
 						<div>
-							<p class="text-sm text-surface-600-300">Total Test Runs</p>
+							<p class="text-surface-600-300 text-sm">Total Test Runs</p>
 							<p class="text-2xl font-bold">
 								{projects.reduce((sum, p) => sum + p._count.testRuns, 0)}
 							</p>
@@ -121,11 +119,11 @@
 
 				<div class="card p-4">
 					<div class="flex items-center gap-3">
-						<div class="p-2 rounded-container bg-success-500/10">
-							<Users class="w-5 h-5 text-success-500" />
+						<div class="rounded-container bg-success-500/10 p-2">
+							<Users class="h-5 w-5 text-success-500" />
 						</div>
 						<div>
-							<p class="text-sm text-surface-600-300">Team</p>
+							<p class="text-surface-600-300 text-sm">Team</p>
 							<p class="text-lg font-bold">
 								{#if hasTeam}
 									{user.team.name}
@@ -143,48 +141,53 @@
 	<!-- Projects List -->
 	{#if projects.length === 0}
 		<div class="card p-12 text-center">
-			<FolderOpen class="w-16 h-16 mx-auto mb-4 text-surface-400" />
-			<h2 class="text-2xl font-bold mb-2">No projects yet</h2>
+			<FolderOpen class="mx-auto mb-4 h-16 w-16 text-surface-400" />
+			<h2 class="mb-2 text-2xl font-bold">No projects yet</h2>
 			<p class="text-surface-600-300 mb-6">
 				Create your first project to start organizing your test cases
 			</p>
 			{#if canCreateProject}
-				<a href="/projects/new" class="btn preset-filled-primary-500 inline-flex items-center gap-2">
-					<Plus class="w-4 h-4" />
+				<a
+					href="/projects/new"
+					class="btn inline-flex items-center gap-2 preset-filled-primary-500"
+				>
+					<Plus class="h-4 w-4" />
 					Create Your First Project
 				</a>
 			{:else}
-				<a href="/teams/new" class="btn preset-filled-primary-500 inline-flex items-center gap-2">
+				<a href="/teams/new" class="btn inline-flex items-center gap-2 preset-filled-primary-500">
 					Upgrade to Create Projects
 				</a>
 			{/if}
 		</div>
 	{:else}
-		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+		<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
 			{#each projects as project}
-				<div class="card p-6 hover:shadow-lg transition-shadow group relative">
+				<div class="group relative card p-6 transition-shadow hover:shadow-lg">
 					<!-- Delete button -->
 					<button
 						onclick={(e) => handleDeleteProject(e, project.id, project.name)}
 						disabled={deletingProjectId === project.id}
-						class="absolute top-4 right-4 p-2 rounded-container hover:bg-error-500/10 text-surface-600-300 hover:text-error-500 transition-colors opacity-0 group-hover:opacity-100"
+						class="text-surface-600-300 absolute top-4 right-4 rounded-container p-2 opacity-0 transition-colors group-hover:opacity-100 hover:bg-error-500/10 hover:text-error-500"
 						title="Delete project"
 					>
 						{#if deletingProjectId === project.id}
 							<span class="text-xs">Deleting...</span>
 						{:else}
-							<Trash2 class="w-4 h-4" />
+							<Trash2 class="h-4 w-4" />
 						{/if}
 					</button>
 
 					<a href="/projects/{project.id}/runs" class="block">
-						<div class="flex items-start justify-between mb-4">
+						<div class="mb-4 flex items-start justify-between">
 							<div class="flex items-center gap-3">
-								<div class="p-2 rounded-container bg-primary-500/10 group-hover:bg-primary-500/20 transition-colors">
-									<FolderOpen class="w-5 h-5 text-primary-500" />
+								<div
+									class="rounded-container bg-primary-500/10 p-2 transition-colors group-hover:bg-primary-500/20"
+								>
+									<FolderOpen class="h-5 w-5 text-primary-500" />
 								</div>
 								<div>
-									<h3 class="font-bold text-lg group-hover:text-primary-500 transition-colors">
+									<h3 class="text-lg font-bold transition-colors group-hover:text-primary-500">
 										{project.name}
 									</h3>
 									<span class="badge preset-filled-surface-500 text-xs">{project.key}</span>
@@ -193,23 +196,25 @@
 						</div>
 
 						{#if project.description}
-							<p class="text-surface-600-300 text-sm mb-4 line-clamp-2">
+							<p class="text-surface-600-300 mb-4 line-clamp-2 text-sm">
 								{project.description}
 							</p>
 						{/if}
 
-						<div class="flex items-center gap-4 text-sm text-surface-600-300">
+						<div class="text-surface-600-300 flex items-center gap-4 text-sm">
 							<div class="flex items-center gap-1">
-								<TestTube2 class="w-4 h-4" />
+								<TestTube2 class="h-4 w-4" />
 								<span>{project._count.testCases} tests</span>
 							</div>
 							<div class="flex items-center gap-1">
-								<PlayCircle class="w-4 h-4" />
+								<PlayCircle class="h-4 w-4" />
 								<span>{project._count.testRuns} runs</span>
 							</div>
 						</div>
 
-						<div class="mt-4 pt-4 border-t border-surface-200-700 flex items-center justify-between text-xs text-surface-600-300">
+						<div
+							class="border-surface-200-700 text-surface-600-300 mt-4 flex items-center justify-between border-t pt-4 text-xs"
+						>
 							<span>
 								by {project.creator.firstName || project.creator.email}
 							</span>

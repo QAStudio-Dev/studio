@@ -76,12 +76,14 @@ PUBLIC_BASE_URL=https://yourdomain.com         # Used for notification links
 ```
 
 **Important for Vercel/Production:**
+
 - `PUBLIC_SLACK_CLIENT_ID` - Must have `PUBLIC_` prefix to be accessible in the browser
 - `SLACK_CLIENT_SECRET` - Should NOT have `PUBLIC_` prefix (server-only, keep secret!)
 - `SLACK_SIGNING_SECRET` - Should NOT have `PUBLIC_` prefix (server-only, used to verify Slack requests)
 - In Vercel, add these as environment variables in your project settings
 
 You can find these values in your Slack app settings:
+
 - **Client ID**: Under "Basic Information" → "App Credentials"
 - **Client Secret**: Under "Basic Information" → "App Credentials"
 - **Signing Secret**: Under "Basic Information" → "App Credentials"
@@ -112,19 +114,23 @@ You can configure which notifications to receive by editing the integration sett
 ### Troubleshooting
 
 **OAuth Error: "redirect_uri_mismatch"**
+
 - Make sure the redirect URI in your Slack app matches exactly: `https://yourdomain.com/api/integrations/slack/callback`
 - Check that you're using HTTPS in production
 
 **Integration shows "ERROR" status**
+
 - The access token may have expired or been revoked
 - Try removing and reconnecting the integration
 
 **Not receiving notifications**
+
 - Check that the integration status is "ACTIVE" in Settings → Integrations
 - Verify that notifications are enabled for your team
 - Check the Slack app has permission to post in the selected channel
 
 **Warning icon when clicking notification buttons**
+
 - This means the Interactivity URL is not configured in your Slack app
 - Go to your Slack app settings → "Interactivity & Shortcuts"
 - Set the Request URL to: `https://yourdomain.com/api/integrations/slack/interactions`
@@ -140,26 +146,26 @@ import { sendNotification, notifyTestRunCompleted } from '$lib/server/integratio
 
 // Send a custom notification
 await sendNotification(teamId, {
-  event: 'TEST_RUN_COMPLETED',
-  title: 'Test Run Complete',
-  message: 'Your test run has finished!',
-  url: 'https://yourdomain.com/test-runs/123',
-  color: '#36a64f',
-  fields: [
-    { name: 'Pass Rate', value: '95%', inline: true },
-    { name: 'Total Tests', value: '100', inline: true }
-  ]
+	event: 'TEST_RUN_COMPLETED',
+	title: 'Test Run Complete',
+	message: 'Your test run has finished!',
+	url: 'https://yourdomain.com/test-runs/123',
+	color: '#36a64f',
+	fields: [
+		{ name: 'Pass Rate', value: '95%', inline: true },
+		{ name: 'Total Tests', value: '100', inline: true }
+	]
 });
 
 // Use helper functions
 await notifyTestRunCompleted(teamId, {
-  id: 'run_123',
-  name: 'Smoke Tests',
-  projectName: 'My Project',
-  passRate: 95,
-  total: 100,
-  passed: 95,
-  failed: 5
+	id: 'run_123',
+	name: 'Smoke Tests',
+	projectName: 'My Project',
+	passRate: 95,
+	total: 100,
+	passed: 95,
+	failed: 5
 });
 ```
 

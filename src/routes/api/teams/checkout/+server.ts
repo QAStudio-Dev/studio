@@ -61,9 +61,10 @@ export const POST: RequestHandler = async (event) => {
 	}
 
 	// Use the request origin for local development, production URL otherwise
-	const baseUrl = event.url.origin.includes('localhost') || event.url.origin.includes('127.0.0.1')
-		? event.url.origin
-		: (PUBLIC_BASE_URL || event.url.origin);
+	const baseUrl =
+		event.url.origin.includes('localhost') || event.url.origin.includes('127.0.0.1')
+			? event.url.origin
+			: PUBLIC_BASE_URL || event.url.origin;
 
 	// Create Stripe Checkout Session
 	try {

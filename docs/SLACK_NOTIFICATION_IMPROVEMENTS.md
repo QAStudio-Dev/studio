@@ -7,6 +7,7 @@
 Updated `sendSlackNotification()` in [src/lib/server/integrations.ts](src/lib/server/integrations.ts) to use better Slack Block Kit components:
 
 **Improvements:**
+
 - Rich field formatting with markdown support (`*bold*` labels)
 - Visual dividers between content and buttons
 - Color-coded attachments for visual status indicators
@@ -15,6 +16,7 @@ Updated `sendSlackNotification()` in [src/lib/server/integrations.ts](src/lib/se
 - Better button text with emoji: "🔍 View Details"
 
 **Before:**
+
 ```javascript
 {
   type: 'section',
@@ -24,6 +26,7 @@ Updated `sendSlackNotification()` in [src/lib/server/integrations.ts](src/lib/se
 ```
 
 **After:**
+
 ```javascript
 {
   type: 'section',
@@ -39,24 +42,29 @@ Updated `sendSlackNotification()` in [src/lib/server/integrations.ts](src/lib/se
 **Issue:** Buttons showed error message in Slack because URLs pointed to `localhost` instead of production domain.
 
 **Fix:** Updated all notification functions to use proper base URL:
+
 ```typescript
 const baseUrl = process.env.PUBLIC_BASE_URL || 'https://qastudio.dev';
 ```
 
 **Files Updated:**
+
 - [src/lib/server/integrations.ts](src/lib/server/integrations.ts) - All helper functions
 - [src/routes/api/test-results/+server.ts](src/routes/api/test-results/+server.ts) - Test failure notifications
 
 ### 3. Improved Notification Content
 
 #### Test Run Completed
+
 **Before:**
+
 ```
 Title: Test Run Completed: E2E Tests
 Message: My Project\nTest run "E2E Tests" has completed.
 ```
 
 **After:**
+
 ```
 Title: ✅ Test Run Completed: E2E Tests (or ⚠️/❌ based on pass rate)
 Message:
@@ -71,13 +79,16 @@ Fields:
 ```
 
 #### Test Run Failed
+
 **Before:**
+
 ```
 Title: ⚠️ Test Run Failed: E2E Tests
 Message: My Project\nTest run "E2E Tests" has failed with 5 failures.
 ```
 
 **After:**
+
 ```
 Title: ❌ Test Run Failed: E2E Tests
 Message:
@@ -91,13 +102,16 @@ Fields:
 ```
 
 #### Test Case Failed (Individual)
+
 **Before:**
+
 ```
 Title: ❌ Test Case Failed: Login should work
 Message: Failed in test run "E2E Tests" (My Project)
 ```
 
 **After:**
+
 ```
 Title: ❌ Test Case Failed: Login should work
 Message:
@@ -137,6 +151,7 @@ Fields:
 All notifications now properly respect the `PUBLIC_BASE_URL` environment variable:
 
 **.env Configuration:**
+
 ```bash
 PUBLIC_BASE_URL="https://qastudio.dev"
 ```
@@ -149,6 +164,7 @@ If `PUBLIC_BASE_URL` is not set, falls back to `https://qastudio.dev` (instead o
 To test the improved notifications:
 
 1. Run Playwright tests with the QA Studio reporter:
+
 ```bash
 npx playwright test
 ```
@@ -163,6 +179,7 @@ npx playwright test
 ## Interactive Button Fix
 
 **Previous Error:**
+
 > "This app is not configured to handle interactive responses. Please configure interactivity URL for your app under the app config page."
 
 **Resolution:**

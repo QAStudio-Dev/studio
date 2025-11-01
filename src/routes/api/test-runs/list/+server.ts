@@ -71,15 +71,12 @@ export const GET: RequestHandler = async (event) => {
 	// Find all projects user has access to
 	const accessibleProjects = await db.project.findMany({
 		where: {
-			OR: [
-				{ createdBy: userId },
-				...(user?.teamId ? [{ teamId: user.teamId }] : [])
-			]
+			OR: [{ createdBy: userId }, ...(user?.teamId ? [{ teamId: user.teamId }] : [])]
 		},
 		select: { id: true }
 	});
 
-	const accessibleProjectIds = accessibleProjects.map(p => p.id);
+	const accessibleProjectIds = accessibleProjects.map((p) => p.id);
 
 	// Add project access filter
 	where.projectId = projectId || { in: accessibleProjectIds };
@@ -138,10 +135,13 @@ export const GET: RequestHandler = async (event) => {
 				_count: true
 			});
 
-			const statusCounts = stats.reduce((acc, stat) => {
-				acc[stat.status] = stat._count;
-				return acc;
-			}, {} as Record<string, number>);
+			const statusCounts = stats.reduce(
+				(acc, stat) => {
+					acc[stat.status] = stat._count;
+					return acc;
+				},
+				{} as Record<string, number>
+			);
 
 			return {
 				...testRun,

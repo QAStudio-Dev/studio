@@ -30,10 +30,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	// - Projects belonging to the user's team (if they have one)
 	const projects = await db.project.findMany({
 		where: {
-			OR: [
-				{ createdBy: userId },
-				...(user.teamId ? [{ teamId: user.teamId }] : [])
-			]
+			OR: [{ createdBy: userId }, ...(user.teamId ? [{ teamId: user.teamId }] : [])]
 		},
 		include: {
 			creator: {

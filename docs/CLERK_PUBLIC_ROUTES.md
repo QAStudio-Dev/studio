@@ -11,14 +11,14 @@ Some API endpoints need to be publicly accessible because they're called by exte
 ```typescript
 // Exact matches
 const publicApiRoutes = [
-  '/api/integrations/slack/interactions',  // Slack button callbacks
-  '/api/integrations/slack/webhook',       // Slack events
-  '/api/test-results'                      // Playwright reporter (uses API key auth)
+	'/api/integrations/slack/interactions', // Slack button callbacks
+	'/api/integrations/slack/webhook', // Slack events
+	'/api/test-results' // Playwright reporter (uses API key auth)
 ];
 
 // Regex pattern matches
 if (/^\/api\/test-runs\/[^/]+\/complete$/.test(pathname)) {
-  // Test run completion (uses API key auth)
+	// Test run completion (uses API key auth)
 }
 ```
 
@@ -29,11 +29,13 @@ if (/^\/api\/test-runs\/[^/]+\/complete$/.test(pathname)) {
 ### Slack Integration Routes
 
 **`/api/integrations/slack/interactions`**
+
 - Called by Slack when users click buttons in notifications
 - Authenticates via Slack signing secret verification
 - Does not require user session
 
 **`/api/integrations/slack/webhook`**
+
 - Receives events from Slack (messages, reactions, etc.)
 - Handles URL verification challenge
 - Does not require user session
@@ -41,11 +43,13 @@ if (/^\/api\/test-runs\/[^/]+\/complete$/.test(pathname)) {
 ### Test Reporting Routes
 
 **`/api/test-results`**
+
 - Called by Playwright reporter to submit test results
 - Authenticates via `QA_STUDIO_API_KEY` header
 - Uses `requireApiAuth()` helper
 
 **`/api/test-runs/(.*)/complete`**
+
 - Called by Playwright reporter to mark test run as complete
 - Authenticates via `QA_STUDIO_API_KEY` header
 - Uses `requireApiAuth()` helper
@@ -60,11 +64,13 @@ if (/^\/api\/test-runs\/[^/]+\/complete$/.test(pathname)) {
 ## Troubleshooting
 
 **403 Forbidden on Slack interactions:**
+
 - Verify route is in `publicRoutes` array
 - Check Clerk middleware configuration
 - Ensure `SLACK_SIGNING_SECRET` is set
 
 **401 Unauthorized on test results:**
+
 - Verify `QA_STUDIO_API_KEY` is set correctly
 - Check API key is being sent in headers
 - Ensure route is in `publicRoutes` array

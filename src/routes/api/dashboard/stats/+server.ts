@@ -149,8 +149,7 @@ export const GET: RequestHandler = async (event) => {
 
 	// Check project limit
 	const hasActiveSubscription =
-		user.team?.subscription?.status === 'ACTIVE' ||
-		user.team?.subscription?.status === 'ACTIVE';
+		user.team?.subscription?.status === 'ACTIVE' || user.team?.subscription?.status === 'ACTIVE';
 	const projectLimit = hasActiveSubscription ? null : 1; // null = unlimited
 	const canCreateProject = projectLimit === null || projects.length < projectLimit;
 

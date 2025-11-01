@@ -68,9 +68,9 @@
 <div class="container mx-auto max-w-3xl px-4 py-12">
 	<!-- Header -->
 	<div class="mb-8">
-		<div class="flex items-center gap-3 mb-4">
-			<div class="p-3 bg-primary-500/10 rounded-lg">
-				<FolderPlus class="w-8 h-8 text-primary-500" />
+		<div class="mb-4 flex items-center gap-3">
+			<div class="rounded-lg bg-primary-500/10 p-3">
+				<FolderPlus class="h-8 w-8 text-primary-500" />
 			</div>
 			<div>
 				<h1 class="text-3xl font-bold">Create New Project</h1>
@@ -81,48 +81,46 @@
 
 	{#if error}
 		<div class="alert preset-filled-error mb-6">
-			<AlertCircle class="w-5 h-5" />
+			<AlertCircle class="h-5 w-5" />
 			<p>{error}</p>
 		</div>
 	{/if}
 
 	{#if !data.canCreateProject}
-		<div class="card p-8 bg-gradient-to-br from-primary-500/10 to-secondary-500/10 border-2 border-primary-500/20 mb-6">
+		<div
+			class="mb-6 card border-2 border-primary-500/20 bg-gradient-to-br from-primary-500/10 to-secondary-500/10 p-8"
+		>
 			<div class="flex items-start gap-4">
-				<div class="p-3 bg-primary-500/20 rounded-lg">
-					<Sparkles class="w-8 h-8 text-primary-500" />
+				<div class="rounded-lg bg-primary-500/20 p-3">
+					<Sparkles class="h-8 w-8 text-primary-500" />
 				</div>
 				<div class="flex-1">
-					<h2 class="text-2xl font-bold mb-2">Upgrade to Create More Projects</h2>
+					<h2 class="mb-2 text-2xl font-bold">Upgrade to Create More Projects</h2>
 					<p class="text-surface-600-300 mb-4">
 						You've reached the free plan limit of 1 project. Upgrade to Pro to create unlimited
 						projects and unlock powerful features:
 					</p>
-					<ul class="space-y-2 mb-6 text-surface-700-200">
+					<ul class="text-surface-700-200 mb-6 space-y-2">
 						<li class="flex items-center gap-2">
-							<div class="w-1.5 h-1.5 rounded-full bg-primary-500"></div>
+							<div class="h-1.5 w-1.5 rounded-full bg-primary-500"></div>
 							<span>Unlimited projects</span>
 						</li>
 						<li class="flex items-center gap-2">
-							<div class="w-1.5 h-1.5 rounded-full bg-primary-500"></div>
+							<div class="h-1.5 w-1.5 rounded-full bg-primary-500"></div>
 							<span>AI-powered failure analysis</span>
 						</li>
 						<li class="flex items-center gap-2">
-							<div class="w-1.5 h-1.5 rounded-full bg-primary-500"></div>
+							<div class="h-1.5 w-1.5 rounded-full bg-primary-500"></div>
 							<span>Advanced reporting and analytics</span>
 						</li>
 						<li class="flex items-center gap-2">
-							<div class="w-1.5 h-1.5 rounded-full bg-primary-500"></div>
+							<div class="h-1.5 w-1.5 rounded-full bg-primary-500"></div>
 							<span>Custom integrations</span>
 						</li>
 					</ul>
 					<div class="flex gap-3">
-						<a href="/teams/new" class="btn preset-filled-primary-500">
-							Upgrade to Pro
-						</a>
-						<a href="/projects" class="btn preset-outlined-surface-500">
-							View My Projects
-						</a>
+						<a href="/teams/new" class="btn preset-filled-primary-500"> Upgrade to Pro </a>
+						<a href="/projects" class="btn preset-outlined-surface-500"> View My Projects </a>
 					</div>
 				</div>
 			</div>
@@ -130,11 +128,21 @@
 	{/if}
 
 	<!-- Form -->
-	<div class="card p-8" class:opacity-50={!data.canCreateProject} class:pointer-events-none={!data.canCreateProject}>
-		<form onsubmit={(e) => { e.preventDefault(); handleSubmit(); }} class="space-y-6">
+	<div
+		class="card p-8"
+		class:opacity-50={!data.canCreateProject}
+		class:pointer-events-none={!data.canCreateProject}
+	>
+		<form
+			onsubmit={(e) => {
+				e.preventDefault();
+				handleSubmit();
+			}}
+			class="space-y-6"
+		>
 			<!-- Project Name -->
 			<label class="label">
-				<span class="text-base font-medium mb-2 block">Project Name *</span>
+				<span class="mb-2 block text-base font-medium">Project Name *</span>
 				<input
 					type="text"
 					class="input text-lg"
@@ -148,10 +156,10 @@
 
 			<!-- Project Key -->
 			<label class="label">
-				<span class="text-base font-medium mb-2 block">Project Key *</span>
+				<span class="mb-2 block text-base font-medium">Project Key *</span>
 				<input
 					type="text"
-					class="input text-lg font-mono"
+					class="input font-mono text-lg"
 					placeholder="PROJ"
 					value={key}
 					oninput={handleKeyInput}
@@ -159,14 +167,14 @@
 					maxlength="10"
 					required
 				/>
-				<p class="text-sm text-surface-600-300 mt-2">
+				<p class="text-surface-600-300 mt-2 text-sm">
 					2-10 uppercase letters or numbers. Used to identify test cases (e.g., {key || 'PROJ'}-123)
 				</p>
 			</label>
 
 			<!-- Description -->
 			<label class="label">
-				<span class="text-base font-medium mb-2 block">Description (optional)</span>
+				<span class="mb-2 block text-base font-medium">Description (optional)</span>
 				<textarea
 					class="textarea"
 					rows="4"
@@ -189,7 +197,7 @@
 
 				<button
 					type="submit"
-					class="btn preset-filled-primary-500 text-lg px-8"
+					class="btn preset-filled-primary-500 px-8 text-lg"
 					disabled={loading || !name.trim() || !key.trim()}
 				>
 					{#if loading}
@@ -203,10 +211,10 @@
 	</div>
 
 	<!-- Help Text -->
-	<div class="mt-6 p-4 bg-surface-50-900 rounded-container text-sm">
+	<div class="bg-surface-50-900 mt-6 rounded-container p-4 text-sm">
 		<p class="text-surface-600-300">
-			<strong>💡 Tip:</strong> Choose a short, memorable project key. It will be used as a prefix
-			for all test cases in this project.
+			<strong>💡 Tip:</strong> Choose a short, memorable project key. It will be used as a prefix for
+			all test cases in this project.
 		</p>
 	</div>
 </div>

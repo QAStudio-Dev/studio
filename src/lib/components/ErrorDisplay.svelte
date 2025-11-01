@@ -76,7 +76,7 @@
 							<h4 class="text-sm font-semibold text-error-500">Error Message</h4>
 							<button
 								onclick={() => copyToClipboard(cleanedErrorMessage, 'error')}
-								class="btn btn-sm preset-ghost"
+								class="preset-ghost btn btn-sm"
 								title="Copy error message"
 							>
 								{#if copiedError}
@@ -90,7 +90,7 @@
 							class="error-message rounded-container border-l-4 border-error-500 bg-error-500/10 p-4"
 						>
 							<pre
-								class="whitespace-pre-wrap break-words font-mono text-sm text-error-700 dark:text-error-300">{cleanedErrorMessage}</pre>
+								class="font-mono text-sm break-words whitespace-pre-wrap text-error-700 dark:text-error-300">{cleanedErrorMessage}</pre>
 						</div>
 					</div>
 				{/if}
@@ -102,7 +102,7 @@
 							<h4 class="text-sm font-semibold text-error-500">Stack Trace</h4>
 							<button
 								onclick={() => copyToClipboard(cleanedStackTrace, 'stack')}
-								class="btn btn-sm preset-ghost"
+								class="preset-ghost btn btn-sm"
 								title="Copy stack trace"
 							>
 								{#if copiedStack}
@@ -113,14 +113,14 @@
 							</button>
 						</div>
 						<div
-							class="stack-trace max-h-96 overflow-y-auto rounded-container border border-surface-200-700 bg-surface-900-50 p-4"
+							class="stack-trace border-surface-200-700 bg-surface-900-50 max-h-96 overflow-y-auto rounded-container border p-4"
 						>
 							<div class="space-y-1 font-mono text-xs">
 								{#each parsedStackTrace as line}
 									<div
-										class="{line.isFile
+										class={line.isFile
 											? 'text-primary-600 dark:text-primary-400'
-											: 'text-surface-700 dark:text-surface-300'}"
+											: 'text-surface-700 dark:text-surface-300'}
 									>
 										{#if line.isFile}
 											<span class="hover:underline">{line.text}</span>

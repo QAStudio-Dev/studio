@@ -185,11 +185,11 @@
 	</div>
 
 	<!-- Search and Filters -->
-	<div class="card mb-6 p-6">
+	<div class="mb-6 card p-6">
 		<div class="mb-4 flex flex-col gap-4 lg:flex-row lg:items-center">
 			<!-- Search -->
 			<div class="relative flex-1">
-				<Search class="text-surface-500 absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2" />
+				<Search class="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-surface-500" />
 				<input
 					type="text"
 					placeholder="Search test runs..."
@@ -260,7 +260,7 @@
 		<div class="space-y-4">
 			{#each testRuns as testRun (testRun.id)}
 				<button
-					class="hover:border-primary-500 card block w-full p-6 text-left transition-all hover:shadow-lg"
+					class="block w-full card p-6 text-left transition-all hover:border-primary-500 hover:shadow-lg"
 					onclick={() => viewTestRun(testRun.id)}
 				>
 					<div class="mb-4 flex items-start justify-between">
@@ -363,10 +363,7 @@
 				{/if}
 
 				{#if page > 1}
-					<button
-						class="btn preset-outlined-surface-500 btn-sm"
-						onclick={() => goToPage(page - 1)}
-					>
+					<button class="btn preset-outlined-surface-500 btn-sm" onclick={() => goToPage(page - 1)}>
 						{page - 1}
 					</button>
 				{/if}
@@ -376,10 +373,7 @@
 				</button>
 
 				{#if page < totalPages}
-					<button
-						class="btn preset-outlined-surface-500 btn-sm"
-						onclick={() => goToPage(page + 1)}
-					>
+					<button class="btn preset-outlined-surface-500 btn-sm" onclick={() => goToPage(page + 1)}>
 						{page + 1}
 					</button>
 				{/if}

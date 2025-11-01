@@ -123,20 +123,25 @@ export const POST: RequestHandler = async (event) => {
 		// If we have a cached summary and regeneration is not requested, return it
 		if (testRun.aiSummary && !regenerate) {
 			console.log(`[AI Summary] Returning cached summary for test run: ${testRunId}`);
-			return json({
-				summary: testRun.aiSummary,
-				patternAnalysis: testRun.aiPatternAnalysis,
-				generatedAt: testRun.aiSummaryGeneratedAt,
-				stats,
-				cached: true
-			}, {
-				headers: {
-					'Cache-Control': 'no-cache'
+			return json(
+				{
+					summary: testRun.aiSummary,
+					patternAnalysis: testRun.aiPatternAnalysis,
+					generatedAt: testRun.aiSummaryGeneratedAt,
+					stats,
+					cached: true
+				},
+				{
+					headers: {
+						'Cache-Control': 'no-cache'
+					}
 				}
-			});
+			);
 		}
 
-		console.log(`[AI Summary] ${regenerate ? 'Regenerating' : 'Generating'} summary for test run: ${testRunId}`);
+		console.log(
+			`[AI Summary] ${regenerate ? 'Regenerating' : 'Generating'} summary for test run: ${testRunId}`
+		);
 
 		// Generate summary
 		const summary = await summarizeTestRun({
@@ -189,17 +194,20 @@ export const POST: RequestHandler = async (event) => {
 
 		console.log(`[AI Summary] Saved summary to database`);
 
-		return json({
-			summary,
-			patternAnalysis,
-			generatedAt: now,
-			stats,
-			cached: false
-		}, {
-			headers: {
-				'Cache-Control': 'no-cache'
+		return json(
+			{
+				summary,
+				patternAnalysis,
+				generatedAt: now,
+				stats,
+				cached: false
+			},
+			{
+				headers: {
+					'Cache-Control': 'no-cache'
+				}
 			}
-		});
+		);
 	} catch (err) {
 		console.error('[AI Summary] Error:', err);
 		const errorMessage = err instanceof Error ? err.message : 'Failed to generate AI summary';

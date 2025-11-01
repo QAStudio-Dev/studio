@@ -75,10 +75,13 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		_count: true
 	});
 
-	const statusCounts = stats.reduce((acc, stat) => {
-		acc[stat.status] = stat._count;
-		return acc;
-	}, {} as Record<string, number>);
+	const statusCounts = stats.reduce(
+		(acc, stat) => {
+			acc[stat.status] = stat._count;
+			return acc;
+		},
+		{} as Record<string, number>
+	);
 
 	const totalResults = await db.testResult.count({
 		where: { testRunId: runId }

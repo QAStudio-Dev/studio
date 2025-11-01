@@ -5,6 +5,7 @@ This guide will help you set up Stripe subscriptions for QA Studio's team functi
 ## Overview
 
 QA Studio uses Stripe for:
+
 - Team subscription management (Pro plan)
 - Per-seat billing
 - Self-service billing portal
@@ -96,11 +97,13 @@ Webhooks keep your database in sync with Stripe subscription events.
 1. **Install Stripe CLI**: https://stripe.com/docs/stripe-cli
 
 2. **Login to Stripe**:
+
    ```bash
    stripe login
    ```
 
 3. **Forward webhooks to your local server**:
+
    ```bash
    stripe listen --forward-to localhost:5173/api/webhooks/stripe
    ```
@@ -148,11 +151,13 @@ The Customer Portal allows users to manage their subscriptions, update payment m
 ### Create a Test Team
 
 1. Start your dev server:
+
    ```bash
    npm run dev
    ```
 
 2. Start Stripe CLI webhook forwarding:
+
    ```bash
    stripe listen --forward-to localhost:5173/api/webhooks/stripe
    ```
@@ -171,16 +176,19 @@ The Customer Portal allows users to manage their subscriptions, update payment m
 ### Verify Webhooks
 
 Check your terminal running `stripe listen` to see webhook events:
+
 - ✅ `checkout.session.completed`
 - ✅ `customer.subscription.created`
 - ✅ `invoice.payment_succeeded`
 
 Check your database:
+
 ```bash
 npx prisma studio
 ```
 
 Verify:
+
 - `Team` record created
 - `Subscription` record created with `status = 'ACTIVE'`
 - `User` record has `teamId` populated
@@ -205,15 +213,15 @@ Verify:
 import { requireActiveSubscription, requireFeature } from '$lib/server/subscriptions';
 
 export const POST: RequestHandler = async ({ locals, params }) => {
-  const userId = await requireAuth(locals);
+	const userId = await requireAuth(locals);
 
-  // Require active subscription
-  await requireActiveSubscription(params.teamId);
+	// Require active subscription
+	await requireActiveSubscription(params.teamId);
 
-  // Require specific feature
-  await requireFeature(params.teamId, 'ai_analysis');
+	// Require specific feature
+	await requireFeature(params.teamId, 'ai_analysis');
 
-  // Your logic here...
+	// Your logic here...
 };
 ```
 
@@ -223,10 +231,10 @@ export const POST: RequestHandler = async ({ locals, params }) => {
 import { requireAvailableSeats } from '$lib/server/subscriptions';
 
 export const POST: RequestHandler = async ({ request, params }) => {
-  // Check if team has available seats before adding member
-  await requireAvailableSeats(params.teamId);
+	// Check if team has available seats before adding member
+	await requireAvailableSeats(params.teamId);
 
-  // Add member...
+	// Add member...
 };
 ```
 
@@ -249,12 +257,14 @@ console.log(limits);
 ## Feature Gating
 
 ### Free Plan
+
 - 1 user only (individual account)
 - Unlimited projects
 - Basic test management
 - Community support
 
 ### Pro Plan (Paid)
+
 - Up to 10+ team members (per seat)
 - Unlimited projects
 - Advanced test management
@@ -271,16 +281,16 @@ Gate premium features in your code:
 import { isFeatureAvailable } from '$lib/server/subscriptions';
 
 export const load: PageServerLoad = async ({ params }) => {
-  const team = await getTeam(params.teamId);
+	const team = await getTeam(params.teamId);
 
-  const hasAI = await isFeatureAvailable(team.id, 'ai_analysis');
+	const hasAI = await isFeatureAvailable(team.id, 'ai_analysis');
 
-  return {
-    team,
-    features: {
-      aiAnalysis: hasAI
-    }
-  };
+	return {
+		team,
+		features: {
+			aiAnalysis: hasAI
+		}
+	};
 };
 ```
 
@@ -288,9 +298,9 @@ In your UI:
 
 ```svelte
 {#if features.aiAnalysis}
-  <AIAnalysisPanel />
+	<AIAnalysisPanel />
 {:else}
-  <UpgradePrompt feature="AI-powered failure analysis" />
+	<UpgradePrompt feature="AI-powered failure analysis" />
 {/if}
 ```
 

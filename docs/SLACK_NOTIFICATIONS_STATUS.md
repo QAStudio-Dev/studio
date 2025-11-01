@@ -3,6 +3,7 @@
 ## ✅ What's Already Working
 
 ### 1. **Integration Infrastructure** (100% Complete)
+
 - ✅ Database schema for integrations and notifications
 - ✅ OAuth flow for connecting Slack workspaces
 - ✅ Settings UI for managing integrations
@@ -10,6 +11,7 @@
 - ✅ Integration service with smart filtering based on user preferences
 
 ### 2. **API Endpoints** (100% Complete)
+
 - ✅ `/api/integrations/slack/callback` - OAuth callback
 - ✅ `/api/integrations/list` - List all integrations
 - ✅ `/api/integrations/[id]/delete` - Remove integration
@@ -18,6 +20,7 @@
 - ✅ `/api/test-runs/[runId]/complete` - Mark test run complete and send notifications
 
 ### 3. **Notification Service** (100% Complete)
+
 - ✅ `sendNotification()` - Generic notification sender
 - ✅ `notifyTestRunCompleted()` - Test run completion notifications
 - ✅ `notifyTestRunFailed()` - Test run failure notifications
@@ -26,6 +29,7 @@
 - ✅ Support for Slack, Discord, and generic webhooks
 
 ### 4. **Automatic Notifications** (Partially Complete)
+
 - ✅ Individual test case failures (when results are submitted)
 - ⚠️ Test run completion (requires reporter update - see below)
 
@@ -40,47 +44,49 @@ Your `@qastudio-dev/playwright` reporter package needs to call the completion en
 ```typescript
 // In your @qastudio-dev/playwright package
 class QAStudioReporter implements Reporter {
-  private testRunId: string | null = null;
+	private testRunId: string | null = null;
 
-  async onBegin(config: FullConfig, suite: Suite) {
-    // ... your existing code that creates the test run
-    // and stores this.testRunId
-  }
+	async onBegin(config: FullConfig, suite: Suite) {
+		// ... your existing code that creates the test run
+		// and stores this.testRunId
+	}
 
-  async onEnd(result: FullResult) {
-    // ... your existing code that sends results
+	async onEnd(result: FullResult) {
+		// ... your existing code that sends results
 
-    // NEW: Mark test run as complete
-    if (this.testRunId) {
-      try {
-        const response = await fetch(`${this.apiUrl}/test-runs/${this.testRunId}/complete`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json'
-          }
-        });
+		// NEW: Mark test run as complete
+		if (this.testRunId) {
+			try {
+				const response = await fetch(`${this.apiUrl}/test-runs/${this.testRunId}/complete`, {
+					method: 'POST',
+					headers: {
+						Authorization: `Bearer ${this.apiKey}`,
+						'Content-Type': 'application/json'
+					}
+				});
 
-        if (response.ok) {
-          console.log('✅ Test run marked as complete, notifications sent');
-        }
-      } catch (error) {
-        console.error('Failed to mark test run as complete:', error);
-      }
-    }
-  }
+				if (response.ok) {
+					console.log('✅ Test run marked as complete, notifications sent');
+				}
+			} catch (error) {
+				console.error('Failed to mark test run as complete:', error);
+			}
+		}
+	}
 }
 ```
 
 ## 🧪 How to Test
 
 ### 1. **Connect Slack Integration**
+
 1. Go to Settings → Integrations
 2. Click "Connect Slack"
 3. Authorize the app and select a channel
 4. Verify integration appears in "Active Integrations"
 
 ### 2. **Configure Notifications**
+
 1. Hover over your Slack integration
 2. Click the ⚙️ Settings icon
 3. Toggle notification preferences:
@@ -90,6 +96,7 @@ class QAStudioReporter implements Reporter {
    - ⬜ Test Case Passed (off by default - can be noisy)
 
 ### 3. **Run Tests**
+
 ```bash
 # Make sure these env vars are set
 export PUBLIC_SLACK_CLIENT_ID=your_client_id
@@ -101,6 +108,7 @@ npx playwright test
 ```
 
 **Expected Notifications:**
+
 - Individual Slack messages for each failed test (if enabled)
 - Summary notification when test run completes (if enabled)
 - Different message if test run has failures vs all passed
@@ -116,25 +124,27 @@ curl -X POST https://qastudio.dev/api/test-runs/YOUR_RUN_ID/complete \
 ```
 
 This will:
+
 1. Mark the test run as COMPLETED
 2. Calculate pass/fail stats
 3. Send Slack notifications (if configured and enabled)
 
 ## 📋 Current Notification Types
 
-| Event | When It Fires | Default State |
-|-------|---------------|---------------|
-| Test Run Started | When test run begins | ✅ Enabled |
-| Test Run Completed | When test run finishes | ✅ Enabled |
-| Test Run Failed | When run has failures | ✅ Enabled |
-| Test Case Failed | Individual test fails | ✅ Enabled |
-| Test Case Passed | Individual test passes | ❌ Disabled (noisy) |
-| Milestone Due | 3 days before due date | ✅ Enabled |
-| Project Created | New project added | ❌ Disabled |
+| Event              | When It Fires          | Default State       |
+| ------------------ | ---------------------- | ------------------- |
+| Test Run Started   | When test run begins   | ✅ Enabled          |
+| Test Run Completed | When test run finishes | ✅ Enabled          |
+| Test Run Failed    | When run has failures  | ✅ Enabled          |
+| Test Case Failed   | Individual test fails  | ✅ Enabled          |
+| Test Case Passed   | Individual test passes | ❌ Disabled (noisy) |
+| Milestone Due      | 3 days before due date | ✅ Enabled          |
+| Project Created    | New project added      | ❌ Disabled         |
 
 ## 🔍 Debugging
 
 ### Check if notifications are being sent:
+
 ```sql
 SELECT * FROM "IntegrationNotification"
 ORDER BY "createdAt" DESC
@@ -142,6 +152,7 @@ LIMIT 10;
 ```
 
 ### Check integration status:
+
 ```sql
 SELECT id, type, name, status, config
 FROM "Integration"
@@ -149,6 +160,7 @@ WHERE "teamId" = 'your-team-id';
 ```
 
 ### Server logs to watch:
+
 - `No active integrations found for team:` - No Slack connected
 - `Notification X disabled for integration Y` - User disabled that notification type
 - `Failed to send notifications:` - Error sending (check Slack webhook URL)

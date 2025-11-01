@@ -38,19 +38,19 @@
 	}
 </script>
 
-<div class="relative group">
+<div class="group relative">
 	{#if highlightedCode}
 		<div class="code-block-wrapper overflow-x-auto rounded-base">
 			{@html highlightedCode}
 		</div>
 	{:else}
-		<pre
-			class="bg-surface-900-100 p-4 rounded-base overflow-x-auto text-xs"><code>{code}</code></pre>
+		<pre class="overflow-x-auto rounded-base bg-surface-900-100 p-4 text-xs"><code>{code}</code
+			></pre>
 	{/if}
 
 	<button
 		onclick={copyToClipboard}
-		class="absolute top-2 right-2 px-3 py-1.5 bg-surface-700-300 hover:bg-surface-600-400 rounded-base text-xs transition-all opacity-0 group-hover:opacity-100 font-medium"
+		class="absolute top-2 right-2 rounded-base bg-surface-700-300 px-3 py-1.5 text-xs font-medium opacity-0 transition-all group-hover:opacity-100 hover:bg-surface-600-400"
 	>
 		{copied ? '✓ Copied!' : 'Copy'}
 	</button>

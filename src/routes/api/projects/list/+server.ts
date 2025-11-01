@@ -25,10 +25,7 @@ export const GET: RequestHandler = async (event) => {
 		// Get projects the user has access to
 		const projects = await db.project.findMany({
 			where: {
-				OR: [
-					{ createdBy: userId },
-					...(user.teamId ? [{ teamId: user.teamId }] : [])
-				]
+				OR: [{ createdBy: userId }, ...(user.teamId ? [{ teamId: user.teamId }] : [])]
 			},
 			select: {
 				id: true,

@@ -143,7 +143,8 @@ export const POST: RequestHandler = async ({ request }) => {
 
 				// Extract subscription ID from parent subscription details
 				const subscriptionId =
-					invoice.parent?.type === 'subscription_details' && invoice.parent.subscription_details?.subscription
+					invoice.parent?.type === 'subscription_details' &&
+					invoice.parent.subscription_details?.subscription
 						? typeof invoice.parent.subscription_details.subscription === 'string'
 							? invoice.parent.subscription_details.subscription
 							: invoice.parent.subscription_details.subscription.id
@@ -168,7 +169,8 @@ export const POST: RequestHandler = async ({ request }) => {
 
 				// Extract subscription ID from parent subscription details
 				const subscriptionId =
-					invoice.parent?.type === 'subscription_details' && invoice.parent.subscription_details?.subscription
+					invoice.parent?.type === 'subscription_details' &&
+					invoice.parent.subscription_details?.subscription
 						? typeof invoice.parent.subscription_details.subscription === 'string'
 							? invoice.parent.subscription_details.subscription
 							: invoice.parent.subscription_details.subscription.id

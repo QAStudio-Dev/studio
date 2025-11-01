@@ -85,7 +85,7 @@
 									{section.title}
 								</button>
 								<!-- Endpoint list under each section -->
-								<div class="ml-3 mt-2 space-y-1 border-l-2 border-surface-300-700 pl-3">
+								<div class="mt-2 ml-3 space-y-1 border-l-2 border-surface-300-700 pl-3">
 									{#each section.endpoints as endpoint}
 										{@const endpointId = generateEndpointId(endpoint.method, endpoint.path)}
 										<a
@@ -115,20 +115,20 @@
 
 					<div class="mt-4">
 						<h3 class="mb-2 text-sm font-semibold">Authentication</h3>
-						<p class="text-xs text-surface-600-400 mb-2">
+						<p class="mb-2 text-xs text-surface-600-400">
 							API requests require authentication via API key or session.
 						</p>
-						<div class="rounded-base bg-surface-200-800 p-3 text-xs space-y-2">
+						<div class="space-y-2 rounded-base bg-surface-200-800 p-3 text-xs">
 							<div>
-								<p class="font-semibold mb-1">Recommended:</p>
+								<p class="mb-1 font-semibold">Recommended:</p>
 								<code class="text-primary-500">Authorization: Bearer your-api-key</code>
 							</div>
 							<div>
-								<p class="font-semibold mb-1">Alternative:</p>
+								<p class="mb-1 font-semibold">Alternative:</p>
 								<code class="text-primary-500">x-api-key: your-api-key</code>
 							</div>
 						</div>
-						<p class="text-xs text-surface-600-400 mt-2">
+						<p class="mt-2 text-xs text-surface-600-400">
 							Generate API keys from your project settings page.
 						</p>
 					</div>
@@ -147,7 +147,7 @@
 						<div class="space-y-6">
 							{#each section.endpoints as endpoint, i}
 								{@const endpointId = generateEndpointId(endpoint.method, endpoint.path)}
-								<div id={endpointId} class="overflow-hidden card rounded-container scroll-mt-24">
+								<div id={endpointId} class="scroll-mt-24 overflow-hidden card rounded-container">
 									<!-- Endpoint Header -->
 									<div class="border-b border-surface-300-700 bg-surface-100-900 px-6 py-4">
 										<div class="flex flex-wrap items-center justify-between gap-3">

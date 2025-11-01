@@ -35,7 +35,7 @@
 	draggable="true"
 	ondragstart={handleDragStart}
 	ondragend={handleDragEndLocal}
-	class="group p-2 border border-surface-200-700 rounded-base hover:border-primary-500 transition-all {isDragging
+	class="group border-surface-200-700 rounded-base border p-2 transition-all hover:border-primary-500 {isDragging
 		? 'opacity-50'
 		: ''}"
 >
@@ -43,17 +43,20 @@
 		<!-- Drag Handle -->
 		<button
 			onmousedown={handleDragHandleMouseDown}
-			class="flex-shrink-0 text-surface-400 hover:text-primary-500 cursor-grab active:cursor-grabbing p-1"
+			class="flex-shrink-0 cursor-grab p-1 text-surface-400 hover:text-primary-500 active:cursor-grabbing"
 			title="Drag to reorder"
 		>
-			<GripVertical class="w-3.5 h-3.5" />
+			<GripVertical class="h-3.5 w-3.5" />
 		</button>
 
 		<!-- Content -->
-		<button onclick={() => onOpenModal(testCase)} class="flex-1 text-left flex items-center gap-2 min-w-0">
-			<TestTube2 class="w-3.5 h-3.5 text-primary-500 flex-shrink-0" />
-			<span class="font-medium text-sm truncate">{testCase.title}</span>
-			<span class="badge preset-filled-surface-500 text-xs flex-shrink-0">
+		<button
+			onclick={() => onOpenModal(testCase)}
+			class="flex min-w-0 flex-1 items-center gap-2 text-left"
+		>
+			<TestTube2 class="h-3.5 w-3.5 flex-shrink-0 text-primary-500" />
+			<span class="truncate text-sm font-medium">{testCase.title}</span>
+			<span class="badge flex-shrink-0 preset-filled-surface-500 text-xs">
 				{testCase.priority}
 			</span>
 		</button>
@@ -61,10 +64,10 @@
 		<!-- Actions -->
 		<a
 			href="/test-cases/{testCase.id}"
-			class="btn btn-sm preset-ghost-surface-500 opacity-0 group-hover:opacity-100 transition-opacity"
+			class="preset-ghost-surface-500 btn btn-sm opacity-0 transition-opacity group-hover:opacity-100"
 			title="Open full view"
 		>
-			<ExternalLink class="w-3.5 h-3.5" />
+			<ExternalLink class="h-3.5 w-3.5" />
 		</a>
 	</div>
 </div>

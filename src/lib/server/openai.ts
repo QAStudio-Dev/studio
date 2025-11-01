@@ -18,8 +18,15 @@ export async function diagnoseFailedTest(params: {
 	priority: string;
 	errorContext?: string;
 }): Promise<string> {
-	const { testCaseTitle, testCaseDescription, errorMessage, stackTrace, testType, priority, errorContext } =
-		params;
+	const {
+		testCaseTitle,
+		testCaseDescription,
+		errorMessage,
+		stackTrace,
+		testType,
+		priority,
+		errorContext
+	} = params;
 
 	const prompt = `You are an expert QA engineer analyzing a failed test. Provide a concise diagnosis of what went wrong and potential fixes.
 
@@ -59,7 +66,9 @@ Keep your response concise and actionable.`;
 
 		const diagnosis = completion.choices[0]?.message?.content;
 		if (!diagnosis) {
-			throw new Error(`No content in OpenAI response. Finish reason: ${completion.choices[0]?.finish_reason}`);
+			throw new Error(
+				`No content in OpenAI response. Finish reason: ${completion.choices[0]?.finish_reason}`
+			);
 		}
 
 		return diagnosis;
@@ -131,7 +140,9 @@ Keep your response concise and actionable (under 300 words).`;
 
 		const summary = completion.choices[0]?.message?.content;
 		if (!summary) {
-			throw new Error(`No content in OpenAI response. Finish reason: ${completion.choices[0]?.finish_reason}`);
+			throw new Error(
+				`No content in OpenAI response. Finish reason: ${completion.choices[0]?.finish_reason}`
+			);
 		}
 
 		return summary;
@@ -161,7 +172,13 @@ export async function analyzeFailurePatterns(params: {
 	const prompt = `You are an expert QA engineer analyzing patterns across multiple test failures.
 
 Failed Tests (${failures.length} total):
-${failures.slice(0, 15).map((f, i) => `${i + 1}. [${f.testType}${f.suiteName ? ` - ${f.suiteName}` : ''}] ${f.testCaseTitle}${f.errorMessage ? `\n   Error: ${f.errorMessage.slice(0, 150)}` : ''}`).join('\n')}
+${failures
+	.slice(0, 15)
+	.map(
+		(f, i) =>
+			`${i + 1}. [${f.testType}${f.suiteName ? ` - ${f.suiteName}` : ''}] ${f.testCaseTitle}${f.errorMessage ? `\n   Error: ${f.errorMessage.slice(0, 150)}` : ''}`
+	)
+	.join('\n')}
 
 Analyze these failures and provide:
 1. Common patterns (similar errors, affected areas, test types)
@@ -189,7 +206,9 @@ Be concise and focus on actionable insights.`;
 
 		const analysis = completion.choices[0]?.message?.content;
 		if (!analysis) {
-			throw new Error(`No content in OpenAI response. Finish reason: ${completion.choices[0]?.finish_reason}`);
+			throw new Error(
+				`No content in OpenAI response. Finish reason: ${completion.choices[0]?.finish_reason}`
+			);
 		}
 
 		return analysis;

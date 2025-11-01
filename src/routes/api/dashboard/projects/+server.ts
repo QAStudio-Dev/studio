@@ -20,9 +20,7 @@ export const GET: RequestHandler = async (event) => {
 	}
 
 	const projects = await db.project.findMany({
-		where: user.teamId
-			? { teamId: user.teamId }
-			: { createdBy: userId, teamId: null },
+		where: user.teamId ? { teamId: user.teamId } : { createdBy: userId, teamId: null },
 		include: {
 			_count: {
 				select: {

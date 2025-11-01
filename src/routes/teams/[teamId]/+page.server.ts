@@ -59,7 +59,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			teamMemberIds: team.members.map((m) => m.id)
 		});
 		throw error(403, {
-			message: 'You are not a member of this team. Please check that you completed team creation successfully.'
+			message:
+				'You are not a member of this team. Please check that you completed team creation successfully.'
 		});
 	}
 

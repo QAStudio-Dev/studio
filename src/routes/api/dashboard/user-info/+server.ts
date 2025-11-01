@@ -28,8 +28,7 @@ export const GET: RequestHandler = async (event) => {
 
 	// Calculate subscription info
 	const hasActiveSubscription =
-		user.team?.subscription?.status === 'ACTIVE' ||
-		user.team?.subscription?.status === 'ACTIVE';
+		user.team?.subscription?.status === 'ACTIVE' || user.team?.subscription?.status === 'ACTIVE';
 	const projectLimit = hasActiveSubscription ? null : 1;
 
 	// Get project count to check if can create more

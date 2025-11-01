@@ -1,5 +1,12 @@
 <script lang="ts">
-	import { Download, FileImage, FileVideo, FileArchive, File, Image as ImageIcon } from 'lucide-svelte';
+	import {
+		Download,
+		FileImage,
+		FileVideo,
+		FileArchive,
+		File,
+		Image as ImageIcon
+	} from 'lucide-svelte';
 	import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
 	import { marked } from 'marked';
 	import { onMount } from 'svelte';
@@ -31,8 +38,13 @@
 	// Load markdown content when modal is opened for a markdown file
 	$effect(() => {
 		if (selectedAttachment) {
-			const attachment = attachments.find(a => a.id === selectedAttachment);
-			if (attachment && isMarkdown(attachment.mimeType) && !markdownContents[attachment.id] && !loadingMarkdown[attachment.id]) {
+			const attachment = attachments.find((a) => a.id === selectedAttachment);
+			if (
+				attachment &&
+				isMarkdown(attachment.mimeType) &&
+				!markdownContents[attachment.id] &&
+				!loadingMarkdown[attachment.id]
+			) {
 				loadMarkdownContent(attachment.id);
 			}
 		}
@@ -105,30 +117,35 @@
 
 {#if attachments && attachments.length > 0}
 	<Dialog>
-		<Dialog.Trigger class="btn preset-tonal-secondary w-full">
-			<ImageIcon class="w-4 h-4" />
+		<Dialog.Trigger class="btn w-full preset-tonal-secondary">
+			<ImageIcon class="h-4 w-4" />
 			View Attachments ({attachments.length})
 		</Dialog.Trigger>
 
 		<Portal>
 			<Dialog.Backdrop class="fixed inset-0 z-50 bg-surface-50-950/80 backdrop-blur-sm" />
-			<Dialog.Positioner class="fixed inset-0 z-50 flex justify-center items-center p-4">
-				<Dialog.Content class="card bg-surface-100-900 w-full max-w-5xl max-h-[90vh] p-6 space-y-4 shadow-xl overflow-hidden flex flex-col">
+			<Dialog.Positioner class="fixed inset-0 z-50 flex items-center justify-center p-4">
+				<Dialog.Content
+					class="flex max-h-[90vh] w-full max-w-5xl flex-col space-y-4 overflow-hidden card bg-surface-100-900 p-6 shadow-xl"
+				>
 					<Dialog.Title class="text-2xl font-bold">Attachments ({attachments.length})</Dialog.Title>
 
-					<div class="flex-1 overflow-y-auto space-y-3">
+					<div class="flex-1 space-y-3 overflow-y-auto">
 						{#each attachments as attachment}
-							<div class="card p-4 bg-surface-50-950">
+							<div class="card bg-surface-50-950 p-4">
 								<div class="flex items-start justify-between gap-3">
-									<div class="flex items-center gap-3 flex-1 min-w-0">
+									<div class="flex min-w-0 flex-1 items-center gap-3">
 										<div class="text-surface-600-300">
-											<svelte:component this={getAttachmentIcon(attachment.mimeType)} class="w-5 h-5" />
+											<svelte:component
+												this={getAttachmentIcon(attachment.mimeType)}
+												class="h-5 w-5"
+											/>
 										</div>
-										<div class="flex-1 min-w-0">
-											<div class="text-sm font-medium truncate" title={attachment.originalName}>
+										<div class="min-w-0 flex-1">
+											<div class="truncate text-sm font-medium" title={attachment.originalName}>
 												{attachment.originalName}
 											</div>
-											<div class="text-xs text-surface-600-300 mt-1">
+											<div class="text-surface-600-300 mt-1 text-xs">
 												{getAttachmentType(attachment.mimeType)} • {formatBytes(attachment.size)}
 											</div>
 										</div>
@@ -138,20 +155,20 @@
 										{#if isViewable(attachment.mimeType)}
 											<button
 												onclick={() => selectAttachment(attachment.id)}
-												class="btn btn-sm preset-tonal-primary-500"
+												class="preset-tonal-primary-500 btn btn-sm"
 												title="View {attachment.originalName}"
 											>
-												<ImageIcon class="w-4 h-4" />
+												<ImageIcon class="h-4 w-4" />
 												View
 											</button>
 										{/if}
 										<a
 											href="/api/attachments/{attachment.id}"
 											download={attachment.originalName}
-											class="btn btn-sm preset-tonal-surface-500"
+											class="preset-tonal-surface-500 btn btn-sm"
 											title="Download {attachment.originalName}"
 										>
-											<Download class="w-4 h-4" />
+											<Download class="h-4 w-4" />
 										</a>
 									</div>
 								</div>
@@ -169,14 +186,16 @@
 	{#if selectedAttachment}
 		{@const attachment = attachments.find((a) => a.id === selectedAttachment)}
 		{#if attachment}
-			<Dialog open={!!selectedAttachment} onOpenChange={() => selectedAttachment = null}>
+			<Dialog open={!!selectedAttachment} onOpenChange={() => (selectedAttachment = null)}>
 				<Portal>
 					<Dialog.Backdrop class="fixed inset-0 z-[60] bg-black/95 backdrop-blur-sm" />
-					<Dialog.Positioner class="fixed inset-0 z-[60] flex justify-center items-center p-4">
-						<Dialog.Content class="relative max-w-7xl w-full max-h-[95vh] flex flex-col">
-							<div class="bg-surface-50-950 rounded-container shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
+					<Dialog.Positioner class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+						<Dialog.Content class="relative flex max-h-[95vh] w-full max-w-7xl flex-col">
+							<div
+								class="flex max-h-[95vh] flex-col overflow-hidden rounded-container bg-surface-50-950 shadow-2xl"
+							>
 								<!-- Content -->
-								<div class="flex-1 overflow-auto flex items-center justify-center bg-black/50">
+								<div class="flex flex-1 items-center justify-center overflow-auto bg-black/50">
 									{#if isImage(attachment.mimeType)}
 										<img
 											src="/api/attachments/{attachment.id}"
@@ -194,14 +213,16 @@
 											Your browser does not support the video tag.
 										</video>
 									{:else if isMarkdown(attachment.mimeType)}
-										<div class="max-w-4xl w-full overflow-auto p-8 bg-surface-100-900">
+										<div class="w-full max-w-4xl overflow-auto bg-surface-100-900 p-8">
 											{#if loadingMarkdown[attachment.id]}
-												<div class="text-center py-8 text-surface-600-300">
-													<div class="inline-block animate-spin w-6 h-6 border-2 border-current border-t-transparent rounded-full"></div>
+												<div class="text-surface-600-300 py-8 text-center">
+													<div
+														class="inline-block h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent"
+													></div>
 													<span class="ml-2">Loading markdown...</span>
 												</div>
 											{:else if markdownContents[attachment.id]}
-												<div class="prose prose-sm dark:prose-invert max-w-none">
+												<div class="prose prose-sm max-w-none dark:prose-invert">
 													{@html marked.parse(markdownContents[attachment.id])}
 												</div>
 											{/if}
@@ -210,11 +231,11 @@
 								</div>
 
 								<!-- Info Bar -->
-								<div class="p-4 border-t border-surface-200-700 bg-surface-100-900">
+								<div class="border-surface-200-700 border-t bg-surface-100-900 p-4">
 									<div class="flex items-center justify-between gap-4">
-										<div class="flex-1 min-w-0">
-											<div class="text-sm font-medium truncate">{attachment.originalName}</div>
-											<div class="text-xs text-surface-600-300">
+										<div class="min-w-0 flex-1">
+											<div class="truncate text-sm font-medium">{attachment.originalName}</div>
+											<div class="text-surface-600-300 text-xs">
 												{getAttachmentType(attachment.mimeType)} • {formatBytes(attachment.size)}
 											</div>
 										</div>
@@ -222,12 +243,12 @@
 											<a
 												href="/api/attachments/{attachment.id}"
 												download={attachment.originalName}
-												class="btn btn-sm preset-filled-primary-500"
+												class="btn preset-filled-primary-500 btn-sm"
 											>
-												<Download class="w-4 h-4" />
+												<Download class="h-4 w-4" />
 												Download
 											</a>
-											<Dialog.CloseTrigger class="btn btn-sm preset-filled-surface-500">
+											<Dialog.CloseTrigger class="btn preset-filled-surface-500 btn-sm">
 												Close
 											</Dialog.CloseTrigger>
 										</div>

@@ -27,8 +27,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	// Check if user has active subscription
 	const hasActiveSubscription =
-		user.team?.subscription?.status === 'ACTIVE' ||
-		user.team?.subscription?.status === 'ACTIVE';
+		user.team?.subscription?.status === 'ACTIVE' || user.team?.subscription?.status === 'ACTIVE';
 
 	// Count existing projects
 	const projectCount = await db.project.count({

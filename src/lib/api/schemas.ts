@@ -197,7 +197,8 @@ export const TestRunsApi = {
 	create: {
 		method: 'POST',
 		path: '/api/test-runs',
-		description: 'Create a new test run. Supports both session and API key authentication. If environment name is provided instead of ID, the environment will be created automatically.',
+		description:
+			'Create a new test run. Supports both session and API key authentication. If environment name is provided instead of ID, the environment will be created automatically.',
 		tags: ['Test Runs'],
 		body: {
 			description: 'Test run details',
@@ -315,7 +316,7 @@ export const TestResultsApi = {
 		method: 'POST',
 		path: '/api/test-results',
 		description:
-			'Submit test results from automated test runners (like Playwright). Automatically creates test cases and suites if they don\'t exist. Supports batch processing and attachment uploads. Sends notifications for failed tests.',
+			"Submit test results from automated test runners (like Playwright). Automatically creates test cases and suites if they don't exist. Supports batch processing and attachment uploads. Sends notifications for failed tests.",
 		tags: ['Test Results'],
 		body: {
 			description: 'Test results batch from automated reporter',
@@ -404,7 +405,17 @@ export type TestCaseResponse = {
 	steps: any; // JSON array of steps
 	expectedResult: string | null;
 	priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
-	type: 'FUNCTIONAL' | 'REGRESSION' | 'SMOKE' | 'INTEGRATION' | 'PERFORMANCE' | 'SECURITY' | 'UI' | 'API' | 'UNIT' | 'E2E';
+	type:
+		| 'FUNCTIONAL'
+		| 'REGRESSION'
+		| 'SMOKE'
+		| 'INTEGRATION'
+		| 'PERFORMANCE'
+		| 'SECURITY'
+		| 'UI'
+		| 'API'
+		| 'UNIT'
+		| 'E2E';
 	automationStatus: 'AUTOMATED' | 'NOT_AUTOMATED' | 'CANDIDATE';
 	tags: string[];
 	projectId: string;
@@ -428,7 +439,17 @@ export type CreateTestCaseBody = {
 	steps?: any; // Array of test step objects
 	expectedResult?: string;
 	priority?: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
-	type?: 'FUNCTIONAL' | 'REGRESSION' | 'SMOKE' | 'INTEGRATION' | 'PERFORMANCE' | 'SECURITY' | 'UI' | 'API' | 'UNIT' | 'E2E';
+	type?:
+		| 'FUNCTIONAL'
+		| 'REGRESSION'
+		| 'SMOKE'
+		| 'INTEGRATION'
+		| 'PERFORMANCE'
+		| 'SECURITY'
+		| 'UI'
+		| 'API'
+		| 'UNIT'
+		| 'E2E';
 	automationStatus?: 'AUTOMATED' | 'NOT_AUTOMATED' | 'CANDIDATE';
 	tags?: string[];
 	suiteId?: string;
@@ -718,7 +739,8 @@ export const AttachmentsApi = {
 	upload: {
 		method: 'POST',
 		path: '/api/attachments',
-		description: 'Upload an attachment (screenshot, log, video) and link it to a test case or test result.',
+		description:
+			'Upload an attachment (screenshot, log, video) and link it to a test case or test result.',
 		tags: ['Attachments'],
 		body: {
 			description: 'Multipart form data with file and metadata',

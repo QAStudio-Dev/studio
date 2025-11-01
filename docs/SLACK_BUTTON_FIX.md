@@ -13,6 +13,7 @@ This happens because Slack requires an **Interactivity URL** to be configured fo
 ### Step 1: Deploy the Interactivity Endpoint
 
 The endpoint has already been created at:
+
 - **Local**: `http://localhost:5173/api/integrations/slack/interactions`
 - **Production**: `https://qastudio.dev/api/integrations/slack/interactions`
 
@@ -52,6 +53,7 @@ Slack will immediately verify the endpoint by sending a test request. If everyth
 ### Step 5: Test the Fix
 
 1. Run a new Playwright test to trigger a notification:
+
    ```bash
    npx playwright test
    ```
@@ -75,22 +77,26 @@ The `/api/integrations/slack/interactions` endpoint:
 ## Troubleshooting
 
 **Slack shows "Your URL didn't respond with the value of the challenge parameter"**
+
 - The endpoint is not accessible from the internet
 - Make sure you're using your production URL, not localhost
 - Verify your app is deployed and running
 
 **Button still shows warning icon**
+
 - Make sure you configured the Interactivity URL in the correct Slack app
 - Try clicking a button in a **new** notification (old messages won't be updated)
 - Clear Slack cache: Settings → Advanced → Reset Cache
 
 **Interactivity URL verification fails**
+
 - Check that the endpoint is deployed and accessible
 - Verify `SLACK_SIGNING_SECRET` is set in your environment variables
 - Use `curl` to test: `curl -X POST https://qastudio.dev/api/integrations/slack/interactions`
 - Check server logs for any errors
 
 **403 Status Code Error**
+
 - This means the `SLACK_SIGNING_SECRET` is not configured
 - Make sure you've added it to both `.env` and Vercel environment variables
 - Redeploy your app after adding the variable

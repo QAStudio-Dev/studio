@@ -35,8 +35,7 @@ export const POST: RequestHandler = async (event) => {
 	});
 
 	const hasAccess =
-		project.createdBy === userId ||
-		(project.teamId && user?.teamId === project.teamId);
+		project.createdBy === userId || (project.teamId && user?.teamId === project.teamId);
 
 	if (!hasAccess) {
 		throw error(403, {

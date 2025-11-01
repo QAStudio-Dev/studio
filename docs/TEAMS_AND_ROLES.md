@@ -7,6 +7,7 @@ QA Studio now includes a comprehensive user management system with teams and rol
 ## Database Schema
 
 ### User Model
+
 ```prisma
 model User {
   id            String   @id // Clerk user ID
@@ -27,6 +28,7 @@ model User {
 ```
 
 ### Team Model
+
 ```prisma
 model Team {
   id          String   @id
@@ -41,12 +43,12 @@ model Team {
 
 ### User Roles
 
-| Role | Permissions | Use Case |
-|------|------------|----------|
-| **ADMIN** | Full system access, manage users, teams, all projects | System administrators |
-| **MANAGER** | Manage projects and teams, assign roles | QA Managers, Team Leads |
-| **TESTER** | Create and execute tests, view team projects | QA Engineers, Testers |
-| **VIEWER** | Read-only access to projects and results | Stakeholders, Developers |
+| Role        | Permissions                                           | Use Case                 |
+| ----------- | ----------------------------------------------------- | ------------------------ |
+| **ADMIN**   | Full system access, manage users, teams, all projects | System administrators    |
+| **MANAGER** | Manage projects and teams, assign roles               | QA Managers, Team Leads  |
+| **TESTER**  | Create and execute tests, view team projects          | QA Engineers, Testers    |
+| **VIEWER**  | Read-only access to projects and results              | Stakeholders, Developers |
 
 ## Setup Steps
 
@@ -109,12 +111,12 @@ import { requireRole } from '$lib/server/auth';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
-  // Only admins can access
-  const user = await requireRole(event, ['ADMIN']);
+	// Only admins can access
+	const user = await requireRole(event, ['ADMIN']);
 
-  return {
-    user
-  };
+	return {
+		user
+	};
 };
 ```
 
@@ -125,15 +127,15 @@ export const load: PageServerLoad = async (event) => {
 import { requireRole } from '$lib/server/auth';
 
 export const load: PageServerLoad = async (event) => {
-  // Managers and Admins can access
-  const user = await requireRole(event, ['ADMIN', 'MANAGER']);
+	// Managers and Admins can access
+	const user = await requireRole(event, ['ADMIN', 'MANAGER']);
 
-  const project = await db.project.findUnique({
-    where: { id: event.params.id },
-    include: { team: true }
-  });
+	const project = await db.project.findUnique({
+		where: { id: event.params.id },
+		include: { team: true }
+	});
 
-  return { user, project };
+	return { user, project };
 };
 ```
 
@@ -145,19 +147,19 @@ import { requireAuth } from '$lib/server/auth';
 import { ensureUser } from '$lib/server/users';
 
 export const POST: RequestHandler = async (event) => {
-  const userId = await requireAuth(event);
-  const user = await ensureUser(userId);
+	const userId = await requireAuth(event);
+	const user = await ensureUser(userId);
 
-  // Create project with user info
-  const project = await db.project.create({
-    data: {
-      name: 'My Project',
-      createdBy: userId,
-      teamId: user.teamId // Associate with user's team
-    }
-  });
+	// Create project with user info
+	const project = await db.project.create({
+		data: {
+			name: 'My Project',
+			createdBy: userId,
+			teamId: user.teamId // Associate with user's team
+		}
+	});
 
-  return json(project);
+	return json(project);
 };
 ```
 
@@ -168,11 +170,11 @@ export const POST: RequestHandler = async (event) => {
 import { getUsers } from '$lib/server/users';
 
 export const load: PageServerLoad = async () => {
-  const projects = await db.project.findMany({
-    include: { creator: true, team: true }
-  });
+	const projects = await db.project.findMany({
+		include: { creator: true, team: true }
+	});
 
-  return { projects };
+	return { projects };
 };
 ```
 
@@ -180,15 +182,15 @@ In your Svelte component:
 
 ```svelte
 <script lang="ts">
-  let { data } = $props();
+	let { data } = $props();
 </script>
 
 {#each data.projects as project}
-  <div class="card">
-    <h3>{project.name}</h3>
-    <p>Created by: {project.creator.firstName} {project.creator.lastName}</p>
-    <p>Team: {project.team?.name || 'No team'}</p>
-  </div>
+	<div class="card">
+		<h3>{project.name}</h3>
+		<p>Created by: {project.creator.firstName} {project.creator.lastName}</p>
+		<p>Team: {project.team?.name || 'No team'}</p>
+	</div>
 {/each}
 ```
 
@@ -201,16 +203,16 @@ In your Svelte component:
 import { requireRole } from '$lib/server/auth';
 
 export const POST: RequestHandler = async (event) => {
-  // Only admins and managers can create teams
-  await requireRole(event, ['ADMIN', 'MANAGER']);
+	// Only admins and managers can create teams
+	await requireRole(event, ['ADMIN', 'MANAGER']);
 
-  const { name, description } = await event.request.json();
+	const { name, description } = await event.request.json();
 
-  const team = await db.team.create({
-    data: { name, description }
-  });
+	const team = await db.team.create({
+		data: { name, description }
+	});
 
-  return json(team);
+	return json(team);
 };
 ```
 
@@ -218,17 +220,17 @@ export const POST: RequestHandler = async (event) => {
 
 ```typescript
 export const PATCH: RequestHandler = async (event) => {
-  const { userId, teamId } = await event.request.json();
+	const { userId, teamId } = await event.request.json();
 
-  // Only admins and managers
-  await requireRole(event, ['ADMIN', 'MANAGER']);
+	// Only admins and managers
+	await requireRole(event, ['ADMIN', 'MANAGER']);
 
-  const user = await db.user.update({
-    where: { id: userId },
-    data: { teamId }
-  });
+	const user = await db.user.update({
+		where: { id: userId },
+		data: { teamId }
+	});
 
-  return json(user);
+	return json(user);
 };
 ```
 
@@ -236,17 +238,17 @@ export const PATCH: RequestHandler = async (event) => {
 
 ```typescript
 export const PATCH: RequestHandler = async (event) => {
-  const { userId, role } = await event.request.json();
+	const { userId, role } = await event.request.json();
 
-  // Only admins can change roles
-  await requireRole(event, ['ADMIN']);
+	// Only admins can change roles
+	await requireRole(event, ['ADMIN']);
 
-  const user = await db.user.update({
-    where: { id: userId },
-    data: { role }
-  });
+	const user = await db.user.update({
+		where: { id: userId },
+		data: { role }
+	});
 
-  return json(user);
+	return json(user);
 };
 ```
 
@@ -256,21 +258,21 @@ Filter projects by team:
 
 ```typescript
 export const load: PageServerLoad = async (event) => {
-  const userId = await requireAuth(event);
-  const user = await ensureUser(userId);
+	const userId = await requireAuth(event);
+	const user = await ensureUser(userId);
 
-  // Get projects for user's team
-  const projects = await db.project.findMany({
-    where: {
-      OR: [
-        { teamId: user.teamId }, // Team projects
-        { createdBy: userId }     // User's own projects
-      ]
-    },
-    include: { creator: true, team: true }
-  });
+	// Get projects for user's team
+	const projects = await db.project.findMany({
+		where: {
+			OR: [
+				{ teamId: user.teamId }, // Team projects
+				{ createdBy: userId } // User's own projects
+			]
+		},
+		include: { creator: true, team: true }
+	});
 
-  return { projects };
+	return { projects };
 };
 ```
 
@@ -279,6 +281,7 @@ export const load: PageServerLoad = async (event) => {
 ### Automatic Sync (via Webhook)
 
 When a user signs up in Clerk:
+
 1. Clerk fires `user.created` webhook
 2. Your webhook handler creates user in database
 3. User is assigned `TESTER` role by default
@@ -287,6 +290,7 @@ When a user signs up in Clerk:
 ### Manual Sync (First Request)
 
 If webhook wasn't set up or user wasn't synced:
+
 1. User makes first authenticated request
 2. `requireAuth()` calls `ensureUser()`
 3. `ensureUser()` syncs user from Clerk to database
@@ -302,29 +306,32 @@ If webhook wasn't set up or user wasn't synced:
 
 ## Role Permission Matrix
 
-| Action | ADMIN | MANAGER | TESTER | VIEWER |
-|--------|-------|---------|--------|--------|
-| View projects | ✅ | ✅ | ✅ (team) | ✅ (team) |
-| Create projects | ✅ | ✅ | ✅ | ❌ |
-| Delete projects | ✅ | ✅ (own) | ❌ | ❌ |
-| Manage teams | ✅ | ✅ | ❌ | ❌ |
-| Assign roles | ✅ | ❌ | ❌ | ❌ |
-| Create test cases | ✅ | ✅ | ✅ | ❌ |
-| Execute tests | ✅ | ✅ | ✅ | ❌ |
-| View results | ✅ | ✅ | ✅ | ✅ |
+| Action            | ADMIN | MANAGER  | TESTER    | VIEWER    |
+| ----------------- | ----- | -------- | --------- | --------- |
+| View projects     | ✅    | ✅       | ✅ (team) | ✅ (team) |
+| Create projects   | ✅    | ✅       | ✅        | ❌        |
+| Delete projects   | ✅    | ✅ (own) | ❌        | ❌        |
+| Manage teams      | ✅    | ✅       | ❌        | ❌        |
+| Assign roles      | ✅    | ❌       | ❌        | ❌        |
+| Create test cases | ✅    | ✅       | ✅        | ❌        |
+| Execute tests     | ✅    | ✅       | ✅        | ❌        |
+| View results      | ✅    | ✅       | ✅        | ✅        |
 
 ## Troubleshooting
 
 ### User not in database
+
 - Check webhook is set up correctly
 - User will be auto-synced on first authenticated request
 
 ### Webhook not firing
+
 - Verify webhook URL is correct
 - Check Clerk webhook logs
 - Ensure `CLERK_WEBHOOK_SECRET` is set correctly
 
 ### Permission denied errors
+
 - Check user role in database
 - Verify `requireRole()` is using correct roles
 - Admin may need to update user role
@@ -332,6 +339,7 @@ If webhook wasn't set up or user wasn't synced:
 ---
 
 **Next Steps:**
+
 1. Run the migration: `npx prisma db push`
 2. Set up Clerk webhook
 3. Create your first admin user

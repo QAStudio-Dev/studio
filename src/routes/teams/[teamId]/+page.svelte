@@ -67,7 +67,7 @@
 	<div class="mb-8">
 		<div class="flex items-start justify-between">
 			<div>
-				<h1 class="text-3xl font-bold mb-2">{team.name}</h1>
+				<h1 class="mb-2 text-3xl font-bold">{team.name}</h1>
 				{#if team.description}
 					<p class="text-surface-600-300">{team.description}</p>
 				{/if}
@@ -75,7 +75,7 @@
 
 			{#if currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'}
 				<a href="/teams/{team.id}/settings" class="btn preset-outlined">
-					<Settings class="w-4 h-4 mr-2" />
+					<Settings class="mr-2 h-4 w-4" />
 					Settings
 				</a>
 			{/if}
@@ -85,7 +85,7 @@
 	<!-- Checkout Status Alert -->
 	{#if checkoutStatus === 'success'}
 		<div class="alert preset-filled-success mb-6">
-			<CheckCircle class="w-5 h-5" />
+			<CheckCircle class="h-5 w-5" />
 			<div>
 				<p class="font-medium">Payment Successful!</p>
 				<p class="text-sm">Your team subscription is now active.</p>
@@ -93,7 +93,7 @@
 		</div>
 	{:else if checkoutStatus === 'canceled'}
 		<div class="alert preset-filled-warning mb-6">
-			<AlertCircle class="w-5 h-5" />
+			<AlertCircle class="h-5 w-5" />
 			<div>
 				<p class="font-medium">Checkout Canceled</p>
 				<p class="text-sm">You can upgrade to Pro anytime from team settings.</p>
@@ -103,18 +103,18 @@
 
 	{#if error}
 		<div class="alert preset-filled-error mb-6">
-			<AlertCircle class="w-5 h-5" />
+			<AlertCircle class="h-5 w-5" />
 			<p>{error}</p>
 		</div>
 	{/if}
 
-	<div class="grid lg:grid-cols-3 gap-6">
+	<div class="grid gap-6 lg:grid-cols-3">
 		<!-- Main Content -->
-		<div class="lg:col-span-2 space-y-6">
+		<div class="space-y-6 lg:col-span-2">
 			<!-- Subscription Status -->
 			<div class="card p-6">
-				<div class="flex items-center gap-3 mb-4">
-					<CreditCard class="w-5 h-5" />
+				<div class="mb-4 flex items-center gap-3">
+					<CreditCard class="h-5 w-5" />
 					<h2 class="h3">Subscription</h2>
 				</div>
 
@@ -129,7 +129,8 @@
 
 						<div class="flex items-center justify-between">
 							<span class="text-surface-600-300">Seats</span>
-							<span class="font-medium">{team.subscription.seats} / {team.members.length} used</span>
+							<span class="font-medium">{team.subscription.seats} / {team.members.length} used</span
+							>
 						</div>
 
 						{#if team.subscription.currentPeriodEnd}
@@ -146,7 +147,7 @@
 						{#if currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'}
 							<button
 								onclick={openBillingPortal}
-								class="btn preset-filled w-full"
+								class="btn w-full preset-filled"
 								disabled={loading}
 							>
 								{loading ? 'Loading...' : 'Manage Billing'}
@@ -154,12 +155,10 @@
 						{/if}
 					</div>
 				{:else}
-					<div class="text-center py-8">
+					<div class="py-8 text-center">
 						<p class="text-surface-600-300 mb-4">No active subscription</p>
 						{#if currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'}
-							<a href="/teams/new" class="btn preset-filled">
-								Upgrade to Pro
-							</a>
+							<a href="/teams/new" class="btn preset-filled"> Upgrade to Pro </a>
 						{/if}
 					</div>
 				{/if}
@@ -167,11 +166,9 @@
 
 			<!-- Recent Projects -->
 			<div class="card p-6">
-				<div class="flex items-center justify-between mb-4">
+				<div class="mb-4 flex items-center justify-between">
 					<h2 class="h3">Recent Projects</h2>
-					<a href="/projects/new" class="btn btn-sm preset-filled-primary">
-						New Project
-					</a>
+					<a href="/projects/new" class="preset-filled-primary btn btn-sm"> New Project </a>
 				</div>
 
 				{#if team.projects.length > 0}
@@ -179,14 +176,14 @@
 						{#each team.projects as project}
 							<a
 								href="/projects/{project.id}"
-								class="block p-4 rounded-container hover:bg-surface-100-800 transition-colors"
+								class="hover:bg-surface-100-800 block rounded-container p-4 transition-colors"
 							>
 								<div class="flex items-center justify-between">
 									<div>
 										<h3 class="font-medium">{project.name}</h3>
-										<p class="text-sm text-surface-600-300">Key: {project.key}</p>
+										<p class="text-surface-600-300 text-sm">Key: {project.key}</p>
 									</div>
-									<span class="text-sm text-surface-600-300">
+									<span class="text-surface-600-300 text-sm">
 										{formatDate(project.createdAt)}
 									</span>
 								</div>
@@ -194,7 +191,7 @@
 						{/each}
 					</div>
 				{:else}
-					<p class="text-center text-surface-600-300 py-8">No projects yet</p>
+					<p class="text-surface-600-300 py-8 text-center">No projects yet</p>
 				{/if}
 			</div>
 		</div>
@@ -203,16 +200,16 @@
 		<div class="space-y-6">
 			<!-- Team Members -->
 			<div class="card p-6">
-				<div class="flex items-center gap-3 mb-4">
-					<Users class="w-5 h-5" />
+				<div class="mb-4 flex items-center gap-3">
+					<Users class="h-5 w-5" />
 					<h2 class="h3">Members</h2>
-					<span class="badge preset-filled-surface ml-auto">{team.members.length}</span>
+					<span class="preset-filled-surface ml-auto badge">{team.members.length}</span>
 				</div>
 
 				<div class="space-y-3">
 					{#each team.members as member}
 						<div class="flex items-center gap-3">
-							<Avatar class="w-10 h-10">
+							<Avatar class="h-10 w-10">
 								{#if member.imageUrl}
 									<Avatar.Image src={member.imageUrl} alt={member.email} />
 								{/if}
@@ -221,24 +218,24 @@
 								</Avatar.Fallback>
 							</Avatar>
 
-							<div class="flex-1 min-w-0">
-								<p class="font-medium truncate">
+							<div class="min-w-0 flex-1">
+								<p class="truncate font-medium">
 									{member.firstName && member.lastName
 										? `${member.firstName} ${member.lastName}`
 										: member.email}
 								</p>
-								<p class="text-sm text-surface-600-300">{member.role}</p>
+								<p class="text-surface-600-300 text-sm">{member.role}</p>
 							</div>
 
 							{#if member.id === currentUser?.id}
-								<span class="badge preset-filled-primary text-xs">You</span>
+								<span class="preset-filled-primary badge text-xs">You</span>
 							{/if}
 						</div>
 					{/each}
 				</div>
 
 				{#if currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'}
-					<a href="/teams/{team.id}/members/invite" class="btn preset-outlined w-full mt-4">
+					<a href="/teams/{team.id}/members/invite" class="mt-4 btn w-full preset-outlined">
 						Invite Members
 					</a>
 				{/if}
@@ -246,16 +243,16 @@
 
 			<!-- Quick Stats -->
 			<div class="card p-6">
-				<h2 class="h4 mb-4">Quick Stats</h2>
+				<h2 class="mb-4 h4">Quick Stats</h2>
 
 				<div class="space-y-3">
 					<div class="flex items-center justify-between">
 						<span class="text-surface-600-300">Projects</span>
-						<span class="font-bold text-xl">{team.projects.length}</span>
+						<span class="text-xl font-bold">{team.projects.length}</span>
 					</div>
 					<div class="flex items-center justify-between">
 						<span class="text-surface-600-300">Members</span>
-						<span class="font-bold text-xl">{team.members.length}</span>
+						<span class="text-xl font-bold">{team.members.length}</span>
 					</div>
 				</div>
 			</div>

@@ -72,9 +72,7 @@ export async function requireAvailableSeats(teamId: string) {
 /**
  * Get subscription status
  */
-export async function getSubscriptionStatus(
-	teamId: string
-): Promise<SubscriptionStatus | null> {
+export async function getSubscriptionStatus(teamId: string): Promise<SubscriptionStatus | null> {
 	const subscription = await db.subscription.findUnique({
 		where: { teamId },
 		select: { status: true }

@@ -1,6 +1,7 @@
 # API Keys Setup Guide
 
 ## Overview
+
 API keys allow external tools (like Playwright reporters, CI/CD pipelines) to authenticate with QA Studio's API without requiring user sessions.
 
 ## Database Migration
@@ -20,6 +21,7 @@ npx prisma db push
 ## Features
 
 ### 1. API Key Management UI
+
 - **Location**: `/settings/api-keys`
 - Users can:
   - Create new API keys with custom names
@@ -29,6 +31,7 @@ npx prisma db push
   - Delete API keys
 
 ### 2. API Key Security
+
 - Keys are hashed using SHA-256 before storage
 - Full key is only shown once during creation
 - Keys have format: `qas_<32-random-chars>`
@@ -36,14 +39,17 @@ npx prisma db push
 - Optional expiration dates
 
 ### 3. API Authentication
+
 Two authentication methods supported:
 
 #### Session Auth (Browser/Web)
+
 ```typescript
 // Already handled by Clerk
 ```
 
 #### API Key Auth (Programmatic)
+
 ```bash
 curl https://your-domain.com/api/test-results \
   -H "Authorization: Bearer qas_your_api_key_here" \
@@ -59,10 +65,10 @@ curl https://your-domain.com/api/test-results \
 import { requireApiAuth } from '$lib/server/api-auth';
 
 export const POST: RequestHandler = async (event) => {
-    // Works with both session and API key
-    const userId = await requireApiAuth(event);
+	// Works with both session and API key
+	const userId = await requireApiAuth(event);
 
-    // ... rest of your logic
+	// ... rest of your logic
 };
 ```
 
@@ -72,13 +78,13 @@ export const POST: RequestHandler = async (event) => {
 import { optionalApiAuth } from '$lib/server/api-auth';
 
 export const GET: RequestHandler = async (event) => {
-    const userId = await optionalApiAuth(event);
+	const userId = await optionalApiAuth(event);
 
-    if (userId) {
-        // Authenticated request
-    } else {
-        // Anonymous request
-    }
+	if (userId) {
+		// Authenticated request
+	} else {
+		// Anonymous request
+	}
 };
 ```
 
@@ -87,35 +93,37 @@ export const GET: RequestHandler = async (event) => {
 ```typescript
 // In your Playwright reporter
 class QAStudioReporter {
-    constructor(config) {
-        this.apiKey = config.apiKey;
-        this.apiUrl = config.apiUrl;
-    }
+	constructor(config) {
+		this.apiKey = config.apiKey;
+		this.apiUrl = config.apiUrl;
+	}
 
-    async sendResults(results) {
-        const response = await fetch(`${this.apiUrl}/test-results`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${this.apiKey}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(results)
-        });
+	async sendResults(results) {
+		const response = await fetch(`${this.apiUrl}/test-results`, {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${this.apiKey}`,
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(results)
+		});
 
-        return response.json();
-    }
+		return response.json();
+	}
 }
 ```
 
 ## API Endpoints
 
 ### List API Keys
+
 ```http
 GET /api/api-keys/list
 Authorization: Bearer <session-or-api-key>
 ```
 
 ### Create API Key
+
 ```http
 POST /api/api-keys/create
 Authorization: Bearer <session-or-api-key>
@@ -128,20 +136,22 @@ Content-Type: application/json
 ```
 
 Response includes the full key (only time it's returned):
+
 ```json
 {
-  "apiKey": {
-    "id": "...",
-    "name": "CI/CD Pipeline",
-    "prefix": "qas_1234...",
-    "expiresAt": "2024-06-01T00:00:00.000Z",
-    "createdAt": "2024-03-01T00:00:00.000Z"
-  },
-  "key": "qas_full_key_here"  // Save this!
+	"apiKey": {
+		"id": "...",
+		"name": "CI/CD Pipeline",
+		"prefix": "qas_1234...",
+		"expiresAt": "2024-06-01T00:00:00.000Z",
+		"createdAt": "2024-03-01T00:00:00.000Z"
+	},
+	"key": "qas_full_key_here" // Save this!
 }
 ```
 
 ### Delete API Key
+
 ```http
 DELETE /api/api-keys/{keyId}/delete
 Authorization: Bearer <session-or-api-key>
@@ -181,6 +191,7 @@ QA_STUDIO_PROJECT_ID=abc123
 ## Accessing Settings Page
 
 Users can access API key management at:
+
 - Direct URL: `https://your-domain.com/settings/api-keys`
 - Or add a link in your user menu/settings
 

@@ -58,7 +58,7 @@
 					<span class="badge preset-filled-surface-500">{project.key}</span>
 				</div>
 				{#if project.description}
-					<p class="text-lg text-surface-600-300">{project.description}</p>
+					<p class="text-surface-600-300 text-lg">{project.description}</p>
 				{/if}
 			</div>
 		</div>
@@ -71,7 +71,7 @@
 						<TestTube2 class="h-5 w-5 text-primary-500" />
 					</div>
 					<div>
-						<p class="text-sm text-surface-600-300">Test Cases</p>
+						<p class="text-surface-600-300 text-sm">Test Cases</p>
 						<p class="text-2xl font-bold">{stats.totalTestCases}</p>
 					</div>
 				</div>
@@ -83,7 +83,7 @@
 						<FolderOpen class="h-5 w-5 text-secondary-500" />
 					</div>
 					<div>
-						<p class="text-sm text-surface-600-300">Test Suites</p>
+						<p class="text-surface-600-300 text-sm">Test Suites</p>
 						<p class="text-2xl font-bold">{stats.totalSuites}</p>
 					</div>
 				</div>
@@ -95,7 +95,7 @@
 						<PlayCircle class="h-5 w-5 text-tertiary-500" />
 					</div>
 					<div>
-						<p class="text-sm text-surface-600-300">Test Runs</p>
+						<p class="text-surface-600-300 text-sm">Test Runs</p>
 						<p class="text-2xl font-bold">{stats.totalTestRuns}</p>
 					</div>
 				</div>
@@ -107,9 +107,11 @@
 						<TrendingUp class="h-5 w-5 text-success-500" />
 					</div>
 					<div>
-						<p class="text-sm text-surface-600-300">Pass Rate</p>
+						<p class="text-surface-600-300 text-sm">Pass Rate</p>
 						<p class="text-2xl font-bold">
-							{stats.totalResults > 0 ? Math.round((stats.passedResults / stats.totalResults) * 100) : 0}%
+							{stats.totalResults > 0
+								? Math.round((stats.passedResults / stats.totalResults) * 100)
+								: 0}%
 						</p>
 					</div>
 				</div>
@@ -128,10 +130,13 @@
 			</div>
 
 			{#if recentRuns.length === 0}
-				<div class="py-8 text-center text-surface-600-300">
+				<div class="text-surface-600-300 py-8 text-center">
 					<PlayCircle class="mx-auto mb-4 h-12 w-12 opacity-50" />
 					<p>No test runs yet</p>
-					<a href="/projects/{project.id}/runs" class="mt-2 inline-block text-primary-500 hover:underline">
+					<a
+						href="/projects/{project.id}/runs"
+						class="mt-2 inline-block text-primary-500 hover:underline"
+					>
 						Create your first test run
 					</a>
 				</div>
@@ -140,17 +145,15 @@
 					{#each recentRuns as run}
 						<a
 							href="/projects/{project.id}/runs/{run.id}"
-							class="block rounded-container border border-surface-300-700 p-4 transition-colors hover:bg-surface-100-800"
+							class="hover:bg-surface-100-800 block rounded-container border border-surface-300-700 p-4 transition-colors"
 						>
 							<div class="mb-2 flex items-center justify-between">
 								<h3 class="font-medium">{run.name}</h3>
-								<span
-									class="badge {getStatusBgColor(run.status)} {getStatusColor(run.status)}"
-								>
+								<span class="badge {getStatusBgColor(run.status)} {getStatusColor(run.status)}">
 									{run.status}
 								</span>
 							</div>
-							<div class="flex items-center gap-4 text-sm text-surface-600-300">
+							<div class="text-surface-600-300 flex items-center gap-4 text-sm">
 								{#if run.environment}
 									<span>{run.environment.name}</span>
 								{/if}
@@ -178,34 +181,34 @@
 			<div class="grid gap-3">
 				<a
 					href="/projects/{project.id}/cases"
-					class="flex items-center gap-3 rounded-container border border-surface-300-700 p-4 transition-colors hover:bg-surface-100-800"
+					class="hover:bg-surface-100-800 flex items-center gap-3 rounded-container border border-surface-300-700 p-4 transition-colors"
 				>
 					<TestTube2 class="h-5 w-5 text-primary-500" />
 					<div>
 						<p class="font-medium">Manage Test Cases</p>
-						<p class="text-sm text-surface-600-300">Create and organize test cases</p>
+						<p class="text-surface-600-300 text-sm">Create and organize test cases</p>
 					</div>
 				</a>
 
 				<a
 					href="/projects/{project.id}/runs"
-					class="flex items-center gap-3 rounded-container border border-surface-300-700 p-4 transition-colors hover:bg-surface-100-800"
+					class="hover:bg-surface-100-800 flex items-center gap-3 rounded-container border border-surface-300-700 p-4 transition-colors"
 				>
 					<PlayCircle class="h-5 w-5 text-tertiary-500" />
 					<div>
 						<p class="font-medium">View Test Runs</p>
-						<p class="text-sm text-surface-600-300">Track test execution history</p>
+						<p class="text-surface-600-300 text-sm">Track test execution history</p>
 					</div>
 				</a>
 
 				<a
 					href="/docs"
-					class="flex items-center gap-3 rounded-container border border-surface-300-700 p-4 transition-colors hover:bg-surface-100-800"
+					class="hover:bg-surface-100-800 flex items-center gap-3 rounded-container border border-surface-300-700 p-4 transition-colors"
 				>
 					<FileText class="h-5 w-5 text-secondary-500" />
 					<div>
 						<p class="font-medium">API Documentation</p>
-						<p class="text-sm text-surface-600-300">Integrate with your test framework</p>
+						<p class="text-surface-600-300 text-sm">Integrate with your test framework</p>
 					</div>
 				</a>
 			</div>
@@ -217,23 +220,23 @@
 		<h2 class="mb-4 text-xl font-bold">Project Details</h2>
 		<div class="grid gap-4 md:grid-cols-2">
 			<div>
-				<p class="mb-1 text-sm text-surface-600-300">Created by</p>
+				<p class="text-surface-600-300 mb-1 text-sm">Created by</p>
 				<p class="font-medium">
 					{project.creator.firstName || project.creator.email}
 				</p>
 			</div>
 			{#if project.team}
 				<div>
-					<p class="mb-1 text-sm text-surface-600-300">Team</p>
+					<p class="text-surface-600-300 mb-1 text-sm">Team</p>
 					<p class="font-medium">{project.team.name}</p>
 				</div>
 			{/if}
 			<div>
-				<p class="mb-1 text-sm text-surface-600-300">Created on</p>
+				<p class="text-surface-600-300 mb-1 text-sm">Created on</p>
 				<p class="font-medium">{new Date(project.createdAt).toLocaleDateString()}</p>
 			</div>
 			<div>
-				<p class="mb-1 text-sm text-surface-600-300">Last updated</p>
+				<p class="text-surface-600-300 mb-1 text-sm">Last updated</p>
 				<p class="font-medium">{new Date(project.updatedAt).toLocaleDateString()}</p>
 			</div>
 		</div>

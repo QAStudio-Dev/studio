@@ -17,64 +17,64 @@ In `src/lib/api/schemas.ts`:
 ```typescript
 // Define response types
 export type MyResourceResponse = {
-  id: string;
-  name: string;
-  createdAt: Date | string;
+	id: string;
+	name: string;
+	createdAt: Date | string;
 };
 
 export type MyResourceCreateBody = {
-  name: string;
+	name: string;
 };
 
 // Define API schema
 export const MyResourceApi = {
-  list: {
-    method: 'GET',
-    path: '/api/my-resources',
-    description: 'List all resources',
-    tags: ['My Resources'],
-    responses: {
-      200: {
-        description: 'Success',
-        example: [
-          {
-            id: '123',
-            name: 'Example',
-            createdAt: '2024-01-01T00:00:00Z'
-          }
-        ] as MyResourceResponse[]
-      }
-    }
-  } satisfies ApiSchema,
+	list: {
+		method: 'GET',
+		path: '/api/my-resources',
+		description: 'List all resources',
+		tags: ['My Resources'],
+		responses: {
+			200: {
+				description: 'Success',
+				example: [
+					{
+						id: '123',
+						name: 'Example',
+						createdAt: '2024-01-01T00:00:00Z'
+					}
+				] as MyResourceResponse[]
+			}
+		}
+	} satisfies ApiSchema,
 
-  create: {
-    method: 'POST',
-    path: '/api/my-resources',
-    description: 'Create a new resource',
-    tags: ['My Resources'],
-    body: {
-      description: 'Resource data',
-      example: {
-        name: 'New Resource'
-      } as MyResourceCreateBody
-    },
-    responses: {
-      201: {
-        description: 'Created',
-        example: {
-          id: '123',
-          name: 'New Resource',
-          createdAt: '2024-01-01T00:00:00Z'
-        } as MyResourceResponse
-      }
-    }
-  } satisfies ApiSchema
+	create: {
+		method: 'POST',
+		path: '/api/my-resources',
+		description: 'Create a new resource',
+		tags: ['My Resources'],
+		body: {
+			description: 'Resource data',
+			example: {
+				name: 'New Resource'
+			} as MyResourceCreateBody
+		},
+		responses: {
+			201: {
+				description: 'Created',
+				example: {
+					id: '123',
+					name: 'New Resource',
+					createdAt: '2024-01-01T00:00:00Z'
+				} as MyResourceResponse
+			}
+		}
+	} satisfies ApiSchema
 } as const;
 
 // Add to ApiSchemas export
 export const ApiSchemas = {
-  projects: ProjectsApi,
-  myResources: MyResourceApi, // <-- Add here
+	projects: ProjectsApi,
+	myResources: MyResourceApi // <-- Add here
 } as const;
 ```
 
@@ -88,21 +88,21 @@ import type { RequestHandler } from './$types';
 import type { MyResourceResponse, MyResourceCreateBody } from '$lib/api/schemas';
 
 export const GET: RequestHandler = async () => {
-  const resources = await db.myResource.findMany();
+	const resources = await db.myResource.findMany();
 
-  const response: MyResourceResponse[] = resources;
-  return json(response);
+	const response: MyResourceResponse[] = resources;
+	return json(response);
 };
 
 export const POST: RequestHandler = async ({ request }) => {
-  const body: MyResourceCreateBody = await request.json();
+	const body: MyResourceCreateBody = await request.json();
 
-  const resource = await db.myResource.create({
-    data: body
-  });
+	const resource = await db.myResource.create({
+		data: body
+	});
 
-  const response: MyResourceResponse = resource;
-  return json(response, { status: 201 });
+	const response: MyResourceResponse = resource;
+	return json(response, { status: 201 });
 };
 ```
 
@@ -122,38 +122,38 @@ Your `/docs` page will automatically include the new endpoint documentation. No 
 
 ```typescript
 export const MyResourceApi = {
-  getById: {
-    method: 'GET',
-    path: '/api/my-resources/:id',
-    description: 'Get resource by ID',
-    tags: ['My Resources'],
-    params: {
-      id: {
-        type: 'string',
-        description: 'Resource ID',
-        required: true,
-        example: '123'
-      }
-    },
-    query: {
-      include: {
-        type: 'string',
-        description: 'Related data to include',
-        required: false,
-        example: 'relations'
-      }
-    },
-    responses: {
-      200: {
-        description: 'Success',
-        example: { id: '123', name: 'Example' } as MyResourceResponse
-      },
-      404: {
-        description: 'Not found',
-        example: { error: 'Resource not found' } as ErrorResponse
-      }
-    }
-  } satisfies ApiSchema
+	getById: {
+		method: 'GET',
+		path: '/api/my-resources/:id',
+		description: 'Get resource by ID',
+		tags: ['My Resources'],
+		params: {
+			id: {
+				type: 'string',
+				description: 'Resource ID',
+				required: true,
+				example: '123'
+			}
+		},
+		query: {
+			include: {
+				type: 'string',
+				description: 'Related data to include',
+				required: false,
+				example: 'relations'
+			}
+		},
+		responses: {
+			200: {
+				description: 'Success',
+				example: { id: '123', name: 'Example' } as MyResourceResponse
+			},
+			404: {
+				description: 'Not found',
+				example: { error: 'Resource not found' } as ErrorResponse
+			}
+		}
+	} satisfies ApiSchema
 };
 ```
 
