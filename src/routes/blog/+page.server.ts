@@ -3,6 +3,8 @@ import { readdir, readFile } from 'fs/promises';
 import { join } from 'path';
 import matter from 'gray-matter';
 
+export const prerender = true;
+
 export const load: PageServerLoad = async () => {
 	const blogDir = join(process.cwd(), 'src/md/blog');
 
