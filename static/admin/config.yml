@@ -1,7 +1,7 @@
 # ==== Decap CMS configuration =========================================
 backend:
   name: github # Git-backed, no Netlify needed
-  repo: BenDaSpur/qa-studio # <owner>/<repo> - UPDATE THIS
+  repo: QAStudio-Dev/studio # <owner>/<repo>
   base_url: https://qastudio.dev
   auth_endpoint: /api/auth/decap
 
