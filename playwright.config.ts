@@ -1,9 +1,20 @@
 import { defineConfig } from '@playwright/test';
+import 'dotenv/config';
+
+
+
+if (!process.env.QA_STUDIO_API_KEY) {
+	throw new Error('QA_STUDIO_API_KEY is not set');
+}
+if (!process.env.QA_STUDIO_PROJECT_ID) {
+	throw new Error('QA_STUDIO_PROJECT_ID is not set');
+}
 
 // Helper to strip ANSI codes from strings (color codes, etc.)
 function stripAnsi(str: string): string {
 	return str.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '').replace(/\[\d+m/g, '');
 }
+
 
 export default defineConfig({
 	reporter: [
@@ -12,8 +23,8 @@ export default defineConfig({
 		  '@qastudio-dev/playwright',
 		  {
 			apiUrl: stripAnsi(process.env.API_URL || 'https://qastudio.dev/api'),
-			apiKey: stripAnsi(process.env.QA_STUDIO_API_KEY || 'qas_E6qb9YRPGJL8jyMmIWs1aj0auN7vZdDH'),
-			projectId: stripAnsi(process.env.QA_STUDIO_PROJECT_ID || 'cmheffgnl0001jv04i49hbv0s'),
+			apiKey: stripAnsi(process.env.QA_STUDIO_API_KEY),
+			projectId: stripAnsi(process.env.QA_STUDIO_PROJECT_ID),
 			environment: process.env.CI ? 'CI' : 'local',
 			createTestRun: true,
 		  },

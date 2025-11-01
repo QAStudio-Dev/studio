@@ -80,14 +80,27 @@
 				<!-- Project Selector (next to logo) -->
 				<SignedIn>
 					<div use:initProjectFetch>
-					<Popover.Provider value={popover}>
+						{#if !projectsFetched}
+							<!-- Loading state -->
+							<div class="flex items-center gap-2 rounded-base border border-surface-300-700 px-3 py-1.5">
+								<span class="text-sm font-medium text-surface-600-300">Loading...</span>
+							</div>
+						{:else if projects.length === 0}
+							<!-- No projects - show New Project button -->
+							<a
+								href="/projects/new"
+								class="flex items-center gap-2 rounded-base border border-primary-500 bg-primary-500 px-3 py-1.5 transition-colors hover:bg-primary-600"
+							>
+								<span class="text-sm font-medium text-white">New Project</span>
+							</a>
+						{:else}
+							<!-- Has projects - show selector -->
+							<Popover.Provider value={popover}>
 						<Popover.Trigger
 							class="flex items-center gap-2 rounded-base border border-surface-300-700 px-3 py-1.5 transition-colors hover:bg-surface-200-800"
 						>
 							<span class="text-sm font-medium">
-								{#if projects.length === 0}
-									Loading...
-								{:else if selectedProjectId}
+								{#if selectedProjectId}
 									{projects.find((p) => p.id === selectedProjectId)?.name || 'Select Project'}
 								{:else}
 									Select Project
@@ -111,38 +124,37 @@
 							<Popover.Content
 								class="mt-2 max-h-96 w-64 overflow-y-auto rounded-container border border-surface-300-700 bg-surface-100-900 p-2 shadow-xl"
 							>
-								{#if projects.length > 0}
-									<!-- View all projects link -->
-									<a
-										href="/projects"
-										onclick={() => popover().setOpen(false)}
-										class="mb-2 block w-full rounded-base border-b border-surface-300-700 px-3 py-2 pb-2 text-left font-medium text-primary-500 transition-colors hover:bg-surface-200-800"
-									>
-										📁 View All Projects
-									</a>
+								<!-- View all projects link -->
+								<a
+									href="/projects"
+									onclick={() => popover().setOpen(false)}
+									class="mb-2 block w-full rounded-base border-b border-surface-300-700 px-3 py-2 pb-2 text-left font-medium text-primary-500 transition-colors hover:bg-surface-200-800"
+								>
+									📁 View All Projects
+								</a>
 
-									{#each projects as project}
-										<button
-											onclick={() => {
-												popover().setOpen(false);
-												switchProject(project.id);
-											}}
-											class="w-full rounded-base px-3 py-2 text-left transition-colors hover:bg-surface-200-800 {selectedProjectId ===
-											project.id
-												? 'bg-surface-200-800'
-												: ''}"
-										>
-											<div class="flex flex-col">
-												<span class="font-medium">{project.name}</span>
-												<span class="text-surface-500-400 text-xs">{project.key}</span>
-											</div>
-										</button>
-									{/each}
-								{/if}
+								{#each projects as project}
+									<button
+										onclick={() => {
+											popover().setOpen(false);
+											switchProject(project.id);
+										}}
+										class="w-full rounded-base px-3 py-2 text-left transition-colors hover:bg-surface-200-800 {selectedProjectId ===
+										project.id
+											? 'bg-surface-200-800'
+											: ''}"
+									>
+										<div class="flex flex-col">
+											<span class="font-medium">{project.name}</span>
+											<span class="text-surface-500-400 text-xs">{project.key}</span>
+										</div>
+									</button>
+								{/each}
 							</Popover.Content>
 						</Popover.Positioner>
 					</Popover.Provider>
-				</div>
+						{/if}
+					</div>
 				</SignedIn>
 
 				<!-- Main Navigation -->

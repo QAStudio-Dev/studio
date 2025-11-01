@@ -1,0 +1,57 @@
+# ==== Decap CMS configuration =========================================
+backend:
+  name: github # Git-backed, no Netlify needed
+  repo: BenDaSpur/qa-studio # <owner>/<repo> - UPDATE THIS
+  base_url: https://qastudio.dev
+  auth_endpoint: /api/auth/decap
+
+# Uncomment for local development with decap-server
+# local_backend: true
+
+site_url: https://qastudio.dev
+logo_url: /full.svg # QA Studio logo
+
+media_folder: 'static/images/blog' # files live in the repo
+public_folder: '/images/blog' # URL that the site uses
+
+publish_mode: editorial_workflow # gives you draft � review � publish
+slug:
+  encoding: 'ascii'
+  clean_accents: true
+  sanitize_replacement: '-' # ensures SEO-friendly slugs
+
+collections:
+  # --- =� Blog posts ---------------------------------------------------
+  - name: 'blog' # used in filenames & Git commits
+    label: 'Blog Posts'
+    folder: 'src/md/blog' # where the .md files live
+    create: true # allow new files via UI
+    format: 'frontmatter'
+    extension: 'md'
+    slug: '{{slug}}' # filename template
+    nested:
+      depth: 3 # limit depth
+      summary: '{{title}}'
+    fields:
+      - { label: 'Title', name: 'title', widget: 'string' }
+      - { label: 'Publish Date', name: 'date', widget: 'datetime', picker_utc: false }
+      - { label: 'Description', name: 'description', widget: 'text', required: false }
+      - { label: 'Cover Image', name: 'cover', widget: 'image', required: false }
+      - {
+          label: 'Category',
+          name: 'category',
+          widget: 'select',
+          options: ['Testing', 'QA Engineering', 'Automation', 'Best Practices', 'Product Updates'],
+          required: false
+        }
+      - { label: 'Tags', name: 'tags', widget: 'list', required: false }
+      - {
+          label: 'Author',
+          name: 'author',
+          widget: 'string',
+          default: 'QA Studio Team',
+          required: false
+        }
+      - { label: 'Slug', name: 'slug', widget: 'string', required: false }
+      - { label: 'Published', name: 'published', widget: 'boolean', default: true }
+      - { label: 'Body', name: 'body', widget: 'markdown' }
