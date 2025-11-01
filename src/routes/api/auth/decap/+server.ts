@@ -1,4 +1,5 @@
 import type { RequestHandler } from './$types';
+import { redirect } from '@sveltejs/kit';
 import { AuthorizationCode } from 'simple-oauth2';
 
 const randomString = () => {
@@ -32,5 +33,5 @@ export const GET: RequestHandler = async ({ request }) => {
 		state: randomString()
 	});
 
-	return Response.redirect(authorizationUri, 301);
+	throw redirect(302, authorizationUri);
 };
