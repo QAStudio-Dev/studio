@@ -83,7 +83,7 @@
 	<hr class="mb-8 border-surface-300-700" />
 
 	<!-- Content -->
-	<div class="prose prose-lg dark:prose-invert max-w-none">
+	<div class="prose prose-lg prose-slate dark:prose-invert max-w-none">
 		{@html post.html}
 	</div>
 
@@ -101,53 +101,3 @@
 		</a>
 	</footer>
 </article>
-
-<style>
-	:global(.prose h1) {
-		@apply text-4xl font-black mb-4;
-	}
-
-	:global(.prose h2) {
-		@apply text-3xl font-bold mb-3 mt-8;
-	}
-
-	:global(.prose h3) {
-		@apply text-2xl font-bold mb-2 mt-6;
-	}
-
-	:global(.prose p) {
-		@apply mb-4 leading-relaxed;
-	}
-
-	:global(.prose a) {
-		@apply text-primary-500 hover:underline;
-	}
-
-	:global(.prose ul, .prose ol) {
-		@apply my-4 ml-6;
-	}
-
-	:global(.prose li) {
-		@apply mb-2;
-	}
-
-	:global(.prose code) {
-		@apply rounded bg-surface-200-800 px-1.5 py-0.5 text-sm;
-	}
-
-	:global(.prose pre) {
-		@apply my-4 overflow-x-auto rounded-container bg-surface-200-800 p-4;
-	}
-
-	:global(.prose pre code) {
-		@apply bg-transparent p-0;
-	}
-
-	:global(.prose blockquote) {
-		@apply border-l-4 border-primary-500 pl-4 italic my-4;
-	}
-
-	:global(.prose img) {
-		@apply rounded-container my-6;
-	}
-</style>
