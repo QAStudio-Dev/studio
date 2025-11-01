@@ -111,7 +111,7 @@
 								</svg>
 							</a>
 							<a
-								href="https://discord.com"
+								href="https://discord.gg/rw3UfdB9pN"
 								target="_blank"
 								rel="noopener noreferrer"
 								class="flex h-8 w-8 items-center justify-center rounded-base bg-surface-200-800 text-surface-700-300 transition-colors hover:bg-primary-500 hover:text-white"

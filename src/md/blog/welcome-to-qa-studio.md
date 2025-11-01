@@ -42,6 +42,6 @@ Getting started with QA Studio is simple:
 
 We're constantly improving QA Studio based on feedback from real QA engineers. Check out our [API documentation](/docs) to start integrating with your existing tools.
 
-Have questions or feedback? Join our [community on Discord](https://discord.com) or check out the code on [GitHub](https://github.com).
+Have questions or feedback? Join our [community on Discord](https://discord.gg/rw3UfdB9pN) or check out the code on [GitHub](https://github.com).
 
 Happy testing! 🚀
