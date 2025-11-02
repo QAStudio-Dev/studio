@@ -540,7 +540,7 @@ export default defineConfig({
 							<span class="font-bold text-primary-500">1.</span>
 							<div>
 								<p class="mb-1 font-medium">Install the QA Studio Playwright reporter</p>
-								<pre class="overflow-x-auto rounded bg-surface-900 p-2 text-xs"><code
+								<pre class="overflow-x-auto rounded bg-surface-900 p-2 text-xs text-surface-50"><code
 										>npm install --save-dev @qa-studio/playwright-reporter</code
 									></pre>
 							</div>
@@ -569,7 +569,7 @@ export default defineConfig({
 							<span class="font-bold text-primary-500">4.</span>
 							<div>
 								<p class="font-medium">Run your tests</p>
-								<pre class="mt-1 overflow-x-auto rounded bg-surface-900 p-2 text-xs"><code
+								<pre class="mt-1 overflow-x-auto rounded bg-surface-900 p-2 text-xs text-surface-50"><code
 										>npx playwright test</code
 									></pre>
 							</div>
@@ -594,7 +594,7 @@ export default defineConfig({
 				<div
 					class="max-h-96 overflow-auto rounded-container border border-surface-300-700 bg-surface-900"
 				>
-					<pre class="p-4 text-xs leading-relaxed"><code
+					<pre class="p-4 text-xs leading-relaxed text-surface-50"><code
 							>{getPlaywrightConfig(
 								apiKeys.length > 0 ? `${apiKeys[0].prefix}...` : 'qas_your_api_key_here'
 							)}</code
@@ -612,7 +612,7 @@ export default defineConfig({
 				<div class="space-y-3">
 					<div>
 						<p class="mb-1 text-xs font-medium">1. Create <code>.env</code> file:</p>
-						<pre class="overflow-x-auto rounded bg-surface-900 p-2 text-xs"><code
+						<pre class="overflow-x-auto rounded bg-surface-900 p-2 text-xs text-surface-50"><code
 								>QA_STUDIO_API_KEY={apiKeys.length > 0
 									? apiKeys[0].prefix + '...'
 									: 'qas_your_api_key_here'}
@@ -623,7 +623,7 @@ ENVIRONMENT=QA</code
 
 					<div>
 						<p class="mb-1 text-xs font-medium">2. Update playwright.config.ts:</p>
-						<pre class="overflow-x-auto rounded bg-surface-900 p-2 text-xs"><code
+						<pre class="overflow-x-auto rounded bg-surface-900 p-2 text-xs text-surface-50"><code
 								>['@qa-studio/playwright-reporter', {'{'}
   apiUrl: '{typeof window !== 'undefined' ? window.location.origin : 'https://qastudio.dev'}/api',
   apiKey: process.env.QA_STUDIO_API_KEY,
@@ -639,7 +639,7 @@ ENVIRONMENT=QA</code
 						<p class="mb-1 text-xs font-medium">
 							3. Add <code>.env</code> to <code>.gitignore</code>:
 						</p>
-						<pre class="overflow-x-auto rounded bg-surface-900 p-2 text-xs"><code
+						<pre class="overflow-x-auto rounded bg-surface-900 p-2 text-xs text-surface-50"><code
 								># Keep API keys secure
 .env
 .env.local</code
@@ -656,7 +656,7 @@ ENVIRONMENT=QA</code
 					<!-- GitHub Actions -->
 					<div>
 						<p class="mb-2 text-xs font-medium">GitHub Actions (.github/workflows/test.yml):</p>
-						<pre class="overflow-x-auto rounded bg-surface-900 p-2 text-xs"><code
+						<pre class="overflow-x-auto rounded bg-surface-900 p-2 text-xs text-surface-50"><code
 								>name: Playwright Tests
 on: [push, pull_request]
 
@@ -679,7 +679,7 @@ jobs:
 					<!-- GitLab CI -->
 					<div>
 						<p class="mb-2 text-xs font-medium">GitLab CI (.gitlab-ci.yml):</p>
-						<pre class="overflow-x-auto rounded bg-surface-900 p-2 text-xs"><code
+						<pre class="overflow-x-auto rounded bg-surface-900 p-2 text-xs text-surface-50"><code
 								>test:
   image: mcr.microsoft.com/playwright:latest
   script:

@@ -5,21 +5,15 @@
 		Users,
 		Crown,
 		Plus,
-		Trash2,
-		Copy,
 		Check,
 		Settings as SettingsIcon,
 		Plug,
-		Bell,
-		Shield,
 		LogOut,
 		ExternalLink,
 		AlertCircle,
 		CheckCircle,
 		XCircle,
-		X,
-		ChevronDown,
-		ChevronUp
+		X
 	} from 'lucide-svelte';
 	import { Tabs } from '@skeletonlabs/skeleton-svelte';
 	import { invalidateAll } from '$app/navigation';
@@ -29,12 +23,6 @@
 	let { data } = $props();
 	let { user } = $derived(data);
 
-	// API Keys state
-	let creatingKey = $state(false);
-	let newKeyName = $state('');
-	let newKeyData = $state<{ key: string; name: string } | null>(null);
-	let deletingKeyId = $state<string | null>(null);
-	let copiedKey = $state(false);
 
 	// Team state
 	let leavingTeam = $state(false);
@@ -80,72 +68,6 @@
 		].join(',');
 
 		return `https://slack.com/oauth/v2/authorize?client_id=${clientId}&scope=${scopes}&redirect_uri=${encodeURIComponent(redirectUri)}`;
-	}
-
-	// Create API key
-	async function handleCreateApiKey() {
-		if (!newKeyName.trim()) return;
-
-		try {
-			const res = await fetch('/api/api-keys/create', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ name: newKeyName })
-			});
-
-			if (!res.ok) {
-				const data = await res.json();
-				throw new Error(data.message || 'Failed to create API key');
-			}
-
-			const data = await res.json();
-			newKeyData = { key: data.key, name: newKeyName };
-			newKeyName = '';
-			await invalidateAll();
-		} catch (err: any) {
-			alert('Error: ' + err.message);
-		}
-	}
-
-	// Delete API key
-	async function handleDeleteApiKey(keyId: string, keyName: string) {
-		const confirmed = confirm(
-			`Are you sure you want to delete the API key "${keyName}"?\n\nThis action cannot be undone and will immediately revoke access.`
-		);
-
-		if (!confirmed) return;
-
-		deletingKeyId = keyId;
-
-		try {
-			const res = await fetch(`/api/api-keys/${keyId}/delete`, {
-				method: 'DELETE'
-			});
-
-			if (!res.ok) {
-				const data = await res.json();
-				throw new Error(data.message || 'Failed to delete API key');
-			}
-
-			await invalidateAll();
-		} catch (err: any) {
-			alert('Error: ' + err.message);
-		} finally {
-			deletingKeyId = null;
-		}
-	}
-
-	// Copy API key
-	function copyApiKey(key: string) {
-		navigator.clipboard.writeText(key);
-		copiedKey = true;
-		setTimeout(() => (copiedKey = false), 2000);
-	}
-
-	// Close new key modal
-	function closeNewKeyModal() {
-		newKeyData = null;
-		creatingKey = false;
 	}
 
 	// Format date
@@ -447,146 +369,86 @@
 							Manage API keys for programmatic access to QA Studio
 						</p>
 					</div>
-					<button
-						onclick={() => (creatingKey = true)}
-						class="btn preset-filled-primary-500"
-						disabled={creatingKey}
-					>
-						<Plus class="mr-2 h-4 w-4" />
-						Create New Key
-					</button>
+					<a href="/settings/api-keys" class="btn preset-filled-primary-500">
+						<Key class="mr-2 h-4 w-4" />
+						Manage API Keys
+					</a>
 				</div>
 
-				<!-- Create Key Form -->
-				{#if creatingKey && !newKeyData}
-					<form
-						onsubmit={(e) => {
-							e.preventDefault();
-							handleCreateApiKey();
-						}}
-						class="bg-surface-50-900 mb-6 rounded-container border border-primary-500 p-4"
-					>
-						<label class="mb-2 block text-sm font-medium">Key Name</label>
-						<input
-							type="text"
-							class="input mb-3"
-							placeholder="e.g., CI/CD Pipeline, Local Development"
-							bind:value={newKeyName}
-							autofocus
-						/>
-						<div class="flex gap-2">
-							<button
-								type="submit"
-								class="btn flex-1 preset-filled-success-500"
-								disabled={!newKeyName.trim()}
-							>
-								Generate Key
-							</button>
-							<button
-								type="button"
-								onclick={() => (creatingKey = false)}
-								class="btn preset-outlined-surface-500"
-							>
-								Cancel
-							</button>
+				<!-- Quick Overview -->
+				<div class="bg-surface-50-900 mb-6 rounded-container border border-primary-500/20 p-6">
+					<div class="mb-4 flex items-start gap-4">
+						<div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary-500/10">
+							<Key class="h-6 w-6 text-primary-500" />
 						</div>
-					</form>
-				{/if}
-
-				<!-- New Key Display Modal -->
-				{#if newKeyData}
-					<div class="mb-6 rounded-container border border-warning-500 bg-warning-500/10 p-6">
-						<div class="mb-4 flex items-start gap-3">
-							<Shield class="mt-1 h-6 w-6 text-warning-500" />
-							<div>
-								<h3 class="mb-1 font-bold text-warning-500">Save Your API Key</h3>
-								<p class="text-surface-600-300 text-sm">
-									This is the only time you'll see this key. Copy it now and store it securely.
-								</p>
-							</div>
+						<div class="flex-1">
+							<h3 class="mb-2 font-bold">Full API Keys Management</h3>
+							<p class="text-surface-600-300 mb-4 text-sm">
+								Access the dedicated API Keys page for complete management including:
+							</p>
+							<ul class="text-surface-600-300 space-y-2 text-sm">
+								<li class="flex items-center gap-2">
+									<Check class="h-4 w-4 text-success-500" />
+									<span>Create and manage API keys</span>
+								</li>
+								<li class="flex items-center gap-2">
+									<Check class="h-4 w-4 text-success-500" />
+									<span>Playwright configuration examples with your API key</span>
+								</li>
+								<li class="flex items-center gap-2">
+									<Check class="h-4 w-4 text-success-500" />
+									<span>CI/CD integration examples (GitHub Actions, GitLab)</span>
+								</li>
+								<li class="flex items-center gap-2">
+									<Check class="h-4 w-4 text-success-500" />
+									<span>Environment variables setup guide</span>
+								</li>
+							</ul>
 						</div>
-
-						<div class="mb-4">
-							<label class="mb-2 block text-sm font-medium">Key Name</label>
-							<div class="bg-surface-100-800 input mb-3 font-mono">{newKeyData.name}</div>
-
-							<label class="mb-2 block text-sm font-medium">API Key</label>
-							<div class="flex gap-2">
-								<input
-									type="text"
-									value={newKeyData.key}
-									readonly
-									class="bg-surface-100-800 input flex-1 font-mono text-sm"
-								/>
-								<button
-									onclick={() => copyApiKey(newKeyData?.key || '')}
-									class="btn preset-filled-primary-500"
-									title="Copy to clipboard"
-								>
-									{#if copiedKey}
-										<Check class="h-4 w-4" />
-									{:else}
-										<Copy class="h-4 w-4" />
-									{/if}
-								</button>
-							</div>
-						</div>
-
-						<button onclick={closeNewKeyModal} class="btn w-full preset-filled-surface-500">
-							Done
-						</button>
 					</div>
-				{/if}
+					<a href="/settings/api-keys" class="btn w-full preset-filled-primary-500">
+						<Key class="mr-2 h-4 w-4" />
+						Go to API Keys Page
+					</a>
+				</div>
 
-				<!-- API Keys List -->
+				<!-- Current API Keys Summary -->
 				{#if user.apiKeys.length === 0}
-					<div class="py-12 text-center">
-						<Key class="mx-auto mb-4 h-16 w-16 text-surface-400" />
-						<h3 class="mb-2 text-xl font-bold">No API Keys</h3>
-						<p class="text-surface-600-300 mb-4">
-							Create an API key to authenticate with the QA Studio API
+					<div class="border-surface-200-700 rounded-container border p-8 text-center">
+						<Key class="mx-auto mb-4 h-12 w-12 text-surface-400" />
+						<h3 class="mb-2 text-lg font-bold">No API Keys Yet</h3>
+						<p class="text-surface-600-300 mb-4 text-sm">
+							Create your first API key to get started with API access
 						</p>
+						<a href="/settings/api-keys" class="btn preset-filled-primary-500">
+							<Plus class="mr-2 h-4 w-4" />
+							Create API Key
+						</a>
 					</div>
 				{:else}
-					<div class="space-y-3">
-						{#each user.apiKeys as apiKey}
-							<div class="border-surface-200-700 group relative rounded-container border p-4">
-								<!-- Delete button -->
-								<button
-									onclick={() => handleDeleteApiKey(apiKey.id, apiKey.name)}
-									disabled={deletingKeyId === apiKey.id}
-									class="text-surface-600-300 absolute top-4 right-4 rounded-container p-2 opacity-0 transition-all group-hover:opacity-100 hover:bg-error-500/10 hover:text-error-500"
-									title="Delete API key"
-								>
-									{#if deletingKeyId === apiKey.id}
-										<span class="text-xs">Deleting...</span>
-									{:else}
-										<Trash2 class="h-4 w-4" />
-									{/if}
-								</button>
-
-								<div class="pr-12">
-									<h3 class="mb-2 font-bold">{apiKey.name}</h3>
-									<div class="text-surface-600-300 mb-3 font-mono text-sm">
+					<div>
+						<h3 class="mb-3 text-sm font-semibold">Your API Keys ({user.apiKeys.length})</h3>
+						<div class="space-y-2">
+							{#each user.apiKeys.slice(0, 3) as apiKey}
+								<div class="border-surface-200-700 rounded-container border p-3">
+									<div class="mb-1 font-medium">{apiKey.name}</div>
+									<div class="text-surface-600-300 font-mono text-xs">
 										{apiKey.prefix}••••••••••••••••
 									</div>
-
-									<div class="text-surface-600-300 flex items-center gap-4 text-xs">
-										<div>Created: {formatDate(apiKey.createdAt)}</div>
-										{#if apiKey.lastUsedAt}
-											<div>• Last used: {formatDate(apiKey.lastUsedAt)}</div>
-										{:else}
-											<div>• Never used</div>
-										{/if}
-										{#if apiKey.expiresAt}
-											<div>
-												• Expires: {formatDate(apiKey.expiresAt)}
-											</div>
-										{/if}
-									</div>
 								</div>
+							{/each}
+						</div>
+						{#if user.apiKeys.length > 3}
+							<div class="text-surface-600-300 mt-3 text-center text-sm">
+								And {user.apiKeys.length - 3} more key{user.apiKeys.length - 3 !== 1 ? 's' : ''}
 							</div>
-						{/each}
+						{/if}
+						<a
+							href="/settings/api-keys"
+							class="mt-4 btn w-full preset-outlined-primary-500"
+						>
+							View All Keys & Get Playwright Config
+						</a>
 					</div>
 				{/if}
 			</div>
