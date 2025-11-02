@@ -13,7 +13,8 @@
 		AlertCircle,
 		CheckCircle,
 		XCircle,
-		X
+		X,
+		Trash2
 	} from 'lucide-svelte';
 	import { Tabs } from '@skeletonlabs/skeleton-svelte';
 	import { invalidateAll } from '$app/navigation';
