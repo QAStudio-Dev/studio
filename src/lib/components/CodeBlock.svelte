@@ -20,7 +20,7 @@
 				lang: language,
 				themes: {
 					light: 'github-light',
-					dark: 'github-dark'
+					dark: 'github-light'
 				}
 			});
 		} catch (error) {
@@ -69,18 +69,20 @@
 		font-family: 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace;
 	}
 
-	/* Light theme colors */
-	:global(.light .code-block-wrapper pre) {
-		background-color: #f6f8fa;
-	}
-
-	/* Dark theme colors */
-	:global(.dark .code-block-wrapper pre) {
-		background-color: #0d1117;
-	}
-
 	:global(.shiki) {
 		border-radius: 0.375rem;
-		background-color: transparent !important;
+	}
+
+	/* Light theme colors */
+	:global([data-mode='light'] .code-block-wrapper .shiki),
+	:global([data-mode='light'] .code-block-wrapper pre) {
+		background-color: #f6f8fa !important;
+	}
+
+	/* Dark theme colors - use light background for readability */
+	:global([data-mode='dark'] .code-block-wrapper .shiki),
+	:global([data-mode='dark'] .code-block-wrapper pre) {
+		background-color: #ffffff !important;
+		border: 1px solid #e1e4e8;
 	}
 </style>
