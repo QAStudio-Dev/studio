@@ -5,6 +5,7 @@
 	import { clearSelectedProject } from '$lib/stores/projectStore';
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
+	import { navigating } from '$app/stores';
 
 	let { children, data } = $props();
 
@@ -77,6 +78,13 @@
 <ClerkProvider>
 	<div class="flex min-h-screen flex-col">
 		<Header />
+
+		<!-- Loading bar -->
+		{#if $navigating}
+			<div class="fixed left-0 right-0 top-0 z-[100] h-1 bg-primary-500/20">
+				<div class="h-full animate-loading-bar bg-primary-500"></div>
+			</div>
+		{/if}
 
 		<main class="flex-1">
 			{@render children()}
