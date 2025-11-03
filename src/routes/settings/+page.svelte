@@ -28,6 +28,9 @@
 	// Team state
 	let leavingTeam = $state(false);
 	let loadingBillingPortal = $state(false);
+	let updatingSeats = $state(false);
+	let newSeats = $state(0);
+	let showSeatUpdateDialog = $state(false);
 
 	// Integration state
 	let deletingIntegrationId = $state<string | null>(null);
@@ -125,6 +128,50 @@
 		} catch (err: any) {
 			alert('Error: ' + err.message);
 			loadingBillingPortal = false;
+		}
+	}
+
+	// Open seat update dialog
+	function openSeatUpdateDialog() {
+		if (!user.team?.subscription) return;
+		newSeats = user.team.subscription.seats;
+		showSeatUpdateDialog = true;
+	}
+
+	// Update seats
+	async function handleUpdateSeats() {
+		if (!user.team) return;
+
+		const currentMembers = user.team.members.length;
+		if (newSeats < currentMembers) {
+			alert(
+				`Cannot reduce seats to ${newSeats}. You currently have ${currentMembers} team members. Please remove members first.`
+			);
+			return;
+		}
+
+		updatingSeats = true;
+
+		try {
+			const res = await fetch('/api/billing/update-seats', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ seats: newSeats })
+			});
+
+			const data = await res.json();
+
+			if (!res.ok) {
+				throw new Error(data.error || 'Failed to update seats');
+			}
+
+			await invalidateAll();
+			showSeatUpdateDialog = false;
+			alert(data.message || 'Successfully updated seat count');
+		} catch (err: any) {
+			alert('Error: ' + err.message);
+		} finally {
+			updatingSeats = false;
 		}
 	}
 
@@ -485,8 +532,18 @@
 									</div>
 								</div>
 								<div>
-									<div class="text-surface-600-300 text-sm">Seats</div>
-									<div class="font-semibold">{user.team.subscription.seats}</div>
+									<div class="text-surface-600-300 mb-1 text-sm">Seats</div>
+									<div class="flex items-center gap-2">
+										<span class="font-semibold">{user.team.subscription.seats}</span>
+										<button
+											onclick={openSeatUpdateDialog}
+											class="btn preset-outlined-primary-500 btn-sm"
+											title="Update seat count"
+										>
+											<Users class="h-3 w-3" />
+											Update
+										</button>
+									</div>
 								</div>
 								{#if user.team.subscription.currentPeriodEnd}
 									<div>
@@ -863,6 +920,87 @@
 						Saving...
 					{:else}
 						Save Settings
+					{/if}
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
+<!-- Seat Update Dialog -->
+{#if showSeatUpdateDialog}
+	<!-- Backdrop -->
+	<button
+		onclick={() => (showSeatUpdateDialog = false)}
+		class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm"
+		aria-label="Close dialog"
+	></button>
+
+	<!-- Dialog -->
+	<div class="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center p-4">
+		<div
+			class="border-surface-200-700 pointer-events-auto w-full max-w-md overflow-y-auto card border bg-surface-50-950 p-6 shadow-2xl"
+		>
+			<div class="mb-4 flex items-center justify-between">
+				<h2 class="text-xl font-bold">Update Seat Count</h2>
+				<button
+					onclick={() => (showSeatUpdateDialog = false)}
+					class="text-surface-500-400 hover:text-surface-900-50 rounded-base p-1 transition-colors"
+					aria-label="Close"
+				>
+					<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M6 18L18 6M6 6l12 12"
+						/>
+					</svg>
+				</button>
+			</div>
+
+			<div class="mb-4">
+				<p class="text-surface-600-300 mb-4 text-sm">
+					Current team members: <strong>{user.team?.members.length || 0}</strong>
+				</p>
+
+				<label class="mb-2 block text-sm font-medium">New Seat Count</label>
+				<input
+					type="number"
+					bind:value={newSeats}
+					min={user.team?.members.length || 1}
+					class="w-full rounded-base border border-surface-300-700 bg-surface-100-900 px-3 py-2"
+				/>
+
+				{#if newSeats < (user.team?.members.length || 0)}
+					<p class="mt-2 text-sm text-error-500">
+						Cannot reduce seats below current member count ({user.team?.members.length || 0}).
+						Please remove members first.
+					</p>
+				{/if}
+
+				<p class="text-surface-500-400 mt-2 text-xs">
+					Changes will be prorated on your next invoice.
+				</p>
+			</div>
+
+			<div class="flex justify-end gap-2">
+				<button
+					onclick={() => (showSeatUpdateDialog = false)}
+					disabled={updatingSeats}
+					class="btn preset-outlined"
+				>
+					Cancel
+				</button>
+				<button
+					onclick={handleUpdateSeats}
+					disabled={updatingSeats || newSeats < (user.team?.members.length || 0)}
+					class="btn preset-filled-primary-500"
+				>
+					{#if updatingSeats}
+						Updating...
+					{:else}
+						Update Seats
 					{/if}
 				</button>
 			</div>
