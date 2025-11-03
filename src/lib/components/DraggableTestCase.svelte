@@ -3,13 +3,14 @@
 
 	interface Props {
 		testCase: any;
+		projectId: string;
 		onDragStart: (event: DragEvent, testCase: any) => void;
 		onDragEnd: () => void;
 		onOpenModal: (testCase: any) => void;
 		isDragging?: boolean;
 	}
 
-	let { testCase, onDragStart, onDragEnd, onOpenModal, isDragging = false }: Props = $props();
+	let { testCase, projectId, onDragStart, onDragEnd, onOpenModal, isDragging = false }: Props = $props();
 
 	let isDragEnabled = $state(false);
 
@@ -63,7 +64,7 @@
 
 		<!-- Actions -->
 		<a
-			href="/test-cases/{testCase.id}"
+			href="/projects/{projectId}/cases/{testCase.id}"
 			class="preset-ghost-surface-500 btn btn-sm opacity-0 transition-opacity group-hover:opacity-100"
 			title="Open full view"
 		>

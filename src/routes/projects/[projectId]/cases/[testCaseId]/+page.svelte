@@ -14,14 +14,72 @@
 		Sparkles,
 		Loader2,
 		ChevronDown,
-		ChevronRight
+		ChevronRight,
+		X,
+		Save
 	} from 'lucide-svelte';
 	import { Avatar, Accordion } from '@skeletonlabs/skeleton-svelte';
 	import AttachmentViewer from '$lib/components/AttachmentViewer.svelte';
 	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
+	import { invalidateAll } from '$app/navigation';
 
 	let { data } = $props();
 	let { testCase } = $derived(data);
+
+	// Edit mode state
+	let showEditDialog = $state(false);
+	let editForm = $state({
+		title: '',
+		description: '',
+		preconditions: '',
+		steps: '',
+		expectedResult: '',
+		priority: 'MEDIUM',
+		type: 'FUNCTIONAL',
+		automationStatus: 'NOT_AUTOMATED'
+	});
+	let savingEdit = $state(false);
+
+	function openEditDialog() {
+		// Reset form with current values
+		editForm = {
+			title: testCase.title,
+			description: testCase.description || '',
+			preconditions: testCase.preconditions || '',
+			steps: testCase.steps || '',
+			expectedResult: testCase.expectedResult || '',
+			priority: testCase.priority,
+			type: testCase.type,
+			automationStatus: testCase.automationStatus
+		};
+		showEditDialog = true;
+	}
+
+	async function handleSaveEdit() {
+		if (!editForm.title.trim()) {
+			alert('Title is required');
+			return;
+		}
+
+		savingEdit = true;
+		try {
+			const res = await fetch(`/api/test-cases/${testCase.id}`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(editForm)
+			});
+
+			if (!res.ok) throw new Error('Failed to update test case');
+
+			await invalidateAll();
+			showEditDialog = false;
+		} catch (err) {
+			console.error(err);
+			alert('Failed to update test case');
+		} finally {
+			savingEdit = false;
+		}
+	}
 
 	// Strip ANSI escape codes from text (color codes, formatting, etc.)
 	function stripAnsi(text: string | null): string {
@@ -180,7 +238,7 @@
 				</div>
 			</div>
 
-			<button class="btn preset-filled-primary-500">
+			<button onclick={openEditDialog} class="btn preset-filled-primary-500">
 				<Edit class="mr-2 h-4 w-4" />
 				Edit
 			</button>
@@ -492,3 +550,171 @@
 		</div>
 	</div>
 </div>
+
+<!-- Edit Dialog -->
+{#if showEditDialog}
+	<!-- Backdrop -->
+	<button
+		onclick={() => (showEditDialog = false)}
+		class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm"
+		aria-label="Close dialog"
+	></button>
+
+	<!-- Dialog -->
+	<div class="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center p-4">
+		<div
+			class="border-surface-200-700 pointer-events-auto max-h-[90vh] w-full max-w-3xl overflow-y-auto card border bg-surface-50-950 p-6 shadow-2xl"
+		>
+			<div class="mb-6 flex items-start justify-between">
+				<div>
+					<div class="mb-2 flex items-center gap-3">
+						<Edit class="h-6 w-6 text-primary-500" />
+						<h2 class="text-2xl font-bold">Edit Test Case</h2>
+					</div>
+					<p class="text-surface-600-300">
+						Update test case details and documentation
+					</p>
+				</div>
+				<button
+					class="preset-ghost-surface-500 btn btn-sm"
+					onclick={() => (showEditDialog = false)}
+				>
+					<X class="h-4 w-4" />
+				</button>
+			</div>
+
+					<form
+						onsubmit={(e) => {
+							e.preventDefault();
+							handleSaveEdit();
+						}}
+						class="space-y-6"
+					>
+						<!-- Title -->
+						<div class="label">
+							<span class="mb-2 block text-sm font-medium">
+								Title <span class="text-error-500">*</span>
+							</span>
+							<input
+								type="text"
+								class="input"
+								placeholder="Test case title"
+								bind:value={editForm.title}
+								required
+								disabled={savingEdit}
+							/>
+						</div>
+
+						<!-- Description -->
+						<div class="label">
+							<span class="mb-2 block text-sm font-medium">Description</span>
+							<textarea
+								class="textarea"
+								rows="3"
+								placeholder="Describe what this test case validates"
+								bind:value={editForm.description}
+								disabled={savingEdit}
+							></textarea>
+						</div>
+
+						<!-- Priority, Type, Automation Status -->
+						<div class="grid gap-4 md:grid-cols-3">
+							<div class="label">
+								<span class="mb-2 block text-sm font-medium">Priority</span>
+								<select class="select" bind:value={editForm.priority} disabled={savingEdit}>
+									<option value="CRITICAL">Critical</option>
+									<option value="HIGH">High</option>
+									<option value="MEDIUM">Medium</option>
+									<option value="LOW">Low</option>
+								</select>
+							</div>
+
+							<div class="label">
+								<span class="mb-2 block text-sm font-medium">Type</span>
+								<select class="select" bind:value={editForm.type} disabled={savingEdit}>
+									<option value="FUNCTIONAL">Functional</option>
+									<option value="REGRESSION">Regression</option>
+									<option value="SMOKE">Smoke</option>
+									<option value="INTEGRATION">Integration</option>
+									<option value="PERFORMANCE">Performance</option>
+									<option value="SECURITY">Security</option>
+									<option value="UI">UI</option>
+									<option value="API">API</option>
+									<option value="UNIT">Unit</option>
+									<option value="E2E">E2E</option>
+								</select>
+							</div>
+
+							<div class="label">
+								<span class="mb-2 block text-sm font-medium">Automation</span>
+								<select class="select" bind:value={editForm.automationStatus} disabled={savingEdit}>
+									<option value="AUTOMATED">Automated</option>
+									<option value="NOT_AUTOMATED">Not Automated</option>
+									<option value="CANDIDATE">Candidate</option>
+								</select>
+							</div>
+						</div>
+
+						<!-- Preconditions -->
+						<div class="label">
+							<span class="mb-2 block text-sm font-medium">Preconditions</span>
+							<textarea
+								class="textarea"
+								rows="3"
+								placeholder="Setup steps or conditions required before test execution"
+								bind:value={editForm.preconditions}
+								disabled={savingEdit}
+							></textarea>
+						</div>
+
+						<!-- Test Steps -->
+						<div class="label">
+							<span class="mb-2 block text-sm font-medium">Test Steps</span>
+							<textarea
+								class="textarea"
+								rows="5"
+								placeholder="Step-by-step instructions to execute this test"
+								bind:value={editForm.steps}
+								disabled={savingEdit}
+							></textarea>
+							<span class="text-surface-600-300 mt-1 text-xs">
+								Enter each step on a new line for better readability
+							</span>
+						</div>
+
+						<!-- Expected Result -->
+						<div class="label">
+							<span class="mb-2 block text-sm font-medium">Expected Result</span>
+							<textarea
+								class="textarea"
+								rows="3"
+								placeholder="What should happen when the test passes"
+								bind:value={editForm.expectedResult}
+								disabled={savingEdit}
+							></textarea>
+						</div>
+
+						<!-- Actions -->
+						<div class="border-surface-200-700 flex justify-end gap-3 border-t pt-4">
+							<button
+								type="button"
+								onclick={() => (showEditDialog = false)}
+								class="btn preset-outlined-surface-500"
+								disabled={savingEdit}
+							>
+								Cancel
+							</button>
+							<button type="submit" class="btn preset-filled-primary-500" disabled={savingEdit}>
+								{#if savingEdit}
+									<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+									Saving...
+								{:else}
+									<Save class="mr-2 h-4 w-4" />
+									Save Changes
+								{/if}
+							</button>
+						</div>
+					</form>
+				</div>
+			</div>
+{/if}

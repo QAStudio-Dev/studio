@@ -6,6 +6,7 @@
 
 	interface Props {
 		suite: any;
+		projectId: string;
 		expandedSuites: Set<string>;
 		allSuites: any[];
 		creatingTestCase: string | null;
@@ -15,8 +16,9 @@
 		draggedTestCase: any | null;
 		dragOverSuite: string | null;
 		dragOverPosition: { suiteId: string | null; index: number } | null;
-		onCreateTestCase: (suiteId: string) => void;
+		onCreateTestCase: (suiteId: string | null, keepOpen?: boolean) => void;
 		onStartCreatingTestCase: (suiteId: string) => void;
+		onUpdateNewTestCaseTitle?: (value: string) => void;
 		onDragStart: (e: DragEvent, testCase: any) => void;
 		onDragEnd: () => void;
 		onDrop: (e: DragEvent, suiteId: string, testCases: any[]) => void;
@@ -31,6 +33,7 @@
 
 	let {
 		suite,
+		projectId,
 		expandedSuites,
 		allSuites,
 		creatingTestCase,
@@ -42,6 +45,7 @@
 		dragOverPosition,
 		onCreateTestCase,
 		onStartCreatingTestCase,
+		onUpdateNewTestCaseTitle,
 		onDragStart,
 		onDragEnd,
 		onDrop,
@@ -79,7 +83,8 @@
 						type="text"
 						class="input-sm input flex-1"
 						placeholder="Test case title (press Enter to create)"
-						bind:value={newTestCaseTitle}
+						value={newTestCaseTitle}
+						oninput={(e) => onUpdateNewTestCaseTitle?.(e.currentTarget.value)}
 						disabled={loading}
 						autofocus
 					/>
@@ -114,6 +119,7 @@
 					/>
 					<DraggableTestCase
 						{testCase}
+						{projectId}
 						{onDragStart}
 						{onDragEnd}
 						{onOpenModal}
@@ -146,6 +152,7 @@
 	{#each childSuites as childSuite (childSuite.id)}
 		<svelte:self
 			suite={childSuite}
+			{projectId}
 			{expandedSuites}
 			{allSuites}
 			{creatingTestCase}
@@ -157,6 +164,7 @@
 			{dragOverPosition}
 			{onCreateTestCase}
 			{onStartCreatingTestCase}
+			{onUpdateNewTestCaseTitle}
 			{onDragStart}
 			{onDragEnd}
 			{onDrop}

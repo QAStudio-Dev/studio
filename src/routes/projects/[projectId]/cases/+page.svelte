@@ -107,42 +107,77 @@
 	async function handleCreateTestCase(suiteId: string | null, keepOpen = true) {
 		if (!newTestCaseTitle.trim()) return;
 
-		loading = true;
+		// Store values before clearing
+		const title = newTestCaseTitle.trim();
+		const description = newTestCaseDescription.trim();
+
+		// Create optimistic test case
+		const optimisticTestCase = {
+			id: `temp-${Date.now()}`,
+			title,
+			description,
+			suiteId,
+			priority: 'MEDIUM',
+			type: 'FUNCTIONAL',
+			automationStatus: 'NOT_AUTOMATED',
+			status: 'ACTIVE',
+			order: 0,
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString()
+		};
+
+		// Immediately add to UI
+		if (suiteId) {
+			const suite = project.testSuites.find((s) => s.id === suiteId);
+			if (suite) {
+				suite.testCases = [...(suite.testCases || []), optimisticTestCase];
+			}
+		} else {
+			project.testCases = [...(project.testCases || []), optimisticTestCase];
+		}
+		project = { ...project };
+
+		// Clear form immediately for next entry
+		newTestCaseTitle = '';
+		newTestCaseDescription = '';
+
+		// Focus back to title input immediately
+		setTimeout(() => {
+			const input = document.querySelector<HTMLInputElement>(
+				'input[placeholder="Test case title (press Enter to create)"]'
+			);
+			input?.focus();
+		}, 10);
+
+		// Make API call in background
 		try {
 			const res = await fetch(`/api/projects/${project.id}/test-cases`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					title: newTestCaseTitle,
-					description: newTestCaseDescription,
+					title,
+					description,
 					suiteId
 				})
 			});
 
 			if (!res.ok) throw new Error('Failed to create test case');
 
-			await invalidateAll();
-
-			// Clear form but keep it open for rapid entry
-			newTestCaseTitle = '';
-			newTestCaseDescription = '';
-
-			if (!keepOpen) {
-				creatingTestCase = null;
-			}
-
-			// Focus back to title input
-			setTimeout(() => {
-				const input = document.querySelector<HTMLInputElement>(
-					'input[placeholder="Test case title"]'
-				);
-				input?.focus();
-			}, 100);
+			// Refresh data in background to get real IDs
+			invalidateAll();
 		} catch (err) {
 			console.error(err);
-			alert('Failed to create test case');
-		} finally {
-			loading = false;
+			// Remove optimistic test case on error
+			if (suiteId) {
+				const suite = project.testSuites.find((s) => s.id === suiteId);
+				if (suite) {
+					suite.testCases = suite.testCases?.filter((tc) => tc.id !== optimisticTestCase.id) || [];
+				}
+			} else {
+				project.testCases = project.testCases?.filter((tc) => tc.id !== optimisticTestCase.id) || [];
+			}
+			project = { ...project };
+			alert('Failed to create test case: ' + (err instanceof Error ? err.message : 'Unknown error'));
 		}
 	}
 
@@ -597,6 +632,7 @@
 			{#each rootSuites as suite (suite.id)}
 				<NestedSuiteTestCases
 					{suite}
+					projectId={project.id}
 					{expandedSuites}
 					allSuites={project.testSuites}
 					{creatingTestCase}
@@ -608,6 +644,7 @@
 					{dragOverPosition}
 					onCreateTestCase={handleCreateTestCase}
 					onStartCreatingTestCase={startCreatingTestCase}
+					onUpdateNewTestCaseTitle={(value) => (newTestCaseTitle = value)}
 					onDragStart={handleDragStart}
 					onDragEnd={handleDragEnd}
 					onDrop={handleDrop}
@@ -676,6 +713,7 @@
 								/>
 								<DraggableTestCase
 									{testCase}
+									projectId={project.id}
 									onDragStart={handleDragStart}
 									onDragEnd={handleDragEnd}
 									onOpenModal={openTestCaseModal}
