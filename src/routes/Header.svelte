@@ -4,10 +4,12 @@
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import { goto } from '$app/navigation';
 	import { Popover, usePopover } from '@skeletonlabs/skeleton-svelte';
+	import { X, Menu } from 'lucide-svelte';
 
 	let projects = $state<any[]>([]);
 	let selectedProjectId = $state<string | null>(null);
 	let projectsFetched = $state(false);
+	let mobileMenuOpen = $state(false);
 
 	// Create popover instance
 	const popover = usePopover({ id: 'project-selector' });
@@ -48,8 +50,19 @@
 	}
 
 	function switchProject(projectId: string) {
+		mobileMenuOpen = false;
 		goto(`/projects/${projectId}/runs`);
 	}
+
+	function closeMobileMenu() {
+		mobileMenuOpen = false;
+	}
+
+	// Close mobile menu when route changes
+	$effect(() => {
+		page.url.pathname;
+		mobileMenuOpen = false;
+	});
 
 	let isActive = $derived.by(() => {
 		/**
@@ -79,7 +92,7 @@
 
 				<!-- Project Selector (next to logo) -->
 				<SignedIn>
-					<div use:initProjectFetch>
+					<div use:initProjectFetch class="hidden md:block">
 						{#if !projectsFetched}
 							<!-- Loading state -->
 							<div
@@ -225,10 +238,10 @@
 
 			<!-- Right Side Actions -->
 			<div class="flex items-center gap-4">
-				<!-- API Docs -->
+				<!-- API Docs - Hidden on mobile -->
 				<a
 					href="/docs"
-					class="rounded-base px-4 py-2 transition-colors {isActive('/docs')
+					class="hidden rounded-base px-4 py-2 transition-colors md:block {isActive('/docs')
 						? 'bg-primary-500 text-white'
 						: 'hover:bg-surface-200-800'}"
 				>
@@ -247,17 +260,144 @@
 				</SignedIn>
 
 				<!-- Mobile Menu Button -->
-				<button class="rounded-base px-3 py-2 transition-colors hover:bg-surface-200-800 md:hidden">
-					<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M4 6h16M4 12h16M4 18h16"
-						/>
-					</svg>
+				<button
+					onclick={() => (mobileMenuOpen = !mobileMenuOpen)}
+					class="rounded-base px-3 py-2 transition-colors hover:bg-surface-200-800 md:hidden"
+					aria-label="Toggle menu"
+				>
+					{#if mobileMenuOpen}
+						<X class="h-6 w-6" />
+					{:else}
+						<Menu class="h-6 w-6" />
+					{/if}
 				</button>
 			</div>
 		</div>
+
+		<!-- Mobile Menu -->
+		{#if mobileMenuOpen}
+			<div class="border-t border-surface-300-700 py-4 md:hidden">
+				<nav class="flex flex-col gap-1">
+					<!-- Project Selector in Mobile Menu -->
+					<SignedIn>
+						<div use:initProjectFetch class="mb-2 px-2">
+							{#if !projectsFetched}
+								<!-- Loading state -->
+								<div
+									class="flex items-center gap-2 rounded-base border border-surface-300-700 px-3 py-2"
+								>
+									<span class="text-surface-600-300 text-sm font-medium">Loading projects...</span>
+								</div>
+							{:else if projects.length === 0}
+								<!-- No projects -->
+								<a
+									href="/projects/new"
+									onclick={closeMobileMenu}
+									class="flex items-center gap-2 rounded-base border border-primary-500 bg-primary-500 px-3 py-2 transition-colors hover:bg-primary-600"
+								>
+									<span class="text-sm font-medium text-white">New Project</span>
+								</a>
+							{:else}
+								<!-- Project Selector -->
+								<div class="rounded-base border border-surface-300-700 p-2">
+									<div class="mb-2 px-1 text-xs font-semibold text-surface-500 uppercase">
+										Projects
+									</div>
+									<a
+										href="/projects"
+										onclick={closeMobileMenu}
+										class="mb-1 block w-full rounded-base px-2 py-1.5 text-left text-sm font-medium text-primary-500 transition-colors hover:bg-surface-200-800"
+									>
+										📁 View All Projects
+									</a>
+									{#each projects as project}
+										<button
+											onclick={() => switchProject(project.id)}
+											class="w-full rounded-base px-2 py-1.5 text-left transition-colors hover:bg-surface-200-800 {selectedProjectId ===
+											project.id
+												? 'bg-surface-200-800'
+												: ''}"
+										>
+											<div class="flex flex-col">
+												<span class="text-sm font-medium">{project.name}</span>
+												<span class="text-surface-500-400 text-xs">{project.key}</span>
+											</div>
+										</button>
+									{/each}
+								</div>
+							{/if}
+						</div>
+
+						<!-- Main Navigation Links -->
+						{#if selectedProjectId}
+							<a
+								href="/projects/{selectedProjectId}"
+								onclick={closeMobileMenu}
+								class="rounded-base px-4 py-2 transition-colors {isActive(
+									`/projects/${selectedProjectId}`,
+									'exact'
+								)
+									? 'bg-primary-500 text-white'
+									: 'hover:bg-surface-200-800'}"
+							>
+								Overview
+							</a>
+							<a
+								href="/projects/{selectedProjectId}/runs"
+								onclick={closeMobileMenu}
+								class="rounded-base px-4 py-2 transition-colors {isActive(
+									`/projects/${selectedProjectId}/runs`,
+									'exact'
+								)
+									? 'bg-primary-500 text-white'
+									: 'hover:bg-surface-200-800'}"
+							>
+								Runs
+							</a>
+							<a
+								href="/projects/{selectedProjectId}/cases"
+								onclick={closeMobileMenu}
+								class="rounded-base px-4 py-2 transition-colors {isActive(
+									`/projects/${selectedProjectId}/cases`,
+									'exact'
+								)
+									? 'bg-primary-500 text-white'
+									: 'hover:bg-surface-200-800'}"
+							>
+								Cases
+							</a>
+
+							<!-- Divider -->
+							<div class="my-2 h-px bg-surface-300-700"></div>
+						{/if}
+
+						<!-- Settings -->
+						<a
+							href="/settings"
+							onclick={closeMobileMenu}
+							class="rounded-base px-4 py-2 transition-colors {isActive('/settings')
+								? 'bg-primary-500 text-white'
+								: 'hover:bg-surface-200-800'}"
+						>
+							Settings
+						</a>
+					</SignedIn>
+
+					<!-- Divider -->
+					<div class="my-2 h-px bg-surface-300-700"></div>
+
+					<!-- API Docs -->
+					<a
+						href="/docs"
+						onclick={closeMobileMenu}
+						class="rounded-base px-4 py-2 transition-colors {isActive('/docs')
+							? 'bg-primary-500 text-white'
+							: 'hover:bg-surface-200-800'}"
+					>
+						API Docs
+					</a>
+				</nav>
+			</div>
+		{/if}
 	</div>
 </header>
