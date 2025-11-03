@@ -504,7 +504,16 @@
 
 					<!-- Team Members Card -->
 					<div class="card p-6">
-						<h3 class="mb-4 text-xl font-bold">Team Members ({user.team.members.length})</h3>
+						<div class="mb-4 flex items-center justify-between">
+							<h3 class="text-xl font-bold">Team Members ({user.team.members.length})</h3>
+							<a
+								href="/teams/{user.team.id}/invite"
+								class="btn preset-filled-primary-500 btn-sm"
+							>
+								<Users class="mr-2 h-4 w-4" />
+								Invite Members
+							</a>
+						</div>
 
 						<div class="space-y-3">
 							{#each user.team.members as member}
