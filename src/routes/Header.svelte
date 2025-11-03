@@ -14,13 +14,14 @@
 	// Create popover instance
 	const popover = usePopover({ id: 'project-selector' });
 
-	// Determine selected project from URL
+	// Determine selected project from URL, or default to first project
 	$effect(() => {
 		const match = page.url.pathname.match(/^\/projects\/([^/]+)/);
 		if (match) {
 			selectedProjectId = match[1];
-		} else {
-			selectedProjectId = null;
+		} else if (projects.length > 0 && !selectedProjectId) {
+			// Default to first project if none selected
+			selectedProjectId = projects[0].id;
 		}
 	});
 
@@ -176,11 +177,11 @@
 				<nav class="hidden items-center gap-2 md:flex">
 					<!-- Only show these navigation items when signed in -->
 					<SignedIn>
-						<!-- Divider -->
-						<div class="mx-1 h-6 w-px bg-surface-300-700"></div>
-
-						<!-- Main Navigation Links -->
 						{#if selectedProjectId}
+							<!-- Divider -->
+							<div class="mx-1 h-6 w-px bg-surface-300-700"></div>
+
+							<!-- Main Navigation Links -->
 							<a
 								href="/projects/{selectedProjectId}"
 								class="rounded-base px-4 py-2 transition-colors {isActive(
@@ -192,10 +193,8 @@
 							>
 								Overview
 							</a>
-						{/if}
 
-						<!-- Show Runs/Cases navigation when a project is selected -->
-						{#if selectedProjectId}
+							<!-- Show Runs/Cases navigation when a project is selected -->
 							<a
 								href="/projects/{selectedProjectId}/runs"
 								class="rounded-base px-4 py-2 transition-colors {isActive(
@@ -218,10 +217,10 @@
 							>
 								Cases
 							</a>
-						{/if}
 
-						<!-- Divider -->
-						<div class="mx-1 h-6 w-px bg-surface-300-700"></div>
+							<!-- Divider -->
+							<div class="mx-1 h-6 w-px bg-surface-300-700"></div>
+						{/if}
 
 						<!-- Settings -->
 						<a
