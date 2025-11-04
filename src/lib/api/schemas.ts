@@ -740,30 +740,89 @@ export const AttachmentsApi = {
 		method: 'POST',
 		path: '/api/attachments',
 		description:
-			'Upload an attachment (screenshot, log, video) and link it to a test case or test result.',
+			'Upload an attachment (screenshot, log, video) and link it to a test case or test result. Supports both JSON with base64 and multipart form data. Must provide either testCaseId or testResultId.',
 		tags: ['Attachments'],
 		body: {
-			description: 'Multipart form data with file and metadata',
+			description:
+				'Supports two formats:\n\n1. JSON (application/json): { name, contentType, data (base64), testCaseId?, testResultId?, type? }\n2. Multipart form data: file (File), testCaseId (optional), testResultId (optional), type (optional)',
 			example: {
-				file: 'Binary file data',
-				testCaseId: 'tc_123',
-				testResultId: null
+				// JSON format example
+				name: 'screenshot.png',
+				contentType: 'image/png',
+				data: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+				testResultId: 'result_123',
+				type: 'screenshot'
 			}
 		},
 		responses: {
 			201: {
 				description: 'Attachment uploaded successfully',
 				example: {
-					id: 'att_123',
-					filename: 'screenshot-2024-01-15.png',
-					originalName: 'screenshot.png',
-					mimeType: 'image/png',
-					size: 125440,
-					url: 'https://storage.example.com/attachments/screenshot-2024-01-15.png',
-					testCaseId: null,
-					testResultId: 'result_123',
-					createdAt: '2024-01-15T10:30:00Z'
-				} as AttachmentResponse
+					attachment: {
+						id: 'att_123',
+						filename: 'attachments/result_123/1705315800000-screenshot.png',
+						url: 'https://storage.example.com/attachments/result_123/1705315800000-screenshot.png',
+						size: 125440,
+						mimeType: 'image/png'
+					}
+				}
+			},
+			400: {
+				description: 'Bad request - missing required fields or invalid format',
+				example: {
+					message: 'Either testCaseId or testResultId is required'
+				}
+			},
+			403: {
+				description: 'Forbidden - no access to the test case or test result',
+				example: {
+					message: 'You do not have access to this test result'
+				}
+			},
+			404: {
+				description: 'Test case or test result not found',
+				example: {
+					message: 'Test result not found'
+				}
+			}
+		}
+	} satisfies ApiSchema,
+	list: {
+		method: 'GET',
+		path: '/api/attachments',
+		description: 'List attachments, optionally filtered by test case or test result',
+		tags: ['Attachments'],
+		query: {
+			testCaseId: {
+				type: 'string',
+				description: 'Filter by test case ID',
+				required: false,
+				example: 'tc_123'
+			},
+			testResultId: {
+				type: 'string',
+				description: 'Filter by test result ID',
+				required: false,
+				example: 'result_123'
+			}
+		},
+		responses: {
+			200: {
+				description: 'List of attachments',
+				example: [
+					{
+						id: 'att_123',
+						filename: 'screenshot-2024-01-15.png',
+						originalName: 'screenshot.png',
+						mimeType: 'image/png',
+						size: 125440,
+						url: 'https://storage.example.com/attachments/screenshot-2024-01-15.png',
+						testCaseId: null,
+						testResultId: 'result_123',
+						type: 'screenshot',
+						createdAt: '2024-01-15T10:30:00Z'
+					}
+				] as AttachmentResponse[]
 			}
 		}
 	} satisfies ApiSchema

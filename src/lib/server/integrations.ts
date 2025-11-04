@@ -314,6 +314,7 @@ export async function notifyTestRunCompleted(
 	testRun: {
 		id: string;
 		name: string;
+		projectId: string;
 		projectName: string;
 		passRate: number;
 		total: number;
@@ -330,7 +331,7 @@ export async function notifyTestRunCompleted(
 		event: 'TEST_RUN_COMPLETED',
 		title: `${emoji} Test Run Completed: ${testRun.name}`,
 		message: `*Project:* ${testRun.projectName}\n*Status:* ${testRun.passRate === 100 ? 'All tests passed' : `${testRun.failed} test(s) failed`}`,
-		url: `${baseUrl}/test-runs/${testRun.id}`,
+		url: `${baseUrl}/projects/${testRun.projectId}/runs/${testRun.id}`,
 		color,
 		fields: [
 			{ name: '📊 Pass Rate', value: `${testRun.passRate}%`, inline: true },
@@ -346,6 +347,7 @@ export async function notifyTestRunFailed(
 	testRun: {
 		id: string;
 		name: string;
+		projectId: string;
 		projectName: string;
 		failedCount: number;
 	}
@@ -356,7 +358,7 @@ export async function notifyTestRunFailed(
 		event: 'TEST_RUN_FAILED',
 		title: `❌ Test Run Failed: ${testRun.name}`,
 		message: `*Project:* ${testRun.projectName}\n*Failures:* ${testRun.failedCount} test(s) failed\n\n⚠️ Immediate attention required`,
-		url: `${baseUrl}/test-runs/${testRun.id}`,
+		url: `${baseUrl}/projects/${testRun.projectId}/runs/${testRun.id}`,
 		color: '#ff0000',
 		fields: [{ name: '🔴 Failed Tests', value: testRun.failedCount.toString(), inline: true }]
 	});

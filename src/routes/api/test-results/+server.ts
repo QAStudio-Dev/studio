@@ -421,6 +421,7 @@ export const POST: RequestHandler = async (event) => {
 				await notifyTestRunCompleted(testRun.project.teamId, {
 					id: testRun.id,
 					name: testRun.name,
+					projectId: testRun.projectId,
 					projectName: testRun.project.name,
 					passRate,
 					total,
@@ -435,11 +436,22 @@ export const POST: RequestHandler = async (event) => {
 			for (const failedTest of failedTests) {
 				await sendNotification(testRun.project.teamId, {
 					event: 'TEST_CASE_FAILED',
-					title: `❌ Test Case Failed: ${failedTest.title}`,
-					message: `*Project:* ${testRun.project.name}\n*Test Run:* ${testRun.name}\n\n⚠️ This test needs attention`,
-					url: `${baseUrl}/test-runs/${testRun.id}`,
+					title: `❌ Test Failed: ${failedTest.title}`,
+					message: `*Test Run:* ${testRun.name}\n*Project:* ${testRun.project.name}`,
+					url: `${baseUrl}/projects/${testRun.projectId}/runs/${testRun.id}`,
 					color: '#ff0000',
-					fields: [{ name: '🧪 Test Case', value: failedTest.title, inline: false }]
+					fields: [
+						{
+							name: '⏱️ Duration',
+							value: failedTest.duration ? `${failedTest.duration}ms` : 'N/A',
+							inline: true
+						},
+						{
+							name: '🔄 Status',
+							value: 'Failed',
+							inline: true
+						}
+					]
 				});
 			}
 		} catch (notificationError) {

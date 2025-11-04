@@ -10,30 +10,66 @@ import { uploadToBlob, generateAttachmentPath } from '$lib/server/blob-storage';
  *
  * Supports both session and API key authentication
  *
- * Request body:
+ * Accepts two formats:
+ *
+ * 1. JSON with base64 (application/json):
  * {
  *   name: string,           // Filename (e.g., "screenshot.png")
  *   contentType: string,    // MIME type (e.g., "image/png")
  *   data: string,           // Base64 encoded file data
  *   type?: string           // Optional: "screenshot", "video", "trace", "other"
  * }
+ *
+ * 2. Multipart form data (multipart/form-data):
+ *   - file: File (required)
+ *   - type: string (optional)
  */
 export const POST: RequestHandler = async (event) => {
 	const userId = await requireApiAuth(event);
 	const { resultId } = event.params;
 
-	const { name, contentType, data, type } = await event.request.json();
+	const contentType = event.request.headers.get('content-type') || '';
+	let name: string;
+	let mimeType: string;
+	let buffer: Buffer;
+	let type: string | undefined;
 
-	if (!name || typeof name !== 'string') {
-		throw error(400, { message: 'name is required' });
+	// Handle multipart/form-data
+	if (contentType.includes('multipart/form-data')) {
+		const formData = await event.request.formData();
+		const file = formData.get('file') as File;
+		type = (formData.get('type') as string) || undefined;
+
+		if (!file) {
+			throw error(400, { message: 'file is required in form data' });
+		}
+
+		name = file.name;
+		mimeType = file.type;
+		const arrayBuffer = await file.arrayBuffer();
+		buffer = Buffer.from(arrayBuffer);
 	}
+	// Handle JSON with base64
+	else {
+		const body = await event.request.json();
+		const { name: jsonName, contentType: jsonContentType, data } = body;
+		type = body.type;
 
-	if (!contentType || typeof contentType !== 'string') {
-		throw error(400, { message: 'contentType is required' });
-	}
+		if (!jsonName || typeof jsonName !== 'string') {
+			throw error(400, { message: 'name is required' });
+		}
 
-	if (!data || typeof data !== 'string') {
-		throw error(400, { message: 'data is required (base64 encoded)' });
+		if (!jsonContentType || typeof jsonContentType !== 'string') {
+			throw error(400, { message: 'contentType is required' });
+		}
+
+		if (!data || typeof data !== 'string') {
+			throw error(400, { message: 'data is required (base64 encoded)' });
+		}
+
+		name = jsonName;
+		mimeType = jsonContentType;
+		buffer = Buffer.from(data, 'base64');
 	}
 
 	// Verify test result access
@@ -71,15 +107,12 @@ export const POST: RequestHandler = async (event) => {
 	}
 
 	try {
-		// Decode base64 data
-		const buffer = Buffer.from(data, 'base64');
-
 		// Generate unique filename
 		const filename = generateAttachmentPath(name, testResult.testRunId, resultId);
 
 		// Upload to blob storage
 		const { url, downloadUrl } = await uploadToBlob(filename, buffer, {
-			contentType
+			contentType: mimeType
 		});
 
 		// Create attachment record
@@ -87,7 +120,7 @@ export const POST: RequestHandler = async (event) => {
 			data: {
 				filename,
 				originalName: name,
-				mimeType: contentType,
+				mimeType,
 				size: buffer.length,
 				url: downloadUrl,
 				testResultId: resultId

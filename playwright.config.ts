@@ -8,6 +8,8 @@ if (!process.env.QA_STUDIO_PROJECT_ID) {
 	throw new Error('QA_STUDIO_PROJECT_ID is not set');
 }
 
+console.log(process.env.QA_STUDIO_API_KEY);
+console.log(process.env.QA_STUDIO_PROJECT_ID);
 // Helper to strip ANSI codes from strings (color codes, etc.)
 function stripAnsi(str: string): string {
 	return str.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '').replace(/\[\d+m/g, '');
@@ -19,7 +21,7 @@ export default defineConfig({
 		[
 			'@qastudio-dev/playwright',
 			{
-				apiUrl: stripAnsi(process.env.API_URL || 'https://qastudio.dev/api'),
+				apiUrl: stripAnsi('http://localhost:5173/api'),
 				apiKey: stripAnsi(process.env.QA_STUDIO_API_KEY),
 				projectId: stripAnsi(process.env.QA_STUDIO_PROJECT_ID),
 				environment: process.env.CI ? 'CI' : 'local',

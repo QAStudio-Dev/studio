@@ -73,6 +73,7 @@ export const POST: RequestHandler = async (event) => {
 				await notifyTestRunFailed(testRun.project.teamId, {
 					id: testRun.id,
 					name: testRun.name,
+					projectId: testRun.projectId,
 					projectName: testRun.project.name,
 					failedCount: failed
 				});
@@ -82,6 +83,7 @@ export const POST: RequestHandler = async (event) => {
 			await notifyTestRunCompleted(testRun.project.teamId, {
 				id: testRun.id,
 				name: testRun.name,
+				projectId: testRun.projectId,
 				projectName: testRun.project.name,
 				passRate,
 				total,
