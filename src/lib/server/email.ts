@@ -17,9 +17,7 @@ interface InvitationEmailData {
 export async function sendInvitationEmail(data: InvitationEmailData) {
 	const { to, teamName, inviterName, role, inviteUrl, expiresAt } = data;
 
-	const expiresIn = Math.ceil(
-		(expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-	);
+	const expiresIn = Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 
 	try {
 		const result = await resend.emails.send({

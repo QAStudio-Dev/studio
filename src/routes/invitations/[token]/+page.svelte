@@ -85,8 +85,10 @@
 		<div class="card p-8">
 			<!-- Header -->
 			<div class="mb-6 text-center">
-				<div class="bg-primary-500/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
-					<Users class="text-primary-500 h-8 w-8" />
+				<div
+					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary-500/10"
+				>
+					<Users class="h-8 w-8 text-primary-500" />
 				</div>
 				<h1 class="mb-2 text-2xl font-bold">You've been invited!</h1>
 				<p class="text-surface-600-300">Join {invitation.team.name} on QA Studio</p>
@@ -193,32 +195,24 @@
 			<!-- Actions -->
 			<SignedIn>
 				<div class="flex gap-3">
-					<button
-						onclick={acceptInvitation}
-						class="btn flex-1 preset-filled"
-						disabled={loading}
-					>
+					<button onclick={acceptInvitation} class="btn flex-1 preset-filled" disabled={loading}>
 						<CheckCircle class="mr-2 h-4 w-4" />
 						{loading ? 'Joining...' : 'Accept Invitation'}
 					</button>
 
-					<button
-						onclick={declineInvitation}
-						class="btn preset-outlined"
-						disabled={loading}
-					>
+					<button onclick={declineInvitation} class="btn preset-outlined" disabled={loading}>
 						Decline
 					</button>
 				</div>
 			</SignedIn>
 
 			<SignedOut>
-				<div class="rounded-container border border-warning-500 bg-warning-500/10 p-4 mb-4">
+				<div class="mb-4 rounded-container border border-warning-500 bg-warning-500/10 p-4">
 					<div class="flex items-start gap-3">
-						<AlertCircle class="h-5 w-5 text-warning-500 flex-shrink-0 mt-0.5" />
+						<AlertCircle class="mt-0.5 h-5 w-5 flex-shrink-0 text-warning-500" />
 						<div>
-							<h3 class="font-medium text-warning-500 mb-1">Sign in required</h3>
-							<p class="text-surface-600-300 text-sm mb-3">
+							<h3 class="mb-1 font-medium text-warning-500">Sign in required</h3>
+							<p class="text-surface-600-300 mb-3 text-sm">
 								You need to sign in or create an account to accept this invitation.
 								{#if invitation.email}
 									Make sure to use the email address: <strong>{invitation.email}</strong>

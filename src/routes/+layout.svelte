@@ -81,8 +81,8 @@
 
 		<!-- Loading bar -->
 		{#if $navigating}
-			<div class="fixed left-0 right-0 top-0 z-[100] h-1 bg-primary-500/20">
-				<div class="h-full animate-loading-bar bg-primary-500"></div>
+			<div class="fixed top-0 right-0 left-0 z-[100] h-1 bg-primary-500/20">
+				<div class="animate-loading-bar h-full bg-primary-500"></div>
 			</div>
 		{/if}
 

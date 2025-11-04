@@ -29,26 +29,17 @@ QA Studio uses Clerk's built-in invitation system to send team invitation emails
 3. Click **Edit** to customize:
 
    **Subject Line:**
+
    ```
    You've been invited to join {{application.name}}
    ```
 
    **Email Body** (example):
+
    ```html
-   Hi there,
-
-   You've been invited to join {{invitation.team_name}} on QA Studio!
-
-   Role: {{invitation.role}}
-
-   Click the button below to accept your invitation:
-
-   {{invitation.url}}
-
-   This invitation will expire in 7 days.
-
-   Best regards,
-   The QA Studio Team
+   Hi there, You've been invited to join {{invitation.team_name}} on QA Studio! Role:
+   {{invitation.role}} Click the button below to accept your invitation: {{invitation.url}} This
+   invitation will expire in 7 days. Best regards, The QA Studio Team
    ```
 
 4. You can use these variables:
@@ -67,6 +58,7 @@ QA Studio uses Clerk's built-in invitation system to send team invitation emails
 4. Customize the email header/footer
 
 **Recommended Settings:**
+
 - **From Name**: QA Studio
 - **Logo**: Upload `/static/full.svg`
 - **Primary Color**: `#667eea` (matches your brand)
@@ -80,6 +72,7 @@ For better deliverability and branding, use a custom email domain:
 2. Click **Add custom email domain**
 3. Add your domain (e.g., `qastudio.dev`)
 4. Follow DNS verification steps:
+
    ```
    Add these DNS records to your domain:
 
@@ -155,18 +148,19 @@ When you create an invitation, we pass this metadata to Clerk:
 
 ```typescript
 await clerkClient.invitations.createInvitation({
-  emailAddress: 'user@example.com',
-  redirectUrl: 'https://qastudio.dev/invitations/[token]',
-  publicMetadata: {
-    teamId: 'clxxx...',
-    teamName: 'Engineering Team',
-    role: 'TESTER',
-    invitationId: 'clxxx...'
-  }
+	emailAddress: 'user@example.com',
+	redirectUrl: 'https://qastudio.dev/invitations/[token]',
+	publicMetadata: {
+		teamId: 'clxxx...',
+		teamName: 'Engineering Team',
+		role: 'TESTER',
+		invitationId: 'clxxx...'
+	}
 });
 ```
 
 You can access these in email templates as:
+
 - `{{invitation.team_name}}`
 - `{{invitation.role}}`
 
@@ -187,17 +181,20 @@ Invitees can sign in with any method enabled in Clerk:
 ### Subject Lines
 
 Good:
+
 - ✅ "Join [Team Name] on QA Studio"
 - ✅ "You've been invited to [Team Name]"
 - ✅ "[Inviter Name] invited you to QA Studio"
 
 Avoid:
+
 - ❌ Generic: "Invitation"
 - ❌ Too long: "You have received an invitation to join the QA Studio test management platform..."
 
 ### Body Content
 
 Include:
+
 - ✅ Who invited them (if available)
 - ✅ Team name prominently
 - ✅ What role they'll have
@@ -206,21 +203,27 @@ Include:
 - ✅ What QA Studio is (brief)
 
 Example template:
+
 ```html
 <p>Hi there,</p>
 
-<p><strong>{{inviter_name}}</strong> has invited you to join <strong>{{team_name}}</strong> on QA Studio.</p>
+<p>
+	<strong>{{inviter_name}}</strong> has invited you to join <strong>{{team_name}}</strong> on QA
+	Studio.
+</p>
 
-<div class="role-badge">
-  Your Role: {{role}}
-</div>
+<div class="role-badge">Your Role: {{role}}</div>
 
-<p>QA Studio is a modern test management platform that helps teams organize, execute, and track testing activities.</p>
+<p>
+	QA Studio is a modern test management platform that helps teams organize, execute, and track
+	testing activities.
+</p>
 
 <a href="{{invitation_url}}" class="cta-button">Accept Invitation</a>
 
 <p class="fine-print">
-  This invitation expires in 7 days. If you didn't expect this invitation, you can safely ignore this email.
+	This invitation expires in 7 days. If you didn't expect this invitation, you can safely ignore
+	this email.
 </p>
 ```
 
@@ -240,12 +243,14 @@ PUBLIC_BASE_URL=https://qastudio.dev  # Used for invitation URLs
 ### Emails Not Sending
 
 **Check:**
+
 1. Invitations enabled in Clerk dashboard?
 2. `CLERK_SECRET_KEY` set correctly?
 3. Email address valid?
 4. Check Clerk dashboard logs: **Logs** → **API Requests**
 
 **Common Errors:**
+
 ```
 "Invitations are not enabled"
 → Enable in Clerk dashboard settings
@@ -260,6 +265,7 @@ PUBLIC_BASE_URL=https://qastudio.dev  # Used for invitation URLs
 ### Emails Going to Spam
 
 **Solutions:**
+
 1. Set up custom email domain (best solution)
 2. Add SPF/DKIM records for your domain
 3. Ensure email content isn't spammy:
@@ -270,12 +276,14 @@ PUBLIC_BASE_URL=https://qastudio.dev  # Used for invitation URLs
 ### User Can't Accept Invitation
 
 **Check:**
+
 1. Did they sign in with the correct email?
 2. Is invitation expired (7 days)?
 3. Is invitation already accepted?
 4. Check browser console for errors
 
 **Debug:**
+
 - Open `/invitations/[token]` page
 - Check server logs for error messages
 - Verify invitation status in database
@@ -283,6 +291,7 @@ PUBLIC_BASE_URL=https://qastudio.dev  # Used for invitation URLs
 ### Email Customization Not Showing
 
 **Solutions:**
+
 1. Clear Clerk cache: Wait 5 minutes after changes
 2. Test in incognito mode
 3. Check correct email template selected
@@ -301,8 +310,8 @@ For bulk invitations, implement rate limiting:
 ```typescript
 // Example: Send invitations with delay
 for (const email of emails) {
-  await sendInvitation(email);
-  await new Promise(resolve => setTimeout(resolve, 200)); // 200ms delay
+	await sendInvitation(email);
+	await new Promise((resolve) => setTimeout(resolve, 200)); // 200ms delay
 }
 ```
 
@@ -325,6 +334,7 @@ for (const email of emails) {
 ### Preventing Abuse
 
 Built-in protections:
+
 - Only admins/managers can send invitations
 - Seat limits enforced before invitation
 - Can't invite same email twice (pending check)
@@ -333,11 +343,13 @@ Built-in protections:
 ## Costs
 
 Clerk invitations are **free on all plans**:
+
 - ✅ Free Plan: Included
 - ✅ Pro Plan: Included
 - ✅ Enterprise: Included
 
 No per-email charges, unlike:
+
 - SendGrid: $0.0001/email (after free tier)
 - Resend: Free for 3,000/month
 - AWS SES: $0.10 per 1,000 emails
@@ -366,6 +378,7 @@ The invitation link works independently of email delivery.
 ## Quick Reference
 
 **Clerk Dashboard Sections:**
+
 - Enable Invitations: User & Authentication → Settings
 - Email Templates: Customization → Emails
 - Custom Domain: Email & SMS → Email Settings
@@ -373,10 +386,12 @@ The invitation link works independently of email delivery.
 - API Logs: Logs → API Requests
 
 **Documentation:**
+
 - [Clerk Invitations Docs](https://clerk.com/docs/authentication/invitations)
 - [Email Customization](https://clerk.com/docs/customization/email)
 - [Custom Domains](https://clerk.com/docs/email-sms/custom-domains)
 
 **Support:**
+
 - Clerk Support: [support@clerk.com](mailto:support@clerk.com)
 - QA Studio Discord: https://discord.gg/rw3UfdB9pN

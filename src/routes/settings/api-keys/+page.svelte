@@ -540,7 +540,8 @@ export default defineConfig({
 							<span class="font-bold text-primary-500">1.</span>
 							<div>
 								<p class="mb-1 font-medium">Install the QA Studio Playwright reporter</p>
-								<pre class="overflow-x-auto rounded bg-surface-900 p-2 text-xs text-surface-50"><code
+								<pre
+									class="overflow-x-auto rounded bg-surface-900 p-2 text-xs text-surface-50"><code
 										>npm install --save-dev @qa-studio/playwright-reporter</code
 									></pre>
 							</div>
@@ -569,7 +570,8 @@ export default defineConfig({
 							<span class="font-bold text-primary-500">4.</span>
 							<div>
 								<p class="font-medium">Run your tests</p>
-								<pre class="mt-1 overflow-x-auto rounded bg-surface-900 p-2 text-xs text-surface-50"><code
+								<pre
+									class="mt-1 overflow-x-auto rounded bg-surface-900 p-2 text-xs text-surface-50"><code
 										>npx playwright test</code
 									></pre>
 							</div>

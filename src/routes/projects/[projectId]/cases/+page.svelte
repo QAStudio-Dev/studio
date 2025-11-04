@@ -174,10 +174,13 @@
 					suite.testCases = suite.testCases?.filter((tc) => tc.id !== optimisticTestCase.id) || [];
 				}
 			} else {
-				project.testCases = project.testCases?.filter((tc) => tc.id !== optimisticTestCase.id) || [];
+				project.testCases =
+					project.testCases?.filter((tc) => tc.id !== optimisticTestCase.id) || [];
 			}
 			project = { ...project };
-			alert('Failed to create test case: ' + (err instanceof Error ? err.message : 'Unknown error'));
+			alert(
+				'Failed to create test case: ' + (err instanceof Error ? err.message : 'Unknown error')
+			);
 		}
 	}
 

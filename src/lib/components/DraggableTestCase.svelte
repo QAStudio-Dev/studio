@@ -10,7 +10,14 @@
 		isDragging?: boolean;
 	}
 
-	let { testCase, projectId, onDragStart, onDragEnd, onOpenModal, isDragging = false }: Props = $props();
+	let {
+		testCase,
+		projectId,
+		onDragStart,
+		onDragEnd,
+		onOpenModal,
+		isDragging = false
+	}: Props = $props();
 
 	let isDragEnabled = $state(false);
 

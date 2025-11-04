@@ -24,7 +24,6 @@
 	let { data } = $props();
 	let { user } = $derived(data);
 
-
 	// Team state
 	let leavingTeam = $state(false);
 	let loadingBillingPortal = $state(false);
@@ -491,10 +490,7 @@
 								And {user.apiKeys.length - 3} more key{user.apiKeys.length - 3 !== 1 ? 's' : ''}
 							</div>
 						{/if}
-						<a
-							href="/settings/api-keys"
-							class="mt-4 btn w-full preset-outlined-primary-500"
-						>
+						<a href="/settings/api-keys" class="mt-4 btn w-full preset-outlined-primary-500">
 							View All Keys & Get Playwright Config
 						</a>
 					</div>
@@ -563,10 +559,7 @@
 					<div class="card p-6">
 						<div class="mb-4 flex items-center justify-between">
 							<h3 class="text-xl font-bold">Team Members ({user.team.members.length})</h3>
-							<a
-								href="/teams/{user.team.id}/invite"
-								class="btn preset-filled-primary-500 btn-sm"
-							>
+							<a href="/teams/{user.team.id}/invite" class="btn preset-filled-primary-500 btn-sm">
 								<Users class="mr-2 h-4 w-4" />
 								Invite Members
 							</a>

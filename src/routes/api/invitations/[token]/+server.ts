@@ -146,7 +146,8 @@ export const POST: RequestHandler = async (event) => {
 		// Pro tier - check seat limit
 		if (currentMembers >= subscription.seats) {
 			throw error(400, {
-				message: 'This team has reached its seat limit. Please ask the team admin to add more seats.'
+				message:
+					'This team has reached its seat limit. Please ask the team admin to add more seats.'
 			});
 		}
 	}

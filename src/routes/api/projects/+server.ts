@@ -63,6 +63,12 @@ export const POST: RequestHandler = async (event) => {
 		// Require authentication
 		const userId = await requireAuth(event);
 
+		// Get user with team info
+		const user = await db.user.findUnique({
+			where: { id: userId },
+			select: { teamId: true }
+		});
+
 		const data = await event.request.json();
 		const { name, description, key } = data;
 
@@ -76,7 +82,8 @@ export const POST: RequestHandler = async (event) => {
 				name,
 				description,
 				key: key.toUpperCase(),
-				createdBy: userId
+				createdBy: userId,
+				teamId: user?.teamId || null // Assign to user's team if they have one
 			}
 		});
 

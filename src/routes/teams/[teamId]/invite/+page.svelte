@@ -112,7 +112,7 @@
 	</div>
 
 	<!-- Seat Information -->
-	<div class="card mb-6 p-6">
+	<div class="mb-6 card p-6">
 		<div class="mb-4 flex items-center justify-between">
 			<div>
 				<h2 class="h4">Available Seats</h2>
@@ -126,9 +126,9 @@
 					{availableSeats}/{maxSeats}
 				</div>
 				{#if !team.subscription}
-					<a href="/teams/new" class="text-primary-500 text-sm underline">Upgrade to add more</a>
+					<a href="/teams/new" class="text-sm text-primary-500 underline">Upgrade to add more</a>
 				{:else if availableSeats === 0}
-					<a href="/teams/{team.id}" class="text-primary-500 text-sm underline">Manage billing</a>
+					<a href="/teams/{team.id}" class="text-sm text-primary-500 underline">Manage billing</a>
 				{/if}
 			</div>
 		</div>
@@ -162,7 +162,7 @@
 
 	<!-- Invitation Form -->
 	{#if availableSeats > 0}
-		<div class="card mb-8 p-6">
+		<div class="mb-8 card p-6">
 			<h2 class="mb-4 h3">Send Invitation</h2>
 
 			<form
@@ -234,7 +234,7 @@
 
 							<button
 								onclick={() => cancelInvitation(invitation.id)}
-								class="btn btn-sm preset-outlined-error"
+								class="preset-outlined-error btn btn-sm"
 								title="Cancel invitation"
 							>
 								<XCircle class="h-4 w-4" />

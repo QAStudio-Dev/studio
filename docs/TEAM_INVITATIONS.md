@@ -29,6 +29,7 @@ Team invitations are tied to your subscription plan:
 - **Pro Tier**: Number of seats purchased (e.g., 5, 10, 25 seats)
 
 When inviting members:
+
 - System checks available seats before allowing invitation
 - Invitation can only be accepted if seats are still available
 - If seats are full, team admin must upgrade or add more seats
@@ -48,6 +49,7 @@ When inviting members:
 5. Click **"Send Invitation"**
 
 The invitation will:
+
 - Be saved in the database with a unique token
 - Expire in 7 days for security
 - Return an invitation link (for development/testing)
@@ -96,6 +98,7 @@ https://qastudio.dev/invitations/[unique-token]
 5. You'll be redirected to the team page
 
 **Important Notes:**
+
 - You must sign in with the email address the invitation was sent to
 - You cannot be a member of multiple teams (one team per user)
 - If you're already in a team, you must leave it first
@@ -301,11 +304,13 @@ When you subscribe to QA Studio Pro:
 ### What Happens When Seats Are Full
 
 **When Inviting:**
+
 - System checks `team.members.length < subscription.seats`
 - If full, returns 400 error with message to upgrade
 - Team admin must add seats before inviting
 
 **When Accepting:**
+
 - Re-checks seat availability (in case it changed)
 - If full, shows error to invitee
 - Invitee should contact team admin
@@ -313,6 +318,7 @@ When you subscribe to QA Studio Pro:
 ### Free Tier Limitations
 
 Free teams (no subscription):
+
 - Maximum 1 member (the team creator)
 - Cannot send invitations
 - Must upgrade to Pro to add team members
@@ -350,6 +356,7 @@ See [CLERK_INVITATIONS_SETUP.md](./CLERK_INVITATIONS_SETUP.md) for complete setu
 4. Test invitation flow
 
 **Quick Setup:**
+
 1. Go to Clerk Dashboard → User & Authentication → Settings
 2. Enable "Invitation mode"
 3. Go to Customization → Emails → Edit "Invitation" template
@@ -360,16 +367,19 @@ See [CLERK_INVITATIONS_SETUP.md](./CLERK_INVITATIONS_SETUP.md) for complete setu
 ### "User is already a member of another team"
 
 **Solution**: Users can only be in one team at a time. They must:
+
 1. Leave their current team first
 2. Then accept the new invitation
 
 ### "Team has reached seat limit"
 
 **For Free Tier:**
+
 - Upgrade to Pro plan
 - Go to `/teams/new` to start subscription
 
 **For Pro Tier:**
+
 - Go to team page → Manage Billing
 - Increase seat quantity in Stripe
 - Try inviting again
@@ -377,6 +387,7 @@ See [CLERK_INVITATIONS_SETUP.md](./CLERK_INVITATIONS_SETUP.md) for complete setu
 ### "Invitation has expired"
 
 Invitations expire after 7 days for security. The team admin must:
+
 1. Go to invite page
 2. Send a new invitation
 3. Invitee clicks new link within 7 days
@@ -384,12 +395,14 @@ Invitations expire after 7 days for security. The team admin must:
 ### "Email mismatch"
 
 Invitee must sign in with the exact email the invitation was sent to. If they use a different email:
+
 1. Cancel the original invitation
 2. Send new invitation to their actual email
 
 ### "This invitation has already been accepted"
 
 The invitation was already used. If the user isn't in the team:
+
 1. Check their account email matches invitation email
 2. Team admin can check member list
 3. Send a new invitation if needed
@@ -438,22 +451,26 @@ Planned features:
 ## Quick Reference
 
 **Pages:**
+
 - Team Invitations: `/teams/[teamId]/invite`
 - Accept Invitation: `/invitations/[token]`
 - Team Management: `/teams/[teamId]`
 
 **Permissions:**
+
 - Send Invitations: ADMIN, MANAGER
 - Accept Invitations: Any authenticated user
 - Manage Billing: ADMIN, MANAGER
 
 **Limits:**
+
 - Free Tier: 1 member
 - Pro Tier: Based on subscription
 - Invitation Expiry: 7 days
 - Pending Invitations: Unlimited (within seat limit)
 
 **Support:**
+
 - Discord: https://discord.gg/rw3UfdB9pN
 - Issues: https://github.com/QAStudio-Dev/studio/issues
 - Documentation: https://qastudio.dev/docs

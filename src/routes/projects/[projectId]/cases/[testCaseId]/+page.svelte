@@ -571,9 +571,7 @@
 						<Edit class="h-6 w-6 text-primary-500" />
 						<h2 class="text-2xl font-bold">Edit Test Case</h2>
 					</div>
-					<p class="text-surface-600-300">
-						Update test case details and documentation
-					</p>
+					<p class="text-surface-600-300">Update test case details and documentation</p>
 				</div>
 				<button
 					class="preset-ghost-surface-500 btn btn-sm"
@@ -583,138 +581,138 @@
 				</button>
 			</div>
 
-					<form
-						onsubmit={(e) => {
-							e.preventDefault();
-							handleSaveEdit();
-						}}
-						class="space-y-6"
-					>
-						<!-- Title -->
-						<div class="label">
-							<span class="mb-2 block text-sm font-medium">
-								Title <span class="text-error-500">*</span>
-							</span>
-							<input
-								type="text"
-								class="input"
-								placeholder="Test case title"
-								bind:value={editForm.title}
-								required
-								disabled={savingEdit}
-							/>
-						</div>
-
-						<!-- Description -->
-						<div class="label">
-							<span class="mb-2 block text-sm font-medium">Description</span>
-							<textarea
-								class="textarea"
-								rows="3"
-								placeholder="Describe what this test case validates"
-								bind:value={editForm.description}
-								disabled={savingEdit}
-							></textarea>
-						</div>
-
-						<!-- Priority, Type, Automation Status -->
-						<div class="grid gap-4 md:grid-cols-3">
-							<div class="label">
-								<span class="mb-2 block text-sm font-medium">Priority</span>
-								<select class="select" bind:value={editForm.priority} disabled={savingEdit}>
-									<option value="CRITICAL">Critical</option>
-									<option value="HIGH">High</option>
-									<option value="MEDIUM">Medium</option>
-									<option value="LOW">Low</option>
-								</select>
-							</div>
-
-							<div class="label">
-								<span class="mb-2 block text-sm font-medium">Type</span>
-								<select class="select" bind:value={editForm.type} disabled={savingEdit}>
-									<option value="FUNCTIONAL">Functional</option>
-									<option value="REGRESSION">Regression</option>
-									<option value="SMOKE">Smoke</option>
-									<option value="INTEGRATION">Integration</option>
-									<option value="PERFORMANCE">Performance</option>
-									<option value="SECURITY">Security</option>
-									<option value="UI">UI</option>
-									<option value="API">API</option>
-									<option value="UNIT">Unit</option>
-									<option value="E2E">E2E</option>
-								</select>
-							</div>
-
-							<div class="label">
-								<span class="mb-2 block text-sm font-medium">Automation</span>
-								<select class="select" bind:value={editForm.automationStatus} disabled={savingEdit}>
-									<option value="AUTOMATED">Automated</option>
-									<option value="NOT_AUTOMATED">Not Automated</option>
-									<option value="CANDIDATE">Candidate</option>
-								</select>
-							</div>
-						</div>
-
-						<!-- Preconditions -->
-						<div class="label">
-							<span class="mb-2 block text-sm font-medium">Preconditions</span>
-							<textarea
-								class="textarea"
-								rows="3"
-								placeholder="Setup steps or conditions required before test execution"
-								bind:value={editForm.preconditions}
-								disabled={savingEdit}
-							></textarea>
-						</div>
-
-						<!-- Test Steps -->
-						<div class="label">
-							<span class="mb-2 block text-sm font-medium">Test Steps</span>
-							<textarea
-								class="textarea"
-								rows="5"
-								placeholder="Step-by-step instructions to execute this test"
-								bind:value={editForm.steps}
-								disabled={savingEdit}
-							></textarea>
-							<span class="text-surface-600-300 mt-1 text-xs">
-								Enter each step on a new line for better readability
-							</span>
-						</div>
-
-						<!-- Expected Result -->
-						<div class="label">
-							<span class="mb-2 block text-sm font-medium">Expected Result</span>
-							<textarea
-								class="textarea"
-								rows="3"
-								placeholder="What should happen when the test passes"
-								bind:value={editForm.expectedResult}
-								disabled={savingEdit}
-							></textarea>
-						</div>
-
-						<!-- Actions -->
-						<div class="border-surface-200-700 flex justify-end gap-3 border-t pt-4">
-							<button
-								type="button"
-								onclick={() => (showEditDialog = false)}
-								class="btn preset-outlined-surface-500"
-								disabled={savingEdit}
-							>
-								Cancel
-							</button>
-							<button type="submit" class="btn preset-filled-primary-500" disabled={savingEdit}>
-								{#if savingEdit}
-									<Loader2 class="mr-2 h-4 w-4 animate-spin" />
-									Saving...
-								{:else}
-									<Save class="mr-2 h-4 w-4" />
-									Save Changes
-								{/if}
-							</button>
-						</div>
-					</form>
+			<form
+				onsubmit={(e) => {
+					e.preventDefault();
+					handleSaveEdit();
+				}}
+				class="space-y-6"
+			>
+				<!-- Title -->
+				<div class="label">
+					<span class="mb-2 block text-sm font-medium">
+						Title <span class="text-error-500">*</span>
+					</span>
+					<input
+						type="text"
+						class="input"
+						placeholder="Test case title"
+						bind:value={editForm.title}
+						required
+						disabled={savingEdit}
+					/>
 				</div>
-			</div>
+
+				<!-- Description -->
+				<div class="label">
+					<span class="mb-2 block text-sm font-medium">Description</span>
+					<textarea
+						class="textarea"
+						rows="3"
+						placeholder="Describe what this test case validates"
+						bind:value={editForm.description}
+						disabled={savingEdit}
+					></textarea>
+				</div>
+
+				<!-- Priority, Type, Automation Status -->
+				<div class="grid gap-4 md:grid-cols-3">
+					<div class="label">
+						<span class="mb-2 block text-sm font-medium">Priority</span>
+						<select class="select" bind:value={editForm.priority} disabled={savingEdit}>
+							<option value="CRITICAL">Critical</option>
+							<option value="HIGH">High</option>
+							<option value="MEDIUM">Medium</option>
+							<option value="LOW">Low</option>
+						</select>
+					</div>
+
+					<div class="label">
+						<span class="mb-2 block text-sm font-medium">Type</span>
+						<select class="select" bind:value={editForm.type} disabled={savingEdit}>
+							<option value="FUNCTIONAL">Functional</option>
+							<option value="REGRESSION">Regression</option>
+							<option value="SMOKE">Smoke</option>
+							<option value="INTEGRATION">Integration</option>
+							<option value="PERFORMANCE">Performance</option>
+							<option value="SECURITY">Security</option>
+							<option value="UI">UI</option>
+							<option value="API">API</option>
+							<option value="UNIT">Unit</option>
+							<option value="E2E">E2E</option>
+						</select>
+					</div>
+
+					<div class="label">
+						<span class="mb-2 block text-sm font-medium">Automation</span>
+						<select class="select" bind:value={editForm.automationStatus} disabled={savingEdit}>
+							<option value="AUTOMATED">Automated</option>
+							<option value="NOT_AUTOMATED">Not Automated</option>
+							<option value="CANDIDATE">Candidate</option>
+						</select>
+					</div>
+				</div>
+
+				<!-- Preconditions -->
+				<div class="label">
+					<span class="mb-2 block text-sm font-medium">Preconditions</span>
+					<textarea
+						class="textarea"
+						rows="3"
+						placeholder="Setup steps or conditions required before test execution"
+						bind:value={editForm.preconditions}
+						disabled={savingEdit}
+					></textarea>
+				</div>
+
+				<!-- Test Steps -->
+				<div class="label">
+					<span class="mb-2 block text-sm font-medium">Test Steps</span>
+					<textarea
+						class="textarea"
+						rows="5"
+						placeholder="Step-by-step instructions to execute this test"
+						bind:value={editForm.steps}
+						disabled={savingEdit}
+					></textarea>
+					<span class="text-surface-600-300 mt-1 text-xs">
+						Enter each step on a new line for better readability
+					</span>
+				</div>
+
+				<!-- Expected Result -->
+				<div class="label">
+					<span class="mb-2 block text-sm font-medium">Expected Result</span>
+					<textarea
+						class="textarea"
+						rows="3"
+						placeholder="What should happen when the test passes"
+						bind:value={editForm.expectedResult}
+						disabled={savingEdit}
+					></textarea>
+				</div>
+
+				<!-- Actions -->
+				<div class="border-surface-200-700 flex justify-end gap-3 border-t pt-4">
+					<button
+						type="button"
+						onclick={() => (showEditDialog = false)}
+						class="btn preset-outlined-surface-500"
+						disabled={savingEdit}
+					>
+						Cancel
+					</button>
+					<button type="submit" class="btn preset-filled-primary-500" disabled={savingEdit}>
+						{#if savingEdit}
+							<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+							Saving...
+						{:else}
+							<Save class="mr-2 h-4 w-4" />
+							Save Changes
+						{/if}
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
 {/if}
