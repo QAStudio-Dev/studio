@@ -140,6 +140,8 @@ model Project {
 
   @@index([createdBy])
   @@index([teamId])
+  @@index([updatedAt]) // For sorting by recently updated
+  @@index([createdAt]) // For sorting by recently created
 }
 
 model Milestone {
@@ -156,6 +158,9 @@ model Milestone {
   testRuns    TestRun[]
 
   @@index([projectId])
+  @@index([status])
+  @@index([dueDate]) // For finding upcoming/overdue milestones
+  @@index([projectId, status]) // Composite for filtering active milestones by project
 }
 
 enum MilestoneStatus {
@@ -200,6 +205,7 @@ model TestSuite {
 
   @@index([projectId])
   @@index([parentId])
+  @@index([projectId, order]) // Composite for ordered suite listing
 }
 
 model TestCase {
@@ -232,6 +238,10 @@ model TestCase {
   @@index([type])
   @@index([createdBy])
   @@index([order])
+  @@index([automationStatus]) // For filtering automated vs manual tests
+  @@index([projectId, priority]) // Composite for filtering high-priority tests
+  @@index([projectId, type]) // Composite for filtering by test type
+  @@index([suiteId, order]) // Composite for ordered test case listing within suite
 }
 
 enum Priority {
@@ -294,6 +304,10 @@ model TestRun {
   @@index([environmentId])
   @@index([status])
   @@index([createdBy])
+  @@index([createdAt]) // For sorting by recently created
+  @@index([completedAt]) // For finding recently completed runs
+  @@index([projectId, status]) // Composite for filtering active runs by project
+  @@index([projectId, createdAt]) // Composite for recent runs by project
 }
 
 enum RunStatus {
@@ -332,6 +346,9 @@ model TestResult {
   @@index([status])
   @@index([executedAt])
   @@index([executedBy])
+  @@index([testRunId, status]) // Composite for filtering results by status within a run
+  @@index([testCaseId, executedAt]) // Composite for test case execution history
+  @@index([testRunId, executedAt]) // Composite for chronological results within a run
 }
 
 enum TestStatus {
@@ -377,6 +394,8 @@ model Attachment {
 
   @@index([testCaseId])
   @@index([testResultId])
+  @@index([createdAt]) // For sorting attachments by upload time
+  @@index([mimeType]) // For filtering by attachment type (images, videos, etc.)
 }
 
 // ============================================
@@ -413,6 +432,8 @@ model Integration {
   @@index([teamId])
   @@index([type])
   @@index([status])
+  @@index([teamId, status]) // Composite for filtering active integrations by team
+  @@index([teamId, type]) // Composite for finding specific integration types
 }
 
 enum IntegrationType {
@@ -453,6 +474,9 @@ model IntegrationNotification {
   @@index([status])
   @@index([eventType])
   @@index([nextRetryAt])
+  @@index([createdAt]) // For finding recent notifications
+  @@index([integrationId, status]) // Composite for filtering notifications by status
+  @@index([status, nextRetryAt]) // Composite for finding pending retries
 }
 
 enum NotificationEvent {
@@ -496,6 +520,8 @@ model TeamInvitation {
   @@index([email])
   @@index([token])
   @@index([status])
+  @@index([expiresAt]) // For finding expired invitations
+  @@index([teamId, status]) // Composite for filtering invitations by status
   @@unique([teamId, email]) // One pending invitation per email per team
 }
 
