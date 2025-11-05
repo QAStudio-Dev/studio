@@ -1,6 +1,20 @@
-import { json } from '@sveltejs/kit';
+import { json, text } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import crypto from 'crypto';
+
+/**
+ * Handle CORS preflight requests
+ */
+export const OPTIONS: RequestHandler = async () => {
+	return new Response(null, {
+		status: 200,
+		headers: {
+			'Access-Control-Allow-Origin': '*',
+			'Access-Control-Allow-Methods': 'POST, OPTIONS',
+			'Access-Control-Allow-Headers': 'Content-Type, X-Slack-Signature, X-Slack-Request-Timestamp'
+		}
+	});
+};
 
 /**
  * Verify Slack request signature
@@ -44,8 +58,11 @@ function verifySlackRequest(
  * This endpoint is public (no authentication required) but verifies requests using Slack's
  * signing secret to ensure they're actually from Slack.
  */
-export const POST: RequestHandler = async ({ request }) => {
-	console.log('[Slack Interactions] Received request from:', request.headers.get('user-agent'));
+export const POST: RequestHandler = async ({ request, url }) => {
+	console.log('[Slack Interactions] ========== REQUEST START ==========');
+	console.log('[Slack Interactions] URL:', url.toString());
+	console.log('[Slack Interactions] User-Agent:', request.headers.get('user-agent'));
+	console.log('[Slack Interactions] Headers:', Object.fromEntries(request.headers.entries()));
 
 	try {
 		// Get the raw body for signature verification
