@@ -312,6 +312,7 @@ export async function notifyTestRunCompleted(
 		total: number;
 		passed: number;
 		failed: number;
+		skipped?: number;
 	}
 ) {
 	const color =
@@ -319,18 +320,25 @@ export async function notifyTestRunCompleted(
 	const emoji = testRun.passRate === 100 ? '✅' : testRun.passRate >= 80 ? '⚠️' : '❌';
 	const baseUrl = process.env.PUBLIC_BASE_URL || 'https://qastudio.dev';
 
+	const fields = [
+		{ name: '📊 Pass Rate', value: `${testRun.passRate}%`, inline: true },
+		{ name: '📝 Total Tests', value: testRun.total.toString(), inline: true },
+		{ name: '✅ Passed', value: testRun.passed.toString(), inline: true },
+		{ name: '❌ Failed', value: testRun.failed.toString(), inline: true }
+	];
+
+	// Add skipped count if present
+	if (testRun.skipped && testRun.skipped > 0) {
+		fields.push({ name: '⏭️ Skipped', value: testRun.skipped.toString(), inline: true });
+	}
+
 	await sendNotification(teamId, {
 		event: 'TEST_RUN_COMPLETED',
 		title: `${emoji} Test Run Completed: ${testRun.name}`,
 		message: `*Project:* ${testRun.projectName}\n*Status:* ${testRun.passRate === 100 ? 'All tests passed' : `${testRun.failed} test(s) failed`}`,
 		url: `${baseUrl}/projects/${testRun.projectId}/runs/${testRun.id}`,
 		color,
-		fields: [
-			{ name: '📊 Pass Rate', value: `${testRun.passRate}%`, inline: true },
-			{ name: '📝 Total Tests', value: testRun.total.toString(), inline: true },
-			{ name: '✅ Passed', value: testRun.passed.toString(), inline: true },
-			{ name: '❌ Failed', value: testRun.failed.toString(), inline: true }
-		]
+		fields
 	});
 }
 

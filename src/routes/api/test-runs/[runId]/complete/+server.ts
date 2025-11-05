@@ -62,8 +62,11 @@ export const POST: RequestHandler = async (event) => {
 	// Calculate stats
 	const passed = testRun.results.filter((r) => r.status === 'PASSED').length;
 	const failed = testRun.results.filter((r) => r.status === 'FAILED').length;
+	const skipped = testRun.results.filter((r) => r.status === 'SKIPPED').length;
 	const total = testRun.results.length;
-	const passRate = total > 0 ? Math.round((passed / total) * 100) : 0;
+	// Pass rate excludes skipped tests (industry standard)
+	const executedTests = passed + failed;
+	const passRate = executedTests > 0 ? Math.round((passed / executedTests) * 100) : 0;
 
 	// Send notifications if team exists
 	if (testRun.project.teamId) {
@@ -88,7 +91,8 @@ export const POST: RequestHandler = async (event) => {
 				passRate,
 				total,
 				passed,
-				failed
+				failed,
+				skipped
 			});
 		} catch (notificationError) {
 			console.error('Failed to send notifications:', notificationError);
@@ -102,6 +106,7 @@ export const POST: RequestHandler = async (event) => {
 			total,
 			passed,
 			failed,
+			skipped,
 			passRate
 		}
 	});

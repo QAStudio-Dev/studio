@@ -111,7 +111,7 @@ export const GET: RequestHandler = async (event) => {
 		take: 10
 	});
 
-	// Calculate pass rate
+	// Calculate pass rate (excluding skipped tests)
 	const passedTests = await db.testResult.count({
 		where: {
 			status: 'PASSED',
@@ -130,22 +130,27 @@ export const GET: RequestHandler = async (event) => {
 		}
 	});
 
-	const totalTests = await db.testResult.count({
-		where: user.teamId
-			? {
-					testRun: {
-						project: { teamId: user.teamId }
+	const failedTests = await db.testResult.count({
+		where: {
+			status: 'FAILED',
+			...(user.teamId
+				? {
+						testRun: {
+							project: { teamId: user.teamId }
+						}
 					}
-				}
-			: {
-					executedBy: userId,
-					testRun: {
-						project: { teamId: null }
-					}
-				}
+				: {
+						executedBy: userId,
+						testRun: {
+							project: { teamId: null }
+						}
+					})
+		}
 	});
 
-	const passRate = totalTests > 0 ? Math.round((passedTests / totalTests) * 100) : 0;
+	// Pass rate excludes skipped tests (industry standard)
+	const executedTests = passedTests + failedTests;
+	const passRate = executedTests > 0 ? Math.round((passedTests / executedTests) * 100) : 0;
 
 	// Check project limit
 	const hasActiveSubscription =

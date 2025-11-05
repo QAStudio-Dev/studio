@@ -539,7 +539,9 @@
 
 					{#if testCase.results.length > 0}
 						{@const passedCount = testCase.results.filter((r) => r.status === 'PASSED').length}
-						{@const passRate = Math.round((passedCount / testCase.results.length) * 100)}
+						{@const failedCount = testCase.results.filter((r) => r.status === 'FAILED').length}
+						{@const executedTests = passedCount + failedCount}
+						{@const passRate = executedTests > 0 ? Math.round((passedCount / executedTests) * 100) : 0}
 						<div class="flex items-center justify-between">
 							<span class="text-surface-600-300">Pass Rate</span>
 							<span class="text-lg font-bold text-success-500">{passRate}%</span>

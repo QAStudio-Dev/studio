@@ -97,7 +97,9 @@ export async function summarizeTestRun(params: {
 }): Promise<string> {
 	const { testRunName, totalTests, passed, failed, blocked, skipped, failedTests } = params;
 
-	const passRate = totalTests > 0 ? Math.round((passed / totalTests) * 100) : 0;
+	// Pass rate excludes skipped tests (industry standard)
+	const executedTests = passed + failed;
+	const passRate = executedTests > 0 ? Math.round((passed / executedTests) * 100) : 0;
 
 	// Limit failed tests in prompt to avoid token limits
 	const failedTestsPreview = failedTests.slice(0, 10);

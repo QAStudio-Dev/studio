@@ -409,8 +409,11 @@ export const POST: RequestHandler = async (event) => {
 
 			const passed = allResults.filter((r) => r.status === 'PASSED').length;
 			const failed = allResults.filter((r) => r.status === 'FAILED').length;
+			const skipped = allResults.filter((r) => r.status === 'SKIPPED').length;
 			const total = allResults.length;
-			const passRate = total > 0 ? Math.round((passed / total) * 100) : 0;
+			// Pass rate excludes skipped tests (industry standard)
+			const executedTests = passed + failed;
+			const passRate = executedTests > 0 ? Math.round((passed / executedTests) * 100) : 0;
 
 			// Check if we should send completion notification
 			// Only send if this is likely the final batch (you might want to adjust this logic)
@@ -426,7 +429,8 @@ export const POST: RequestHandler = async (event) => {
 					passRate,
 					total,
 					passed,
-					failed
+					failed,
+					skipped
 				});
 			}
 
