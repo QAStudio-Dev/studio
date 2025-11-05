@@ -195,10 +195,11 @@
 		}
 	}
 
-	// Calculate pass rate
+	// Calculate pass rate (excluding skipped tests - industry standard)
 	function getPassRate() {
-		if (stats.total === 0) return 0;
-		return Math.round((stats.passed / stats.total) * 100);
+		const executedTests = stats.passed + stats.failed;
+		if (executedTests === 0) return 0;
+		return Math.round((stats.passed / executedTests) * 100);
 	}
 
 	// Get run status color

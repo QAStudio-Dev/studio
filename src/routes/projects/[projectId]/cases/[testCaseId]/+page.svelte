@@ -16,7 +16,8 @@
 		ChevronDown,
 		ChevronRight,
 		X,
-		Save
+		Save,
+		Play
 	} from 'lucide-svelte';
 	import { Avatar, Accordion } from '@skeletonlabs/skeleton-svelte';
 	import AttachmentViewer from '$lib/components/AttachmentViewer.svelte';
@@ -325,8 +326,17 @@
 								</Accordion.ItemTrigger>
 
 								<Accordion.ItemContent class="px-4 pb-4">
-									<div class="text-surface-600-300 mb-2 text-sm">
-										Executed by: {result.executor.firstName || result.executor.email}
+									<div class="mb-3 flex items-center justify-between gap-4">
+										<div class="text-surface-600-300 text-sm">
+											Executed by: {result.executor.firstName || result.executor.email}
+										</div>
+										<a
+											href="/projects/{testCase.project.id}/runs/{result.testRun.id}"
+											class="preset-tonal-primary-500 btn btn-sm"
+										>
+											<Play class="h-3 w-3" />
+											View Test Run
+										</a>
 									</div>
 
 									{#if result.comment}
