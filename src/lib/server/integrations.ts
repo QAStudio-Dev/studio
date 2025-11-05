@@ -183,23 +183,15 @@ async function sendSlackNotification(integrationId: string, payload: Notificatio
 		});
 	}
 
-	// Add divider before button
+	// Add link as markdown text instead of button
 	if (payload.url) {
 		blocks.push({ type: 'divider' });
 		blocks.push({
-			type: 'actions',
-			elements: [
-				{
-					type: 'button',
-					text: {
-						type: 'plain_text',
-						text: '🔍 View Details',
-						emoji: true
-					},
-					url: payload.url,
-					style: payload.color === '#ff0000' ? 'danger' : 'primary'
-				}
-			]
+			type: 'section',
+			text: {
+				type: 'mrkdwn',
+				text: `🔍 <${payload.url}|View Details>`
+			}
 		});
 	}
 

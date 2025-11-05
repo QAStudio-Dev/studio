@@ -22,18 +22,18 @@ const publicApiRoutes = [
 
 // Function to check if a path is a public API route
 function isPublicApiRoute(pathname: string): boolean {
-	console.log('[Hooks] Checking if public route:', pathname);
+	// console.log('[Hooks] Checking if public route:', pathname);
 
 	// Exact matches for specific routes
 	if (publicApiRoutes.includes(pathname)) {
-		console.log('[Hooks] ✅ Matched public route (exact):', pathname);
+		// console.log('[Hooks] ✅ Matched public route (exact):', pathname);
 		return true;
 	}
 
 	// Pattern matches for dynamic routes
 	// Match /api/test-runs/{id}/complete
 	if (/^\/api\/test-runs\/[^/]+\/complete$/.test(pathname)) {
-		console.log('[Hooks] ✅ Matched public route (pattern): test-runs/complete');
+		// console.log('[Hooks] ✅ Matched public route (pattern): test-runs/complete');
 		return true;
 	}
 
@@ -41,7 +41,7 @@ function isPublicApiRoute(pathname: string): boolean {
 	// This is checked in the endpoint itself, but we need Clerk context for session auth
 	// so we don't skip it here
 
-	console.log('[Hooks] ❌ Not a public route:', pathname);
+	// console.log('[Hooks] ❌ Not a public route:', pathname);
 	return false;
 }
 
