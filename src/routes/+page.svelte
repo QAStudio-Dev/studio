@@ -79,9 +79,9 @@
 					? 'animate-fade-in-up animation-delay-100'
 					: 'opacity-0'}"
 			>
-				Start free with one project. Self-host for unlimited control.
-				<br class="hidden lg:block" />
-				Upgrade for teams, AI-powered insights, and unlimited projects.
+				<strong class="text-white">No code changes. No test mapping. No annotations.</strong>
+				<br />
+				Automatically discovers your existing tests.
 			</p>
 
 			<!-- CTA Buttons -->
@@ -182,17 +182,62 @@
 
 	<!-- Bento Grid -->
 	<div class="mx-auto grid max-w-6xl auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-		<!-- Large Feature 1 -->
+		<!-- Large Feature 1 - Zero Code Changes -->
 		<div
 			class="group relative overflow-hidden card p-8 transition-all hover:-translate-y-1 hover:shadow-2xl md:col-span-2 lg:row-span-2"
 		>
 			<div
-				class="absolute top-0 right-0 h-32 w-32 rounded-full bg-primary-500/10 blur-3xl transition-all group-hover:scale-150"
+				class="absolute top-0 right-0 h-32 w-32 rounded-full bg-success-500/10 blur-3xl transition-all group-hover:scale-150"
 			></div>
 			<div class="relative">
-				<div class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-500/10">
+				<div class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-success-500/10">
 					<svg
-						class="h-8 w-8 text-primary-500"
+						class="h-8 w-8 text-success-500"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+						/>
+					</svg>
+				</div>
+				<h3 class="mb-3 text-2xl font-bold">Zero Code Changes Required</h3>
+				<p class="mb-6 text-surface-600 dark:text-surface-400">
+					<strong class="text-surface-900 dark:text-surface-100">No test mapping annotations. No framework lock-in. No code modifications.</strong>
+					<br /><br />
+					QA Studio automatically discovers and maps your tests through our Playwright reporter.
+					Just install, run your tests, and we handle the rest. Works with your existing test suite out of the box.
+				</p>
+				<div class="flex flex-wrap gap-2">
+					<span
+						class="rounded-full bg-success-500/10 px-3 py-1 text-xs font-medium text-success-600 dark:text-success-400"
+						>Auto-Discovery</span
+					>
+					<span
+						class="rounded-full bg-success-500/10 px-3 py-1 text-xs font-medium text-success-600 dark:text-success-400"
+						>Framework Agnostic</span
+					>
+					<span
+						class="rounded-full bg-success-500/10 px-3 py-1 text-xs font-medium text-success-600 dark:text-success-400"
+						>Zero Maintenance</span
+					>
+				</div>
+			</div>
+		</div>
+
+		<!-- Feature 2 - Performance -->
+		<div
+			class="group relative overflow-hidden card p-6 transition-all hover:-translate-y-1 hover:shadow-xl"
+		>
+			<div class="absolute top-0 right-0 h-24 w-24 rounded-full bg-primary-500/10 blur-2xl"></div>
+			<div class="relative">
+				<div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary-500/10">
+					<svg
+						class="h-6 w-6 text-primary-500"
 						fill="none"
 						stroke="currentColor"
 						viewBox="0 0 24 24"
@@ -205,57 +250,14 @@
 						/>
 					</svg>
 				</div>
-				<h3 class="mb-3 text-2xl font-bold">Lightning Fast Performance</h3>
-				<p class="mb-6 text-surface-600 dark:text-surface-400">
-					Built on modern tech that's actually fast. No waiting for pages to load, no sluggish UI.
-					Just instant test management.
-				</p>
-				<div class="flex flex-wrap gap-2">
-					<span
-						class="rounded-full bg-primary-500/10 px-3 py-1 text-xs font-medium text-primary-600 dark:text-primary-400"
-						>SvelteKit</span
-					>
-					<span
-						class="rounded-full bg-primary-500/10 px-3 py-1 text-xs font-medium text-primary-600 dark:text-primary-400"
-						>PostgreSQL</span
-					>
-					<span
-						class="rounded-full bg-primary-500/10 px-3 py-1 text-xs font-medium text-primary-600 dark:text-primary-400"
-						>Prisma</span
-					>
-				</div>
-			</div>
-		</div>
-
-		<!-- Feature 2 -->
-		<div
-			class="group relative overflow-hidden card p-6 transition-all hover:-translate-y-1 hover:shadow-xl"
-		>
-			<div class="absolute top-0 right-0 h-24 w-24 rounded-full bg-success-500/10 blur-2xl"></div>
-			<div class="relative">
-				<div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-success-500/10">
-					<svg
-						class="h-6 w-6 text-success-500"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
-						/>
-					</svg>
-				</div>
-				<h3 class="mb-2 text-lg font-bold">API First</h3>
+				<h3 class="mb-2 text-lg font-bold">Lightning Fast</h3>
 				<p class="text-sm text-surface-600 dark:text-surface-400">
-					Every feature available via REST API. Build custom integrations in minutes.
+					No sluggish UI. Instant page loads. Built on modern tech that actually performs.
 				</p>
 			</div>
 		</div>
 
-		<!-- Feature 3 -->
+		<!-- Feature 3 - API First -->
 		<div
 			class="group relative overflow-hidden card p-6 transition-all hover:-translate-y-1 hover:shadow-xl"
 		>
@@ -272,13 +274,13 @@
 							stroke-linecap="round"
 							stroke-linejoin="round"
 							stroke-width="2"
-							d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+							d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
 						/>
 					</svg>
 				</div>
-				<h3 class="mb-2 text-lg font-bold">All Test Types</h3>
+				<h3 class="mb-2 text-lg font-bold">API First</h3>
 				<p class="text-sm text-surface-600 dark:text-surface-400">
-					E2E, API, unit, integration, regression - track everything in one place.
+					Every feature available via REST API. Build custom integrations in minutes.
 				</p>
 			</div>
 		</div>
@@ -488,6 +490,10 @@
 
 	.animation-delay-100 {
 		animation-delay: 0.1s;
+	}
+
+	.animation-delay-150 {
+		animation-delay: 0.15s;
 	}
 
 	.animation-delay-200 {
