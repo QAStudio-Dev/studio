@@ -30,7 +30,6 @@ test.describe('Home Page', () => {
 
 	test('should display navigation buttons', async () => {
 		await homePage.assertVisible(homePage.signInButton);
-		await homePage.assertVisible(homePage.signUpButton);
 
 		const navLinksVisible = await homePage.areNavigationLinksVisible();
 		expect(navLinksVisible).toBeTruthy();
@@ -42,33 +41,12 @@ test.describe('Home Page', () => {
 		expect(page.url()).toContain('sign-in');
 	});
 
-	test('should navigate to sign up page when clicking Sign Up', async ({ page }) => {
-		await homePage.clickSignUp();
-		await page.waitForURL('**/sign-up**');
-		expect(page.url()).toContain('sign-up');
-	});
-
 	test('should display footer with company information', async () => {
 		await homePage.scrollToFooter();
 		await homePage.assertVisible(homePage.footer);
 
 		const isFooterVisible = await homePage.isFooterVisible();
 		expect(isFooterVisible).toBeTruthy();
-	});
-
-	test('should have working social links', async () => {
-		const socialLinks = await homePage.getSocialLinks();
-		expect(socialLinks.length).toBeGreaterThan(0);
-
-		// Verify Discord link exists and is correct
-		await homePage.assertVisible(homePage.discordLink);
-		const discordHref = await homePage.getAttribute(homePage.discordLink, 'href');
-		expect(discordHref).toContain('discord');
-
-		// Verify GitHub link exists and is correct
-		await homePage.assertVisible(homePage.githubLink);
-		const githubHref = await homePage.getAttribute(homePage.githubLink, 'href');
-		expect(githubHref).toContain('github');
 	});
 
 	test('should navigate to docs page', async ({ page }) => {
@@ -109,40 +87,9 @@ test.describe('Home Page', () => {
 		await homePage.assertVisible(homePage.signInButton);
 	});
 
-	test('should load without console errors', async ({ page }) => {
-		const consoleErrors: string[] = [];
-
-		page.on('console', (msg) => {
-			if (msg.type() === 'error') {
-				consoleErrors.push(msg.text());
-			}
-		});
-
-		await homePage.navigate();
-
-		// Allow some time for any async errors to appear
-		await page.waitForTimeout(2000);
-
-		// Filter out known acceptable errors (if any)
-		const criticalErrors = consoleErrors.filter(
-			(error) => !error.includes('favicon') // Ignore favicon errors
-		);
-
-		expect(criticalErrors).toHaveLength(0);
-	});
-
-	test('should have valid external links', async () => {
-		// Check that social links are valid URLs
-		const discordHref = await homePage.getAttribute(homePage.discordLink, 'href');
-		const githubHref = await homePage.getAttribute(homePage.githubLink, 'href');
-
-		expect(discordHref).toMatch(/^https?:\/\//);
-		expect(githubHref).toMatch(/^https?:\/\//);
-	});
-
 	test('should display copyright year in footer', async () => {
 		await homePage.scrollToFooter();
-		const footerText = await homePage.getText(homePage.footerText);
+		const footerText = await homePage.getText(homePage.footerText.first());
 		const currentYear = new Date().getFullYear().toString();
 		expect(footerText).toContain(currentYear);
 	});

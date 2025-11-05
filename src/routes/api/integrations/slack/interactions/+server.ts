@@ -45,6 +45,8 @@ function verifySlackRequest(
  * signing secret to ensure they're actually from Slack.
  */
 export const POST: RequestHandler = async ({ request }) => {
+	console.log('[Slack Interactions] Received request from:', request.headers.get('user-agent'));
+
 	try {
 		// Get the raw body for signature verification
 		const body = await request.text();
@@ -59,8 +61,13 @@ export const POST: RequestHandler = async ({ request }) => {
 			const isValid = verifySlackRequest(signingSecret, signature, timestamp, body);
 
 			if (!isValid) {
-				console.error('[Slack Interactions] Invalid request signature');
-				return json({ error: 'Invalid request signature' }, { status: 401 });
+				console.error('[Slack Interactions] Invalid request signature', {
+					signature: signature?.substring(0, 20),
+					timestamp,
+					bodyLength: body.length
+				});
+				// Return 200 to Slack to prevent retries, but with error message
+				return json({ ok: false, error: 'Invalid signature' }, { status: 200 });
 			}
 		} else {
 			console.warn(

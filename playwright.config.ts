@@ -8,8 +8,6 @@ if (!process.env.QA_STUDIO_PROJECT_ID) {
 	throw new Error('QA_STUDIO_PROJECT_ID is not set');
 }
 
-console.log(process.env.QA_STUDIO_API_KEY);
-console.log(process.env.QA_STUDIO_PROJECT_ID);
 // Helper to strip ANSI codes from strings (color codes, etc.)
 function stripAnsi(str: string): string {
 	return str.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '').replace(/\[\d+m/g, '');
@@ -44,5 +42,6 @@ export default defineConfig({
 	// 	port: 5173,
 	// 	reuseExistingServer: true // Don't fail if server is already running
 	// },
-	testDir: 'e2e'
+	testDir: 'e2e',
+	workers: 4
 });

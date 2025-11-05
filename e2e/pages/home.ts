@@ -9,7 +9,6 @@ export class HomePage extends BasePage {
 	// Selectors
 	readonly logo: Locator;
 	readonly signInButton: Locator;
-	readonly signUpButton: Locator;
 	readonly heroTitle: Locator;
 	readonly heroDescription: Locator;
 	readonly getStartedButton: Locator;
@@ -26,8 +25,7 @@ export class HomePage extends BasePage {
 
 		// Initialize locators
 		this.logo = page.locator('img[alt="QA Studio"]').first();
-		this.signInButton = page.getByRole('link', { name: 'Sign In' });
-		this.signUpButton = page.getByRole('link', { name: 'Sign Up' });
+		this.signInButton = page.getByRole('button', { name: 'Sign In' });
 		this.heroTitle = page.locator('h1').first();
 		this.heroDescription = page.locator('p.text-xl').first();
 		this.getStartedButton = page.getByRole('link', { name: /get started/i });
@@ -56,13 +54,6 @@ export class HomePage extends BasePage {
 	}
 
 	/**
-	 * Click the Sign Up button
-	 */
-	async clickSignUp() {
-		await this.click(this.signUpButton);
-	}
-
-	/**
 	 * Click the Get Started button
 	 */
 	async clickGetStarted() {
@@ -80,14 +71,14 @@ export class HomePage extends BasePage {
 	 * Navigate to Blog
 	 */
 	async navigateToBlog() {
-		await this.click(this.blogLink);
+		await this.click(this.blogLink.first());
 	}
 
 	/**
 	 * Navigate to Docs
 	 */
 	async navigateToDocs() {
-		await this.click(this.docsLink);
+		await this.click(this.docsLink.first());
 	}
 
 	/**
@@ -125,8 +116,7 @@ export class HomePage extends BasePage {
 	 */
 	async areNavigationLinksVisible(): Promise<boolean> {
 		const signInVisible = await this.isVisible(this.signInButton);
-		const signUpVisible = await this.isVisible(this.signUpButton);
-		return signInVisible && signUpVisible;
+		return signInVisible
 	}
 
 	/**
@@ -154,7 +144,6 @@ export class HomePage extends BasePage {
 	async areMainCTAsPresent(): Promise<boolean> {
 		try {
 			await this.assertVisible(this.signInButton);
-			await this.assertVisible(this.signUpButton);
 			return true;
 		} catch {
 			return false;
