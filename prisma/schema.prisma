@@ -137,6 +137,7 @@ model Project {
   testRuns    TestRun[]
   milestones  Milestone[]
   environments Environment[]
+  jiraIssues  JiraIssue[]
 
   @@index([createdBy])
   @@index([teamId])
@@ -340,6 +341,7 @@ model TestResult {
   testRun     TestRun    @relation(fields: [testRunId], references: [id], onDelete: Cascade)
   attachments Attachment[]
   steps       TestStepResult[]
+  jiraIssues  JiraIssue[]
 
   @@index([testCaseId])
   @@index([testRunId])
@@ -531,4 +533,45 @@ enum InvitationStatus {
   DECLINED
   EXPIRED
   CANCELED
+}
+
+// ============================================
+// JIRA INTEGRATION
+// ============================================
+
+model JiraIssue {
+  id            String   @id @default(cuid())
+  jiraIssueKey  String   @unique // e.g., "PROJ-123"
+  jiraIssueId   String   // Jira's internal ID
+  integrationId String   // Which Jira integration created this
+  testResultId  String?  // Link to test result that triggered creation
+  projectId     String   // QA Studio project
+
+  // Jira issue details (cached for performance)
+  summary       String
+  description   String?
+  issueType     String   // Bug, Task, Story, etc.
+  status        String   // Open, In Progress, Done, etc.
+  priority      String?  // High, Medium, Low, etc.
+  assignee      String?  // Jira user display name
+  reporter      String?  // Jira user display name
+  labels        String[] // Jira labels
+
+  // Sync metadata
+  lastSyncedAt  DateTime?
+  syncError     String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  testResult    TestResult? @relation(fields: [testResultId], references: [id], onDelete: SetNull)
+  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([integrationId])
+  @@index([testResultId])
+  @@index([projectId])
+  @@index([jiraIssueKey])
+  @@index([status])
+  @@index([createdAt])
 }

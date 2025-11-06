@@ -752,6 +752,43 @@
 							</div>
 						{/if}
 
+						<!-- Jira Integration -->
+						{#if !user.team?.integrations?.some((i) => i.type === 'JIRA')}
+							<div class="border-surface-200-700 rounded-container border p-4">
+								<div class="mb-3 flex items-start gap-3">
+									<div
+										class="flex h-12 w-12 items-center justify-center rounded-container bg-[#0052CC]"
+									>
+										<svg class="h-7 w-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+											<path
+												d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005zm5.723-5.756H5.736a5.215 5.215 0 0 0 5.215 5.214h2.129v2.058a5.218 5.218 0 0 0 5.215 5.214V6.758a1.001 1.001 0 0 0-1.001-1.001zM23.013 0H11.455a5.215 5.215 0 0 0 5.215 5.215h2.129v2.057A5.215 5.215 0 0 0 24 12.483V1.005A1.001 1.001 0 0 0 23.013 0z"
+											/>
+										</svg>
+									</div>
+									<div class="flex-1">
+										<h4 class="mb-1 font-bold">Jira</h4>
+										<p class="text-surface-600-300 text-sm">
+											Create and track issues from test failures
+										</p>
+									</div>
+								</div>
+
+								{#if user.team}
+									<a
+										href="/settings/integrations/jira"
+										class="btn w-full preset-filled-primary-500"
+									>
+										<ExternalLink class="mr-2 h-4 w-4" />
+										Connect Jira
+									</a>
+								{:else}
+									<button class="btn w-full preset-outlined-surface-500" disabled>
+										Requires Team
+									</button>
+								{/if}
+							</div>
+						{/if}
+
 						<!-- More integrations coming soon -->
 						<div class="border-surface-200-700 rounded-container border p-4 opacity-50">
 							<div class="mb-3 flex items-start gap-3">
@@ -763,7 +800,7 @@
 								<div class="flex-1">
 									<h4 class="mb-1 font-bold">More Coming Soon</h4>
 									<p class="text-surface-600-300 text-sm">
-										GitHub, Jira, Microsoft Teams, and more
+										GitHub, Microsoft Teams, Discord, and more
 									</p>
 								</div>
 							</div>
