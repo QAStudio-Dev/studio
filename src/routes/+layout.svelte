@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { ClerkProvider } from 'svelte-clerk';
+	import { MetaTags, deepMerge } from 'svelte-meta-tags';
+	import { page } from '$app/state';
 	import Header from './Header.svelte';
 	import '../app.css';
 	import { clearSelectedProject } from '$lib/stores/projectStore';
@@ -8,6 +10,9 @@
 	import { navigating } from '$app/stores';
 
 	let { children, data } = $props();
+
+	// Merge base meta tags with page-specific meta tags
+	let metaTags = $derived(deepMerge(data.baseMetaTags || {}, page.data.pageMetaTags || {}));
 
 	// Get current year dynamically
 	const currentYear = new Date().getFullYear();
@@ -65,7 +70,6 @@
 </script>
 
 <svelte:head>
-	<title>QA Studio - Test Management Platform</title>
 	<script>
 		// Initialize theme before page renders to prevent flash
 		(function () {
@@ -74,6 +78,8 @@
 		})();
 	</script>
 </svelte:head>
+
+<MetaTags {...metaTags} />
 
 <ClerkProvider>
 	<div class="flex min-h-screen flex-col">

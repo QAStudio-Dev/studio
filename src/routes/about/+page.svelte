@@ -2,14 +2,6 @@
 	import { Heart, Code, Users, Zap } from 'lucide-svelte';
 </script>
 
-<svelte:head>
-	<title>About QA Studio - Our Story</title>
-	<meta
-		name="description"
-		content="Learn about QA Studio's mission to provide modern, open-source test management for every team."
-	/>
-</svelte:head>
-
 <div class="container mx-auto max-w-4xl px-4 py-12">
 	<div class="mb-8">
 		<a href="/" class="mb-4 inline-flex items-center gap-2 text-primary-500 hover:underline">

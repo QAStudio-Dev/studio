@@ -8,14 +8,6 @@
 	});
 </script>
 
-<svelte:head>
-	<title>QA Studio - Modern Test Management Built by QA Engineers</title>
-	<meta
-		name="description"
-		content="Stop wrestling with bloated test management tools. QA Studio is the lightning-fast, API-first platform built by engineers who actually do QA."
-	/>
-</svelte:head>
-
 <!-- Hero Section with Animated Background -->
 <div
 	class="relative min-h-[90vh] overflow-hidden bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-600"

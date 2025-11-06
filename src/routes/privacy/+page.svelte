@@ -2,14 +2,6 @@
 	const lastUpdated = 'January 15, 2025';
 </script>
 
-<svelte:head>
-	<title>Privacy Policy - QA Studio</title>
-	<meta
-		name="description"
-		content="QA Studio Privacy Policy - How we collect, use, and protect your data."
-	/>
-</svelte:head>
-
 <div class="container mx-auto max-w-4xl px-4 py-12">
 	<div class="mb-8">
 		<a href="/" class="mb-4 inline-flex items-center gap-2 text-primary-500 hover:underline">

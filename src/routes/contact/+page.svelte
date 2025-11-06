@@ -2,14 +2,6 @@
 	import { Mail, Github, MessageCircle } from 'lucide-svelte';
 </script>
 
-<svelte:head>
-	<title>Contact Us - QA Studio</title>
-	<meta
-		name="description"
-		content="Get in touch with QA Studio - Report issues, join our community, or reach out for support."
-	/>
-</svelte:head>
-
 <div class="container mx-auto max-w-4xl px-4 py-12">
 	<div class="mb-8">
 		<a href="/" class="mb-4 inline-flex items-center gap-2 text-primary-500 hover:underline">
