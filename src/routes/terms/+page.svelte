@@ -23,9 +23,8 @@
 		<section class="mb-8">
 			<h2>1. Acceptance of Terms</h2>
 			<p>
-				By accessing or using QA Studio ("Service"), you agree to be bound by these Terms of
-				Service ("Terms"). If you disagree with any part of these terms, you may not use the
-				Service.
+				By accessing or using QA Studio ("Service"), you agree to be bound by these Terms of Service
+				("Terms"). If you disagree with any part of these terms, you may not use the Service.
 			</p>
 			<p>
 				<strong>Self-Hosted Deployments:</strong> These Terms apply to our hosted service at qastudio.dev.
@@ -65,8 +64,8 @@
 
 			<h3>3.3 Account Information</h3>
 			<p>
-				You must provide accurate, current, and complete information during registration and keep
-				it updated.
+				You must provide accurate, current, and complete information during registration and keep it
+				updated.
 			</p>
 		</section>
 
@@ -127,8 +126,7 @@
 
 			<h3>6.1 Your Content</h3>
 			<p>
-				You retain ownership of all test data, attachments, and content you upload ("User
-				Content").
+				You retain ownership of all test data, attachments, and content you upload ("User Content").
 			</p>
 
 			<h3>6.2 License to Us</h3>
@@ -223,14 +221,14 @@
 
 			<h3>11.1 Uptime</h3>
 			<p>
-				We strive for high availability but do not guarantee uninterrupted access. We are not
-				liable for downtime or service interruptions.
+				We strive for high availability but do not guarantee uninterrupted access. We are not liable
+				for downtime or service interruptions.
 			</p>
 
 			<h3>11.2 Maintenance</h3>
 			<p>
-				We may perform scheduled maintenance with reasonable notice. Emergency maintenance may
-				occur without notice.
+				We may perform scheduled maintenance with reasonable notice. Emergency maintenance may occur
+				without notice.
 			</p>
 
 			<h3>11.3 Service Modifications</h3>
@@ -290,8 +288,8 @@
 		<section class="mb-8">
 			<h2>14. Limitation of Liability</h2>
 			<p>
-				TO THE MAXIMUM EXTENT PERMITTED BY LAW, WE SHALL NOT BE LIABLE FOR ANY INDIRECT,
-				INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING BUT NOT LIMITED TO:
+				TO THE MAXIMUM EXTENT PERMITTED BY LAW, WE SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
+				SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING BUT NOT LIMITED TO:
 			</p>
 			<ul>
 				<li>Loss of profits or revenue</li>
@@ -307,7 +305,10 @@
 
 		<section class="mb-8">
 			<h2>15. Indemnification</h2>
-			<p>You agree to indemnify and hold us harmless from any claims, damages, or expenses arising from:</p>
+			<p>
+				You agree to indemnify and hold us harmless from any claims, damages, or expenses arising
+				from:
+			</p>
 			<ul>
 				<li>Your use of the Service</li>
 				<li>Your User Content</li>
@@ -321,8 +322,8 @@
 
 			<h3>16.1 Informal Resolution</h3>
 			<p>
-				Before filing a claim, you agree to contact us at legal@qastudio.dev to resolve the
-				dispute informally.
+				Before filing a claim, you agree to contact us at legal@qastudio.dev to resolve the dispute
+				informally.
 			</p>
 
 			<h3>16.2 Arbitration</h3>
@@ -341,8 +342,8 @@
 		<section class="mb-8">
 			<h2>17. Governing Law</h2>
 			<p>
-				These Terms are governed by the laws of the United States, without regard to conflict of
-				law principles.
+				These Terms are governed by the laws of the United States, without regard to conflict of law
+				principles.
 			</p>
 		</section>
 
@@ -386,7 +387,9 @@
 			</ul>
 		</section>
 
-		<section class="mb-8 card border-2 border-primary-500/20 bg-primary-50/50 p-6 dark:bg-primary-950/50">
+		<section
+			class="mb-8 card border-2 border-primary-500/20 bg-primary-50/50 p-6 dark:bg-primary-950/50"
+		>
 			<h2 class="mt-0">Open Source License</h2>
 			<p>
 				QA Studio is open-source software. These Terms of Service apply to our hosted service at
@@ -394,16 +397,17 @@
 			</p>
 			<p>
 				For self-hosted deployments, please refer to our open-source license at <a
-					href="https://github.com/qastudio/qastudio" target="_blank" rel="noopener noreferrer"
-					>GitHub</a
+					href="https://github.com/qastudio/qastudio"
+					target="_blank"
+					rel="noopener noreferrer">GitHub</a
 				>.
 			</p>
 		</section>
 
 		<section class="mb-8">
 			<p class="text-sm text-surface-600 dark:text-surface-400">
-				By using QA Studio, you acknowledge that you have read, understood, and agree to be bound
-				by these Terms of Service.
+				By using QA Studio, you acknowledge that you have read, understood, and agree to be bound by
+				these Terms of Service.
 			</p>
 		</section>
 	</div>

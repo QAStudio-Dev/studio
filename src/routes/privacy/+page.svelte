@@ -40,8 +40,8 @@
 			<h3>2.1 Information You Provide</h3>
 			<ul>
 				<li>
-					<strong>Account Information:</strong> Email address, name, and authentication credentials
-					managed through Clerk.
+					<strong>Account Information:</strong> Email address, name, and authentication credentials managed
+					through Clerk.
 				</li>
 				<li>
 					<strong>Test Data:</strong> Test cases, test results, test runs, attachments (screenshots,
@@ -63,16 +63,16 @@
 			<h3>2.2 Automatically Collected Information</h3>
 			<ul>
 				<li>
-					<strong>Usage Data:</strong> IP address, browser type, device information, pages visited,
-					features used, and interaction patterns.
+					<strong>Usage Data:</strong> IP address, browser type, device information, pages visited, features
+					used, and interaction patterns.
 				</li>
 				<li>
-					<strong>Cookies:</strong> Session cookies for authentication, preference cookies for user
-					settings, and analytics cookies.
+					<strong>Cookies:</strong> Session cookies for authentication, preference cookies for user settings,
+					and analytics cookies.
 				</li>
 				<li>
-					<strong>API Usage:</strong> API requests, response times, and error logs for monitoring
-					and debugging.
+					<strong>API Usage:</strong> API requests, response times, and error logs for monitoring and
+					debugging.
 				</li>
 			</ul>
 
@@ -94,11 +94,15 @@
 			<h2>3. How We Use Your Information</h2>
 			<p>We use collected information for:</p>
 			<ul>
-				<li><strong>Service Delivery:</strong> Providing and maintaining the test management platform.</li>
+				<li>
+					<strong>Service Delivery:</strong> Providing and maintaining the test management platform.
+				</li>
 				<li>
 					<strong>Test Management:</strong> Storing, organizing, and displaying your test data.
 				</li>
-				<li><strong>AI Features:</strong> Generating test diagnostics and insights (when enabled).</li>
+				<li>
+					<strong>AI Features:</strong> Generating test diagnostics and insights (when enabled).
+				</li>
 				<li>
 					<strong>Communication:</strong> Sending notifications, updates, and support responses.
 				</li>
@@ -168,7 +172,9 @@
 				<li><strong>Encryption:</strong> Data encrypted in transit (TLS) and at rest.</li>
 				<li><strong>Access Controls:</strong> Role-based access and authentication.</li>
 				<li><strong>Regular Audits:</strong> Security reviews and vulnerability assessments.</li>
-				<li><strong>Secure Infrastructure:</strong> Hosted on Vercel with enterprise-grade security.</li>
+				<li>
+					<strong>Secure Infrastructure:</strong> Hosted on Vercel with enterprise-grade security.
+				</li>
 			</ul>
 			<p>
 				<strong>Note:</strong> No system is 100% secure. While we strive to protect your data, we cannot
@@ -197,8 +203,8 @@
 		<section class="mb-8">
 			<h2>8. International Data Transfers</h2>
 			<p>
-				Your data may be transferred to and processed in countries outside your residence. We
-				ensure appropriate safeguards are in place through:
+				Your data may be transferred to and processed in countries outside your residence. We ensure
+				appropriate safeguards are in place through:
 			</p>
 			<ul>
 				<li>Standard contractual clauses</li>
@@ -260,11 +266,17 @@
 			<h2>14. GDPR Compliance (EU Users)</h2>
 			<p>If you are in the European Economic Area (EEA):</p>
 			<ul>
-				<li><strong>Legal Basis:</strong> We process data based on consent, contract, legitimate interest,
-				or legal obligation.</li>
-				<li><strong>Data Protection Officer:</strong> Contact privacy@qastudio.dev for GDPR inquiries.</li>
-				<li><strong>Supervisory Authority:</strong> You have the right to lodge a complaint with your
-				local data protection authority.</li>
+				<li>
+					<strong>Legal Basis:</strong> We process data based on consent, contract, legitimate interest,
+					or legal obligation.
+				</li>
+				<li>
+					<strong>Data Protection Officer:</strong> Contact privacy@qastudio.dev for GDPR inquiries.
+				</li>
+				<li>
+					<strong>Supervisory Authority:</strong> You have the right to lodge a complaint with your local
+					data protection authority.
+				</li>
 			</ul>
 		</section>
 

@@ -25,7 +25,7 @@
 		<!-- Email Support -->
 		<a
 			href="mailto:ben@qastudio.dev"
-			class="group card flex flex-col items-center p-8 text-center transition-all hover:-translate-y-1 hover:shadow-xl"
+			class="group flex flex-col items-center card p-8 text-center transition-all hover:-translate-y-1 hover:shadow-xl"
 		>
 			<div
 				class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-500/10 transition-all group-hover:scale-110"
@@ -44,7 +44,7 @@
 			href="https://github.com/QAStudio-Dev/studio/issues"
 			target="_blank"
 			rel="noopener noreferrer"
-			class="group card flex flex-col items-center p-8 text-center transition-all hover:-translate-y-1 hover:shadow-xl"
+			class="group flex flex-col items-center card p-8 text-center transition-all hover:-translate-y-1 hover:shadow-xl"
 		>
 			<div
 				class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-500/10 transition-all group-hover:scale-110"
@@ -65,7 +65,7 @@
 			href="https://discord.gg/rw3UfdB9pN"
 			target="_blank"
 			rel="noopener noreferrer"
-			class="group card flex flex-col items-center p-8 text-center transition-all hover:-translate-y-1 hover:shadow-xl"
+			class="group flex flex-col items-center card p-8 text-center transition-all hover:-translate-y-1 hover:shadow-xl"
 		>
 			<div
 				class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary-500/10 transition-all group-hover:scale-110"

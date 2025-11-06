@@ -199,10 +199,13 @@
 				</div>
 				<h3 class="mb-3 text-2xl font-bold">Zero Code Changes Required</h3>
 				<p class="mb-6 text-surface-600 dark:text-surface-400">
-					<strong class="text-surface-900 dark:text-surface-100">No test mapping annotations. No framework lock-in. No code modifications.</strong>
+					<strong class="text-surface-900 dark:text-surface-100"
+						>No test mapping annotations. No framework lock-in. No code modifications.</strong
+					>
 					<br /><br />
-					QA Studio automatically discovers and maps your tests through our Playwright reporter.
-					Just install, run your tests, and we handle the rest. Works with your existing test suite out of the box.
+					QA Studio automatically discovers and maps your tests through our Playwright reporter. Just
+					install, run your tests, and we handle the rest. Works with your existing test suite out of
+					the box.
 				</p>
 				<div class="flex flex-wrap gap-2">
 					<span

@@ -116,7 +116,7 @@ export class HomePage extends BasePage {
 	 */
 	async areNavigationLinksVisible(): Promise<boolean> {
 		const signInVisible = await this.isVisible(this.signInButton);
-		return signInVisible
+		return signInVisible;
 	}
 
 	/**

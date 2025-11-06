@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Discord Community
+    url: https://discord.gg/rw3UfdB9pN
+    about: Join our Discord server for questions, discussions, and community support
+  - name: Documentation
+    url: https://github.com/QAStudio-Dev/studio#readme
+    about: Check out the documentation for setup guides and API reference

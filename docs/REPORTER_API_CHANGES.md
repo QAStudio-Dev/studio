@@ -18,16 +18,17 @@ The endpoint now includes:
 
 ### API Endpoint Comparison
 
-| Endpoint | Status | Recommended For |
-|----------|--------|-----------------|
-| `/api/attachments` | ✅ **Public API** | All external integrations |
-| `/api/test-results/[resultId]/attachments` | ⚠️ Internal | Can be deprecated |
+| Endpoint                                   | Status            | Recommended For           |
+| ------------------------------------------ | ----------------- | ------------------------- |
+| `/api/attachments`                         | ✅ **Public API** | All external integrations |
+| `/api/test-results/[resultId]/attachments` | ⚠️ Internal       | Can be deprecated         |
 
 ## Required Reporter Changes
 
 ### File: `qastudio-playwright/src/api-client.ts`
 
 **Current Code:**
+
 ```typescript
 async uploadAttachment(testRunId: string, testResultId: string, name: string, contentType: string, data: Buffer) {
     this.log(`Uploading attachment: ${name} (${contentType})`);
@@ -43,6 +44,7 @@ async uploadAttachment(testRunId: string, testResultId: string, name: string, co
 ```
 
 **Updated Code:**
+
 ```typescript
 async uploadAttachment(testResultId: string, name: string, contentType: string, data: Buffer, type?: string) {
     this.log(`Uploading attachment: ${name} (${contentType})`);
@@ -74,11 +76,11 @@ The endpoint accepts **two formats**:
 
 ```json
 {
-  "name": "screenshot.png",
-  "contentType": "image/png",
-  "data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB...",
-  "testResultId": "result_clx123abc",
-  "type": "screenshot"
+	"name": "screenshot.png",
+	"contentType": "image/png",
+	"data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB...",
+	"testResultId": "result_clx123abc",
+	"type": "screenshot"
 }
 ```
 
@@ -97,36 +99,40 @@ type: screenshot
 ## Response Format
 
 **Success (201 Created):**
+
 ```json
 {
-  "attachment": {
-    "id": "att_clx456def",
-    "filename": "attachments/result_123/1705315800000-screenshot.png",
-    "url": "https://storage.example.com/attachments/...",
-    "size": 125440,
-    "mimeType": "image/png"
-  }
+	"attachment": {
+		"id": "att_clx456def",
+		"filename": "attachments/result_123/1705315800000-screenshot.png",
+		"url": "https://storage.example.com/attachments/...",
+		"size": 125440,
+		"mimeType": "image/png"
+	}
 }
 ```
 
 **Error (400 Bad Request):**
+
 ```json
 {
-  "message": "Either testCaseId or testResultId is required"
+	"message": "Either testCaseId or testResultId is required"
 }
 ```
 
 **Error (403 Forbidden):**
+
 ```json
 {
-  "message": "You do not have access to this test result"
+	"message": "You do not have access to this test result"
 }
 ```
 
 **Error (404 Not Found):**
+
 ```json
 {
-  "message": "Test result not found"
+	"message": "Test result not found"
 }
 ```
 

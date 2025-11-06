@@ -22,9 +22,9 @@
 	</div>
 
 	<!-- The Story -->
-	<div class="card mb-6 p-8">
+	<div class="mb-6 card p-8">
 		<h2 class="mb-4 text-2xl font-bold">The Story Behind QA Studio</h2>
-		<div class="prose dark:prose-invert max-w-none">
+		<div class="prose max-w-none dark:prose-invert">
 			<p class="text-surface-600 dark:text-surface-400">
 				After building countless test management platforms, suites, and tools across different
 				companies and projects, I realized something: I kept solving the same problems over and over
@@ -32,12 +32,14 @@
 				tracking, reporting—but I was constantly reinventing the wheel.
 			</p>
 			<p class="text-surface-600 dark:text-surface-400">
-				As a passionate believer in open source and a lover of software development, I decided it was
-				time to build something different. Something the entire QA community could benefit from.
+				As a passionate believer in open source and a lover of software development, I decided it
+				was time to build something different. Something the entire QA community could benefit from.
 				Something that wouldn't need to be rebuilt from scratch at the next company.
 			</p>
 			<p class="text-surface-600 dark:text-surface-400">
-				<strong class="text-surface-900 dark:text-surface-100">QA Studio was born from that frustration and that passion.</strong>
+				<strong class="text-surface-900 dark:text-surface-100"
+					>QA Studio was born from that frustration and that passion.</strong
+				>
 			</p>
 			<p class="text-surface-600 dark:text-surface-400">
 				It's the test management platform I wish existed when I started my career. Modern, fast,
@@ -99,7 +101,7 @@
 	</div>
 
 	<!-- Why Open Source -->
-	<div class="card mb-6 bg-primary-50/50 p-8 dark:bg-primary-950/50">
+	<div class="mb-6 card bg-primary-50/50 p-8 dark:bg-primary-950/50">
 		<h2 class="mb-4 text-2xl font-bold">Why Open Source?</h2>
 		<div class="space-y-4 text-surface-600 dark:text-surface-400">
 			<p>
@@ -129,7 +131,7 @@
 	</div>
 
 	<!-- The Tech Stack -->
-	<div class="card mb-6 p-8">
+	<div class="mb-6 card p-8">
 		<h2 class="mb-4 text-2xl font-bold">Built With Modern Technology</h2>
 		<p class="mb-6 text-surface-600 dark:text-surface-400">
 			QA Studio is built with cutting-edge web technologies that prioritize performance, developer
@@ -148,19 +150,27 @@
 			</div>
 			<div class="rounded-base bg-surface-100-900 p-4">
 				<div class="mb-1 font-semibold">PostgreSQL</div>
-				<div class="text-sm text-surface-600 dark:text-surface-400">Reliable, scalable database</div>
+				<div class="text-sm text-surface-600 dark:text-surface-400">
+					Reliable, scalable database
+				</div>
 			</div>
 			<div class="rounded-base bg-surface-100-900 p-4">
 				<div class="mb-1 font-semibold">Prisma</div>
-				<div class="text-sm text-surface-600 dark:text-surface-400">Modern ORM for data management</div>
+				<div class="text-sm text-surface-600 dark:text-surface-400">
+					Modern ORM for data management
+				</div>
 			</div>
 			<div class="rounded-base bg-surface-100-900 p-4">
 				<div class="mb-1 font-semibold">Playwright</div>
-				<div class="text-sm text-surface-600 dark:text-surface-400">First-class test integration</div>
+				<div class="text-sm text-surface-600 dark:text-surface-400">
+					First-class test integration
+				</div>
 			</div>
 			<div class="rounded-base bg-surface-100-900 p-4">
 				<div class="mb-1 font-semibold">Docker</div>
-				<div class="text-sm text-surface-600 dark:text-surface-400">Easy self-hosting (coming soon)</div>
+				<div class="text-sm text-surface-600 dark:text-surface-400">
+					Easy self-hosting (coming soon)
+				</div>
 			</div>
 		</div>
 	</div>
