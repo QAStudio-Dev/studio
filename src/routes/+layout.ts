@@ -6,7 +6,7 @@ export const load: LayoutLoad = async ({ url, data }) => {
 		title: 'QA Studio',
 		titleTemplate: '%s | QA Studio',
 		description:
-			'Modern test management platform built by QA engineers. Zero code changes required - automatically discovers your tests through Playwright integration.',
+			'Modern test management platform built by QA engineers. Open source, API-first, and designed for modern testing workflows.',
 		canonical: new URL(url.pathname, url.origin).href,
 		openGraph: {
 			type: 'website',
@@ -14,7 +14,7 @@ export const load: LayoutLoad = async ({ url, data }) => {
 			locale: 'en_US',
 			title: 'QA Studio - Modern Test Management Platform',
 			description:
-				'Modern test management platform built by QA engineers. Zero code changes required - automatically discovers your tests through Playwright integration.',
+				'Modern test management platform built by QA engineers. Open source, API-first, and designed for modern testing workflows.',
 			siteName: 'QA Studio',
 			images: [
 				{
@@ -32,7 +32,7 @@ export const load: LayoutLoad = async ({ url, data }) => {
 			site: '@qastudio',
 			title: 'QA Studio - Modern Test Management Platform',
 			description:
-				'Modern test management platform built by QA engineers. Zero code changes required.',
+				'Modern test management platform built by QA engineers. Open source and API-first.',
 			image: 'https://qastudio.dev/og_image.png',
 			imageAlt: 'QA Studio - Modern Test Management'
 		},

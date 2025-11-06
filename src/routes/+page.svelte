@@ -71,9 +71,9 @@
 					? 'animate-fade-in-up animation-delay-100'
 					: 'opacity-0'}"
 			>
-				<strong class="text-white">No code changes. No test mapping. No annotations.</strong>
+				<strong class="text-white">Open source test management platform.</strong>
 				<br />
-				Automatically discovers your existing tests.
+				Built for modern QA teams. No vendor lock-in.
 			</p>
 
 			<!-- CTA Buttons -->
@@ -174,7 +174,7 @@
 
 	<!-- Bento Grid -->
 	<div class="mx-auto grid max-w-6xl auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-		<!-- Large Feature 1 - Zero Code Changes -->
+		<!-- Large Feature 1 - Open Source -->
 		<div
 			class="group relative overflow-hidden card p-8 transition-all hover:-translate-y-1 hover:shadow-2xl md:col-span-2 lg:row-span-2"
 		>
@@ -197,28 +197,28 @@
 						/>
 					</svg>
 				</div>
-				<h3 class="mb-3 text-2xl font-bold">Zero Code Changes Required</h3>
+				<h3 class="mb-3 text-2xl font-bold">Fully Open Source</h3>
 				<p class="mb-6 text-surface-600 dark:text-surface-400">
 					<strong class="text-surface-900 dark:text-surface-100"
-						>No test mapping annotations. No framework lock-in. No code modifications.</strong
+						>No vendor lock-in. No proprietary formats. No artificial limits.</strong
 					>
 					<br /><br />
-					QA Studio automatically discovers and maps your tests through our Playwright reporter. Just
-					install, run your tests, and we handle the rest. Works with your existing test suite out of
-					the box.
+					QA Studio is completely open source and free to use. Fork it, customize it, self-host it.
+					The code belongs to the community, and you have full control over your testing data and
+					infrastructure.
 				</p>
 				<div class="flex flex-wrap gap-2">
 					<span
 						class="rounded-full bg-success-500/10 px-3 py-1 text-xs font-medium text-success-600 dark:text-success-400"
-						>Auto-Discovery</span
+						>Elastic 2.0 License</span
 					>
 					<span
 						class="rounded-full bg-success-500/10 px-3 py-1 text-xs font-medium text-success-600 dark:text-success-400"
-						>Framework Agnostic</span
+						>Self-Hostable</span
 					>
 					<span
 						class="rounded-full bg-success-500/10 px-3 py-1 text-xs font-medium text-success-600 dark:text-success-400"
-						>Zero Maintenance</span
+						>Community Driven</span
 					>
 				</div>
 			</div>
