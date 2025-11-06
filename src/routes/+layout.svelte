@@ -153,7 +153,7 @@
 									Projects
 								</a>
 							</li>
-							<li>
+							<!-- <li>
 								<a
 									href="https://github.com"
 									target="_blank"
@@ -162,12 +162,12 @@
 								>
 									Self-Hosting Guide
 								</a>
-							</li>
-							<li>
+							</li> -->
+							<!-- <li>
 								<a href="/" class="text-surface-600-400 transition-colors hover:text-primary-500">
 									Pricing
 								</a>
-							</li>
+							</li> -->
 						</ul>
 					</div>
 
@@ -193,15 +193,15 @@
 									GitHub
 								</a>
 							</li>
-							<li>
+							<!-- <li>
 								<a
 									href="/blog"
 									class="text-surface-600-400 transition-colors hover:text-primary-500"
 								>
 									Changelog
 								</a>
-							</li>
-							<li>
+							</li> -->
+							<!-- <li>
 								<a
 									href="https://discord.com"
 									target="_blank"
@@ -210,7 +210,7 @@
 								>
 									Community
 								</a>
-							</li>
+							</li> -->
 						</ul>
 					</div>
 
@@ -219,22 +219,34 @@
 						<h3 class="mb-4 text-sm font-bold">Company</h3>
 						<ul class="space-y-2 text-sm">
 							<li>
-								<a href="/" class="text-surface-600-400 transition-colors hover:text-primary-500">
+								<a
+									href="/about"
+									class="text-surface-600-400 transition-colors hover:text-primary-500"
+								>
 									About
 								</a>
 							</li>
 							<li>
-								<a href="/" class="text-surface-600-400 transition-colors hover:text-primary-500">
+								<a
+									href="/contact"
+									class="text-surface-600-400 transition-colors hover:text-primary-500"
+								>
 									Contact
 								</a>
 							</li>
 							<li>
-								<a href="/" class="text-surface-600-400 transition-colors hover:text-primary-500">
+								<a
+									href="/privacy"
+									class="text-surface-600-400 transition-colors hover:text-primary-500"
+								>
 									Privacy Policy
 								</a>
 							</li>
 							<li>
-								<a href="/" class="text-surface-600-400 transition-colors hover:text-primary-500">
+								<a
+									href="/terms"
+									class="text-surface-600-400 transition-colors hover:text-primary-500"
+								>
 									Terms of Service
 								</a>
 							</li>
@@ -250,14 +262,14 @@
 							<span class="text-surface-400-600">•</span>
 							<span>Built with ❤️ by QA Engineers</span>
 						</div>
-						<div class="flex items-center gap-1 text-xs text-surface-600-400">
+						<!-- <div class="flex items-center gap-1 text-xs text-surface-600-400">
 							<span class="rounded-full bg-success-500/10 px-2 py-1 text-success-500">
 								✓ Open Source
 							</span>
 							<span class="rounded-full bg-primary-500/10 px-2 py-1 text-primary-500">
 								v1.0.0
 							</span>
-						</div>
+						</div> -->
 					</div>
 				</div>
 			</div>
