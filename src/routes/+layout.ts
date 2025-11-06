@@ -18,12 +18,12 @@ export const load: LayoutLoad = async ({ url, data }) => {
 			siteName: 'QA Studio',
 			images: [
 				{
-					url: 'https://qastudio.dev/og-image.jpg',
+					url: 'https://qastudio.dev/og_image.png',
 					alt: 'QA Studio - Modern Test Management',
 					width: 1200,
 					height: 630,
-					secureUrl: 'https://qastudio.dev/og-image.jpg',
-					type: 'image/jpeg'
+					secureUrl: 'https://qastudio.dev/og_image.png',
+					type: 'image/png'
 				}
 			]
 		},
@@ -33,7 +33,7 @@ export const load: LayoutLoad = async ({ url, data }) => {
 			title: 'QA Studio - Modern Test Management Platform',
 			description:
 				'Modern test management platform built by QA engineers. Zero code changes required.',
-			image: 'https://qastudio.dev/og-image.jpg',
+			image: 'https://qastudio.dev/og_image.png',
 			imageAlt: 'QA Studio - Modern Test Management'
 		},
 		additionalMetaTags: [
