@@ -74,6 +74,7 @@
 		"shiki": "^3.13.0",
 		"simple-oauth2": "^5.1.0",
 		"stripe": "^19.1.0",
-		"svelte-clerk": "^0.17.6"
+		"svelte-clerk": "^0.17.6",
+		"zod": "^4.1.12"
 	}
 }

@@ -16,26 +16,26 @@ datasource db {
 // ============================================
 
 model User {
-  id            String   @id // Clerk user ID
-  email         String   @unique
-  firstName     String?
-  lastName      String?
-  imageUrl      String?
-  role          UserRole @default(TESTER)
+  id        String   @id // Clerk user ID
+  email     String   @unique
+  firstName String?
+  lastName  String?
+  imageUrl  String?
+  role      UserRole @default(TESTER)
 
   // Team membership
-  teamId        String?
+  teamId String?
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  team          Team?     @relation(fields: [teamId], references: [id], onDelete: SetNull)
-  createdProjects  Project[]  @relation("ProjectCreator")
-  createdTestCases TestCase[] @relation("TestCaseCreator")
-  createdTestRuns  TestRun[]  @relation("TestRunCreator")
+  team             Team?        @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  createdProjects  Project[]    @relation("ProjectCreator")
+  createdTestCases TestCase[]   @relation("TestCaseCreator")
+  createdTestRuns  TestRun[]    @relation("TestRunCreator")
   executedResults  TestResult[] @relation("TestResultExecutor")
-  apiKeys       ApiKey[]
+  apiKeys          ApiKey[]
 
   @@index([email])
   @@index([teamId])
@@ -43,17 +43,17 @@ model User {
 }
 
 model ApiKey {
-  id          String   @id @default(cuid())
-  name        String   // User-friendly name like "CI/CD Pipeline"
-  key         String   @unique // The actual API key (hashed)
-  prefix      String   // First 8 chars for display (e.g., "qas_1234...")
-  userId      String
-  lastUsedAt  DateTime?
-  expiresAt   DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String    @id @default(cuid())
+  name       String // User-friendly name like "CI/CD Pipeline"
+  key        String    @unique // The actual API key (hashed)
+  prefix     String // First 8 chars for display (e.g., "qas_1234...")
+  userId     String
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([key])
@@ -101,19 +101,19 @@ model Subscription {
 }
 
 enum SubscriptionStatus {
-  ACTIVE        // Paid and active
-  PAST_DUE      // Payment failed
-  CANCELED      // Subscription canceled
-  INCOMPLETE    // Initial payment pending
+  ACTIVE // Paid and active
+  PAST_DUE // Payment failed
+  CANCELED // Subscription canceled
+  INCOMPLETE // Initial payment pending
   INCOMPLETE_EXPIRED // Initial payment failed
-  UNPAID        // Payment failed, subscription ended
+  UNPAID // Payment failed, subscription ended
 }
 
 enum UserRole {
-  ADMIN      // Full system access
-  MANAGER    // Can manage projects and teams
-  TESTER     // Can create and execute tests
-  VIEWER     // Read-only access
+  ADMIN // Full system access
+  MANAGER // Can manage projects and teams
+  TESTER // Can create and execute tests
+  VIEWER // Read-only access
 }
 
 // ============================================
@@ -125,19 +125,19 @@ model Project {
   name        String
   description String?
   key         String   @unique // Short identifier like "PROJ"
-  createdBy   String   // Clerk user ID
-  teamId      String?  // Optional team ownership
+  createdBy   String // Clerk user ID
+  teamId      String? // Optional team ownership
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  creator     User     @relation("ProjectCreator", fields: [createdBy], references: [id], onDelete: Cascade)
-  team        Team?    @relation(fields: [teamId], references: [id], onDelete: SetNull)
-  testSuites  TestSuite[]
-  testCases   TestCase[]
-  testRuns    TestRun[]
-  milestones  Milestone[]
+  creator      User          @relation("ProjectCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  team         Team?         @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  testSuites   TestSuite[]
+  testCases    TestCase[]
+  testRuns     TestRun[]
+  milestones   Milestone[]
   environments Environment[]
-  jiraIssues  JiraIssue[]
+  jiraIssues   JiraIssue[]
 
   @@index([createdBy])
   @@index([teamId])
@@ -146,17 +146,17 @@ model Project {
 }
 
 model Milestone {
-  id          String   @id @default(cuid())
+  id          String          @id @default(cuid())
   name        String
   description String?
   dueDate     DateTime?
   status      MilestoneStatus @default(ACTIVE)
   projectId   String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  testRuns    TestRun[]
+  project  Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  testRuns TestRun[]
 
   @@index([projectId])
   @@index([status])
@@ -172,17 +172,17 @@ enum MilestoneStatus {
 
 model Environment {
   id          String   @id @default(cuid())
-  name        String   // e.g., "Production", "Staging", "QA"
+  name        String // e.g., "Production", "Staging", "QA"
   description String?
   projectId   String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  testRuns    TestRun[]
+  project  Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  testRuns TestRun[]
 
-  @@index([projectId])
   @@unique([projectId, name])
+  @@index([projectId])
 }
 
 // ============================================
@@ -194,15 +194,15 @@ model TestSuite {
   name        String
   description String?
   projectId   String
-  parentId    String?  // For nested suites
+  parentId    String? // For nested suites
   order       Int      @default(0) // For drag-and-drop ordering
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  parent      TestSuite?  @relation("SuiteHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  children    TestSuite[] @relation("SuiteHierarchy")
-  testCases   TestCase[]
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parent    TestSuite?  @relation("SuiteHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children  TestSuite[] @relation("SuiteHierarchy")
+  testCases TestCase[]
 
   @@index([projectId])
   @@index([parentId])
@@ -210,28 +210,28 @@ model TestSuite {
 }
 
 model TestCase {
-  id            String   @id @default(cuid())
-  title         String
-  description   String?
-  preconditions String?  // Setup requirements
-  steps         Json?    // Array of test steps
-  expectedResult String?
-  priority      Priority @default(MEDIUM)
-  type          TestType @default(FUNCTIONAL)
+  id               String           @id @default(cuid())
+  title            String
+  description      String?
+  preconditions    String? // Setup requirements
+  steps            Json? // Array of test steps
+  expectedResult   String?
+  priority         Priority         @default(MEDIUM)
+  type             TestType         @default(FUNCTIONAL)
   automationStatus AutomationStatus @default(NOT_AUTOMATED)
-  tags          String[] // For categorization
-  projectId     String
-  suiteId       String?
-  createdBy     String   // Clerk user ID
-  order         Int      @default(0) // For drag-and-drop ordering
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  tags             String[] // For categorization
+  projectId        String
+  suiteId          String?
+  createdBy        String // Clerk user ID
+  order            Int              @default(0) // For drag-and-drop ordering
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
-  creator       User      @relation("TestCaseCreator", fields: [createdBy], references: [id], onDelete: Cascade)
-  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  suite         TestSuite? @relation(fields: [suiteId], references: [id], onDelete: SetNull)
-  results       TestResult[]
-  attachments   Attachment[]
+  creator     User         @relation("TestCaseCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  suite       TestSuite?   @relation(fields: [suiteId], references: [id], onDelete: SetNull)
+  results     TestResult[]
+  attachments Attachment[]
 
   @@index([projectId])
   @@index([suiteId])
@@ -276,29 +276,29 @@ enum AutomationStatus {
 // ============================================
 
 model TestRun {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   name          String
   description   String?
   projectId     String
   milestoneId   String?
   environmentId String?
   status        RunStatus @default(PLANNED)
-  createdBy     String   // Clerk user ID
+  createdBy     String // Clerk user ID
   startedAt     DateTime?
   completedAt   DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   // AI-generated content
-  aiSummary     String?  // AI-generated summary of the test run
-  aiPatternAnalysis String? // AI-generated failure pattern analysis
+  aiSummary            String? // AI-generated summary of the test run
+  aiPatternAnalysis    String? // AI-generated failure pattern analysis
   aiSummaryGeneratedAt DateTime? // When the AI summary was generated
 
-  creator       User         @relation("TestRunCreator", fields: [createdBy], references: [id], onDelete: Cascade)
-  project       Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  milestone     Milestone?   @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
-  environment   Environment? @relation(fields: [environmentId], references: [id], onDelete: SetNull)
-  results       TestResult[]
+  creator     User         @relation("TestRunCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  milestone   Milestone?   @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+  environment Environment? @relation(fields: [environmentId], references: [id], onDelete: SetNull)
+  results     TestResult[]
 
   @@index([projectId])
   @@index([milestoneId])
@@ -319,26 +319,26 @@ enum RunStatus {
 }
 
 model TestResult {
-  id          String   @id @default(cuid())
-  testCaseId  String
-  testRunId   String
-  status      TestStatus
-  comment     String?  // Tester notes
-  duration    Int?     // Duration in milliseconds
-  stackTrace  String?  // For failures
+  id           String     @id @default(cuid())
+  testCaseId   String
+  testRunId    String
+  status       TestStatus
+  comment      String? // Tester notes
+  duration     Int? // Duration in milliseconds
+  stackTrace   String? // For failures
   errorMessage String? // For failures
-  executedBy  String   // Clerk user ID
-  executedAt  DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  executedBy   String // Clerk user ID
+  executedAt   DateTime   @default(now())
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   // AI-generated content
-  aiDiagnosis String?  // AI-generated diagnosis for failed tests
+  aiDiagnosis            String? // AI-generated diagnosis for failed tests
   aiDiagnosisGeneratedAt DateTime? // When the AI diagnosis was generated
 
-  executor    User       @relation("TestResultExecutor", fields: [executedBy], references: [id], onDelete: Cascade)
-  testCase    TestCase   @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
-  testRun     TestRun    @relation(fields: [testRunId], references: [id], onDelete: Cascade)
+  executor    User             @relation("TestResultExecutor", fields: [executedBy], references: [id], onDelete: Cascade)
+  testCase    TestCase         @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+  testRun     TestRun          @relation(fields: [testRunId], references: [id], onDelete: Cascade)
   attachments Attachment[]
   steps       TestStepResult[]
   jiraIssues  JiraIssue[]
@@ -363,15 +363,15 @@ enum TestStatus {
 }
 
 model TestStepResult {
-  id           String   @id @default(cuid())
+  id           String     @id @default(cuid())
   testResultId String
   stepNumber   Int
   description  String
   status       TestStatus
   comment      String?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime   @default(now())
 
-  testResult   TestResult @relation(fields: [testResultId], references: [id], onDelete: Cascade)
+  testResult TestResult @relation(fields: [testResultId], references: [id], onDelete: Cascade)
 
   @@index([testResultId])
 }
@@ -385,14 +385,14 @@ model Attachment {
   filename     String
   originalName String
   mimeType     String
-  size         Int      // Size in bytes
-  url          String   // Storage location (S3, local, etc.)
+  size         Int // Size in bytes
+  url          String // Storage location (S3, local, etc.)
   testCaseId   String?
   testResultId String?
   createdAt    DateTime @default(now())
 
-  testCase     TestCase?   @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
-  testResult   TestResult? @relation(fields: [testResultId], references: [id], onDelete: Cascade)
+  testCase   TestCase?   @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+  testResult TestResult? @relation(fields: [testResultId], references: [id], onDelete: Cascade)
 
   @@index([testCaseId])
   @@index([testResultId])
@@ -405,31 +405,32 @@ model Attachment {
 // ============================================
 
 model Integration {
-  id              String            @id @default(cuid())
-  teamId          String
-  type            IntegrationType
-  name            String            // User-friendly name like "Engineering Slack"
-  status          IntegrationStatus @default(ACTIVE)
+  id     String            @id @default(cuid())
+  teamId String
+  type   IntegrationType
+  name   String // User-friendly name like "Engineering Slack"
+  status IntegrationStatus @default(ACTIVE)
 
   // OAuth & Connection Data (encrypted in production)
-  accessToken     String?           // OAuth access token
-  refreshToken    String?           // OAuth refresh token
-  tokenExpiresAt  DateTime?
-  webhookUrl      String?           // For incoming webhooks
-  webhookSecret   String?           // For verifying webhook signatures
+  accessToken    String? // OAuth access token
+  refreshToken   String? // OAuth refresh token
+  tokenExpiresAt DateTime?
+  webhookUrl     String? // For incoming webhooks
+  webhookSecret  String? // For verifying webhook signatures
 
   // Integration-specific configuration (JSON)
-  config          Json?             // Channel IDs, preferences, etc.
+  config Json? // Channel IDs, preferences, etc.
 
   // Metadata
-  installedBy     String            // User ID who installed
-  lastSyncedAt    DateTime?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  installedBy  String // User ID who installed
+  lastSyncedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   // Relations
-  team            Team              @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  notifications   IntegrationNotification[]
+  team          Team                      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  notifications IntegrationNotification[]
+  jiraIssues    JiraIssue[]
 
   @@index([teamId])
   @@index([type])
@@ -456,21 +457,21 @@ enum IntegrationStatus {
 }
 
 model IntegrationNotification {
-  id            String           @id @default(cuid())
+  id            String             @id @default(cuid())
   integrationId String
   eventType     NotificationEvent
   status        NotificationStatus @default(PENDING)
-  payload       Json              // Event data to send
-  response      Json?             // Response from integration
+  payload       Json // Event data to send
+  response      Json? // Response from integration
   error         String?
-  attempts      Int               @default(0)
-  maxAttempts   Int               @default(3)
+  attempts      Int                @default(0)
+  maxAttempts   Int                @default(3)
   nextRetryAt   DateTime?
   sentAt        DateTime?
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
 
-  integration   Integration       @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  integration Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
 
   @@index([integrationId])
   @@index([status])
@@ -503,28 +504,28 @@ enum NotificationStatus {
 // ============================================
 
 model TeamInvitation {
-  id          String           @id @default(cuid())
-  teamId      String
-  email       String
-  role        UserRole         @default(TESTER)
-  status      InvitationStatus @default(PENDING)
-  invitedBy   String           // User ID who sent the invitation
-  token       String           @unique // Unique token for accepting invitation
-  expiresAt   DateTime         // Invitations expire after 7 days
-  acceptedAt  DateTime?
-  declinedAt  DateTime?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  id         String           @id @default(cuid())
+  teamId     String
+  email      String
+  role       UserRole         @default(TESTER)
+  status     InvitationStatus @default(PENDING)
+  invitedBy  String // User ID who sent the invitation
+  token      String           @unique // Unique token for accepting invitation
+  expiresAt  DateTime // Invitations expire after 7 days
+  acceptedAt DateTime?
+  declinedAt DateTime?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
 
-  team        Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
+  @@unique([teamId, email]) // One pending invitation per email per team
   @@index([teamId])
   @@index([email])
   @@index([token])
   @@index([status])
   @@index([expiresAt]) // For finding expired invitations
   @@index([teamId, status]) // Composite for filtering invitations by status
-  @@unique([teamId, email]) // One pending invitation per email per team
 }
 
 enum InvitationStatus {
@@ -540,33 +541,34 @@ enum InvitationStatus {
 // ============================================
 
 model JiraIssue {
-  id            String   @id @default(cuid())
-  jiraIssueKey  String   @unique // e.g., "PROJ-123"
-  jiraIssueId   String   // Jira's internal ID
-  integrationId String   // Which Jira integration created this
-  testResultId  String?  // Link to test result that triggered creation
-  projectId     String   // QA Studio project
+  id            String  @id @default(cuid())
+  jiraIssueKey  String  @unique // e.g., "PROJ-123"
+  jiraIssueId   String // Jira's internal ID
+  integrationId String // Which Jira integration created this
+  testResultId  String? // Link to test result that triggered creation
+  projectId     String // QA Studio project
 
   // Jira issue details (cached for performance)
-  summary       String
-  description   String?
-  issueType     String   // Bug, Task, Story, etc.
-  status        String   // Open, In Progress, Done, etc.
-  priority      String?  // High, Medium, Low, etc.
-  assignee      String?  // Jira user display name
-  reporter      String?  // Jira user display name
-  labels        String[] // Jira labels
+  summary     String
+  description String?
+  issueType   String // Bug, Task, Story, etc.
+  status      String // Open, In Progress, Done, etc.
+  priority    String? // High, Medium, Low, etc.
+  assignee    String? // Jira user display name
+  reporter    String? // Jira user display name
+  labels      String[] // Jira labels
 
   // Sync metadata
-  lastSyncedAt  DateTime?
-  syncError     String?
+  lastSyncedAt DateTime?
+  syncError    String?
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  testResult    TestResult? @relation(fields: [testResultId], references: [id], onDelete: SetNull)
-  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  integration Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  testResult  TestResult? @relation(fields: [testResultId], references: [id], onDelete: SetNull)
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([integrationId])
   @@index([testResultId])

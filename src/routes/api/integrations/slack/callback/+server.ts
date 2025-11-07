@@ -2,6 +2,7 @@ import { json, redirect } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { requireAuth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
+import { encrypt } from '$lib/server/encryption';
 
 /**
  * GET /api/integrations/slack/callback
@@ -66,6 +67,15 @@ export const GET: RequestHandler = async (event) => {
 			throw redirect(302, '/settings?tab=integrations&error=no_team');
 		}
 
+		// Encrypt sensitive tokens before storing
+		const encryptedAccessToken = tokenData.access_token ? encrypt(tokenData.access_token) : null;
+		const encryptedRefreshToken = tokenData.refresh_token ? encrypt(tokenData.refresh_token) : null;
+
+		// Encrypt webhook URL if present (contains sensitive token)
+		const encryptedWebhookUrl = tokenData.incoming_webhook?.url
+			? encrypt(tokenData.incoming_webhook.url)
+			: null;
+
 		// Store integration in database
 		await db.integration.create({
 			data: {
@@ -73,15 +83,20 @@ export const GET: RequestHandler = async (event) => {
 				type: 'SLACK',
 				name: tokenData.team.name || 'Slack Workspace',
 				status: 'ACTIVE',
-				accessToken: tokenData.access_token,
-				refreshToken: tokenData.refresh_token,
+				accessToken: encryptedAccessToken,
+				refreshToken: encryptedRefreshToken,
 				config: {
 					teamId: tokenData.team.id,
 					teamName: tokenData.team.name,
 					scope: tokenData.scope,
 					botUserId: tokenData.bot_user_id,
 					appId: tokenData.app_id,
-					incomingWebhook: tokenData.incoming_webhook
+					incomingWebhook: encryptedWebhookUrl
+						? {
+								...tokenData.incoming_webhook,
+								url: encryptedWebhookUrl
+							}
+						: tokenData.incoming_webhook
 				},
 				installedBy: userId
 			}

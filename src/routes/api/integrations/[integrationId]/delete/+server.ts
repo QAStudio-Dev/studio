@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { requireAuth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
+import { decrypt } from '$lib/server/encryption';
 
 /**
  * DELETE /api/integrations/[integrationId]/delete
@@ -39,11 +40,13 @@ export const DELETE: RequestHandler = async (event) => {
 		// For Slack, optionally revoke the OAuth token
 		if (integration.type === 'SLACK' && integration.accessToken) {
 			try {
+				// Decrypt access token before revoking
+				const accessToken = decrypt(integration.accessToken);
 				await fetch('https://slack.com/api/auth.revoke', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/x-www-form-urlencoded',
-						Authorization: `Bearer ${integration.accessToken}`
+						Authorization: `Bearer ${accessToken}`
 					}
 				});
 			} catch (err) {

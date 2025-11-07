@@ -122,9 +122,7 @@ export class JiraClient {
 	 * Get issue types for a project
 	 */
 	async getIssueTypes(projectKey: string): Promise<{ data: JiraIssueType[]; error?: string }> {
-		const result = await this.request<{ issueTypes: JiraIssueType[] }>(
-			`/project/${projectKey}`
-		);
+		const result = await this.request<{ issueTypes: JiraIssueType[] }>(`/project/${projectKey}`);
 		if (result.error) {
 			return { data: [], error: result.error };
 		}
@@ -258,10 +256,7 @@ export class JiraClient {
 	/**
 	 * Search issues using JQL
 	 */
-	async searchIssues(
-		jql: string,
-		maxResults = 50
-	): Promise<{ data: JiraIssue[]; error?: string }> {
+	async searchIssues(jql: string, maxResults = 50): Promise<{ data: JiraIssue[]; error?: string }> {
 		const result = await this.request<{ issues: JiraIssue[] }>(
 			`/search?jql=${encodeURIComponent(jql)}&maxResults=${maxResults}`
 		);
@@ -273,25 +268,53 @@ export class JiraClient {
 }
 
 /**
+ * Type guard for Jira integration config
+ */
+interface JiraIntegrationConfig {
+	baseUrl: string;
+	email: string;
+	apiToken: string;
+}
+
+function isValidJiraConfig(config: unknown): config is JiraIntegrationConfig {
+	return (
+		typeof config === 'object' &&
+		config !== null &&
+		'baseUrl' in config &&
+		'email' in config &&
+		'apiToken' in config &&
+		typeof config.baseUrl === 'string' &&
+		typeof config.email === 'string' &&
+		typeof config.apiToken === 'string'
+	);
+}
+
+/**
  * Helper function to create a Jira client from an Integration record
+ * Automatically decrypts the API token if needed
  */
 export function createJiraClientFromIntegration(integration: {
 	config: unknown;
 }): JiraClient | null {
-	const config = integration.config as {
-		baseUrl?: string;
-		email?: string;
-		apiToken?: string;
-	};
-
-	if (!config.baseUrl || !config.email || !config.apiToken) {
+	if (!isValidJiraConfig(integration.config)) {
 		console.error('Invalid Jira integration config');
 		return null;
 	}
 
+	const { decrypt } = require('./encryption');
+	let apiToken = integration.config.apiToken;
+
+	// Decrypt token if it's encrypted
+	try {
+		apiToken = decrypt(apiToken);
+	} catch (error) {
+		console.error('Failed to decrypt Jira API token:', error);
+		return null;
+	}
+
 	return new JiraClient({
-		baseUrl: config.baseUrl,
-		email: config.email,
-		apiToken: config.apiToken
+		baseUrl: integration.config.baseUrl,
+		email: integration.config.email,
+		apiToken
 	});
 }

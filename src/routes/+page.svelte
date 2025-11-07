@@ -203,9 +203,8 @@
 						>No vendor lock-in. No proprietary formats. No artificial limits.</strong
 					>
 					<br /><br />
-					QA Studio is completely open source and free to use. Fork it, customize it, self-host it.
-					The code belongs to the community, and you have full control over your testing data and
-					infrastructure.
+					QA Studio is completely open source and free to use. Fork it, customize it, self-host it. The
+					code belongs to the community, and you have full control over your testing data and infrastructure.
 				</p>
 				<div class="flex flex-wrap gap-2">
 					<span

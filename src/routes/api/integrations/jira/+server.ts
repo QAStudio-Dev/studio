@@ -3,6 +3,8 @@ import type { RequestHandler } from './$types';
 import { requireAuth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import { JiraClient } from '$lib/server/integrations/jira';
+import { encrypt } from '$lib/server/encryption';
+import { z } from 'zod';
 
 /**
  * GET /api/integrations/jira
@@ -54,6 +56,24 @@ export const GET: RequestHandler = async (event) => {
 	return json({ integrations: safeIntegrations });
 };
 
+// Validation schema
+const CreateJiraIntegrationSchema = z.object({
+	name: z.string().min(1).max(100),
+	baseUrl: z.string().refine(
+		(url) => {
+			try {
+				const parsed = new URL(url);
+				return parsed.protocol === 'https:';
+			} catch {
+				return false;
+			}
+		},
+		{ message: 'Must be a valid HTTPS URL' }
+	),
+	email: z.string().email(),
+	apiToken: z.string().min(1)
+});
+
 /**
  * POST /api/integrations/jira
  * Create a new Jira integration
@@ -71,23 +91,37 @@ export const POST: RequestHandler = async (event) => {
 		return json({ error: 'User must be part of a team' }, { status: 400 });
 	}
 
-	const body = await event.request.json();
-	const { name, baseUrl, email, apiToken } = body;
-
-	if (!name || !baseUrl || !email || !apiToken) {
-		return json({ error: 'Missing required fields' }, { status: 400 });
+	// Parse and validate request body
+	let body;
+	try {
+		const rawBody = await event.request.json();
+		body = CreateJiraIntegrationSchema.parse(rawBody);
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			const firstError = error.issues[0];
+			return json(
+				{ error: firstError.message || `Invalid ${firstError.path.join('.')}` },
+				{ status: 400 }
+			);
+		}
+		return json({ error: 'Invalid request body' }, { status: 400 });
 	}
 
+	const { name, baseUrl, email, apiToken } = body;
+
+	// Remove trailing slash from baseUrl
+	const normalizedBaseUrl = baseUrl.replace(/\/$/, '');
+
 	// Test the connection
-	const jiraClient = new JiraClient({ baseUrl, email, apiToken });
+	const jiraClient = new JiraClient({ baseUrl: normalizedBaseUrl, email, apiToken });
 	const testResult = await jiraClient.testConnection();
 
 	if (!testResult.success) {
-		return json(
-			{ error: `Failed to connect to Jira: ${testResult.error}` },
-			{ status: 400 }
-		);
+		return json({ error: `Failed to connect to Jira: ${testResult.error}` }, { status: 400 });
 	}
+
+	// Encrypt the API token
+	const encryptedApiToken = encrypt(apiToken);
 
 	// Create the integration
 	const integration = await db.integration.create({
@@ -97,9 +131,9 @@ export const POST: RequestHandler = async (event) => {
 			name,
 			status: 'ACTIVE',
 			config: {
-				baseUrl,
+				baseUrl: normalizedBaseUrl,
 				email,
-				apiToken // TODO: Encrypt this in production
+				apiToken: encryptedApiToken
 			},
 			installedBy: userId
 		}
@@ -112,7 +146,7 @@ export const POST: RequestHandler = async (event) => {
 			name: integration.name,
 			status: integration.status,
 			config: {
-				baseUrl,
+				baseUrl: normalizedBaseUrl,
 				email
 			},
 			createdAt: integration.createdAt

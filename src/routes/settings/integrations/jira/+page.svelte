@@ -25,7 +25,8 @@
 		try {
 			new URL(baseUrl);
 		} catch {
-			error = 'Invalid Jira URL. Please enter a valid URL (e.g., https://yourcompany.atlassian.net)';
+			error =
+				'Invalid Jira URL. Please enter a valid URL (e.g., https://yourcompany.atlassian.net)';
 			return;
 		}
 
@@ -77,7 +78,7 @@
 	</div>
 
 	<!-- Connection Form -->
-	<div class="card mb-6 p-6">
+	<div class="mb-6 card p-6">
 		<h2 class="mb-4 text-xl font-bold">Connection Details</h2>
 
 		<!-- Error Message -->
@@ -91,7 +92,13 @@
 			</div>
 		{/if}
 
-		<form onsubmit={(e) => { e.preventDefault(); handleConnect(); }} class="space-y-4">
+		<form
+			onsubmit={(e) => {
+				e.preventDefault();
+				handleConnect();
+			}}
+			class="space-y-4"
+		>
 			<!-- Integration Name -->
 			<div>
 				<label for="name" class="mb-2 block text-sm font-medium">
@@ -171,14 +178,8 @@
 
 			<!-- Submit Button -->
 			<div class="flex justify-end gap-3 pt-4">
-				<a href="/settings?tab=integrations" class="btn preset-outlined-surface-500">
-					Cancel
-				</a>
-				<button
-					type="submit"
-					disabled={connecting}
-					class="btn preset-filled-primary-500"
-				>
+				<a href="/settings?tab=integrations" class="btn preset-outlined-surface-500"> Cancel </a>
+				<button type="submit" disabled={connecting} class="btn preset-filled-primary-500">
 					{#if connecting}
 						<span>Connecting...</span>
 					{:else}
@@ -196,19 +197,26 @@
 
 		<div class="space-y-4">
 			<div class="flex items-start gap-3">
-				<div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-500 text-sm font-bold text-white">
+				<div
+					class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-500 text-sm font-bold text-white"
+				>
 					1
 				</div>
 				<div>
 					<h3 class="mb-1 font-semibold">Get your Jira URL</h3>
 					<p class="text-surface-600-300 text-sm">
-						This is usually in the format <code class="rounded bg-surface-200-800 px-1 py-0.5 text-xs">https://yourcompany.atlassian.net</code>
+						This is usually in the format <code
+							class="rounded bg-surface-200-800 px-1 py-0.5 text-xs"
+							>https://yourcompany.atlassian.net</code
+						>
 					</p>
 				</div>
 			</div>
 
 			<div class="flex items-start gap-3">
-				<div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-500 text-sm font-bold text-white">
+				<div
+					class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-500 text-sm font-bold text-white"
+				>
 					2
 				</div>
 				<div>
@@ -218,8 +226,8 @@
 							href="https://id.atlassian.com/manage-profile/security/api-tokens"
 							target="_blank"
 							rel="noopener noreferrer"
-							class="text-primary-500 hover:underline"
-						>Atlassian API Tokens</a> and create a new token
+							class="text-primary-500 hover:underline">Atlassian API Tokens</a
+						> and create a new token
 					</p>
 					<p class="text-surface-600-300 text-sm">
 						Give it a name like "QA Studio Integration" and copy the generated token
@@ -228,7 +236,9 @@
 			</div>
 
 			<div class="flex items-start gap-3">
-				<div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-500 text-sm font-bold text-white">
+				<div
+					class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-500 text-sm font-bold text-white"
+				>
 					3
 				</div>
 				<div>
@@ -240,7 +250,9 @@
 			</div>
 
 			<div class="flex items-start gap-3">
-				<div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-500 text-sm font-bold text-white">
+				<div
+					class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-500 text-sm font-bold text-white"
+				>
 					4
 				</div>
 				<div>
@@ -254,7 +266,7 @@
 	</div>
 
 	<!-- Features -->
-	<div class="card mt-6 p-6">
+	<div class="mt-6 card p-6">
 		<h2 class="mb-4 text-xl font-bold">What You Can Do</h2>
 		<div class="space-y-3">
 			<div class="flex items-start gap-3">
