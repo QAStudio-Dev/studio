@@ -17,11 +17,13 @@
 		ChevronRight,
 		X,
 		Save,
-		Play
+		Play,
+		Bug
 	} from 'lucide-svelte';
 	import { Avatar, Accordion } from '@skeletonlabs/skeleton-svelte';
 	import AttachmentViewer from '$lib/components/AttachmentViewer.svelte';
 	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
+	import JiraIssueModal from '$lib/components/JiraIssueModal.svelte';
 	import { invalidateAll } from '$app/navigation';
 
 	let { data } = $props();
@@ -100,6 +102,27 @@
 		Map<string, { diagnosis: string; generatedAt?: Date; cached?: boolean }>
 	>(new Map());
 	let loadingDiagnosis = $state<Set<string>>(new Set());
+
+	// Jira integration
+	let showJiraModal = $state(false);
+	let jiraModalSummary = $state('');
+	let jiraModalDescription = $state('');
+
+	function openJiraModal() {
+		jiraModalSummary = `Test Case: ${testCase.title}`;
+		jiraModalDescription = `**Test Case**: ${testCase.title}
+**Project**: ${testCase.project.name} (${testCase.project.key})
+**Priority**: ${testCase.priority}
+**Type**: ${testCase.type}
+**Automation Status**: ${testCase.automationStatus}
+
+${testCase.description ? `**Description**:\n${testCase.description}\n\n` : ''}${testCase.preconditions ? `**Preconditions**:\n${testCase.preconditions}\n\n` : ''}**Test Steps**:
+${testCase.steps || 'See test case for details'}
+
+**Expected Result**:
+${testCase.expectedResult || 'See test case for details'}`;
+		showJiraModal = true;
+	}
 
 	async function loadMoreResults() {
 		if (loadingMore || !hasMoreResults) return;
@@ -239,10 +262,16 @@
 				</div>
 			</div>
 
-			<button onclick={openEditDialog} class="btn preset-filled-primary-500">
-				<Edit class="mr-2 h-4 w-4" />
-				Edit
-			</button>
+			<div class="flex gap-2">
+				<button onclick={openJiraModal} class="preset-tonal-warning-500 btn">
+					<Bug class="mr-2 h-4 w-4" />
+					Create Jira Issue
+				</button>
+				<button onclick={openEditDialog} class="btn preset-filled-primary-500">
+					<Edit class="mr-2 h-4 w-4" />
+					Edit
+				</button>
+			</div>
 		</div>
 	</div>
 
@@ -729,3 +758,12 @@
 		</div>
 	</div>
 {/if}
+
+<!-- Jira Issue Modal -->
+<JiraIssueModal
+	bind:open={showJiraModal}
+	onClose={() => (showJiraModal = false)}
+	testCaseId={testCase.id}
+	prefillSummary={jiraModalSummary}
+	prefillDescription={jiraModalDescription}
+/>

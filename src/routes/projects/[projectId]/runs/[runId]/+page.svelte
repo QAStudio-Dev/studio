@@ -20,13 +20,15 @@
 		FileText,
 		Download,
 		Sparkles,
-		TrendingUp
+		TrendingUp,
+		Bug
 	} from 'lucide-svelte';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import ErrorDisplay from '$lib/components/ErrorDisplay.svelte';
 	import AttachmentViewer from '$lib/components/AttachmentViewer.svelte';
+	import JiraIssueModal from '$lib/components/JiraIssueModal.svelte';
 
 	let { data } = $props();
 	let { testRun, stats } = $derived(data);
@@ -64,6 +66,31 @@
 		cached?: boolean;
 	} | null>(null);
 	let loadingSummary = $state(false);
+
+	// Jira integration
+	let showJiraModal = $state(false);
+	let jiraModalTestCaseId = $state<string | undefined>(undefined);
+	let jiraModalTestResultId = $state<string | undefined>(undefined);
+	let jiraModalSummary = $state('');
+	let jiraModalDescription = $state('');
+
+	function openJiraModal(result: any) {
+		jiraModalTestCaseId = result.testCase.id;
+		jiraModalTestResultId = result.id;
+		jiraModalSummary = `Test Failure: ${result.testCase.title}`;
+		jiraModalDescription = `**Test Case**: ${result.testCase.title}
+**Test Run**: ${testRun.name}
+**Environment**: ${testRun.environment?.name || 'N/A'}
+**Status**: ${result.status}
+**Priority**: ${result.testCase.priority}
+
+${result.errorMessage ? `**Error Message**:\n${result.errorMessage}\n\n` : ''}${result.testCase.description ? `**Test Description**:\n${result.testCase.description}\n\n` : ''}**Steps to Reproduce**:
+${result.testCase.steps || 'See test case for details'}
+
+**Expected Result**:
+${result.testCase.expectedResult || 'See test case for details'}`;
+		showJiraModal = true;
+	}
 
 	// Fetch test results
 	async function fetchTestResults() {
@@ -715,7 +742,7 @@
 
 												<!-- Action Buttons Row (for failed tests) -->
 												{#if result.status === 'FAILED'}
-													<div class="flex gap-2">
+													<div class="flex flex-wrap gap-2">
 														{#if !aiDiagnoses.has(result.id) && !loadingDiagnosis.has(result.id)}
 															<button
 																onclick={() => getDiagnosis(result.id)}
@@ -725,6 +752,13 @@
 																Get AI Diagnosis
 															</button>
 														{/if}
+														<button
+															onclick={() => openJiraModal(result)}
+															class="btn flex-1 preset-tonal-warning"
+														>
+															<Bug class="h-4 w-4" />
+															Create Jira Issue
+														</button>
 														{#if result.attachments && result.attachments.length > 0}
 															<div class="flex-1">
 																<AttachmentViewer attachments={result.attachments} />
@@ -898,3 +932,13 @@
 		{/if}
 	{/if}
 </div>
+
+<!-- Jira Issue Modal -->
+<JiraIssueModal
+	bind:open={showJiraModal}
+	onClose={() => (showJiraModal = false)}
+	testCaseId={jiraModalTestCaseId}
+	testResultId={jiraModalTestResultId}
+	prefillSummary={jiraModalSummary}
+	prefillDescription={jiraModalDescription}
+/>
