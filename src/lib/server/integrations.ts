@@ -1,5 +1,6 @@
 import { db } from './db';
 import type { NotificationEvent, IntegrationType } from '@prisma/client';
+import { decrypt } from './encryption';
 
 /**
  * Integration Service
@@ -147,11 +148,14 @@ async function sendSlackNotification(integrationId: string, payload: Notificatio
 	}
 
 	// Get webhook URL from config (if using incoming webhook)
-	const webhookUrl = (integration.config as any)?.incomingWebhook?.url;
+	const encryptedWebhookUrl = (integration.config as any)?.incomingWebhook?.url;
 
-	if (!webhookUrl) {
+	if (!encryptedWebhookUrl) {
 		throw new Error('Slack webhook URL not configured');
 	}
+
+	// Decrypt webhook URL (contains sensitive token)
+	const webhookUrl = decrypt(encryptedWebhookUrl);
 
 	// Build blocks for Slack message with improved formatting
 	const blocks: any[] = [
@@ -237,6 +241,9 @@ async function sendDiscordNotification(integrationId: string, payload: Notificat
 		throw new Error('Discord webhook URL not found');
 	}
 
+	// Decrypt webhook URL (contains sensitive token)
+	const webhookUrl = decrypt(integration.webhookUrl);
+
 	// Format message for Discord
 	const discordMessage = {
 		embeds: [
@@ -252,7 +259,7 @@ async function sendDiscordNotification(integrationId: string, payload: Notificat
 	};
 
 	// Send to Discord
-	const response = await fetch(integration.webhookUrl, {
+	const response = await fetch(webhookUrl, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json'
@@ -280,12 +287,16 @@ async function sendWebhookNotification(integrationId: string, payload: Notificat
 		throw new Error('Webhook URL not found');
 	}
 
+	// Decrypt sensitive webhook data
+	const webhookUrl = decrypt(integration.webhookUrl);
+	const webhookSecret = integration.webhookSecret ? decrypt(integration.webhookSecret) : null;
+
 	// Send to webhook
-	const response = await fetch(integration.webhookUrl, {
+	const response = await fetch(webhookUrl, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
-			...(integration.webhookSecret && { 'X-Webhook-Secret': integration.webhookSecret })
+			...(webhookSecret && { 'X-Webhook-Secret': webhookSecret })
 		},
 		body: JSON.stringify(payload)
 	});

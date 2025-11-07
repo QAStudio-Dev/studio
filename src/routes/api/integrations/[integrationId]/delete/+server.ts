@@ -2,6 +2,8 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { requireAuth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
+import { decrypt } from '$lib/server/encryption';
+import { z } from 'zod';
 
 /**
  * DELETE /api/integrations/[integrationId]/delete
@@ -10,6 +12,11 @@ import { db } from '$lib/server/db';
 export const DELETE: RequestHandler = async (event) => {
 	const userId = await requireAuth(event);
 	const { integrationId } = event.params;
+
+	// Validate integrationId format
+	if (!z.cuid().safeParse(integrationId).success) {
+		return json({ message: 'Invalid integration ID format' }, { status: 400 });
+	}
 
 	try {
 		// Get user's team
@@ -39,11 +46,13 @@ export const DELETE: RequestHandler = async (event) => {
 		// For Slack, optionally revoke the OAuth token
 		if (integration.type === 'SLACK' && integration.accessToken) {
 			try {
+				// Decrypt access token before revoking
+				const accessToken = decrypt(integration.accessToken);
 				await fetch('https://slack.com/api/auth.revoke', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/x-www-form-urlencoded',
-						Authorization: `Bearer ${integration.accessToken}`
+						Authorization: `Bearer ${accessToken}`
 					}
 				});
 			} catch (err) {
