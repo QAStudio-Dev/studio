@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { requireAuth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
+import { z } from 'zod';
 
 /**
  * DELETE /api/integrations/jira/[integrationId]
@@ -42,6 +43,12 @@ export const DELETE: RequestHandler = async (event) => {
 	return json({ success: true });
 };
 
+// Validation schema for updating integration
+const UpdateIntegrationSchema = z.object({
+	name: z.string().min(1).max(100).optional(),
+	status: z.enum(['ACTIVE', 'INACTIVE', 'ERROR']).optional()
+});
+
 /**
  * PATCH /api/integrations/jira/[integrationId]
  * Update a Jira integration
@@ -73,7 +80,22 @@ export const PATCH: RequestHandler = async (event) => {
 		return json({ error: 'Integration not found' }, { status: 404 });
 	}
 
-	const body = await event.request.json();
+	// Parse and validate request body
+	let body;
+	try {
+		const rawBody = await event.request.json();
+		body = UpdateIntegrationSchema.parse(rawBody);
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			const firstError = error.issues[0];
+			return json(
+				{ error: firstError.message || `Invalid ${firstError.path.join('.')}` },
+				{ status: 400 }
+			);
+		}
+		return json({ error: 'Invalid request body' }, { status: 400 });
+	}
+
 	const { name, status } = body;
 
 	// Update the integration

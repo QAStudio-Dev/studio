@@ -84,20 +84,35 @@ export class JiraClient {
 
 			if (!response.ok) {
 				const errorText = await response.text();
+				// Log detailed error server-side for debugging
 				console.error(`Jira API error (${response.status}):`, errorText);
+
+				// Return sanitized error message to client
+				const sanitizedError =
+					response.status === 401
+						? 'Authentication failed. Please check your credentials.'
+						: response.status === 403
+							? 'Access denied. Please check your permissions.'
+							: response.status === 404
+								? 'Resource not found.'
+								: `Request failed with status ${response.status}`;
+
 				return {
 					data: null as T,
-					error: `Jira API error: ${response.status} - ${errorText}`
+					error: sanitizedError
 				};
 			}
 
 			const data = await response.json();
 			return { data };
 		} catch (error) {
+			// Log detailed error server-side
 			console.error('Jira request failed:', error);
+
+			// Return generic error to client
 			return {
 				data: null as T,
-				error: error instanceof Error ? error.message : 'Unknown error'
+				error: 'Failed to connect to Jira. Please check your network connection.'
 			};
 		}
 	}

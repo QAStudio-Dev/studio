@@ -112,16 +112,20 @@ export const POST: RequestHandler = async (event) => {
 	// Remove trailing slash from baseUrl
 	const normalizedBaseUrl = baseUrl.replace(/\/$/, '');
 
-	// Test the connection
+	// Encrypt the API token immediately to minimize plaintext exposure
+	const encryptedApiToken = encrypt(apiToken);
+
+	// Test the connection (Jira client will decrypt internally)
 	const jiraClient = new JiraClient({ baseUrl: normalizedBaseUrl, email, apiToken });
 	const testResult = await jiraClient.testConnection();
 
 	if (!testResult.success) {
-		return json({ error: `Failed to connect to Jira: ${testResult.error}` }, { status: 400 });
+		// Sanitize error message - don't expose internal Jira details
+		return json(
+			{ error: 'Failed to connect to Jira. Please verify your credentials and URL.' },
+			{ status: 400 }
+		);
 	}
-
-	// Encrypt the API token
-	const encryptedApiToken = encrypt(apiToken);
 
 	// Create the integration
 	const integration = await db.integration.create({
