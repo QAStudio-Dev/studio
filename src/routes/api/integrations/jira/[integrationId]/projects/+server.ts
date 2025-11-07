@@ -43,8 +43,8 @@ export const GET: RequestHandler = async (event) => {
 
 	// Get projects
 	const result = await jiraClient.getProjects();
-	if (result.error) {
-		return json({ error: result.error }, { status: 500 });
+	if (result.error || !result.data) {
+		return json({ error: result.error || 'Failed to fetch projects' }, { status: 500 });
 	}
 
 	return json({ projects: result.data });

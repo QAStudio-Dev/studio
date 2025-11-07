@@ -97,8 +97,8 @@ export const POST: RequestHandler = async (event) => {
 		labels: ['qa-studio', 'automated-test']
 	});
 
-	if (result.error) {
-		return json({ error: result.error }, { status: 500 });
+	if (result.error || !result.data) {
+		return json({ error: result.error || 'Failed to create issue' }, { status: 500 });
 	}
 
 	// Extract description text from ADF format

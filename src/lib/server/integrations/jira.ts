@@ -69,7 +69,7 @@ export class JiraClient {
 	private async request<T>(
 		endpoint: string,
 		options: RequestInit = {}
-	): Promise<{ data: T; error?: string }> {
+	): Promise<{ data: T | null; error?: string }> {
 		try {
 			const url = `${this.baseUrl}/rest/api/3${endpoint}`;
 			const response = await fetch(url, {
@@ -98,7 +98,7 @@ export class JiraClient {
 								: `Request failed with status ${response.status}`;
 
 				return {
-					data: null as T,
+					data: null,
 					error: sanitizedError
 				};
 			}
@@ -111,7 +111,7 @@ export class JiraClient {
 
 			// Return generic error to client
 			return {
-				data: null as T,
+				data: null,
 				error: 'Failed to connect to Jira. Please check your network connection.'
 			};
 		}
@@ -131,7 +131,7 @@ export class JiraClient {
 	/**
 	 * Get all projects
 	 */
-	async getProjects(): Promise<{ data: JiraProject[]; error?: string }> {
+	async getProjects(): Promise<{ data: JiraProject[] | null; error?: string }> {
 		return this.request<JiraProject[]>('/project');
 	}
 
@@ -140,7 +140,7 @@ export class JiraClient {
 	 */
 	async getIssueTypes(projectKey: string): Promise<{ data: JiraIssueType[]; error?: string }> {
 		const result = await this.request<{ issueTypes: JiraIssueType[] }>(`/project/${projectKey}`);
-		if (result.error) {
+		if (result.error || !result.data) {
 			return { data: [], error: result.error };
 		}
 		return { data: result.data.issueTypes || [], error: result.error };
@@ -149,7 +149,9 @@ export class JiraClient {
 	/**
 	 * Create a new issue
 	 */
-	async createIssue(request: CreateIssueRequest): Promise<{ data: JiraIssue; error?: string }> {
+	async createIssue(
+		request: CreateIssueRequest
+	): Promise<{ data: JiraIssue | null; error?: string }> {
 		const body = {
 			fields: {
 				project: {
@@ -194,7 +196,7 @@ export class JiraClient {
 	/**
 	 * Get an issue by key
 	 */
-	async getIssue(issueKey: string): Promise<{ data: JiraIssue; error?: string }> {
+	async getIssue(issueKey: string): Promise<{ data: JiraIssue | null; error?: string }> {
 		return this.request<JiraIssue>(`/issue/${issueKey}`);
 	}
 
@@ -277,7 +279,7 @@ export class JiraClient {
 		const result = await this.request<{ issues: JiraIssue[] }>(
 			`/search?jql=${encodeURIComponent(jql)}&maxResults=${maxResults}`
 		);
-		if (result.error) {
+		if (result.error || !result.data) {
 			return { data: [], error: result.error };
 		}
 		return { data: result.data.issues || [], error: result.error };
