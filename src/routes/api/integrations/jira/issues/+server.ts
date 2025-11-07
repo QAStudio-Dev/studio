@@ -117,6 +117,11 @@ export const POST: RequestHandler = async (event) => {
 		projectId = testCase.projectId;
 	}
 
+	// Ensure we have a test case (should always be true due to validation)
+	if (!testCase) {
+		return json({ error: 'Test case or result not found' }, { status: 404 });
+	}
+
 	// Create Jira client
 	const jiraClient = createJiraClientFromIntegration(integration);
 	if (!jiraClient) {
@@ -137,10 +142,16 @@ export const POST: RequestHandler = async (event) => {
 		return json({ error: result.error || 'Failed to create issue' }, { status: 500 });
 	}
 
+	// Ensure we have the expected fields in the response
+	if (!result.data.fields) {
+		console.error('Unexpected Jira response format:', result.data);
+		return json({ error: 'Unexpected response from Jira API' }, { status: 500 });
+	}
+
 	// Extract description text from ADF format
 	// Jira's description field is an Atlassian Document Format (ADF) object
 	let descriptionText: string | null = null;
-	if (result.data.fields.description) {
+	if (result.data?.fields?.description) {
 		try {
 			// ADF structure: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: '...' }] }] }
 			const adf = result.data.fields.description as any;
