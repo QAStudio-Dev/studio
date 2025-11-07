@@ -9,9 +9,9 @@ import { IntegrationType } from '@prisma/client';
 
 // Validation schema for creating Jira issues
 const CreateJiraIssueSchema = z.object({
-	integrationId: z.string().cuid(),
-	testResultId: z.string().cuid().optional(),
-	testCaseId: z.string().cuid().optional(),
+	integrationId: z.string().min(1),
+	testResultId: z.string().min(1).optional(),
+	testCaseId: z.string().min(1).optional(),
 	projectKey: z
 		.string()
 		.min(1)
