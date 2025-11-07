@@ -10,7 +10,8 @@ import { IntegrationType } from '@prisma/client';
 // Validation schema for creating Jira issues
 const CreateJiraIssueSchema = z.object({
 	integrationId: z.string().cuid(),
-	testResultId: z.string().cuid(),
+	testResultId: z.string().cuid().optional(),
+	testCaseId: z.string().cuid().optional(),
 	projectKey: z
 		.string()
 		.min(1)
@@ -21,7 +22,10 @@ const CreateJiraIssueSchema = z.object({
 	issueType: z.string().min(1).max(50),
 	priority: z.string().min(1).max(50).optional(),
 	labels: z.array(z.string().max(255)).max(10).optional()
-});
+}).refine(
+	(data) => data.testResultId || data.testCaseId,
+	{ message: 'Either testResultId or testCaseId must be provided' }
+);
 
 /**
  * POST /api/integrations/jira/issues
@@ -38,8 +42,16 @@ export const POST: RequestHandler = async (event) => {
 		return handleValidationError(error);
 	}
 
-	const { integrationId, testResultId, projectKey, summary, description, issueType, priority } =
-		body;
+	const {
+		integrationId,
+		testResultId,
+		testCaseId,
+		projectKey,
+		summary,
+		description,
+		issueType,
+		priority
+	} = body;
 
 	// Get user's team
 	const user = await db.user.findUnique({
@@ -64,21 +76,45 @@ export const POST: RequestHandler = async (event) => {
 		return json({ error: 'Integration not found' }, { status: 404 });
 	}
 
-	// Get test result
-	const testResult = await db.testResult.findUnique({
-		where: { id: testResultId },
-		include: {
-			testCase: {
-				include: {
-					project: true
-				}
-			},
-			testRun: true
-		}
-	});
+	// Get test result or test case
+	let testResult = null;
+	let testCase = null;
+	let projectId = '';
 
-	if (!testResult) {
-		return json({ error: 'Test result not found' }, { status: 404 });
+	if (testResultId) {
+		// Get test result with related data
+		testResult = await db.testResult.findUnique({
+			where: { id: testResultId },
+			include: {
+				testCase: {
+					include: {
+						project: true
+					}
+				},
+				testRun: true
+			}
+		});
+
+		if (!testResult) {
+			return json({ error: 'Test result not found' }, { status: 404 });
+		}
+
+		testCase = testResult.testCase;
+		projectId = testResult.testCase.projectId;
+	} else if (testCaseId) {
+		// Get test case with related data
+		testCase = await db.testCase.findUnique({
+			where: { id: testCaseId },
+			include: {
+				project: true
+			}
+		});
+
+		if (!testCase) {
+			return json({ error: 'Test case not found' }, { status: 404 });
+		}
+
+		projectId = testCase.projectId;
 	}
 
 	// Create Jira client
@@ -139,8 +175,8 @@ export const POST: RequestHandler = async (event) => {
 				jiraIssueKey: result.data.key,
 				jiraIssueId: result.data.id,
 				integrationId,
-				testResultId,
-				projectId: testResult.testCase.projectId,
+				testResultId: testResultId || null,
+				projectId,
 				summary: result.data.fields.summary,
 				description: descriptionText,
 				issueType: result.data.fields.issuetype.name,
@@ -173,6 +209,7 @@ export const POST: RequestHandler = async (event) => {
 	return json({
 		issue: {
 			...jiraIssue,
+			key: jiraIssue.jiraIssueKey, // Add 'key' alias for frontend
 			url: jiraUrl
 		}
 	});

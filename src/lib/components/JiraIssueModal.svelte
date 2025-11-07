@@ -159,19 +159,26 @@
 		success = false;
 
 		try {
+			const payload: any = {
+				integrationId: selectedIntegrationId,
+				projectKey: selectedProjectKey,
+				issueType: selectedIssueType,
+				summary: summary.trim(),
+				description: description.trim() || undefined,
+				priority: selectedPriority
+			};
+
+			// Only send the ID that was provided
+			if (testResultId) {
+				payload.testResultId = testResultId;
+			} else if (testCaseId) {
+				payload.testCaseId = testCaseId;
+			}
+
 			const res = await fetch('/api/integrations/jira/issues', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					integrationId: selectedIntegrationId,
-					projectKey: selectedProjectKey,
-					issueType: selectedIssueType,
-					summary: summary.trim(),
-					description: description.trim() || undefined,
-					priority: selectedPriority,
-					testCaseId,
-					testResultId
-				})
+				body: JSON.stringify(payload)
 			});
 
 			if (!res.ok) {
