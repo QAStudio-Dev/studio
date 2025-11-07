@@ -39,7 +39,7 @@
 	let selectedIntegrationId = $state('');
 	let selectedProjectKey = $state('');
 	let selectedIssueType = $state('');
-	let selectedPriority = $state('MEDIUM');
+	let selectedPriority = $state('Medium');
 	let summary = $state(prefillSummary);
 	let description = $state(prefillDescription);
 
@@ -394,11 +394,11 @@
 								bind:value={selectedPriority}
 								disabled={loading}
 							>
-								<option value="HIGHEST">Highest</option>
-								<option value="HIGH">High</option>
-								<option value="MEDIUM">Medium</option>
-								<option value="LOW">Low</option>
-								<option value="LOWEST">Lowest</option>
+								<option value="Highest">Highest</option>
+								<option value="High">High</option>
+								<option value="Medium">Medium</option>
+								<option value="Low">Low</option>
+								<option value="Lowest">Lowest</option>
 							</select>
 						</div>
 
