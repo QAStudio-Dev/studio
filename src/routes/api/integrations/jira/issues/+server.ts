@@ -3,6 +3,23 @@ import type { RequestHandler } from './$types';
 import { requireAuth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import { createJiraClientFromIntegration } from '$lib/server/integrations/jira';
+import { z } from 'zod';
+
+// Validation schema for creating Jira issues
+const CreateJiraIssueSchema = z.object({
+	integrationId: z.string().cuid(),
+	testResultId: z.string().cuid(),
+	projectKey: z
+		.string()
+		.min(1)
+		.max(10)
+		.regex(/^[A-Z][A-Z0-9]*$/, 'Project key must be uppercase letters and numbers'),
+	summary: z.string().min(1).max(255),
+	description: z.string().max(32000).optional(),
+	issueType: z.string().min(1).max(50),
+	priority: z.string().min(1).max(50).optional(),
+	labels: z.array(z.string().max(255)).max(10).optional()
+});
 
 /**
  * POST /api/integrations/jira/issues
@@ -11,13 +28,24 @@ import { createJiraClientFromIntegration } from '$lib/server/integrations/jira';
 export const POST: RequestHandler = async (event) => {
 	const userId = await requireAuth(event);
 
-	const body = await event.request.json();
+	// Parse and validate request body
+	let body;
+	try {
+		const rawBody = await event.request.json();
+		body = CreateJiraIssueSchema.parse(rawBody);
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			const firstError = error.issues[0];
+			return json(
+				{ error: firstError.message || `Invalid ${firstError.path.join('.')}` },
+				{ status: 400 }
+			);
+		}
+		return json({ error: 'Invalid request body' }, { status: 400 });
+	}
+
 	const { integrationId, testResultId, projectKey, summary, description, issueType, priority } =
 		body;
-
-	if (!integrationId || !testResultId || !projectKey || !summary || !issueType) {
-		return json({ error: 'Missing required fields' }, { status: 400 });
-	}
 
 	// Get user's team
 	const user = await db.user.findUnique({
@@ -79,6 +107,34 @@ export const POST: RequestHandler = async (event) => {
 		return json({ error: result.error }, { status: 500 });
 	}
 
+	// Extract description text from ADF format
+	// Jira's description field is an Atlassian Document Format (ADF) object
+	let descriptionText: string | null = null;
+	if (result.data.fields.description) {
+		try {
+			// ADF structure: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: '...' }] }] }
+			const adf = result.data.fields.description as any;
+			if (adf.content && Array.isArray(adf.content)) {
+				// Extract all text nodes from all paragraphs
+				const textParts: string[] = [];
+				adf.content.forEach((node: any) => {
+					if (node.content && Array.isArray(node.content)) {
+						node.content.forEach((textNode: any) => {
+							if (textNode.type === 'text' && textNode.text) {
+								textParts.push(textNode.text);
+							}
+						});
+					}
+				});
+				descriptionText = textParts.join('\n');
+			}
+		} catch (error) {
+			console.error('Failed to parse ADF description:', error);
+			// Fallback: stringify the ADF object
+			descriptionText = JSON.stringify(result.data.fields.description);
+		}
+	}
+
 	// Save the issue link in our database
 	const jiraIssue = await db.jiraIssue.create({
 		data: {
@@ -88,7 +144,7 @@ export const POST: RequestHandler = async (event) => {
 			testResultId,
 			projectId: testResult.testCase.projectId,
 			summary: result.data.fields.summary,
-			description: result.data.fields.description || null,
+			description: descriptionText,
 			issueType: result.data.fields.issuetype.name,
 			status: result.data.fields.status.name,
 			priority: result.data.fields.priority?.name || null,

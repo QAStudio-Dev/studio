@@ -3,6 +3,8 @@
  * Handles communication with Jira REST API
  */
 
+import { decrypt } from '$lib/server/encryption';
+
 export interface JiraConfig {
 	baseUrl: string; // e.g., "https://yourcompany.atlassian.net"
 	email: string; // Jira account email
@@ -301,7 +303,6 @@ export function createJiraClientFromIntegration(integration: {
 		return null;
 	}
 
-	const { decrypt } = require('./encryption');
 	let apiToken = integration.config.apiToken;
 
 	// Decrypt token if it's encrypted

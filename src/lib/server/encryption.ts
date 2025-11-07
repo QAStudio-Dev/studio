@@ -5,32 +5,47 @@
 
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 
-// Encryption key must be 32 bytes for AES-256
+// Encryption key must be exactly 64 hex characters (32 bytes) for AES-256
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
 
-if (!ENCRYPTION_KEY) {
-	console.warn('ENCRYPTION_KEY not set - sensitive data will be stored unencrypted!');
+/**
+ * Validate and parse the encryption key
+ * @throws Error if key is invalid
+ */
+function getValidatedKey(): Buffer {
+	if (!ENCRYPTION_KEY) {
+		throw new Error(
+			'ENCRYPTION_KEY environment variable is not set. Generate one with: openssl rand -hex 32'
+		);
+	}
+
+	// Key must be exactly 64 hex characters (32 bytes)
+	if (!/^[0-9a-f]{64}$/i.test(ENCRYPTION_KEY)) {
+		throw new Error(
+			'ENCRYPTION_KEY must be exactly 64 hexadecimal characters (32 bytes). ' +
+				'Current length: ' +
+				ENCRYPTION_KEY.length +
+				'. Generate a valid key with: openssl rand -hex 32'
+		);
+	}
+
+	return Buffer.from(ENCRYPTION_KEY, 'hex');
 }
+
+// Validate key on module load to fail fast in all environments
+const encryptionKey: Buffer = getValidatedKey();
 
 /**
  * Encrypt sensitive text using AES-256-GCM
  * Returns format: iv:authTag:encryptedData (all hex-encoded)
  */
 export function encrypt(text: string): string {
-	if (!ENCRYPTION_KEY) {
-		console.warn('Encryption key not configured - storing data in plain text');
-		return text;
-	}
-
 	try {
-		// Ensure key is exactly 32 bytes
-		const key = Buffer.from(ENCRYPTION_KEY.padEnd(32, '0').slice(0, 32));
-
 		// Generate random IV (12 bytes for GCM)
 		const iv = randomBytes(12);
 
 		// Create cipher
-		const cipher = createCipheriv('aes-256-gcm', key, iv);
+		const cipher = createCipheriv('aes-256-gcm', encryptionKey, iv);
 
 		// Encrypt data
 		let encrypted = cipher.update(text, 'utf8', 'hex');
@@ -51,31 +66,23 @@ export function encrypt(text: string): string {
  * Decrypt text that was encrypted with encrypt()
  */
 export function decrypt(encryptedText: string): string {
-	if (!ENCRYPTION_KEY) {
-		console.warn('Encryption key not configured - assuming plain text');
-		return encryptedText;
-	}
-
 	// Check if data is encrypted (has the iv:authTag:data format)
 	const parts = encryptedText.split(':');
 	if (parts.length !== 3) {
-		// Assume it's plain text (for backward compatibility)
-		console.warn('Data appears to be unencrypted');
+		// Assume it's plain text (for backward compatibility with existing data)
+		console.warn('Data appears to be unencrypted - returning as plain text');
 		return encryptedText;
 	}
 
 	try {
 		const [ivHex, authTagHex, encrypted] = parts;
 
-		// Ensure key is exactly 32 bytes
-		const key = Buffer.from(ENCRYPTION_KEY.padEnd(32, '0').slice(0, 32));
-
 		// Convert from hex
 		const iv = Buffer.from(ivHex, 'hex');
 		const authTag = Buffer.from(authTagHex, 'hex');
 
 		// Create decipher
-		const decipher = createDecipheriv('aes-256-gcm', key, iv);
+		const decipher = createDecipheriv('aes-256-gcm', encryptionKey, iv);
 		decipher.setAuthTag(authTag);
 
 		// Decrypt data
