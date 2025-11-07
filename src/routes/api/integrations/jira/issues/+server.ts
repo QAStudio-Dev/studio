@@ -128,18 +128,43 @@ export const POST: RequestHandler = async (event) => {
 		return json({ error: 'Invalid Jira configuration' }, { status: 500 });
 	}
 
+	// Build link back to QA Studio
+	const baseUrl = 'https://qastudio.dev';
+	let qaStudioLink = '';
+	if (testResultId && testResult) {
+		// Link to the test run with the specific result
+		qaStudioLink = `${baseUrl}/projects/${projectId}/runs/${testResult.testRunId}`;
+	} else if (testCaseId) {
+		// Link to the test case page
+		qaStudioLink = `${baseUrl}/projects/${projectId}/cases/${testCaseId}`;
+	}
+
+	// Append QA Studio link to description
+	const fullDescription = description
+		? `${description}\n\n---\n\n**QA Studio**: ${qaStudioLink}`
+		: `**QA Studio**: ${qaStudioLink}`;
+
 	// Create the issue in Jira
-	const result = await jiraClient.createIssue({
+	const createResult = await jiraClient.createIssue({
 		projectKey,
 		summary,
-		description: description || '',
+		description: fullDescription,
 		issueType,
 		priority,
 		labels: ['qa-studio', 'automated-test']
 	});
 
+	if (createResult.error || !createResult.data) {
+		return json({ error: createResult.error || 'Failed to create issue' }, { status: 500 });
+	}
+
+	// The create endpoint returns minimal data (id, key, self)
+	// Fetch the full issue details to get all fields
+	const issueKey = createResult.data.key;
+	const result = await jiraClient.getIssue(issueKey);
+
 	if (result.error || !result.data) {
-		return json({ error: result.error || 'Failed to create issue' }, { status: 500 });
+		return json({ error: result.error || 'Failed to fetch created issue details' }, { status: 500 });
 	}
 
 	// Ensure we have the expected fields in the response
