@@ -139,7 +139,7 @@
 
 			// Auto-select "Bug" if available, otherwise first type
 			const bugType = issueTypes.find((t) => t.name.toLowerCase() === 'bug');
-			selectedIssueType = bugType ? bugType.id : issueTypes[0]?.id || '';
+			selectedIssueType = bugType ? bugType.name : issueTypes[0]?.name || '';
 		} catch (err: any) {
 			console.error(err);
 			error = err.message || 'Failed to load issue types';
@@ -380,7 +380,7 @@
 									{loadingIssueTypes ? 'Loading issue types...' : 'Select issue type...'}
 								</option>
 								{#each issueTypes as issueType}
-									<option value={issueType.id}>{issueType.name}</option>
+									<option value={issueType.name}>{issueType.name}</option>
 								{/each}
 							</select>
 						</div>
