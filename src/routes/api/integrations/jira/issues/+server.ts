@@ -8,24 +8,25 @@ import { handleValidationError, validateRequestBody } from '$lib/server/validati
 import { IntegrationType } from '@prisma/client';
 
 // Validation schema for creating Jira issues
-const CreateJiraIssueSchema = z.object({
-	integrationId: z.string().min(1),
-	testResultId: z.string().min(1).optional(),
-	testCaseId: z.string().min(1).optional(),
-	projectKey: z
-		.string()
-		.min(1)
-		.max(10)
-		.regex(/^[A-Z][A-Z0-9]*$/, 'Project key must be uppercase letters and numbers'),
-	summary: z.string().min(1).max(255),
-	description: z.string().max(32000).optional(),
-	issueType: z.string().min(1).max(50),
-	priority: z.string().min(1).max(50).optional(),
-	labels: z.array(z.string().max(255)).max(10).optional()
-}).refine(
-	(data) => data.testResultId || data.testCaseId,
-	{ message: 'Either testResultId or testCaseId must be provided' }
-);
+const CreateJiraIssueSchema = z
+	.object({
+		integrationId: z.string().min(1),
+		testResultId: z.string().min(1).optional(),
+		testCaseId: z.string().min(1).optional(),
+		projectKey: z
+			.string()
+			.min(1)
+			.max(10)
+			.regex(/^[A-Z][A-Z0-9]*$/, 'Project key must be uppercase letters and numbers'),
+		summary: z.string().min(1).max(255),
+		description: z.string().max(32000).optional(),
+		issueType: z.string().min(1).max(50),
+		priority: z.string().min(1).max(50).optional(),
+		labels: z.array(z.string().max(255)).max(10).optional()
+	})
+	.refine((data) => data.testResultId || data.testCaseId, {
+		message: 'Either testResultId or testCaseId must be provided'
+	});
 
 /**
  * POST /api/integrations/jira/issues
@@ -164,7 +165,10 @@ export const POST: RequestHandler = async (event) => {
 	const result = await jiraClient.getIssue(issueKey);
 
 	if (result.error || !result.data) {
-		return json({ error: result.error || 'Failed to fetch created issue details' }, { status: 500 });
+		return json(
+			{ error: result.error || 'Failed to fetch created issue details' },
+			{ status: 500 }
+		);
 	}
 
 	// Ensure we have the expected fields in the response

@@ -11,6 +11,68 @@
 			day: 'numeric'
 		});
 	}
+
+	// Generate a consistent gradient based on a string (date or slug)
+	function getGradientForPost(seed: string): string {
+		// Better hash function with more distribution
+		let hash1 = 0;
+		let hash2 = 0;
+		for (let i = 0; i < seed.length; i++) {
+			hash1 = seed.charCodeAt(i) + ((hash1 << 5) - hash1);
+			hash2 = seed.charCodeAt(i) + ((hash2 << 3) + hash2);
+		}
+
+		// Gradient directions
+		const directions = [
+			'bg-gradient-to-br', // bottom-right
+			'bg-gradient-to-tr', // top-right
+			'bg-gradient-to-bl', // bottom-left
+			'bg-gradient-to-tl', // top-left
+			'bg-gradient-to-r', // right
+			'bg-gradient-to-l', // left
+			'bg-gradient-to-b', // bottom
+			'bg-gradient-to-t' // top
+		];
+
+		// Expanded gradient color combinations with more variety
+		const colorCombos = [
+			// Blues & Purples
+			'from-primary-500 to-secondary-500',
+			'from-primary-600 to-secondary-600',
+			'from-primary-500 via-secondary-500 to-tertiary-500',
+			'from-secondary-600 to-primary-500',
+
+			// Teals & Greens
+			'from-tertiary-500 to-success-500',
+			'from-success-500 to-tertiary-600',
+			'from-tertiary-600 to-primary-500',
+			'from-success-600 to-primary-400',
+
+			// Warm colors
+			'from-warning-500 to-error-500',
+			'from-error-500 to-warning-600',
+			'from-warning-600 to-primary-500',
+			'from-primary-500 to-warning-500',
+
+			// Purple variations
+			'from-secondary-500 to-tertiary-500',
+			'from-secondary-600 to-tertiary-600',
+			'from-tertiary-500 to-secondary-600',
+
+			// Mixed palettes
+			'from-primary-500 to-tertiary-500',
+			'from-success-500 to-secondary-500',
+			'from-tertiary-600 to-warning-500',
+			'from-primary-400 to-success-500',
+			'from-secondary-500 via-primary-500 to-success-500'
+		];
+
+		// Use different hash values for direction and colors to increase variation
+		const directionIndex = Math.abs(hash1) % directions.length;
+		const colorIndex = Math.abs(hash2) % colorCombos.length;
+
+		return `${directions[directionIndex]} ${colorCombos[colorIndex]}`;
+	}
 </script>
 
 <svelte:head>
@@ -52,7 +114,7 @@
 							/>
 						</div>
 					{:else}
-						<div class="aspect-video bg-gradient-to-br from-primary-500 to-secondary-500"></div>
+						<div class="aspect-video {getGradientForPost(post.slug || post.date)}"></div>
 					{/if}
 
 					<!-- Content -->
