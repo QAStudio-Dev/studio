@@ -1,10 +1,11 @@
 import { definePageMetaTags } from 'svelte-meta-tags';
+import type { PageLoad } from './$types';
 
 // since there's no dynamic data here, we can prerender
 // it so that it gets served as a static asset in production
 export const prerender = true;
 
-export const load = () => {
+export const load: PageLoad = async ({ data }) => {
 	const pageTags = definePageMetaTags({
 		title: 'Open Source Test Management & Automated Test Reporting Platform',
 		description:
@@ -16,5 +17,8 @@ export const load = () => {
 		}
 	});
 
-	return { ...pageTags };
+	return {
+		...data,
+		...pageTags
+	};
 };

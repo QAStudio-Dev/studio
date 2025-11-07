@@ -1,11 +1,72 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { Calendar, ArrowRight } from 'lucide-svelte';
+
+	let { data } = $props();
+	let { posts } = $derived(data);
 
 	let mounted = $state(false);
 
 	onMount(() => {
 		mounted = true;
 	});
+
+	function formatDate(date: string) {
+		return new Date(date).toLocaleDateString('en-US', {
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric'
+		});
+	}
+
+	// Generate a consistent gradient based on a string (same as blog page)
+	function getGradientForPost(seed: string): string {
+		let hash1 = 0;
+		let hash2 = 0;
+		for (let i = 0; i < seed.length; i++) {
+			hash1 = seed.charCodeAt(i) + ((hash1 << 5) - hash1);
+			hash2 = seed.charCodeAt(i) + ((hash2 << 3) + hash2);
+		}
+
+		const directions = [
+			'bg-gradient-to-br',
+			'bg-gradient-to-tr',
+			'bg-gradient-to-bl',
+			'bg-gradient-to-tl',
+			'bg-gradient-to-r',
+			'bg-gradient-to-l',
+			'bg-gradient-to-b',
+			'bg-gradient-to-t'
+		];
+
+		const colorCombos = [
+			'from-primary-500 to-secondary-500',
+			'from-primary-600 to-secondary-600',
+			'from-primary-500 via-secondary-500 to-tertiary-500',
+			'from-secondary-600 to-primary-500',
+			'from-tertiary-500 to-success-500',
+			'from-success-500 to-tertiary-600',
+			'from-tertiary-600 to-primary-500',
+			'from-success-600 to-primary-400',
+			'from-warning-500 to-error-500',
+			'from-error-500 to-warning-600',
+			'from-warning-600 to-primary-500',
+			'from-primary-500 to-warning-500',
+			'from-secondary-500 to-tertiary-500',
+			'from-secondary-600 to-tertiary-600',
+			'from-tertiary-500 to-secondary-600',
+			'from-primary-500 to-tertiary-500',
+			'from-success-500 to-secondary-500',
+			'from-tertiary-600 to-warning-500',
+			'from-primary-400 to-success-500',
+			'from-secondary-500 via-primary-500 to-success-500'
+		];
+
+		const directionIndex = Math.abs(hash1) % directions.length;
+		const colorIndex = Math.abs(hash2) % colorCombos.length;
+
+		return `${directions[directionIndex]} ${colorCombos[colorIndex]}`;
+	}
 </script>
 
 <!-- Hero Section with Animated Background -->
@@ -397,6 +458,90 @@
 		</div>
 	</div>
 </div>
+
+<!-- Latest Blog Posts Section -->
+{#if posts && posts.length > 0}
+	<div class="container mx-auto max-w-6xl px-4 py-20">
+		<div class="mb-12 flex items-end justify-between">
+			<div>
+				<h2 class="mb-2 text-4xl font-black">Latest from the Blog</h2>
+				<p class="text-lg text-surface-600-400">
+					Insights, guides, and updates from the QA Studio team
+				</p>
+			</div>
+			<a
+				href="/blog"
+				class="group hidden items-center gap-2 text-primary-500 transition-all hover:gap-3 md:flex"
+			>
+				<span class="font-medium">View all posts</span>
+				<ArrowRight class="h-5 w-5 transition-transform group-hover:translate-x-1" />
+			</a>
+		</div>
+
+		<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+			{#each posts as post}
+				<a
+					href="/blog/{post.slug}"
+					class="group overflow-hidden card transition-all hover:-translate-y-1 hover:shadow-xl"
+				>
+					<!-- Cover Image or Gradient -->
+					{#if post.cover}
+						<div class="aspect-video overflow-hidden bg-surface-200-800">
+							<img
+								src={post.cover}
+								alt={post.title}
+								class="h-full w-full object-cover transition-transform group-hover:scale-105"
+							/>
+						</div>
+					{:else}
+						<div class="aspect-video {getGradientForPost(post.slug || post.date)}"></div>
+					{/if}
+
+					<!-- Content -->
+					<div class="p-6">
+						<!-- Category Badge -->
+						{#if post.category}
+							<span
+								class="mb-3 inline-block rounded-full bg-primary-500/10 px-3 py-1 text-xs font-medium text-primary-500"
+							>
+								{post.category}
+							</span>
+						{/if}
+
+						<!-- Title -->
+						<h3 class="mb-2 text-xl font-bold transition-colors group-hover:text-primary-500">
+							{post.title}
+						</h3>
+
+						<!-- Description -->
+						{#if post.description}
+							<p class="mb-4 line-clamp-2 text-sm text-surface-600-400">
+								{post.description}
+							</p>
+						{/if}
+
+						<!-- Date -->
+						<div class="flex items-center gap-2 text-xs text-surface-600-400">
+							<Calendar class="h-3.5 w-3.5" />
+							<span>{formatDate(post.date)}</span>
+						</div>
+					</div>
+				</a>
+			{/each}
+		</div>
+
+		<!-- View All Link (Mobile) -->
+		<div class="mt-8 text-center md:hidden">
+			<a
+				href="/blog"
+				class="group inline-flex items-center gap-2 text-primary-500 transition-all hover:gap-3"
+			>
+				<span class="font-medium">View all posts</span>
+				<ArrowRight class="h-5 w-5 transition-transform group-hover:translate-x-1" />
+			</a>
+		</div>
+	</div>
+{/if}
 
 <style>
 	@keyframes float {
