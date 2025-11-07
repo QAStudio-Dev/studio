@@ -5,6 +5,8 @@ import { db } from '$lib/server/db';
 import { JiraClient } from '$lib/server/integrations/jira';
 import { encrypt } from '$lib/server/encryption';
 import { z } from 'zod';
+import { handleValidationError, validateRequestBody } from '$lib/server/validation';
+import { IntegrationType, IntegrationStatus } from '@prisma/client';
 
 /**
  * GET /api/integrations/jira
@@ -27,7 +29,7 @@ export const GET: RequestHandler = async (event) => {
 	const integrations = await db.integration.findMany({
 		where: {
 			teamId: user.teamId,
-			type: 'JIRA'
+			type: IntegrationType.JIRA
 		},
 		select: {
 			id: true,
@@ -94,17 +96,9 @@ export const POST: RequestHandler = async (event) => {
 	// Parse and validate request body
 	let body;
 	try {
-		const rawBody = await event.request.json();
-		body = CreateJiraIntegrationSchema.parse(rawBody);
+		body = await validateRequestBody(event.request, CreateJiraIntegrationSchema);
 	} catch (error) {
-		if (error instanceof z.ZodError) {
-			const firstError = error.issues[0];
-			return json(
-				{ error: firstError.message || `Invalid ${firstError.path.join('.')}` },
-				{ status: 400 }
-			);
-		}
-		return json({ error: 'Invalid request body' }, { status: 400 });
+		return handleValidationError(error);
 	}
 
 	const { name, baseUrl, email, apiToken } = body;
@@ -131,9 +125,9 @@ export const POST: RequestHandler = async (event) => {
 	const integration = await db.integration.create({
 		data: {
 			teamId: user.teamId,
-			type: 'JIRA',
+			type: IntegrationType.JIRA,
 			name,
-			status: 'ACTIVE',
+			status: IntegrationStatus.ACTIVE,
 			config: {
 				baseUrl: normalizedBaseUrl,
 				email,

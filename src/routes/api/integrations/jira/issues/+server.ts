@@ -4,6 +4,8 @@ import { requireAuth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import { createJiraClientFromIntegration } from '$lib/server/integrations/jira';
 import { z } from 'zod';
+import { handleValidationError, validateRequestBody } from '$lib/server/validation';
+import { IntegrationType } from '@prisma/client';
 
 // Validation schema for creating Jira issues
 const CreateJiraIssueSchema = z.object({
@@ -31,17 +33,9 @@ export const POST: RequestHandler = async (event) => {
 	// Parse and validate request body
 	let body;
 	try {
-		const rawBody = await event.request.json();
-		body = CreateJiraIssueSchema.parse(rawBody);
+		body = await validateRequestBody(event.request, CreateJiraIssueSchema);
 	} catch (error) {
-		if (error instanceof z.ZodError) {
-			const firstError = error.issues[0];
-			return json(
-				{ error: firstError.message || `Invalid ${firstError.path.join('.')}` },
-				{ status: 400 }
-			);
-		}
-		return json({ error: 'Invalid request body' }, { status: 400 });
+		return handleValidationError(error);
 	}
 
 	const { integrationId, testResultId, projectKey, summary, description, issueType, priority } =
@@ -62,7 +56,7 @@ export const POST: RequestHandler = async (event) => {
 		where: {
 			id: integrationId,
 			teamId: user.teamId,
-			type: 'JIRA'
+			type: IntegrationType.JIRA
 		}
 	});
 
