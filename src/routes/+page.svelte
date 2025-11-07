@@ -173,7 +173,7 @@
 	</div>
 
 	<!-- Bento Grid -->
-	<div class="mx-auto grid max-w-6xl auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+	<div class="mx-auto grid max-w-6xl grid-cols-1 gap-4 md:auto-rows-fr md:grid-cols-2 lg:grid-cols-3">
 		<!-- Large Feature 1 - Open Source -->
 		<div
 			class="group relative overflow-hidden card p-8 transition-all hover:-translate-y-1 hover:shadow-2xl md:col-span-2 lg:row-span-2"
