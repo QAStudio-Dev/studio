@@ -9,25 +9,25 @@ describe('Slack integration service', () => {
 		it('should decrypt webhook URL before sending notification', async () => {
 			const { encrypt, decrypt } = await import('../encryption');
 
-			const plainWebhookUrl = 'https://hooks.slack.com/services/T12345/B12345/secretToken123';
+			const plainWebhookUrl = 'https://hooks.example.com/services/T12345/B12345/secretToken123';
 			const encryptedWebhookUrl = encrypt(plainWebhookUrl);
 
 			// Verify encryption worked
-			expect(encryptedWebhookUrl).not.toContain('hooks.slack.com');
+			expect(encryptedWebhookUrl).not.toContain('hooks.example.com');
 			expect(encryptedWebhookUrl).not.toContain('secretToken123');
 
 			// Decrypt for use
 			const decryptedUrl = decrypt(encryptedWebhookUrl);
 
 			expect(decryptedUrl).toBe(plainWebhookUrl);
-			expect(decryptedUrl).toContain('hooks.slack.com');
+			expect(decryptedUrl).toContain('hooks.example.com');
 		});
 
 		it('should handle encrypted webhook URL from database', async () => {
 			const { encrypt, decrypt, isEncrypted } = await import('../encryption');
 
 			// Simulate data from database
-			const storedWebhookUrl = encrypt('https://hooks.slack.com/services/T/B/secret');
+			const storedWebhookUrl = encrypt('https://hooks.example.com/services/T/B/secret');
 
 			// Verify it's encrypted
 			expect(isEncrypted(storedWebhookUrl)).toBe(true);
@@ -36,7 +36,7 @@ describe('Slack integration service', () => {
 			const webhookUrl = decrypt(storedWebhookUrl);
 
 			expect(webhookUrl).toContain('https://');
-			expect(webhookUrl).toContain('hooks.slack.com');
+			expect(webhookUrl).toContain('hooks.example.com');
 		});
 
 		it('should throw error if webhook URL is missing', () => {
@@ -138,7 +138,7 @@ describe('Slack integration service', () => {
 
 	describe('webhook request', () => {
 		it('should send POST request to webhook URL', async () => {
-			const webhookUrl = 'https://hooks.slack.com/services/T/B/token';
+			const webhookUrl = 'https://hooks.example.com/services/T/B/token';
 			const payload = {
 				blocks: [
 					{
@@ -178,7 +178,7 @@ describe('Slack integration service', () => {
 				text: async () => 'ok'
 			});
 
-			const response = await fetch('https://hooks.slack.com/services/T/B/token', {
+			const response = await fetch('https://hooks.example.com/services/T/B/token', {
 				method: 'POST',
 				body: '{}'
 			});
@@ -194,7 +194,7 @@ describe('Slack integration service', () => {
 				text: async () => 'invalid_payload'
 			});
 
-			const response = await fetch('https://hooks.slack.com/services/T/B/token', {
+			const response = await fetch('https://hooks.example.com/services/T/B/token', {
 				method: 'POST',
 				body: '{invalid}'
 			});
@@ -207,7 +207,7 @@ describe('Slack integration service', () => {
 			global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
 
 			await expect(
-				fetch('https://hooks.slack.com/services/T/B/token', {
+				fetch('https://hooks.example.com/services/T/B/token', {
 					method: 'POST',
 					body: '{}'
 				})
@@ -254,7 +254,7 @@ describe('Slack integration service', () => {
 		it('should decrypt access token from database', async () => {
 			const { encrypt, decrypt } = await import('../encryption');
 
-			const plainAccessToken = 'xoxb-1234567890-1234567890123-AbCdEfGhIjKlMnOpQrStUvWx';
+			const plainAccessToken = 'xoxb-example-test-token-not-real';
 			const encryptedAccessToken = encrypt(plainAccessToken);
 
 			// Stored encrypted
@@ -321,7 +321,7 @@ describe('Slack integration service', () => {
 		it('should not expose sensitive data in error messages', async () => {
 			const { encrypt } = await import('../encryption');
 
-			const webhookUrl = 'https://hooks.slack.com/services/T/B/supersecret123';
+			const webhookUrl = 'https://hooks.example.com/services/T/B/supersecret123';
 			const encryptedUrl = encrypt(webhookUrl);
 
 			// Error should not contain the secret token
@@ -335,22 +335,22 @@ describe('Slack integration service', () => {
 
 	describe('webhook URL validation', () => {
 		it('should validate Slack webhook URL format', () => {
-			const validUrl = 'https://hooks.slack.com/services/T12345/B12345/abc123';
+			const validUrl = 'https://hooks.example.com/services/T12345/B12345/abc123';
 
-			expect(validUrl).toMatch(/^https:\/\/hooks\.slack\.com\/services\//);
+			expect(validUrl).toMatch(/^https:\/\/hooks\.example\.com\/services\//);
 		});
 
 		it('should reject invalid webhook URLs', () => {
 			const invalidUrls = [
-				'http://hooks.slack.com/services/T/B/token', // HTTP instead of HTTPS
+				'http://hooks.example.com/services/T/B/token', // HTTP instead of HTTPS
 				'https://evil.com/webhook', // Wrong domain
-				'https://hooks.slack.com/different/path', // Wrong path
+				'https://hooks.example.com/different/path', // Wrong path
 				''
 			];
 
 			invalidUrls.forEach((url) => {
 				if (url) {
-					expect(url).not.toMatch(/^https:\/\/hooks\.slack\.com\/services\/T\w+\/B\w+\/\w+$/);
+					expect(url).not.toMatch(/^https:\/\/hooks\.example\.com\/services\/T\w+\/B\w+\/\w+$/);
 				}
 			});
 		});
@@ -370,14 +370,14 @@ describe('Slack integration service', () => {
 					channel: '#general',
 					channel_id: 'C12345',
 					configuration_url: 'https://test.slack.com/services/B12345',
-					url: encrypt('https://hooks.slack.com/services/T/B/token')
+					url: encrypt('https://hooks.example.com/services/T/B/token')
 				}
 			};
 
 			expect(config.teamId).toBeDefined();
 			expect(config.teamName).toBeDefined();
 			expect(config.incomingWebhook).toBeDefined();
-			expect(config.incomingWebhook.url).not.toContain('hooks.slack.com');
+			expect(config.incomingWebhook.url).not.toContain('hooks.example.com');
 		});
 	});
 
@@ -393,7 +393,7 @@ describe('Slack integration service', () => {
 				text: async () => 'rate_limited'
 			});
 
-			const response = await fetch('https://hooks.slack.com/services/T/B/token', {
+			const response = await fetch('https://hooks.example.com/services/T/B/token', {
 				method: 'POST',
 				body: '{}'
 			});

@@ -143,12 +143,12 @@ describe('encryption', () => {
 
 		it('should handle Slack webhook URL encryption', () => {
 			const webhookUrl =
-				'https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXX';
+				'https://hooks.example.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXX';
 			const encrypted = encrypt(webhookUrl);
 			const decrypted = decrypt(encrypted);
 
 			expect(decrypted).toBe(webhookUrl);
-			expect(encrypted).not.toContain('slack.com');
+			expect(encrypted).not.toContain('example.com');
 		});
 
 		it('should handle email encryption', () => {
