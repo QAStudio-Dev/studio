@@ -57,6 +57,101 @@ export interface CreateIssueRequest {
 	labels?: string[];
 }
 
+/**
+ * Convert markdown-style text to Atlassian Document Format (ADF)
+ * Supports: **bold**, links, and line breaks
+ */
+function markdownToADF(text: string): any {
+	const content: any[] = [];
+	const lines = text.split('\n');
+
+	for (const line of lines) {
+		if (line.trim() === '---') {
+			// Horizontal rule
+			content.push({
+				type: 'rule'
+			});
+			continue;
+		}
+
+		if (line.trim() === '') {
+			// Empty paragraph for spacing
+			content.push({
+				type: 'paragraph',
+				content: []
+			});
+			continue;
+		}
+
+		// Parse inline formatting (bold and links)
+		const paragraphContent: any[] = [];
+
+		// Match **bold** and URLs
+		const combinedRegex = /(\*\*([^*]+)\*\*)|(https?:\/\/[^\s]+)/g;
+
+		let lastIndex = 0;
+		let match;
+
+		while ((match = combinedRegex.exec(line)) !== null) {
+			// Add text before this match
+			if (match.index > lastIndex) {
+				const plainText = line.substring(lastIndex, match.index);
+				paragraphContent.push({
+					type: 'text',
+					text: plainText
+				});
+			}
+
+			// Add formatted content
+			if (match[2]) {
+				// Bold text: **text**
+				paragraphContent.push({
+					type: 'text',
+					text: match[2],
+					marks: [{ type: 'strong' }]
+				});
+			} else if (match[3]) {
+				// URL link
+				paragraphContent.push({
+					type: 'text',
+					text: match[3],
+					marks: [
+						{
+							type: 'link',
+							attrs: {
+								href: match[3]
+							}
+						}
+					]
+				});
+			}
+
+			lastIndex = match.index + match[0].length;
+		}
+
+		// Add remaining text
+		if (lastIndex < line.length) {
+			const plainText = line.substring(lastIndex);
+			paragraphContent.push({
+				type: 'text',
+				text: plainText
+			});
+		}
+
+		// Add paragraph
+		content.push({
+			type: 'paragraph',
+			content: paragraphContent.length > 0 ? paragraphContent : [{ type: 'text', text: line }]
+		});
+	}
+
+	return {
+		type: 'doc',
+		version: 1,
+		content
+	};
+}
+
 export class JiraClient {
 	private baseUrl: string;
 	private auth: string;
@@ -158,21 +253,7 @@ export class JiraClient {
 					key: request.projectKey
 				},
 				summary: request.summary,
-				description: {
-					type: 'doc',
-					version: 1,
-					content: [
-						{
-							type: 'paragraph',
-							content: [
-								{
-									type: 'text',
-									text: request.description
-								}
-							]
-						}
-					]
-				},
+				description: markdownToADF(request.description),
 				issuetype: {
 					name: request.issueType
 				},
