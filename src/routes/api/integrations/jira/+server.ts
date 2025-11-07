@@ -9,6 +9,28 @@ import { handleValidationError, validateRequestBody } from '$lib/server/validati
 import { IntegrationType, IntegrationStatus } from '@prisma/client';
 
 /**
+ * TODO: Rate Limiting
+ *
+ * Consider implementing rate limiting for integration endpoints to prevent abuse:
+ *
+ * 1. Connection Tests (POST endpoint): Limit to 5 requests per user per 5 minutes
+ *    - Prevents brute force credential testing
+ *    - Mitigates API key enumeration attacks
+ *
+ * 2. Issue Creation: Limit to 100 requests per team per hour
+ *    - Prevents accidental API flooding from automated test runs
+ *    - Protects against Jira API rate limit exhaustion
+ *
+ * Implementation Options:
+ * - SvelteKit middleware with in-memory store (simple, single-server)
+ * - Redis-backed rate limiter (distributed, production-ready)
+ * - Third-party service (e.g., Upstash Rate Limit, Unkey)
+ *
+ * Recommended: Start with SvelteKit hooks.server.ts middleware using a Map-based
+ * store for MVP, then migrate to Redis when deploying to multiple servers.
+ */
+
+/**
  * GET /api/integrations/jira
  * List all Jira integrations for the user's team
  */

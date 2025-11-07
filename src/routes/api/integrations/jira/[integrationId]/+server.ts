@@ -12,6 +12,11 @@ export const DELETE: RequestHandler = async (event) => {
 	const userId = await requireAuth(event);
 	const { integrationId } = event.params;
 
+	// Validate integrationId format
+	if (!z.cuid().safeParse(integrationId).success) {
+		return json({ error: 'Invalid integration ID format' }, { status: 400 });
+	}
+
 	// Get user's team
 	const user = await db.user.findUnique({
 		where: { id: userId },
@@ -56,6 +61,11 @@ const UpdateIntegrationSchema = z.object({
 export const PATCH: RequestHandler = async (event) => {
 	const userId = await requireAuth(event);
 	const { integrationId } = event.params;
+
+	// Validate integrationId format
+	if (!z.cuid().safeParse(integrationId).success) {
+		return json({ error: 'Invalid integration ID format' }, { status: 400 });
+	}
 
 	// Get user's team
 	const user = await db.user.findUnique({

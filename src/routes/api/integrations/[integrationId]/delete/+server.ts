@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { requireAuth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import { decrypt } from '$lib/server/encryption';
+import { z } from 'zod';
 
 /**
  * DELETE /api/integrations/[integrationId]/delete
@@ -11,6 +12,11 @@ import { decrypt } from '$lib/server/encryption';
 export const DELETE: RequestHandler = async (event) => {
 	const userId = await requireAuth(event);
 	const { integrationId } = event.params;
+
+	// Validate integrationId format
+	if (!z.cuid().safeParse(integrationId).success) {
+		return json({ message: 'Invalid integration ID format' }, { status: 400 });
+	}
 
 	try {
 		// Get user's team

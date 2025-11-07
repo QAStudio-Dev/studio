@@ -130,24 +130,41 @@ export const POST: RequestHandler = async (event) => {
 	}
 
 	// Save the issue link in our database
-	const jiraIssue = await db.jiraIssue.create({
-		data: {
-			jiraIssueKey: result.data.key,
-			jiraIssueId: result.data.id,
-			integrationId,
-			testResultId,
-			projectId: testResult.testCase.projectId,
-			summary: result.data.fields.summary,
-			description: descriptionText,
-			issueType: result.data.fields.issuetype.name,
-			status: result.data.fields.status.name,
-			priority: result.data.fields.priority?.name || null,
-			assignee: result.data.fields.assignee?.displayName || null,
-			reporter: result.data.fields.reporter?.displayName || null,
-			labels: result.data.fields.labels || [],
-			lastSyncedAt: new Date()
-		}
-	});
+	// NOTE: If this fails, the Jira issue will remain created.
+	// Consider implementing compensating transaction (delete issue in Jira) if needed.
+	let jiraIssue;
+	try {
+		jiraIssue = await db.jiraIssue.create({
+			data: {
+				jiraIssueKey: result.data.key,
+				jiraIssueId: result.data.id,
+				integrationId,
+				testResultId,
+				projectId: testResult.testCase.projectId,
+				summary: result.data.fields.summary,
+				description: descriptionText,
+				issueType: result.data.fields.issuetype.name,
+				status: result.data.fields.status.name,
+				priority: result.data.fields.priority?.name || null,
+				assignee: result.data.fields.assignee?.displayName || null,
+				reporter: result.data.fields.reporter?.displayName || null,
+				labels: result.data.fields.labels || [],
+				lastSyncedAt: new Date()
+			}
+		});
+	} catch (dbError) {
+		console.error('Failed to save Jira issue to database:', dbError);
+		// Issue was created in Jira but not saved locally
+		// Return the Jira issue details so the user knows it exists
+		return json(
+			{
+				error: 'Issue created in Jira but failed to save locally',
+				jiraIssueKey: result.data.key,
+				jiraUrl: `${(integration.config as { baseUrl: string }).baseUrl}/browse/${result.data.key}`
+			},
+			{ status: 500 }
+		);
+	}
 
 	// Get Jira base URL for the link
 	const config = integration.config as { baseUrl: string };
