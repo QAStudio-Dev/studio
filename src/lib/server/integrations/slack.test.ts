@@ -254,7 +254,7 @@ describe('Slack integration service', () => {
 		it('should decrypt access token from database', async () => {
 			const { encrypt, decrypt } = await import('../encryption');
 
-			const plainAccessToken = 'xoxb-example-test-token-not-real';
+			const plainAccessToken = 'fake-slack-token-for-testing-only';
 			const encryptedAccessToken = encrypt(plainAccessToken);
 
 			// Stored encrypted
@@ -264,7 +264,7 @@ describe('Slack integration service', () => {
 			const accessToken = decrypt(storedToken);
 
 			expect(accessToken).toBe(plainAccessToken);
-			expect(accessToken).toMatch(/^xoxb-/);
+			expect(accessToken).toContain('fake-slack-token');
 		});
 
 		it('should throw error if access token is missing', () => {
@@ -280,14 +280,14 @@ describe('Slack integration service', () => {
 
 	describe('Slack API authentication', () => {
 		it('should use Bearer token authentication', () => {
-			const accessToken = 'xoxb-test-token';
+			const accessToken = 'fake-test-token';
 
 			const headers = {
 				Authorization: `Bearer ${accessToken}`,
 				'Content-Type': 'application/json'
 			};
 
-			expect(headers.Authorization).toBe('Bearer xoxb-test-token');
+			expect(headers.Authorization).toBe('Bearer fake-test-token');
 		});
 	});
 

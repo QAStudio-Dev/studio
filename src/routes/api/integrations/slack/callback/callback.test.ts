@@ -11,8 +11,8 @@ describe('Slack OAuth callback', () => {
 			// Mock the Slack token exchange response
 			const mockSlackResponse = {
 				ok: true,
-				access_token: 'xoxb-test-slack-token',
-				refresh_token: 'xoxb-refresh-test-token',
+				access_token: 'fake-test-slack-access-token',
+				refresh_token: 'fake-test-slack-refresh-token',
 				team: {
 					id: 'T12345',
 					name: 'Test Workspace'
@@ -38,8 +38,8 @@ describe('Slack OAuth callback', () => {
 		});
 
 		it('should encrypt access token before storing', async () => {
-			const plainAccessToken = 'xoxb-plain-token-example-fake';
-			const plainRefreshToken = 'xoxb-refresh-token-example-fake';
+			const plainAccessToken = 'fake-plain-access-token-example';
+			const plainRefreshToken = 'fake-plain-refresh-token-example';
 			const plainWebhookUrl = 'https://hooks.example.com/test-webhook-fake';
 
 			// Import encryption to verify format
@@ -78,7 +78,7 @@ describe('Slack OAuth callback', () => {
 			const { encrypt } = await import('$lib/server/encryption');
 
 			// Should handle null/undefined without throwing
-			const encryptedAccessToken = encrypt('xoxb-token');
+			const encryptedAccessToken = encrypt('fake-test-token');
 			const encryptedRefreshToken = null; // No refresh token provided
 
 			expect(encryptedAccessToken).toBeDefined();
@@ -140,7 +140,7 @@ describe('Slack OAuth callback', () => {
 
 	describe('security', () => {
 		it('should not expose access token in URL or logs', () => {
-			const accessToken = 'xoxb-secret-token-12345';
+			const accessToken = 'fake-secret-test-token-12345';
 			const webhookUrl = 'https://hooks.example.com/test-webhook-secret-fake';
 
 			// Tokens should never appear in:
@@ -151,8 +151,8 @@ describe('Slack OAuth callback', () => {
 			const redirectUrl = '/settings?tab=integrations&success=slack_connected';
 
 			expect(redirectUrl).not.toContain(accessToken);
-			expect(redirectUrl).not.toContain('xoxb');
-			expect(redirectUrl).not.toContain('secret');
+			expect(redirectUrl).not.toContain('fake-secret');
+			expect(redirectUrl).not.toContain('token');
 		});
 
 		it('should validate OAuth state parameter to prevent CSRF', async () => {
@@ -179,7 +179,7 @@ describe('Slack OAuth callback', () => {
 		it('should not store plaintext tokens in database', async () => {
 			const { encrypt, isEncrypted } = await import('$lib/server/encryption');
 
-			const plainToken = 'xoxb-plain-token';
+			const plainToken = 'fake-plain-test-token';
 			const encryptedToken = encrypt(plainToken);
 
 			// Verify token is encrypted before storage
@@ -272,15 +272,15 @@ describe('Slack OAuth callback', () => {
 		it('should handle webhook URL with sensitive token', () => {
 			// Slack webhook URLs contain sensitive tokens in the path
 			const webhookUrl =
-				'https://hooks.example.com/services/T12345678/B87654321/AbCdEfGhIjKlMnOpQrStUvWx';
+				'https://hooks.example.com/services/T12345678/B87654321/fake-token-example-test';
 
 			// URL parts:
 			// - T12345678: Team ID
 			// - B87654321: Bot/App ID
-			// - AbCdEfGhIjKlMnOpQrStUvWx: Secret token (MUST be encrypted)
+			// - fake-token-example-test: Secret token (MUST be encrypted)
 
 			const secretToken = webhookUrl.split('/').pop();
-			expect(secretToken).toHaveLength(24);
+			expect(secretToken).toHaveLength(23);
 		});
 	});
 
@@ -288,7 +288,7 @@ describe('Slack OAuth callback', () => {
 		it('should encrypt access token with correct format', async () => {
 			const { encrypt } = await import('$lib/server/encryption');
 
-			const accessToken = 'xoxb-test-fake-example-token-not-real';
+			const accessToken = 'fake-access-token-for-testing-purposes';
 			const encrypted = encrypt(accessToken);
 
 			// Encrypted format: iv:authTag:encryptedData
@@ -302,7 +302,7 @@ describe('Slack OAuth callback', () => {
 		it('should encrypt refresh token with correct format', async () => {
 			const { encrypt } = await import('$lib/server/encryption');
 
-			const refreshToken = 'xoxe-xoxp-test-fake-example-not-real';
+			const refreshToken = 'fake-refresh-token-for-testing-purposes';
 			const encrypted = encrypt(refreshToken);
 
 			const parts = encrypted.split(':');
@@ -312,7 +312,7 @@ describe('Slack OAuth callback', () => {
 		it('should produce different ciphertext for same token', async () => {
 			const { encrypt } = await import('$lib/server/encryption');
 
-			const token = 'xoxb-test-token';
+			const token = 'fake-test-token-example';
 			const encrypted1 = encrypt(token);
 			const encrypted2 = encrypt(token);
 
@@ -355,7 +355,7 @@ describe('Slack OAuth callback', () => {
 
 			// Some OAuth flows may not include incoming webhook
 			const tokenData = {
-				access_token: 'xoxb-token',
+				access_token: 'fake-test-token',
 				team: { id: 'T12345', name: 'Test' },
 				incoming_webhook: undefined
 			};
