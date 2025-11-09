@@ -56,7 +56,7 @@
 			if (selectedEnvironment) params.set('environmentId', selectedEnvironment);
 			if (selectedMilestone) params.set('milestoneId', selectedMilestone);
 
-			const res = await fetch(`/api/test-runs/list?${params}`);
+			const res = await fetch(`/api/runs/list?${params}`);
 			if (!res.ok) throw new Error('Failed to fetch test runs');
 
 			const data = await res.json();

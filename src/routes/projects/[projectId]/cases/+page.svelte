@@ -291,7 +291,7 @@
 	async function handleDropSuiteOnSuite(draggedSuiteId: string, targetSuiteId: string) {
 		// Move suite to be a child of target suite
 		try {
-			const res = await fetch(`/api/test-suites/${draggedSuiteId}/move-to-parent`, {
+			const res = await fetch(`/api/suites/${draggedSuiteId}/move-to-parent`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
@@ -355,7 +355,7 @@
 		project = { ...project };
 
 		try {
-			const res = await fetch(`/api/test-suites/${suiteId}/reorder`, {
+			const res = await fetch(`/api/suites/${suiteId}/reorder`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ order: adjustedIndex })
@@ -433,7 +433,7 @@
 
 		try {
 			// Make the API call in the background
-			const res = await fetch(`/api/test-cases/${testCaseId}/reorder`, {
+			const res = await fetch(`/api/cases/${testCaseId}/reorder`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({

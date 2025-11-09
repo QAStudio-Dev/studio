@@ -196,7 +196,7 @@ export type CreateTestRunBody = {
 export const TestRunsApi = {
 	create: {
 		method: 'POST',
-		path: '/api/test-runs',
+		path: '/api/runs',
 		description:
 			'Create a new test run. Supports both session and API key authentication. If environment name is provided instead of ID, the environment will be created automatically.',
 		tags: ['Test Runs'],
@@ -314,7 +314,7 @@ export type SubmitTestResultsResponse = {
 export const TestResultsApi = {
 	submit: {
 		method: 'POST',
-		path: '/api/test-results',
+		path: '/api/results',
 		description:
 			"Submit test results from automated test runners (like Playwright). Automatically creates test cases and suites if they don't exist. Supports batch processing and attachment uploads. Sends notifications for failed tests.",
 		tags: ['Test Results'],

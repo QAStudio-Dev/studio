@@ -3,6 +3,8 @@ import { sequence } from '@sveltejs/kit/hooks';
 import { withClerkHandler } from 'svelte-clerk/server';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 
+console.log(process.env.CLERK_SECRET_KEY);
+
 const handleParaglide: Handle = ({ event, resolve }) =>
 	paraglideMiddleware(event.request, ({ request, locale }) => {
 		event.request = request;

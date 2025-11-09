@@ -15,6 +15,9 @@ const config = {
 	preprocess: [vitePreprocess(), mdsvex()],
 	kit: {
 		adapter: adapter(),
+		alias: {
+			$api: './src/api'
+		},
 		prerender: {
 			handleHttpError: 'warn' // Don't fail on 404s during prerender
 		}
