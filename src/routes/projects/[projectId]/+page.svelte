@@ -7,12 +7,23 @@
 		Calendar,
 		Users,
 		Settings,
-		FileText
+		FileText,
+		Edit
 	} from 'lucide-svelte';
 	import { setSelectedProject } from '$lib/stores/projectStore';
+	import { Dialog } from '@skeletonlabs/skeleton-svelte';
+	import { goto, invalidateAll } from '$app/navigation';
 
 	let { data } = $props();
 	let { project, stats, recentRuns } = $derived(data);
+
+	// Edit modal state
+	let showEditModal = $state(false);
+	let editName = $state(project.name);
+	let editKey = $state(project.key);
+	let editDescription = $state(project.description || '');
+	let isSaving = $state(false);
+	let errorMessage = $state('');
 
 	// Set this project as selected when page loads
 	$effect(() => {
@@ -46,13 +57,65 @@
 		};
 		return colors[status] || 'bg-surface-500/10';
 	}
+
+	function openEditModal() {
+		editName = project.name;
+		editKey = project.key;
+		editDescription = project.description || '';
+		errorMessage = '';
+		showEditModal = true;
+	}
+
+	async function saveProject() {
+		if (!editName.trim() || !editKey.trim()) {
+			errorMessage = 'Name and key are required';
+			return;
+		}
+
+		isSaving = true;
+		errorMessage = '';
+
+		try {
+			const response = await fetch(`/api/projects/${project.id}`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					name: editName.trim(),
+					key: editKey.trim().toUpperCase(),
+					description: editDescription.trim() || null
+				})
+			});
+
+			if (!response.ok) {
+				const error = await response.json();
+				errorMessage = error.error || 'Failed to update project';
+				return;
+			}
+
+			// Update the selected project in the store
+			setSelectedProject({
+				id: project.id,
+				name: editName.trim(),
+				key: editKey.trim().toUpperCase()
+			});
+
+			// Refresh the page data
+			await invalidateAll();
+			showEditModal = false;
+		} catch (error) {
+			console.error('Error updating project:', error);
+			errorMessage = 'Failed to update project';
+		} finally {
+			isSaving = false;
+		}
+	}
 </script>
 
 <div class="container mx-auto max-w-7xl px-4 py-8">
 	<!-- Header -->
 	<div class="mb-8">
 		<div class="flex items-start justify-between">
-			<div>
+			<div class="flex-1">
 				<div class="mb-2 flex items-center gap-3">
 					<h1 class="text-4xl font-bold">{project.name}</h1>
 					<span class="badge preset-filled-surface-500">{project.key}</span>
@@ -61,6 +124,10 @@
 					<p class="text-surface-600-300 text-lg">{project.description}</p>
 				{/if}
 			</div>
+			<button onclick={openEditModal} class="btn preset-filled-surface-500 flex items-center gap-2">
+				<Edit class="h-4 w-4" />
+				Edit Project
+			</button>
 		</div>
 
 		<!-- Stats Cards -->
@@ -242,3 +309,102 @@
 		</div>
 	</div>
 </div>
+
+<!-- Edit Project Dialog -->
+<Dialog open={showEditModal} onOpenChange={(e) => (showEditModal = e.open)}>
+	<Dialog.Backdrop />
+	<Dialog.Positioner>
+		<Dialog.Content class="w-full max-w-lg">
+			<div class="card rounded-container p-6">
+				<div class="mb-6 flex items-center justify-between">
+					<h2 class="text-2xl font-bold">Edit Project</h2>
+					<Dialog.CloseTrigger class="btn-icon preset-tonal">
+						<span class="text-xl">&times;</span>
+					</Dialog.CloseTrigger>
+				</div>
+
+				{#if errorMessage}
+					<div class="mb-4 rounded-container bg-error-500/10 p-3 text-sm text-error-500">
+						{errorMessage}
+					</div>
+				{/if}
+
+				<form
+					onsubmit={(e) => {
+						e.preventDefault();
+						saveProject();
+					}}
+					class="space-y-4"
+				>
+					<!-- Project Name -->
+					<div>
+						<label for="edit-name" class="mb-2 block text-sm font-medium">
+							Project Name <span class="text-error-500">*</span>
+						</label>
+						<input
+							id="edit-name"
+							type="text"
+							bind:value={editName}
+							required
+							class="input"
+							placeholder="My Project"
+						/>
+					</div>
+
+					<!-- Project Key -->
+					<div>
+						<label for="edit-key" class="mb-2 block text-sm font-medium">
+							Project Key <span class="text-error-500">*</span>
+						</label>
+						<input
+							id="edit-key"
+							type="text"
+							bind:value={editKey}
+							required
+							maxlength="10"
+							pattern="[A-Z0-9]+"
+							class="input uppercase"
+							placeholder="PROJ"
+							oninput={(e) => {
+								const target = e.target as HTMLInputElement;
+								target.value = target.value.toUpperCase();
+							}}
+						/>
+						<p class="mt-1 text-xs text-surface-600-400">
+							3-10 uppercase letters/numbers (e.g., PROJ, QA, TEST123)
+						</p>
+					</div>
+
+					<!-- Description -->
+					<div>
+						<label for="edit-description" class="mb-2 block text-sm font-medium">
+							Description
+						</label>
+						<textarea
+							id="edit-description"
+							bind:value={editDescription}
+							rows="3"
+							class="input"
+							placeholder="Optional description"
+						></textarea>
+					</div>
+
+					<!-- Actions -->
+					<div class="flex justify-end gap-3 pt-4">
+						<button
+							type="button"
+							onclick={() => (showEditModal = false)}
+							class="btn preset-outlined"
+							disabled={isSaving}
+						>
+							Cancel
+						</button>
+						<button type="submit" class="btn preset-filled-primary-500" disabled={isSaving}>
+							{isSaving ? 'Saving...' : 'Save Changes'}
+						</button>
+					</div>
+				</form>
+			</div>
+		</Dialog.Content>
+	</Dialog.Positioner>
+</Dialog>
