@@ -38,33 +38,35 @@ export const Modifier = (r: any) => {
 	return r;
 };
 
-export default new Endpoint({ Input, Output, Error, Modifier }).handle(async (input, evt): Promise<any> => {
-	const userId = await requireAuth(evt);
+export default new Endpoint({ Input, Output, Error, Modifier }).handle(
+	async (input, evt): Promise<any> => {
+		const userId = await requireAuth(evt);
 
-	// Get user with team info
-	const user = await db.user.findUnique({
-		where: { id: userId },
-		select: { teamId: true }
-	});
-
-	const { name, description, key } = input;
-
-	try {
-		const project = await db.project.create({
-			data: {
-				name,
-				description: description || null,
-				key: key.toUpperCase(),
-				createdBy: userId,
-				teamId: user?.teamId || null
-			}
+		// Get user with team info
+		const user = await db.user.findUnique({
+			where: { id: userId },
+			select: { teamId: true }
 		});
 
-		return serializeDates(project);
-	} catch (err: any) {
-		if (err.code === 'P2002') {
-			throw Error[409];
+		const { name, description, key } = input;
+
+		try {
+			const project = await db.project.create({
+				data: {
+					name,
+					description: description || null,
+					key: key.toUpperCase(),
+					createdBy: userId,
+					teamId: user?.teamId || null
+				}
+			});
+
+			return serializeDates(project);
+		} catch (err: any) {
+			if (err.code === 'P2002') {
+				throw Error[409];
+			}
+			throw Error[500];
 		}
-		throw Error[500];
 	}
-});
+);

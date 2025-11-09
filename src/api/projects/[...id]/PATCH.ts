@@ -41,26 +41,28 @@ export const Modifier = (r: any) => {
 	return r;
 };
 
-export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(async (input): Promise<any> => {
-	const updateData: any = {};
-	if (input.name !== undefined) updateData.name = input.name;
-	if (input.description !== undefined) updateData.description = input.description;
-	if (input.key !== undefined) updateData.key = input.key.toUpperCase();
+export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
+	async (input): Promise<any> => {
+		const updateData: any = {};
+		if (input.name !== undefined) updateData.name = input.name;
+		if (input.description !== undefined) updateData.description = input.description;
+		if (input.key !== undefined) updateData.key = input.key.toUpperCase();
 
-	try {
-		const project = await db.project.update({
-			where: { id: input.id },
-			data: updateData
-		});
+		try {
+			const project = await db.project.update({
+				where: { id: input.id },
+				data: updateData
+			});
 
-		return serializeDates(project);
-	} catch (err: any) {
-		if (err.code === 'P2025') {
-			throw Error[404];
+			return serializeDates(project);
+		} catch (err: any) {
+			if (err.code === 'P2025') {
+				throw Error[404];
+			}
+			if (err.code === 'P2002') {
+				throw Error[409];
+			}
+			throw Error[500];
 		}
-		if (err.code === 'P2002') {
-			throw Error[409];
-		}
-		throw Error[500];
 	}
-});
+);

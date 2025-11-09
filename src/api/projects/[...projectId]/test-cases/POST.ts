@@ -14,10 +14,7 @@ export const Input = z.object({
 	preconditions: z.string().optional().describe('Pre-requisites before executing the test'),
 	steps: z.string().optional().describe('Test execution steps'),
 	expectedResult: z.string().optional().describe('Expected test outcome'),
-	priority: z
-		.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'])
-		.optional()
-		.describe('Test case priority'),
+	priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).optional().describe('Test case priority'),
 	type: z
 		.enum([
 			'FUNCTIONAL',

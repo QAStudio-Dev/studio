@@ -8,20 +8,17 @@
 		if (browser) {
 			// Dynamically import Swagger UI for browser only
 			const SwaggerUIBundle = (await import('swagger-ui-dist/swagger-ui-bundle.js')).default;
-			const SwaggerUIStandalonePreset = (await import('swagger-ui-dist/swagger-ui-standalone-preset.js')).default;
+			const SwaggerUIStandalonePreset = (
+				await import('swagger-ui-dist/swagger-ui-standalone-preset.js')
+			).default;
 
 			// Initialize Swagger UI
 			SwaggerUIBundle({
 				url: '/api/openapi',
 				dom_id: '#swagger-ui',
 				deepLinking: true,
-				presets: [
-					SwaggerUIBundle.presets.apis,
-					SwaggerUIStandalonePreset
-				],
-				plugins: [
-					SwaggerUIBundle.plugins.DownloadUrl
-				],
+				presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+				plugins: [SwaggerUIBundle.plugins.DownloadUrl],
 				layout: 'StandaloneLayout',
 				displayRequestDuration: true,
 				filter: true,
@@ -38,10 +35,7 @@
 		name="description"
 		content="Interactive REST API documentation for QA Studio test management platform"
 	/>
-	<link
-		rel="stylesheet"
-		href="https://unpkg.com/swagger-ui-dist@5.10.5/swagger-ui.css"
-	/>
+	<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.10.5/swagger-ui.css" />
 </svelte:head>
 
 <div class="min-h-screen bg-surface-50-950">

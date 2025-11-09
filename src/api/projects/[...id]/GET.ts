@@ -54,32 +54,34 @@ export const Modifier = (r: any) => {
 	return r;
 };
 
-export default new Endpoint({ Param, Output, Error, Modifier }).handle(async (input): Promise<any> => {
-	const project = await db.project.findUnique({
-		where: { id: input.id },
-		include: {
-			_count: {
-				select: {
-					testCases: true,
-					testRuns: true,
-					testSuites: true,
-					milestones: true,
-					environments: true
+export default new Endpoint({ Param, Output, Error, Modifier }).handle(
+	async (input): Promise<any> => {
+		const project = await db.project.findUnique({
+			where: { id: input.id },
+			include: {
+				_count: {
+					select: {
+						testCases: true,
+						testRuns: true,
+						testSuites: true,
+						milestones: true,
+						environments: true
+					}
+				},
+				milestones: {
+					orderBy: { createdAt: 'desc' },
+					take: 5
+				},
+				environments: {
+					orderBy: { name: 'asc' }
 				}
-			},
-			milestones: {
-				orderBy: { createdAt: 'desc' },
-				take: 5
-			},
-			environments: {
-				orderBy: { name: 'asc' }
 			}
+		});
+
+		if (!project) {
+			throw Error[404];
 		}
-	});
 
-	if (!project) {
-		throw Error[404];
+		return serializeDates(project);
 	}
-
-	return serializeDates(project);
-});
+);

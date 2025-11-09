@@ -13,10 +13,7 @@ export const Input = z.object({
 	preconditions: z.string().nullable().optional().describe('Pre-requisites before executing'),
 	steps: z.string().nullable().optional().describe('Test execution steps'),
 	expectedResult: z.string().nullable().optional().describe('Expected test outcome'),
-	priority: z
-		.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'])
-		.optional()
-		.describe('Test case priority'),
+	priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).optional().describe('Test case priority'),
 	type: z
 		.enum([
 			'FUNCTIONAL',
@@ -93,7 +90,8 @@ export const Error = {
 export const Modifier = (r: any) => {
 	r.tags = ['Cases'];
 	r.summary = 'Update a test case';
-	r.description = 'Update test case fields including title, steps, priority, and automation status.';
+	r.description =
+		'Update test case fields including title, steps, priority, and automation status.';
 	return r;
 };
 

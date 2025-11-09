@@ -375,7 +375,11 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 					// Process attachments if any
 					let attachmentCount = 0;
 					if (result.attachments && Array.isArray(result.attachments)) {
-						attachmentCount = await processAttachments(result.attachments, input.testRunId, testResult.id);
+						attachmentCount = await processAttachments(
+							result.attachments,
+							input.testRunId,
+							testResult.id
+						);
 					}
 
 					processedResults.push({
@@ -405,7 +409,11 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 					// Process attachments if any
 					let attachmentCount = 0;
 					if (result.attachments && Array.isArray(result.attachments)) {
-						attachmentCount = await processAttachments(result.attachments, input.testRunId, testResult.id);
+						attachmentCount = await processAttachments(
+							result.attachments,
+							input.testRunId,
+							testResult.id
+						);
 					}
 
 					processedResults.push({

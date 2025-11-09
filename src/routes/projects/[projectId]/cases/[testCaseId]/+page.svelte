@@ -130,9 +130,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 		loadingMore = true;
 		try {
 			const nextPage = resultsPage + 1;
-			const response = await fetch(
-				`/api/cases/${testCase.id}/results?page=${nextPage}&limit=10`
-			);
+			const response = await fetch(`/api/cases/${testCase.id}/results?page=${nextPage}&limit=10`);
 
 			if (response.ok) {
 				const data = await response.json();

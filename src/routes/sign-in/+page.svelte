@@ -14,13 +14,13 @@
 			<div class="mx-auto w-full max-w-md">
 				<div class="mb-8 text-center lg:text-left">
 					<h1 class="mb-2 text-4xl font-black">Welcome Back</h1>
-					<p class="text-surface-600-400 text-lg">Sign in to continue your QA journey</p>
+					<p class="text-lg text-surface-600-400">Sign in to continue your QA journey</p>
 				</div>
 
 				<SignIn />
 
 				<div class="mt-8 text-center">
-					<p class="text-surface-600-400 text-sm">
+					<p class="text-sm text-surface-600-400">
 						Don't have an account?
 						<a href="/sign-up" class="font-medium text-primary-500 hover:text-primary-600">
 							Sign up - it's free!
@@ -32,7 +32,9 @@
 
 		<!-- Right Side: Benefits -->
 		<div class="order-1 lg:order-2">
-			<div class="card rounded-container bg-gradient-to-br from-primary-500 to-secondary-500 p-8 text-white">
+			<div
+				class="card rounded-container bg-gradient-to-br from-primary-500 to-secondary-500 p-8 text-white"
+			>
 				<div class="mb-6">
 					<h2 class="mb-2 text-3xl font-black">Start Testing Smarter</h2>
 					<p class="text-lg opacity-90">
@@ -78,9 +80,7 @@
 						</div>
 						<div>
 							<p class="font-semibold">Seamless Integrations</p>
-							<p class="text-sm opacity-90">
-								Connect with Jira, Slack, GitHub, and more (Pro)
-							</p>
+							<p class="text-sm opacity-90">Connect with Jira, Slack, GitHub, and more (Pro)</p>
 						</div>
 					</div>
 
@@ -93,9 +93,7 @@
 						</div>
 						<div>
 							<p class="font-semibold">Multiple Projects</p>
-							<p class="text-sm opacity-90">
-								Create and manage unlimited projects (Pro)
-							</p>
+							<p class="text-sm opacity-90">Create and manage unlimited projects (Pro)</p>
 						</div>
 					</div>
 				</div>

@@ -29,18 +29,16 @@ export const Modifier = (r: any) => {
 	return r;
 };
 
-export default new Endpoint({ Param, Output, Modifier }).handle(
-	async (input): Promise<any> => {
-		const milestones = await db.milestone.findMany({
-			where: { projectId: input.projectId },
-			orderBy: { createdAt: 'desc' },
-			include: {
-				_count: {
-					select: { testRuns: true }
-				}
+export default new Endpoint({ Param, Output, Modifier }).handle(async (input): Promise<any> => {
+	const milestones = await db.milestone.findMany({
+		where: { projectId: input.projectId },
+		orderBy: { createdAt: 'desc' },
+		include: {
+			_count: {
+				select: { testRuns: true }
 			}
-		});
+		}
+	});
 
-		return serializeDates(milestones);
-	}
-);
+	return serializeDates(milestones);
+});
