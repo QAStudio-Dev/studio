@@ -231,12 +231,20 @@ async function processAttachments(
 				typeof attachment.body === 'object' &&
 				attachment.body !== null &&
 				'type' in attachment.body &&
-				'data' in attachment.body &&
-				attachment.body.type === 'Buffer' &&
-				Array.isArray(attachment.body.data)
+				'data' in attachment.body
 			) {
 				// Buffer serialized as JSON: { type: 'Buffer', data: [bytes...] }
-				buffer = Buffer.from(attachment.body.data as number[]);
+				const serializedBuffer = attachment.body as { type: string; data: number[] };
+				if (serializedBuffer.type === 'Buffer' && Array.isArray(serializedBuffer.data)) {
+					buffer = Buffer.from(serializedBuffer.data);
+				} else {
+					attachmentErrors.push({
+						testTitle,
+						attachmentName: attachment.name,
+						error: `Invalid serialized buffer format`
+					});
+					continue;
+				}
 			} else {
 				attachmentErrors.push({
 					testTitle,
@@ -288,18 +296,33 @@ async function processAttachments(
 }
 
 /**
- * Helper function to find or create a nested test suite hierarchy
+ * Suite cache for batch operations
+ */
+interface SuiteCache {
+	[key: string]: string; // key: "projectId:parentId:name" -> suiteId
+}
+
+/**
+ * Helper function to find or create a nested test suite hierarchy (with caching)
  */
 async function findOrCreateSuiteHierarchy(
 	suitePath: string[],
 	projectId: string,
-	userId: string
+	userId: string,
+	suiteCache: SuiteCache
 ): Promise<string | null> {
 	if (suitePath.length === 0) return null;
 
 	let parentId: string | null = null;
 
 	for (const suiteName of suitePath) {
+		// Check cache first
+		const cacheKey: string = `${projectId}:${parentId || 'null'}:${suiteName}`;
+		if (suiteCache[cacheKey]) {
+			parentId = suiteCache[cacheKey];
+			continue;
+		}
+
 		// Try to find existing suite with this name and parent
 		let suite: any = await db.testSuite.findFirst({
 			where: {
@@ -331,6 +354,8 @@ async function findOrCreateSuiteHierarchy(
 			});
 		}
 
+		// Cache the result
+		suiteCache[cacheKey] = suite.id;
 		parentId = suite.id;
 	}
 
@@ -395,6 +420,16 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 			error: string;
 		}> = [];
 
+		// Initialize suite cache for batch operations
+		// This prevents N+1 queries when multiple tests share the same suite hierarchy
+		const suiteCache: SuiteCache = {};
+
+		// Process results sequentially
+		// NOTE: While this is a loop with individual DB operations, it's necessary because:
+		// 1. We need to check for existing test cases before creating new ones
+		// 2. Suite cache eliminates most N+1 queries for suite hierarchy
+		// 3. Test cases are pre-loaded in memory for fast lookups
+		// 4. Future optimization: Consider using Prisma transactions for atomic batches
 		for (const result of input.results) {
 			try {
 				// Map Playwright status to QA Studio status
@@ -426,8 +461,13 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 						testTitle = parts[parts.length - 1];
 						const suitePath = parts.slice(0, -1);
 
-						// Create or find the suite hierarchy
-						suiteId = await findOrCreateSuiteHierarchy(suitePath, testRun.projectId, userId);
+						// Create or find the suite hierarchy (with caching)
+						suiteId = await findOrCreateSuiteHierarchy(
+							suitePath,
+							testRun.projectId,
+							userId,
+							suiteCache
+						);
 					}
 				}
 
