@@ -106,7 +106,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 			if (selectedPriority) params.set('priority', selectedPriority);
 			if (selectedType) params.set('type', selectedType);
 
-			const res = await fetch(`/api/test-runs/${testRun.id}/results?${params}`);
+			const res = await fetch(`/api/runs/${testRun.id}/results?${params}`);
 			if (!res.ok) throw new Error('Failed to fetch test results');
 
 			const resultData = await res.json();

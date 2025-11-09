@@ -17,9 +17,29 @@ interface NotificationPayload {
 }
 
 /**
+ * Result of a notification send operation
+ */
+export interface NotificationResult {
+	success: boolean;
+	integrationsSent: number;
+	integrationsFailed: number;
+	errors?: Array<{ integrationId: string; error: string }>;
+}
+
+/**
  * Send a notification to all active integrations for a team
  */
-export async function sendNotification(teamId: string, payload: NotificationPayload) {
+export async function sendNotification(
+	teamId: string,
+	payload: NotificationPayload
+): Promise<NotificationResult> {
+	const result: NotificationResult = {
+		success: false,
+		integrationsSent: 0,
+		integrationsFailed: 0,
+		errors: []
+	};
+
 	try {
 		// Get all active integrations for the team
 		const integrations = await db.integration.findMany({
@@ -31,7 +51,7 @@ export async function sendNotification(teamId: string, payload: NotificationPayl
 
 		if (integrations.length === 0) {
 			console.log('No active integrations found for team:', teamId);
-			return;
+			return result;
 		}
 
 		// Filter integrations based on notification preferences
@@ -51,7 +71,7 @@ export async function sendNotification(teamId: string, payload: NotificationPayl
 
 		if (enabledIntegrations.length === 0) {
 			console.log('No integrations have this notification enabled:', payload.event);
-			return;
+			return result;
 		}
 
 		// Send to each enabled integration
@@ -59,9 +79,52 @@ export async function sendNotification(teamId: string, payload: NotificationPayl
 			sendToIntegration(integration.id, integration.type, payload)
 		);
 
-		await Promise.allSettled(promises);
-	} catch (error) {
+		const results = await Promise.allSettled(promises);
+
+		// Process results
+		results.forEach((promiseResult, index) => {
+			if (promiseResult.status === 'fulfilled') {
+				const integrationResult = promiseResult.value;
+				if (integrationResult.success) {
+					result.integrationsSent++;
+				} else {
+					result.integrationsFailed++;
+					result.errors?.push({
+						integrationId: enabledIntegrations[index].id,
+						error: integrationResult.error || 'Unknown error'
+					});
+				}
+			} else {
+				result.integrationsFailed++;
+				result.errors?.push({
+					integrationId: enabledIntegrations[index].id,
+					error: promiseResult.reason?.message || 'Unknown error'
+				});
+			}
+		});
+
+		result.success = result.integrationsSent > 0;
+
+		// Log summary
+		if (result.integrationsFailed > 0) {
+			console.error(
+				`Notification ${payload.event} partially failed: ${result.integrationsSent} sent, ${result.integrationsFailed} failed`,
+				result.errors
+			);
+		} else {
+			console.log(
+				`Notification ${payload.event} sent successfully to ${result.integrationsSent} integration(s)`
+			);
+		}
+
+		return result;
+	} catch (error: any) {
 		console.error('Error sending notifications:', error);
+		result.errors?.push({
+			integrationId: 'system',
+			error: error.message || 'System error'
+		});
+		return result;
 	}
 }
 
@@ -325,7 +388,7 @@ export async function notifyTestRunCompleted(
 		failed: number;
 		skipped?: number;
 	}
-) {
+): Promise<NotificationResult> {
 	const color =
 		testRun.passRate === 100 ? '#36a64f' : testRun.passRate >= 80 ? '#ffa500' : '#ff0000';
 	const emoji = testRun.passRate === 100 ? '✅' : testRun.passRate >= 80 ? '⚠️' : '❌';
@@ -343,7 +406,7 @@ export async function notifyTestRunCompleted(
 		fields.push({ name: '⏭️ Skipped', value: testRun.skipped.toString(), inline: true });
 	}
 
-	await sendNotification(teamId, {
+	return await sendNotification(teamId, {
 		event: 'TEST_RUN_COMPLETED',
 		title: `${emoji} Test Run Completed: ${testRun.name}`,
 		message: `*Project:* ${testRun.projectName}\n*Status:* ${testRun.passRate === 100 ? 'All tests passed' : `${testRun.failed} test(s) failed`}`,
@@ -362,10 +425,10 @@ export async function notifyTestRunFailed(
 		projectName: string;
 		failedCount: number;
 	}
-) {
+): Promise<NotificationResult> {
 	const baseUrl = process.env.PUBLIC_BASE_URL || 'https://qastudio.dev';
 
-	await sendNotification(teamId, {
+	return await sendNotification(teamId, {
 		event: 'TEST_RUN_FAILED',
 		title: `❌ Test Run Failed: ${testRun.name}`,
 		message: `*Project:* ${testRun.projectName}\n*Failures:* ${testRun.failedCount} test(s) failed\n\n⚠️ Immediate attention required`,
@@ -384,10 +447,10 @@ export async function notifyMilestoneDue(
 		dueDate: Date;
 		daysUntilDue: number;
 	}
-) {
+): Promise<NotificationResult> {
 	const baseUrl = process.env.PUBLIC_BASE_URL || 'https://qastudio.dev';
 
-	await sendNotification(teamId, {
+	return await sendNotification(teamId, {
 		event: 'MILESTONE_DUE',
 		title: `📅 Milestone Due Soon: ${milestone.name}`,
 		message: `*Project:* ${milestone.projectName}\n*Due Date:* ${milestone.dueDate.toLocaleDateString()}\n*Days Remaining:* ${milestone.daysUntilDue}`,

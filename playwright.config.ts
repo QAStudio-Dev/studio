@@ -19,7 +19,7 @@ export default defineConfig({
 		[
 			'@qastudio-dev/playwright',
 			{
-				apiUrl: stripAnsi('http://localhost:5173/api'),
+				apiUrl: stripAnsi('http://qastudio.dev/api'),
 				apiKey: stripAnsi(process.env.QA_STUDIO_API_KEY),
 				projectId: stripAnsi(process.env.QA_STUDIO_PROJECT_ID),
 				environment: process.env.CI ? 'CI' : 'local',
@@ -28,7 +28,7 @@ export default defineConfig({
 		]
 	],
 	use: {
-		baseURL: process.env.BASE_URL || 'http://localhost:5173',
+		baseURL: 'https://qastudio.dev',
 		// Capture screenshots on failure
 		screenshot: 'only-on-failure',
 		// Capture videos on failure
@@ -42,6 +42,6 @@ export default defineConfig({
 	// 	port: 5173,
 	// 	reuseExistingServer: true // Don't fail if server is already running
 	// },
-	testDir: 'e2e',
+	testDir: 'e2e/tests',
 	workers: 4
 });

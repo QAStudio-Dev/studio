@@ -475,7 +475,7 @@ export default defineConfig({
 			<div class="bg-surface-50-900 mb-6 rounded-container p-4">
 				<p class="mb-2 text-sm font-medium">Example usage:</p>
 				<pre class="overflow-x-auto text-xs"><code
-						>curl https://qastudio.com/api/test-results \
+						>curl https://qastudio.com/api/results \
   -H "Authorization: Bearer {createdKey}"</code
 					></pre>
 			</div>

@@ -75,6 +75,8 @@
 		"simple-oauth2": "^5.1.0",
 		"stripe": "^19.1.0",
 		"svelte-clerk": "^0.17.6",
+		"sveltekit-api": "^0.6.1",
+		"swagger-ui-dist": "^5.30.2",
 		"zod": "^4.1.12"
 	}
 }

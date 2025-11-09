@@ -124,7 +124,7 @@
 					<p class="text-surface-600-300 text-lg">{project.description}</p>
 				{/if}
 			</div>
-			<button onclick={openEditModal} class="btn preset-filled-surface-500 flex items-center gap-2">
+			<button onclick={openEditModal} class="btn flex items-center gap-2 preset-filled-surface-500">
 				<Edit class="h-4 w-4" />
 				Edit Project
 			</button>

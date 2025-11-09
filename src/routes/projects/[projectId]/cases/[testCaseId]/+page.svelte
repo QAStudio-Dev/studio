@@ -66,7 +66,7 @@
 
 		savingEdit = true;
 		try {
-			const res = await fetch(`/api/test-cases/${testCase.id}`, {
+			const res = await fetch(`/api/cases/${testCase.id}`, {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(editForm)
@@ -130,9 +130,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 		loadingMore = true;
 		try {
 			const nextPage = resultsPage + 1;
-			const response = await fetch(
-				`/api/test-cases/${testCase.id}/results?page=${nextPage}&limit=10`
-			);
+			const response = await fetch(`/api/cases/${testCase.id}/results?page=${nextPage}&limit=10`);
 
 			if (response.ok) {
 				const data = await response.json();
