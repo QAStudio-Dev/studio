@@ -400,10 +400,10 @@ jobs:
 
 Now that you've integrated Playwright with QA Studio, explore these features:
 
-- **[API Documentation](/docs)**: Learn about advanced API features
-- **[Milestones](/docs#milestones)**: Track testing progress against releases
-- **[Environments](/docs#environments)**: Test across multiple environments
-- **[Team Collaboration](/teams)**: Invite team members to view results
+- **[API Documentation](/docs)**: Learn about advanced API features and test the endpoints interactively
+- **Milestones**: Track testing progress against releases in your project settings
+- **Environments**: Test across multiple environments (Production, Staging, QA, etc.)
+- **Team Collaboration**: Invite team members to view and analyze test results
 
 ## Package Links
 
