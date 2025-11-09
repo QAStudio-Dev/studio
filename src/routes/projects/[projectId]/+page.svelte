@@ -312,10 +312,10 @@
 
 <!-- Edit Project Dialog -->
 <Dialog open={showEditModal} onOpenChange={(e) => (showEditModal = e.open)}>
-	<Dialog.Backdrop />
-	<Dialog.Positioner>
+	<Dialog.Backdrop class="fixed inset-0 z-40 bg-black/50" />
+	<Dialog.Positioner class="fixed inset-0 z-50 flex items-center justify-center p-4">
 		<Dialog.Content class="w-full max-w-lg">
-			<div class="card rounded-container p-6">
+			<div class="card rounded-container bg-surface-50-950 p-6 shadow-xl">
 				<div class="mb-6 flex items-center justify-between">
 					<h2 class="text-2xl font-bold">Edit Project</h2>
 					<Dialog.CloseTrigger class="btn-icon preset-tonal">
