@@ -199,12 +199,13 @@ This will create:
       - Test Case: "should login with valid credentials"
 
 **Attachment Body Formats:**
-The `body` field in attachments supports multiple formats:
+The `body` field in attachments supports the following formats:
 
-1. **Base64 string**: `"iVBORw0KGgoAAAANSUhEUgAAAA..."`
-2. **File path**: `"/path/to/screenshot.png"` (will be read and uploaded)
-3. **Buffer object**: `Buffer.from(...)`
-4. **Serialized Buffer**: `{ type: 'Buffer', data: [bytes...] }`
+1. **Base64 string**: `"iVBORw0KGgoAAAANSUhEUgAAAA..."` (recommended)
+2. **Buffer object**: `Buffer.from(...)`
+3. **Serialized Buffer**: `{ type: 'Buffer', data: [bytes...] }`
+
+**Security Note:** File paths are NOT supported. All attachment data must be provided as base64-encoded strings or Buffer objects to prevent unauthorized file system access.
 
 **Response:**
 

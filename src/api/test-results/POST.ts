@@ -2,8 +2,6 @@ import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
 import { uploadToBlob, generateAttachmentPath } from '$lib/server/blob-storage';
-import { readFile } from 'fs/promises';
-import { existsSync } from 'fs';
 import { sendNotification, notifyTestRunCompleted } from '$lib/server/integrations';
 import {
 	generateTestCaseId,
@@ -50,6 +48,7 @@ export const Output = z.object({
 			testResultId: z.string(),
 			title: z.string(),
 			status: z.enum(['PASSED', 'FAILED', 'SKIPPED']),
+			duration: z.number().nullable().describe('Test duration in milliseconds'),
 			created: z.boolean().describe('Whether a new test case was created'),
 			attachmentCount: z.number()
 		})
@@ -62,7 +61,17 @@ export const Output = z.object({
 			})
 		)
 		.optional()
-		.describe('Errors encountered during processing')
+		.describe('Errors encountered during processing'),
+	attachmentErrors: z
+		.array(
+			z.object({
+				testTitle: z.string(),
+				attachmentName: z.string(),
+				error: z.string()
+			})
+		)
+		.optional()
+		.describe('Attachment upload errors')
 });
 
 export const Error = {
@@ -80,6 +89,55 @@ export const Modifier = (r: any) => {
 };
 
 /**
+ * Allowed MIME types for attachments
+ *
+ * Supports common Playwright attachments:
+ * - Screenshots: image/png, image/jpeg
+ * - Videos: video/webm, video/mp4
+ * - Traces: application/zip, application/octet-stream
+ * - Logs: text/plain, application/x-ndjson
+ * - Network HAR: application/json
+ */
+const ALLOWED_MIME_TYPES = [
+	// Images
+	'image/png',
+	'image/jpeg',
+	'image/jpg',
+	'image/gif',
+	'image/webp',
+	'image/svg+xml',
+	// Videos
+	'video/webm',
+	'video/mp4',
+	'video/quicktime',
+	// Archives (includes Playwright traces)
+	'application/zip',
+	'application/x-zip-compressed',
+	'application/gzip',
+	'application/x-gzip',
+	// Binary data (for buffers without explicit MIME type)
+	'application/octet-stream',
+	// Text
+	'text/plain',
+	'text/markdown',
+	'text/html',
+	'text/css',
+	'application/json',
+	'application/javascript',
+	'application/xml',
+	// Logs
+	'application/x-ndjson',
+	'text/x-log'
+] as const;
+
+/**
+ * Validate MIME type
+ */
+function isValidMimeType(mimeType: string): boolean {
+	return ALLOWED_MIME_TYPES.includes(mimeType as any);
+}
+
+/**
  * Get file extension from MIME type
  */
 function getExtensionFromMimeType(mimeType: string): string {
@@ -89,16 +147,21 @@ function getExtensionFromMimeType(mimeType: string): string {
 		'image/jpg': 'jpg',
 		'image/gif': 'gif',
 		'image/webp': 'webp',
+		'image/svg+xml': 'svg',
 		'video/webm': 'webm',
 		'video/mp4': 'mp4',
 		'video/quicktime': 'mov',
 		'application/zip': 'zip',
+		'application/x-zip-compressed': 'zip',
+		'application/gzip': 'gz',
 		'application/json': 'json',
 		'text/plain': 'txt',
 		'text/markdown': 'md',
 		'text/html': 'html',
 		'text/css': 'css',
-		'application/javascript': 'js'
+		'application/javascript': 'js',
+		'application/xml': 'xml',
+		'application/x-ndjson': 'ndjson'
 	};
 	return mimeToExt[mimeType.toLowerCase()] || 'bin';
 }
@@ -114,7 +177,9 @@ async function processAttachments(
 		type?: string;
 	}>,
 	testRunId: string,
-	testResultId: string
+	testResultId: string,
+	testTitle: string,
+	attachmentErrors: Array<{ testTitle: string; attachmentName: string; error: string }>
 ): Promise<number> {
 	if (!attachments || attachments.length === 0) {
 		return 0;
@@ -124,29 +189,40 @@ async function processAttachments(
 
 	for (const attachment of attachments) {
 		try {
+			// Validate MIME type
+			if (!isValidMimeType(attachment.contentType)) {
+				attachmentErrors.push({
+					testTitle,
+					attachmentName: attachment.name,
+					error: `Unsupported MIME type: ${attachment.contentType}. Allowed types: images (png, jpg, gif, webp, svg), videos (webm, mp4), archives (zip, gzip), traces (application/zip), text, logs, JSON`
+				});
+				continue;
+			}
+
 			// Convert body to Buffer
 			let buffer: Buffer;
 
 			if (!attachment.body) {
-				console.warn(`Skipping attachment ${attachment.name}: no body provided`);
+				attachmentErrors.push({
+					testTitle,
+					attachmentName: attachment.name,
+					error: 'No body provided'
+				});
 				continue;
 			}
 
 			if (typeof attachment.body === 'string') {
-				// Could be base64 or a file path
-				// Check if it looks like a file path
-				if (attachment.body.includes('/') || attachment.body.includes('\\')) {
-					// It's likely a file path - try to read it
-					if (existsSync(attachment.body)) {
-						buffer = await readFile(attachment.body);
-					} else {
-						console.warn(`File path doesn't exist for ${attachment.name}: ${attachment.body}`);
-						// Fallback to base64 decode
-						buffer = Buffer.from(attachment.body, 'base64');
-					}
-				} else {
-					// Base64 encoded string
+				// For security, we ONLY accept base64-encoded strings
+				// File paths are not supported to prevent arbitrary file system access
+				try {
 					buffer = Buffer.from(attachment.body, 'base64');
+				} catch (err: any) {
+					attachmentErrors.push({
+						testTitle,
+						attachmentName: attachment.name,
+						error: `Failed to decode base64: ${err.message}`
+					});
+					continue;
 				}
 			} else if (Buffer.isBuffer(attachment.body)) {
 				// Already a Buffer
@@ -162,10 +238,11 @@ async function processAttachments(
 				// Buffer serialized as JSON: { type: 'Buffer', data: [bytes...] }
 				buffer = Buffer.from(attachment.body.data as number[]);
 			} else {
-				console.warn(
-					`Skipping attachment ${attachment.name}: invalid body type`,
-					typeof attachment.body
-				);
+				attachmentErrors.push({
+					testTitle,
+					attachmentName: attachment.name,
+					error: `Invalid body type: ${typeof attachment.body}`
+				});
 				continue;
 			}
 
@@ -199,7 +276,11 @@ async function processAttachments(
 			uploadedCount++;
 		} catch (err: any) {
 			console.error(`Failed to upload attachment ${attachment.name}:`, err);
-			// Continue processing other attachments even if one fails
+			attachmentErrors.push({
+				testTitle,
+				attachmentName: attachment.name,
+				error: err.message || 'Upload failed'
+			});
 		}
 	}
 
@@ -298,8 +379,21 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 		}
 
 		// Process results
-		const processedResults = [];
-		const errors = [];
+		const processedResults: Array<{
+			testCaseId: string;
+			testResultId: string;
+			title: string;
+			status: 'PASSED' | 'FAILED' | 'SKIPPED';
+			duration: number | null;
+			created: boolean;
+			attachmentCount: number;
+		}> = [];
+		const errors: Array<{ testTitle: string; error: string }> = [];
+		const attachmentErrors: Array<{
+			testTitle: string;
+			attachmentName: string;
+			error: string;
+		}> = [];
 
 		for (const result of input.results) {
 			try {
@@ -378,7 +472,9 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 						attachmentCount = await processAttachments(
 							result.attachments,
 							input.testRunId,
-							testResult.id
+							testResult.id,
+							result.title,
+							attachmentErrors
 						);
 					}
 
@@ -387,6 +483,7 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 						testResultId: testResult.id,
 						title: result.title,
 						status,
+						duration: result.duration || null,
 						created: true,
 						attachmentCount
 					});
@@ -412,7 +509,9 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 						attachmentCount = await processAttachments(
 							result.attachments,
 							input.testRunId,
-							testResult.id
+							testResult.id,
+							result.title,
+							attachmentErrors
 						);
 					}
 
@@ -421,6 +520,7 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 						testResultId: testResult.id,
 						title: result.title,
 						status,
+						duration: result.duration || null,
 						created: false,
 						attachmentCount
 					});
@@ -455,7 +555,7 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 
 				if (isComplete) {
 					// Send test run completed notification
-					await notifyTestRunCompleted(testRun.project.teamId, {
+					const result = await notifyTestRunCompleted(testRun.project.teamId, {
 						id: testRun.id,
 						name: testRun.name,
 						projectId: testRun.projectId,
@@ -466,13 +566,23 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 						failed,
 						skipped
 					});
+
+					if (!result.success && result.errors && result.errors.length > 0) {
+						console.error('Test run completion notification failed:', {
+							testRunId: testRun.id,
+							testRunName: testRun.name,
+							integrationsSent: result.integrationsSent,
+							integrationsFailed: result.integrationsFailed,
+							errors: result.errors
+						});
+					}
 				}
 
 				// Send individual test case failure notifications
 				const baseUrl = process.env.PUBLIC_BASE_URL || 'https://qastudio.dev';
 				const failedTests = processedResults.filter((r) => r.status === 'FAILED');
 				for (const failedTest of failedTests) {
-					await sendNotification(testRun.project.teamId, {
+					const result = await sendNotification(testRun.project.teamId, {
 						event: 'TEST_CASE_FAILED',
 						title: `❌ Test Failed: ${failedTest.title}`,
 						message: `*Test Run:* ${testRun.name}\n*Project:* ${testRun.project.name}`,
@@ -491,17 +601,33 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 							}
 						]
 					});
+
+					if (!result.success && result.errors && result.errors.length > 0) {
+						console.error('Test case failure notification failed:', {
+							testCaseTitle: failedTest.title,
+							testRunId: testRun.id,
+							integrationsSent: result.integrationsSent,
+							integrationsFailed: result.integrationsFailed,
+							errors: result.errors
+						});
+					}
 				}
-			} catch (notificationError) {
+			} catch (notificationError: any) {
 				// Don't fail the request if notifications fail
-				console.error('Failed to send notifications:', notificationError);
+				console.error('Failed to send notifications:', {
+					error: notificationError.message || 'Unknown error',
+					testRunId: testRun.id,
+					testRunName: testRun.name,
+					stack: notificationError.stack
+				});
 			}
 		}
 
 		return {
 			processedCount: processedResults.length,
 			results: processedResults,
-			errors: errors.length > 0 ? errors : undefined
+			errors: errors.length > 0 ? errors : undefined,
+			attachmentErrors: attachmentErrors.length > 0 ? attachmentErrors : undefined
 		};
 	}
 );
