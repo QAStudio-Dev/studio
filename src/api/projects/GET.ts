@@ -4,22 +4,24 @@ import { requireAuth } from '$lib/server/auth';
 import { serializeDates } from '$lib/utils/date';
 
 // Schema definitions
-const ProjectCountsSchema = z.object({
-	testCases: z.number(),
-	testRuns: z.number(),
-	testSuites: z.number()
-});
+const ProjectCountsSchema = z
+	.object({
+		testCases: z.number().describe('Number of test cases in the project'),
+		testRuns: z.number().describe('Number of test runs in the project'),
+		testSuites: z.number().describe('Number of test suites in the project')
+	})
+	.describe('Aggregate counts for project resources');
 
 export const Output = z.array(
 	z.object({
-		id: z.string(),
-		name: z.string(),
-		description: z.string().nullable(),
-		key: z.string(),
-		createdBy: z.string(),
-		teamId: z.string().nullable(),
-		createdAt: z.coerce.string(),
-		updatedAt: z.coerce.string(),
+		id: z.string().describe('Unique project identifier'),
+		name: z.string().describe('Project name'),
+		description: z.string().nullable().describe('Project description'),
+		key: z.string().describe('Unique project key (e.g., PROJ)'),
+		createdBy: z.string().describe('User ID who created the project'),
+		teamId: z.string().nullable().describe('Team ID if project belongs to a team'),
+		createdAt: z.coerce.string().describe('ISO 8601 creation timestamp'),
+		updatedAt: z.coerce.string().describe('ISO 8601 last update timestamp'),
 		_count: ProjectCountsSchema
 	})
 );
