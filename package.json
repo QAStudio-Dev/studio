@@ -59,6 +59,7 @@
 		"vitest-browser-svelte": "^1.1.0"
 	},
 	"dependencies": {
+		"@asteasolutions/zod-to-openapi": "^8.1.0",
 		"@neodrag/svelte": "^2.3.3",
 		"@prisma/client": "^6.18.0",
 		"@stripe/stripe-js": "^8.1.0",
@@ -78,5 +79,10 @@
 		"sveltekit-api": "^0.6.1",
 		"swagger-ui-dist": "^5.30.2",
 		"zod": "^4.1.12"
+	},
+	"overrides": {
+		"sveltekit-api": {
+			"@asteasolutions/zod-to-openapi": "^8.1.0"
+		}
 	}
 }
