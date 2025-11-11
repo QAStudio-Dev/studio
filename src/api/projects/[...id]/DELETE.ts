@@ -1,5 +1,6 @@
 import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
+import { deleteCache, CacheKeys } from '$lib/server/redis';
 
 export const Param = z.object({
 	id: z.string()
@@ -24,9 +25,43 @@ export const Modifier = (r: any) => {
 
 export default new Endpoint({ Param, Output, Error, Modifier }).handle(async (input) => {
 	try {
+		// Get project with team members BEFORE deletion to avoid race condition
+		const project = await db.project.findUnique({
+			where: { id: input.id },
+			select: {
+				createdBy: true,
+				teamId: true,
+				team: {
+					select: {
+						members: {
+							select: { id: true }
+						}
+					}
+				}
+			}
+		});
+
+		if (!project) {
+			throw Error[404];
+		}
+
+		// Build cache invalidation list BEFORE deletion
+		const cachesToInvalidate = [CacheKeys.project(input.id), CacheKeys.projects(project.createdBy)];
+
+		// Add team members' caches if project has a team
+		if (project.team?.members) {
+			project.team.members.forEach((member) => {
+				cachesToInvalidate.push(CacheKeys.projects(member.id));
+			});
+		}
+
+		// Perform deletion
 		await db.project.delete({
 			where: { id: input.id }
 		});
+
+		// Invalidate caches after deletion
+		await deleteCache(cachesToInvalidate);
 
 		return { success: true };
 	} catch (err: any) {

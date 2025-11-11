@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { requireAuth } from '$lib/server/auth';
 import { ensureUser } from '$lib/server/users';
+import { deleteCache, CacheKeys } from '$lib/server/redis';
 
 /**
  * Accept an invitation
@@ -104,6 +105,9 @@ export const POST: RequestHandler = async (event) => {
 			}
 		})
 	]);
+
+	// Invalidate user's project cache - they now have access to team projects
+	await deleteCache(CacheKeys.projects(userId));
 
 	return json({
 		success: true,

@@ -1,6 +1,7 @@
 import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { serializeDates } from '$lib/utils/date';
+import { getCachedOrFetch, CacheKeys, CacheTTL } from '$lib/server/redis';
 
 export const Param = z.object({
 	id: z.string()
@@ -56,32 +57,38 @@ export const Modifier = (r: any) => {
 
 export default new Endpoint({ Param, Output, Error, Modifier }).handle(
 	async (input): Promise<any> => {
-		const project = await db.project.findUnique({
-			where: { id: input.id },
-			include: {
-				_count: {
-					select: {
-						testCases: true,
-						testRuns: true,
-						testSuites: true,
-						milestones: true,
-						environments: true
+		return getCachedOrFetch(
+			CacheKeys.project(input.id),
+			async () => {
+				const project = await db.project.findUnique({
+					where: { id: input.id },
+					include: {
+						_count: {
+							select: {
+								testCases: true,
+								testRuns: true,
+								testSuites: true,
+								milestones: true,
+								environments: true
+							}
+						},
+						milestones: {
+							orderBy: { createdAt: 'desc' },
+							take: 5
+						},
+						environments: {
+							orderBy: { name: 'asc' }
+						}
 					}
-				},
-				milestones: {
-					orderBy: { createdAt: 'desc' },
-					take: 5
-				},
-				environments: {
-					orderBy: { name: 'asc' }
+				});
+
+				if (!project) {
+					throw Error[404];
 				}
-			}
-		});
 
-		if (!project) {
-			throw Error[404];
-		}
-
-		return serializeDates(project);
+				return serializeDates(project);
+			},
+			CacheTTL.project
+		);
 	}
 );

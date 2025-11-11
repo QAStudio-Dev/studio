@@ -2,6 +2,7 @@ import { Endpoint, z } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { requireAuth } from '$lib/server/auth';
 import { serializeDates } from '$lib/utils/date';
+import { getCachedOrFetch, CacheKeys, CacheTTL } from '$lib/server/redis';
 
 // Schema definitions
 const ProjectCountsSchema = z
@@ -37,36 +38,43 @@ export const Modifier = (r: any) => {
 export default new Endpoint({ Output, Modifier }).handle(async (input, evt): Promise<any> => {
 	const userId = await requireAuth(evt);
 
-	// Get user with team info to determine access
-	const user = await db.user.findUnique({
-		where: { id: userId },
-		select: { teamId: true }
-	});
+	// Use cache-aside pattern
+	return getCachedOrFetch(
+		CacheKeys.projects(userId),
+		async () => {
+			// Get user with team info to determine access
+			const user = await db.user.findUnique({
+				where: { id: userId },
+				select: { teamId: true }
+			});
 
-	// Build the where clause for projects
-	const whereClause: any = {
-		OR: [{ createdBy: userId }]
-	};
+			// Build the where clause for projects
+			const whereClause: any = {
+				OR: [{ createdBy: userId }]
+			};
 
-	// Add team projects if user has a team
-	if (user?.teamId) {
-		whereClause.OR.push({ teamId: user.teamId });
-	}
-
-	// Get projects the user has access to
-	const projects = await db.project.findMany({
-		where: whereClause,
-		orderBy: { createdAt: 'desc' },
-		include: {
-			_count: {
-				select: {
-					testCases: true,
-					testRuns: true,
-					testSuites: true
-				}
+			// Add team projects if user has a team
+			if (user?.teamId) {
+				whereClause.OR.push({ teamId: user.teamId });
 			}
-		}
-	});
 
-	return serializeDates(projects);
+			// Get projects the user has access to
+			const projects = await db.project.findMany({
+				where: whereClause,
+				orderBy: { createdAt: 'desc' },
+				include: {
+					_count: {
+						select: {
+							testCases: true,
+							testRuns: true,
+							testSuites: true
+						}
+					}
+				}
+			});
+
+			return serializeDates(projects);
+		},
+		CacheTTL.project
+	);
 });

@@ -2,6 +2,7 @@ import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
 import { serializeDates } from '$lib/utils/date';
+import { deleteCache, CacheKeys } from '$lib/server/redis';
 
 export const Input = z.object({
 	projectId: z.string().describe('Project ID'),
@@ -136,6 +137,9 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 				milestone: true
 			}
 		});
+
+		// Invalidate project cache since it includes test run count
+		await deleteCache(CacheKeys.project(input.projectId));
 
 		return serializeDates(testRun);
 	}

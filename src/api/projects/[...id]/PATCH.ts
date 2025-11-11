@@ -1,6 +1,7 @@
 import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { serializeDates } from '$lib/utils/date';
+import { deleteCache, CacheKeys } from '$lib/server/redis';
 
 export const Param = z.object({
 	id: z.string()
@@ -49,10 +50,47 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 		if (input.key !== undefined) updateData.key = input.key.toUpperCase();
 
 		try {
+			// Get project with team members BEFORE mutation to avoid race condition
+			const existingProject = await db.project.findUnique({
+				where: { id: input.id },
+				select: {
+					createdBy: true,
+					teamId: true,
+					team: {
+						select: {
+							members: {
+								select: { id: true }
+							}
+						}
+					}
+				}
+			});
+
+			if (!existingProject) {
+				throw Error[404];
+			}
+
+			// Build cache invalidation list BEFORE mutation
+			const cachesToInvalidate = [
+				CacheKeys.project(input.id),
+				CacheKeys.projects(existingProject.createdBy)
+			];
+
+			// Add team members' caches if project has a team
+			if (existingProject.team?.members) {
+				existingProject.team.members.forEach((member) => {
+					cachesToInvalidate.push(CacheKeys.projects(member.id));
+				});
+			}
+
+			// Perform mutation
 			const project = await db.project.update({
 				where: { id: input.id },
 				data: updateData
 			});
+
+			// Invalidate caches after mutation
+			await deleteCache(cachesToInvalidate);
 
 			return serializeDates(project);
 		} catch (err: any) {
