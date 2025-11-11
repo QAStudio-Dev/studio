@@ -30,11 +30,12 @@ export const Input = z.object({
 						z.object({
 							name: z.string(),
 							contentType: z.string(),
-							body: z.union([z.string(), z.any()]).optional(),
+							body: z.any().optional(),
 							type: z.string().optional()
 						})
 					)
 					.optional()
+					.default([])
 					.describe('Screenshots, logs, videos, etc.')
 			})
 		)
