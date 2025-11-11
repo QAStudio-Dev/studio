@@ -25,17 +25,53 @@ export const redis = new Redis({
 export const isCacheEnabled = !!(KV_REST_API_URL && KV_REST_API_TOKEN);
 
 /**
+ * Validate cache key input to prevent invalid keys
+ */
+function validateCacheKeyInput(input: string, type: string): void {
+	if (!input || input.trim() === '') {
+		throw new Error(`Cache key ${type} cannot be empty`);
+	}
+	if (input.includes(':') || input.includes('*')) {
+		throw new Error(`Cache key ${type} cannot contain ':' or '*' characters`);
+	}
+}
+
+/**
  * Cache key prefixes for different data types
  */
 export const CacheKeys = {
-	project: (id: string) => `project:${id}`,
-	projects: (userId: string) => `projects:user:${userId}`,
-	testRun: (id: string) => `run:${id}`,
-	testResult: (id: string) => `result:${id}`,
-	testResults: (runId: string) => `results:run:${runId}`,
-	testCase: (id: string) => `case:${id}`,
-	testSuite: (id: string) => `suite:${id}`,
-	apiKey: (key: string) => `apikey:${key}`
+	project: (id: string) => {
+		validateCacheKeyInput(id, 'project id');
+		return `project:${id}`;
+	},
+	projects: (userId: string) => {
+		validateCacheKeyInput(userId, 'user id');
+		return `projects:user:${userId}`;
+	},
+	testRun: (id: string) => {
+		validateCacheKeyInput(id, 'test run id');
+		return `run:${id}`;
+	},
+	testResult: (id: string) => {
+		validateCacheKeyInput(id, 'test result id');
+		return `result:${id}`;
+	},
+	testResults: (runId: string) => {
+		validateCacheKeyInput(runId, 'run id');
+		return `results:run:${runId}`;
+	},
+	testCase: (id: string) => {
+		validateCacheKeyInput(id, 'test case id');
+		return `case:${id}`;
+	},
+	testSuite: (id: string) => {
+		validateCacheKeyInput(id, 'test suite id');
+		return `suite:${id}`;
+	},
+	apiKey: (key: string) => {
+		validateCacheKeyInput(key, 'api key');
+		return `apikey:${key}`;
+	}
 } as const;
 
 /**
@@ -89,6 +125,8 @@ export async function setCache<T>(key: string, data: T, ttl?: number): Promise<b
  * Delete cached data
  */
 export async function deleteCache(key: string | string[]): Promise<boolean> {
+	if (!isCacheEnabled) return false;
+
 	try {
 		if (Array.isArray(key)) {
 			await redis.del(...key);

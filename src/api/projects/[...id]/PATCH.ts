@@ -1,7 +1,7 @@
 import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { serializeDates } from '$lib/utils/date';
-import { deleteCache, CacheKeys, deleteCachePattern } from '$lib/server/redis';
+import { deleteCache, CacheKeys } from '$lib/server/redis';
 
 export const Param = z.object({
 	id: z.string()
@@ -50,14 +50,39 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 		if (input.key !== undefined) updateData.key = input.key.toUpperCase();
 
 		try {
+			// Get project to determine which user caches to invalidate
+			const existingProject = await db.project.findUnique({
+				where: { id: input.id },
+				select: { createdBy: true, teamId: true }
+			});
+
+			if (!existingProject) {
+				throw Error[404];
+			}
+
 			const project = await db.project.update({
 				where: { id: input.id },
 				data: updateData
 			});
 
-			// Invalidate project cache and all user caches with this project
-			await deleteCache(CacheKeys.project(input.id));
-			await deleteCachePattern('projects:user:*');
+			// Invalidate project cache and creator's project list
+			const cachesToInvalidate = [
+				CacheKeys.project(input.id),
+				CacheKeys.projects(existingProject.createdBy)
+			];
+
+			// If project has a team, invalidate caches for all team members
+			if (existingProject.teamId) {
+				const teamMembers = await db.user.findMany({
+					where: { teamId: existingProject.teamId },
+					select: { id: true }
+				});
+				teamMembers.forEach((member) => {
+					cachesToInvalidate.push(CacheKeys.projects(member.id));
+				});
+			}
+
+			await deleteCache(cachesToInvalidate);
 
 			return serializeDates(project);
 		} catch (err: any) {

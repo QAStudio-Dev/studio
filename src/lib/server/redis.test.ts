@@ -84,6 +84,20 @@ describe('Redis Caching Layer', () => {
 			expect(CacheKeys.testResults('run-123')).toBe('results:run:run-123');
 		});
 
+		it('should validate cache key inputs', () => {
+			// Empty strings should throw
+			expect(() => CacheKeys.project('')).toThrow('Cache key project id cannot be empty');
+			expect(() => CacheKeys.projects('  ')).toThrow('Cache key user id cannot be empty');
+
+			// Colon and asterisk characters should throw
+			expect(() => CacheKeys.project('test:id')).toThrow(
+				"Cache key project id cannot contain ':' or '*' characters"
+			);
+			expect(() => CacheKeys.testRun('run*123')).toThrow(
+				"Cache key test run id cannot contain ':' or '*' characters"
+			);
+		});
+
 		it('should define TTL constants', () => {
 			expect(CacheTTL.project).toBe(300); // 5 minutes
 			expect(CacheTTL.testRun).toBe(180); // 3 minutes
@@ -234,9 +248,7 @@ describe('Redis Caching Layer', () => {
 		it('should delete all keys matching pattern using SCAN', async () => {
 			// First scan returns cursor 10 with 2 keys
 			// Second scan returns cursor 0 (done) with 1 key
-			mockScan
-				.mockResolvedValueOnce([10, ['key1', 'key2']])
-				.mockResolvedValueOnce([0, ['key3']]);
+			mockScan.mockResolvedValueOnce([10, ['key1', 'key2']]).mockResolvedValueOnce([0, ['key3']]);
 			mockDel.mockResolvedValue(3);
 
 			const result = await deleteCachePattern('projects:user:*');
@@ -256,9 +268,7 @@ describe('Redis Caching Layer', () => {
 
 		it('should handle string cursor from Redis', async () => {
 			// Redis can return cursor as string
-			mockScan
-				.mockResolvedValueOnce(['10', ['key1']])
-				.mockResolvedValueOnce(['0', ['key2']]);
+			mockScan.mockResolvedValueOnce(['10', ['key1']]).mockResolvedValueOnce(['0', ['key2']]);
 			mockDel.mockResolvedValue(2);
 
 			const result = await deleteCachePattern('test:*');

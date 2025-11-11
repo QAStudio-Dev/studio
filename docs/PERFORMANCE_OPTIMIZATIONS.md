@@ -5,6 +5,7 @@ This document tracks performance optimizations implemented in the QA Studio code
 ## Test Results Submission API (`/api/results`)
 
 ### Problem: N+1 Query Performance
+
 The test results submission endpoint processes test results from automated runners (e.g., Playwright). With large test suites (100+ tests), this could lead to performance issues due to N+1 queries.
 
 ### Optimization: Suite Hierarchy Caching
@@ -12,16 +13,19 @@ The test results submission endpoint processes test results from automated runne
 **Location:** [src/api/test-results/POST.ts](../src/api/test-results/POST.ts:290-355)
 
 **Implementation:**
+
 - Added in-memory `SuiteCache` to store already-resolved suite hierarchies
 - Cache key format: `"projectId:parentId:suiteName"`
 - Prevents repeated database lookups for the same suite path
 - Particularly effective when multiple tests share the same suite structure
 
 **Impact:**
-- **Before:** O(n * m) queries where n = number of tests, m = suite hierarchy depth
-- **After:** O(unique_suites * m) queries - dramatically reduced when tests share suites
+
+- **Before:** O(n \* m) queries where n = number of tests, m = suite hierarchy depth
+- **After:** O(unique_suites \* m) queries - dramatically reduced when tests share suites
 
 **Example:**
+
 ```typescript
 // 100 tests in the same suite "Auth > Login"
 // Before: 200 queries (2 per test for 2-level hierarchy)
@@ -42,6 +46,7 @@ The test results submission endpoint processes test results from automated runne
 ### Future Optimizations
 
 **Prisma Transactions for Batch Inserts:**
+
 ```typescript
 // TODO: Consider using Prisma.$transaction() for creating multiple test cases/results
 // This would provide:
@@ -55,6 +60,7 @@ await db.$transaction([
 ```
 
 **Attachment Batch Uploads:**
+
 ```typescript
 // TODO: Consider parallel attachment uploads with concurrency limit
 // Current: Sequential uploads
@@ -64,6 +70,7 @@ await db.$transaction([
 ### Performance Metrics
 
 Recommended monitoring for production:
+
 - Track test result submission duration by batch size
 - Monitor database query counts per request
 - Alert on submissions taking >30s for 100+ tests
@@ -79,11 +86,13 @@ See [DATABASE_INDEXES.md](./DATABASE_INDEXES.md) for index recommendations.
 **Location:** [src/lib/server/integrations.ts](../src/lib/server/integrations.ts:77-104)
 
 **Implementation:**
+
 - Uses `Promise.allSettled()` to send to all integrations in parallel
 - Tracks success/failure per integration
 - Returns detailed error information
 
 **Impact:**
+
 - Notifications to 3 integrations complete in ~1s instead of ~3s
 - Individual failures don't block other integrations
 

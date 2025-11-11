@@ -234,9 +234,11 @@
 		color: #fff;
 	}
 
-	:global(.dark #swagger-ui .swagger-ui .renderedMarkdown,
-	.dark #swagger-ui .swagger-ui .renderedMarkdown p,
-	.dark #swagger-ui .swagger-ui .renderedMarkdown code) {
+	:global(
+		.dark #swagger-ui .swagger-ui .renderedMarkdown,
+		.dark #swagger-ui .swagger-ui .renderedMarkdown p,
+		.dark #swagger-ui .swagger-ui .renderedMarkdown code
+	) {
 		color: #d1d1d1;
 	}
 
@@ -302,8 +304,10 @@
 		border-color: #3a3a3a;
 	}
 
-	:global(.dark #swagger-ui .swagger-ui .parameters,
-	.dark #swagger-ui .swagger-ui .parameters-col_description) {
+	:global(
+		.dark #swagger-ui .swagger-ui .parameters,
+		.dark #swagger-ui .swagger-ui .parameters-col_description
+	) {
 		background: transparent;
 	}
 
