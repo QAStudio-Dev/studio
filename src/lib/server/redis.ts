@@ -78,11 +78,11 @@ export const CacheKeys = {
  * Default TTL (time-to-live) values in seconds
  */
 export const CacheTTL = {
-	project: 300, // 5 minutes
-	testRun: 180, // 3 minutes
-	testResult: 300, // 5 minutes
-	testCase: 600, // 10 minutes
-	apiKey: 300 // 5 minutes
+	project: 2592000, // 30 days - rarely changes, invalidated on updates
+	testRun: 2592000, // 30 days - immutable once completed
+	testResult: 2592000, // 30 days - immutable once created
+	testCase: 2592000, // 30 days - rarely changes, invalidated on updates
+	apiKey: 300 // 5 minutes - security sensitive, keep short
 } as const;
 
 /**
@@ -150,6 +150,8 @@ export async function deleteCachePattern(pattern: string): Promise<boolean> {
 	try {
 		const keysToDelete: string[] = [];
 		let cursor: string | number = 0;
+		let iterations = 0;
+		const MAX_ITERATIONS = 1000; // Safety limit to prevent infinite loops
 
 		// Use SCAN to iterate through keys without blocking
 		do {
@@ -159,6 +161,14 @@ export async function deleteCachePattern(pattern: string): Promise<boolean> {
 			});
 			cursor = result[0];
 			keysToDelete.push(...result[1]);
+			iterations++;
+
+			if (iterations >= MAX_ITERATIONS) {
+				console.error(
+					`Redis SCAN exceeded ${MAX_ITERATIONS} iterations for pattern: ${pattern}. Found ${keysToDelete.length} keys so far.`
+				);
+				break;
+			}
 		} while (cursor !== 0 && cursor !== '0');
 
 		// Delete all matched keys

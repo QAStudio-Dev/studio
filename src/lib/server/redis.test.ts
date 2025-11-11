@@ -99,10 +99,11 @@ describe('Redis Caching Layer', () => {
 		});
 
 		it('should define TTL constants', () => {
-			expect(CacheTTL.project).toBe(300); // 5 minutes
-			expect(CacheTTL.testRun).toBe(180); // 3 minutes
-			expect(CacheTTL.testResult).toBe(300); // 5 minutes
-			expect(CacheTTL.testCase).toBe(600); // 10 minutes
+			expect(CacheTTL.project).toBe(2592000); // 30 days
+			expect(CacheTTL.testRun).toBe(2592000); // 30 days
+			expect(CacheTTL.testResult).toBe(2592000); // 30 days
+			expect(CacheTTL.testCase).toBe(2592000); // 30 days
+			expect(CacheTTL.apiKey).toBe(300); // 5 minutes
 		});
 	});
 

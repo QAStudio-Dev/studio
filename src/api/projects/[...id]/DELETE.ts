@@ -25,34 +25,45 @@ export const Modifier = (r: any) => {
 
 export default new Endpoint({ Param, Output, Error, Modifier }).handle(async (input) => {
 	try {
-		// Get project to determine which user caches to invalidate
+		// Get project with team members BEFORE deletion to avoid race condition
 		const project = await db.project.findUnique({
 			where: { id: input.id },
-			select: { createdBy: true, teamId: true }
+			select: {
+				createdBy: true,
+				teamId: true,
+				team: {
+					select: {
+						members: {
+							select: { id: true }
+						}
+					}
+				}
+			}
 		});
 
 		if (!project) {
 			throw Error[404];
 		}
 
-		await db.project.delete({
-			where: { id: input.id }
-		});
+		// Build cache invalidation list BEFORE deletion
+		const cachesToInvalidate = [
+			CacheKeys.project(input.id),
+			CacheKeys.projects(project.createdBy)
+		];
 
-		// Invalidate project cache and creator's project list
-		const cachesToInvalidate = [CacheKeys.project(input.id), CacheKeys.projects(project.createdBy)];
-
-		// If project has a team, invalidate caches for all team members
-		if (project.teamId) {
-			const teamMembers = await db.user.findMany({
-				where: { teamId: project.teamId },
-				select: { id: true }
-			});
-			teamMembers.forEach((member) => {
+		// Add team members' caches if project has a team
+		if (project.team?.members) {
+			project.team.members.forEach((member) => {
 				cachesToInvalidate.push(CacheKeys.projects(member.id));
 			});
 		}
 
+		// Perform deletion
+		await db.project.delete({
+			where: { id: input.id }
+		});
+
+		// Invalidate caches after deletion
 		await deleteCache(cachesToInvalidate);
 
 		return { success: true };
