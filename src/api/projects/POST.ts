@@ -43,10 +43,19 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 	async (input, evt): Promise<any> => {
 		const userId = await requireAuth(evt);
 
-		// Get user with team info
+		// Get user with team and team members info BEFORE project creation
 		const user = await db.user.findUnique({
 			where: { id: userId },
-			select: { teamId: true }
+			select: {
+				teamId: true,
+				team: {
+					select: {
+						members: {
+							select: { id: true }
+						}
+					}
+				}
+			}
 		});
 
 		const { name, description, key } = input;
@@ -62,8 +71,18 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 				}
 			});
 
-			// Invalidate user's projects cache
-			await deleteCache(CacheKeys.projects(userId));
+			// Build cache invalidation list
+			const cachesToInvalidate = [CacheKeys.projects(userId)];
+
+			// Add team members' caches if user has a team
+			if (user?.team?.members) {
+				user.team.members.forEach((member) => {
+					cachesToInvalidate.push(CacheKeys.projects(member.id));
+				});
+			}
+
+			// Invalidate all affected caches
+			await deleteCache(cachesToInvalidate);
 
 			return serializeDates(project);
 		} catch (err: any) {
