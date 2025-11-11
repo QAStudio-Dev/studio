@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { requireAuth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import { stripe } from '$lib/server/stripe';
+import { deleteCache, CacheKeys } from '$lib/server/redis';
 
 /**
  * POST /api/teams/leave
@@ -66,6 +67,9 @@ export const POST: RequestHandler = async (event) => {
 				where: { id: user.teamId }
 			});
 
+			// Invalidate user's project cache - team and all team projects are deleted
+			await deleteCache(CacheKeys.projects(userId));
+
 			return json({ message: 'Successfully deleted team and left' });
 		}
 
@@ -76,6 +80,9 @@ export const POST: RequestHandler = async (event) => {
 				teamId: null
 			}
 		});
+
+		// Invalidate user's project cache - they no longer see team projects
+		await deleteCache(CacheKeys.projects(userId));
 
 		return json({ message: 'Successfully left the team' });
 	} catch (error: any) {
