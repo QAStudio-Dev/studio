@@ -59,13 +59,7 @@
 	@apply bg-transparent p-0;
 }
 
-/* Shiki theme switching - use CSS custom properties for dark mode */
-.prose pre.shiki,
-.prose pre.shiki span {
-	color: var(--shiki-light) !important;
-	background-color: var(--shiki-light-bg) !important;
-}
-
+/* Shiki theme switching - override inline styles in dark mode */
 :where([data-mode='dark'], [data-mode='dark'] *) .prose pre.shiki,
 :where([data-mode='dark'], [data-mode='dark'] *) .prose pre.shiki span {
 	color: var(--shiki-dark) !important;
