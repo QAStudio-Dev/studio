@@ -86,7 +86,7 @@ test.describe('Blog Page', () => {
 		expect(clearButtonVisible).toBeFalsy();
 
 		// Search for something
-		await blogPage.search('playwright');
+		await blogPage.search('asdasdasdasdasdasdasdas');
 		await blogPage.wait(500);
 
 		// Clear button should now be visible
@@ -99,7 +99,7 @@ test.describe('Blog Page', () => {
 		const initialCount = await blogPage.getBlogPostCount();
 
 		// Search for something
-		await blogPage.search('test');
+		await blogPage.search('asdasdasdasdas');
 		await blogPage.wait(500);
 
 		// Click clear button

@@ -22,7 +22,7 @@ export class BlogPage extends BasePage {
 		this.pageTitle = page.locator('h1');
 		this.pageDescription = page.locator('p.text-surface-600-400').first();
 		this.searchInput = page.locator('input[type="text"]');
-		this.searchResultCount = page.locator('text=/Found \\d+ posts?/');
+		this.searchResultCount = page.locator('p:has-text("Found")');
 		this.clearSearchButton = page.locator('button:has-text("Clear search")');
 		this.rssLink = page.locator('a[href="/rss.xml"]');
 		this.atomLink = page.locator('a[href="/atom.xml"]');
