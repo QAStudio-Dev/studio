@@ -1,11 +1,28 @@
 import { KV_REST_API_URL, KV_REST_API_TOKEN } from '$env/static/private';
 import { Redis } from '@upstash/redis';
+import { dev } from '$app/environment';
+
+// Validate Redis environment variables
+if (!KV_REST_API_URL || !KV_REST_API_TOKEN) {
+	if (dev) {
+		console.warn(
+			'[Redis] Environment variables not set - caching disabled. Add KV_REST_API_URL and KV_REST_API_TOKEN to .env'
+		);
+	} else {
+		throw new Error(
+			'Redis environment variables (KV_REST_API_URL, KV_REST_API_TOKEN) are required in production'
+		);
+	}
+}
 
 // Initialize Redis client
 export const redis = new Redis({
 	url: KV_REST_API_URL || '',
 	token: KV_REST_API_TOKEN || ''
 });
+
+// Flag to check if caching is enabled
+export const isCacheEnabled = !!(KV_REST_API_URL && KV_REST_API_TOKEN);
 
 /**
  * Cache key prefixes for different data types
@@ -33,9 +50,12 @@ export const CacheTTL = {
 } as const;
 
 /**
- * Get cached data with automatic JSON parsing
+ * Get cached data
+ * Note: @upstash/redis handles JSON deserialization automatically
  */
 export async function getCache<T>(key: string): Promise<T | null> {
+	if (!isCacheEnabled) return null;
+
 	try {
 		const data = await redis.get<T>(key);
 		return data;
@@ -46,14 +66,17 @@ export async function getCache<T>(key: string): Promise<T | null> {
 }
 
 /**
- * Set cached data with automatic JSON serialization and TTL
+ * Set cached data with TTL
+ * Note: @upstash/redis handles JSON serialization automatically
  */
 export async function setCache<T>(key: string, data: T, ttl?: number): Promise<boolean> {
+	if (!isCacheEnabled) return false;
+
 	try {
 		if (ttl) {
-			await redis.setex(key, ttl, JSON.stringify(data));
+			await redis.setex(key, ttl, data);
 		} else {
-			await redis.set(key, JSON.stringify(data));
+			await redis.set(key, data);
 		}
 		return true;
 	} catch (error) {
@@ -81,14 +104,30 @@ export async function deleteCache(key: string | string[]): Promise<boolean> {
 
 /**
  * Delete all cache keys matching a pattern
+ * Uses SCAN instead of KEYS to avoid blocking Redis
  */
 export async function deleteCachePattern(pattern: string): Promise<boolean> {
+	if (!isCacheEnabled) return false;
+
 	try {
-		// Get all keys matching the pattern
-		const keys = await redis.keys(pattern);
-		if (keys.length > 0) {
-			await redis.del(...keys);
+		const keysToDelete: string[] = [];
+		let cursor: string | number = 0;
+
+		// Use SCAN to iterate through keys without blocking
+		do {
+			const result: [string | number, string[]] = await redis.scan(cursor, {
+				match: pattern,
+				count: 100
+			});
+			cursor = result[0];
+			keysToDelete.push(...result[1]);
+		} while (cursor !== 0 && cursor !== '0');
+
+		// Delete all matched keys
+		if (keysToDelete.length > 0) {
+			await redis.del(...keysToDelete);
 		}
+
 		return true;
 	} catch (error) {
 		console.error('Redis pattern delete error:', error);

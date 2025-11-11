@@ -664,10 +664,11 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 			}
 		}
 
-		// Invalidate caches for test run and results
+		// Invalidate caches for test run, results, and project (counts may have changed)
 		await deleteCache([
 			CacheKeys.testRun(input.testRunId),
-			CacheKeys.testResults(input.testRunId)
+			CacheKeys.testResults(input.testRunId),
+			CacheKeys.project(testRun.projectId)
 		]);
 
 		return {
