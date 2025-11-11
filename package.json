@@ -71,6 +71,7 @@
 		"gray-matter": "^4.0.3",
 		"lucide-svelte": "^0.548.0",
 		"marked": "^16.4.1",
+		"marked-highlight": "^2.2.3",
 		"nanoid": "^5.1.6",
 		"openai": "^6.7.0",
 		"prisma": "^6.18.0",

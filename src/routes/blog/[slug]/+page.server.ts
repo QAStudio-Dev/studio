@@ -4,8 +4,31 @@ import { join } from 'path';
 import matter from 'gray-matter';
 import { error } from '@sveltejs/kit';
 import { marked } from 'marked';
+import { markedHighlight } from 'marked-highlight';
+import { codeToHtml } from 'shiki';
 
 export const prerender = true;
+
+// Configure marked with Shiki syntax highlighting
+marked.use(
+	markedHighlight({
+		async: true,
+		async highlight(code, lang) {
+			try {
+				return await codeToHtml(code, {
+					lang: lang || 'text',
+					themes: {
+						light: 'github-light',
+						dark: 'github-dark'
+					}
+				});
+			} catch (e) {
+				// Fallback to plain code if language is not supported
+				return code;
+			}
+		}
+	})
+);
 
 export const entries: EntryGenerator = async () => {
 	const blogDir = join(process.cwd(), 'src/md/blog');

@@ -55,7 +55,15 @@ export async function sendNotification(
 		}
 
 		// Filter integrations based on notification preferences
+		// Skip JIRA/GITHUB/GITLAB - they're for issue tracking, not notifications
+		const notificationTypes: IntegrationType[] = ['SLACK', 'DISCORD', 'TEAMS', 'WEBHOOK'];
+
 		const enabledIntegrations = integrations.filter((integration) => {
+			// Skip non-notification integration types
+			if (!notificationTypes.includes(integration.type)) {
+				return false;
+			}
+
 			const config = integration.config as any;
 			const notifications = config?.notifications || {};
 
