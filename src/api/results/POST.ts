@@ -9,6 +9,7 @@ import {
 	generateTestSuiteId,
 	generateAttachmentId
 } from '$lib/server/ids';
+import { deleteCache, CacheKeys } from '$lib/server/redis';
 
 export const Input = z.object({
 	testRunId: z.string().describe('ID of the test run'),
@@ -662,6 +663,12 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 				});
 			}
 		}
+
+		// Invalidate caches for test run and results
+		await deleteCache([
+			CacheKeys.testRun(input.testRunId),
+			CacheKeys.testResults(input.testRunId)
+		]);
 
 		return {
 			processedCount: processedResults.length,

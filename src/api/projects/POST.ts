@@ -2,6 +2,7 @@ import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { requireAuth } from '$lib/server/auth';
 import { serializeDates } from '$lib/utils/date';
+import { deleteCache, CacheKeys } from '$lib/server/redis';
 
 export const Input = z.object({
 	name: z.string().min(1),
@@ -60,6 +61,9 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 					teamId: user?.teamId || null
 				}
 			});
+
+			// Invalidate user's projects cache
+			await deleteCache(CacheKeys.projects(userId));
 
 			return serializeDates(project);
 		} catch (err: any) {

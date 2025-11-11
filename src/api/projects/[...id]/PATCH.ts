@@ -1,6 +1,7 @@
 import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { serializeDates } from '$lib/utils/date';
+import { deleteCache, CacheKeys, deleteCachePattern } from '$lib/server/redis';
 
 export const Param = z.object({
 	id: z.string()
@@ -53,6 +54,10 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 				where: { id: input.id },
 				data: updateData
 			});
+
+			// Invalidate project cache and all user caches with this project
+			await deleteCache(CacheKeys.project(input.id));
+			await deleteCachePattern('projects:user:*');
 
 			return serializeDates(project);
 		} catch (err: any) {
