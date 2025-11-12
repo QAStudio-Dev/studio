@@ -224,13 +224,33 @@
 			<Dialog open={!!selectedAttachment} onOpenChange={() => (selectedAttachment = null)}>
 				<Portal>
 					<Dialog.Backdrop class="fixed inset-0 z-[60] bg-black/95 backdrop-blur-sm" />
-					<Dialog.Positioner class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-						<Dialog.Content class="relative flex max-h-[95vh] w-full max-w-7xl flex-col">
+					<Dialog.Positioner
+						class="fixed inset-0 z-[60] flex items-center justify-center {isTrace(
+							attachment.mimeType
+						)
+							? 'p-0'
+							: 'p-4'}"
+					>
+						<Dialog.Content
+							class="relative flex w-full flex-col {isTrace(attachment.mimeType)
+								? 'h-full max-w-none'
+								: 'max-h-[95vh] max-w-7xl'}"
+						>
 							<div
-								class="flex max-h-[95vh] flex-col overflow-hidden rounded-container bg-surface-50-950 shadow-2xl"
+								class="flex flex-col overflow-hidden bg-surface-50-950 shadow-2xl {isTrace(
+									attachment.mimeType
+								)
+									? 'h-full'
+									: 'max-h-[95vh] rounded-container'}"
 							>
 								<!-- Content -->
-								<div class="flex flex-1 items-center justify-center overflow-auto bg-black/50">
+								<div
+									class="flex items-center justify-center overflow-auto bg-black/50 {isTrace(
+										attachment.mimeType
+									)
+										? 'h-full flex-1'
+										: 'flex-1'}"
+								>
 									{#if isImage(attachment.mimeType)}
 										<img
 											src="/api/attachments/{attachment.id}"
@@ -290,30 +310,43 @@
 									{/if}
 								</div>
 
-								<!-- Info Bar -->
-								<div class="border-surface-200-700 border-t bg-surface-100-900 p-4">
-									<div class="flex items-center justify-between gap-4">
-										<div class="min-w-0 flex-1">
-											<div class="truncate text-sm font-medium">{attachment.originalName}</div>
-											<div class="text-surface-600-300 text-xs">
-												{getAttachmentType(attachment.mimeType)} • {formatBytes(attachment.size)}
+								<!-- Info Bar (hidden for trace files) -->
+								{#if !isTrace(attachment.mimeType)}
+									<div class="border-surface-200-700 border-t bg-surface-100-900 p-4">
+										<div class="flex items-center justify-between gap-4">
+											<div class="min-w-0 flex-1">
+												<div class="truncate text-sm font-medium">{attachment.originalName}</div>
+												<div class="text-surface-600-300 text-xs">
+													{getAttachmentType(attachment.mimeType)} • {formatBytes(attachment.size)}
+												</div>
+											</div>
+											<div class="flex gap-2">
+												<a
+													href="/api/attachments/{attachment.id}"
+													download={attachment.originalName}
+													class="btn preset-filled-primary-500 btn-sm"
+												>
+													<Download class="h-4 w-4" />
+													Download
+												</a>
+												<Dialog.CloseTrigger class="btn preset-filled-surface-500 btn-sm">
+													Close
+												</Dialog.CloseTrigger>
 											</div>
 										</div>
-										<div class="flex gap-2">
-											<a
-												href="/api/attachments/{attachment.id}"
-												download={attachment.originalName}
-												class="btn preset-filled-primary-500 btn-sm"
-											>
-												<Download class="h-4 w-4" />
-												Download
-											</a>
-											<Dialog.CloseTrigger class="btn preset-filled-surface-500 btn-sm">
-												Close
-											</Dialog.CloseTrigger>
-										</div>
 									</div>
-								</div>
+								{/if}
+
+								<!-- Floating close button for trace files -->
+								{#if isTrace(attachment.mimeType)}
+									<div class="absolute top-4 right-4 z-10">
+										<Dialog.CloseTrigger
+											class="btn preset-filled-surface-500 shadow-lg hover:bg-surface-200-800"
+										>
+											Close
+										</Dialog.CloseTrigger>
+									</div>
+								{/if}
 							</div>
 						</Dialog.Content>
 					</Dialog.Positioner>
