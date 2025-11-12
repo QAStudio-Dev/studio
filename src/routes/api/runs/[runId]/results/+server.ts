@@ -133,9 +133,24 @@ export const GET: RequestHandler = async (event) => {
 				}
 			},
 			attachments: true,
+			steps: {
+				where: { parentStepId: null }, // Only get top-level steps
+				orderBy: { stepNumber: 'asc' },
+				include: {
+					childSteps: {
+						orderBy: { stepNumber: 'asc' },
+						include: {
+							childSteps: {
+								orderBy: { stepNumber: 'asc' }
+							}
+						}
+					}
+				}
+			},
 			_count: {
 				select: {
-					attachments: true
+					attachments: true,
+					steps: true
 				}
 			}
 		}

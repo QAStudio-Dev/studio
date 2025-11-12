@@ -29,6 +29,7 @@
 	import ErrorDisplay from '$lib/components/ErrorDisplay.svelte';
 	import AttachmentViewer from '$lib/components/AttachmentViewer.svelte';
 	import JiraIssueModal from '$lib/components/JiraIssueModal.svelte';
+	import TestStepsViewer from '$lib/components/TestStepsViewer.svelte';
 
 	let { data } = $props();
 	let { testRun, stats } = $derived(data);
@@ -445,10 +446,10 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 				<Clock class="mt-1 h-5 w-5 text-surface-500" />
 				<div>
 					<div class="text-surface-600-300 text-xs">Started</div>
-					<div class="font-semibold">{formatDate(testRun.startedAt)}</div>
+					<div class="font-semibold">{formatDate(testRun.startedAt?.toISOString() || null)}</div>
 					{#if testRun.completedAt}
 						<div class="text-xs text-surface-500">
-							Completed: {formatDate(testRun.completedAt)}
+							Completed: {formatDate(testRun.completedAt?.toISOString())}
 						</div>
 					{/if}
 				</div>
@@ -488,7 +489,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 			<div class="border-surface-200-700 border-t pt-4">
 				{#if !runSummary && !loadingSummary}
 					<button
-						onclick={getRunSummary}
+						onclick={() => getRunSummary()}
 						class="preset-tonal-primary-500 btn btn-sm"
 						disabled={loadingSummary}
 					>
@@ -820,6 +821,11 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 													stackTrace={result.stackTrace}
 													compact={false}
 												/>
+
+												<!-- Test Steps -->
+												{#if result.steps && result.steps.length > 0}
+													<TestStepsViewer steps={result.steps} />
+												{/if}
 
 												<!-- Comment -->
 												{#if result.comment}

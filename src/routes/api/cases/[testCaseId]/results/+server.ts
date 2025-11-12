@@ -42,6 +42,20 @@ export const GET: RequestHandler = async ({ params, url }) => {
 						orderBy: {
 							createdAt: 'asc'
 						}
+					},
+					steps: {
+						where: { parentStepId: null }, // Only get top-level steps
+						orderBy: { stepNumber: 'asc' },
+						include: {
+							childSteps: {
+								orderBy: { stepNumber: 'asc' },
+								include: {
+									childSteps: {
+										orderBy: { stepNumber: 'asc' }
+									}
+								}
+							}
+						}
 					}
 				}
 			}),

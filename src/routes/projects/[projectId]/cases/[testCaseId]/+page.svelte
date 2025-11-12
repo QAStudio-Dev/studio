@@ -24,6 +24,7 @@
 	import AttachmentViewer from '$lib/components/AttachmentViewer.svelte';
 	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
 	import JiraIssueModal from '$lib/components/JiraIssueModal.svelte';
+	import TestStepsViewer from '$lib/components/TestStepsViewer.svelte';
 	import { invalidateAll } from '$app/navigation';
 
 	let { data } = $props();
@@ -423,6 +424,13 @@ ${testCase.expectedResult || 'See test case for details'}`;
 													</Accordion.Item>
 												{/if}
 											</Accordion>
+										</div>
+									{/if}
+
+									<!-- Test Steps -->
+									{#if result.steps && result.steps.length > 0}
+										<div class="mt-3">
+											<TestStepsViewer steps={result.steps} compact={true} />
 										</div>
 									{/if}
 
