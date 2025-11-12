@@ -1,6 +1,7 @@
 import { clerkClient } from 'svelte-clerk/server';
 import { db } from './db';
 import crypto from 'crypto';
+import { UserRole } from '@prisma/client';
 
 /**
  * Send invitation via Clerk
@@ -8,7 +9,7 @@ import crypto from 'crypto';
 export async function sendInvitationWithClerk(
 	teamId: string,
 	email: string,
-	role: string,
+	role: UserRole,
 	invitedBy: string
 ) {
 	// Create invitation token for our system
@@ -68,7 +69,7 @@ export async function sendInvitationWithClerk(
 export async function createInvitationLink(
 	teamId: string,
 	email: string,
-	role: string,
+	role: UserRole,
 	invitedBy: string
 ) {
 	const token = crypto.randomBytes(32).toString('hex');

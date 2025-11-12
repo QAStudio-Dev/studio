@@ -46,6 +46,9 @@ export async function syncUserFromClerk(userId: string) {
 				firstName: clerkUser.firstName,
 				lastName: clerkUser.lastName,
 				imageUrl: clerkUser.imageUrl
+			},
+			include: {
+				team: true
 			}
 		});
 

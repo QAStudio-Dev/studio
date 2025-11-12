@@ -125,7 +125,7 @@
 						<div>
 							<p class="text-surface-600-300 text-sm">Team</p>
 							<p class="text-lg font-bold">
-								{#if hasTeam}
+								{#if hasTeam && user.team}
 									{user.team.name}
 								{:else}
 									<span class="text-surface-600-300 text-sm">No team</span>

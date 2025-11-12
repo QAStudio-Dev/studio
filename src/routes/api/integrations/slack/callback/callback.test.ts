@@ -361,8 +361,10 @@ describe('Slack OAuth callback', () => {
 			};
 
 			const encryptedAccessToken = encrypt(tokenData.access_token);
+			// @ts-expect-error - testing undefined case
 			const encryptedWebhookUrl = tokenData.incoming_webhook?.url
-				? encrypt(tokenData.incoming_webhook.url)
+				? // @ts-expect-error - testing undefined case
+					encrypt(tokenData.incoming_webhook.url)
 				: null;
 
 			expect(encryptedAccessToken).toBeDefined();

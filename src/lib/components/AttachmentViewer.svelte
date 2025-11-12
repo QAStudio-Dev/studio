@@ -26,6 +26,8 @@
 	let selectedAttachment = $state<string | null>(null);
 	let markdownContents = $state<Record<string, string>>({});
 	let loadingMarkdown = $state<Record<string, boolean>>({});
+	let traceSignedUrls = $state<Record<string, string>>({});
+	let loadingTraceUrl = $state<Record<string, boolean>>({});
 
 	// Configure marked for safe HTML rendering
 	onMount(() => {
@@ -35,17 +37,27 @@
 		});
 	});
 
-	// Load markdown content when modal is opened for a markdown file
+	// Load content when modal is opened for markdown or trace files
 	$effect(() => {
 		if (selectedAttachment) {
 			const attachment = attachments.find((a) => a.id === selectedAttachment);
-			if (
-				attachment &&
-				isMarkdown(attachment.mimeType) &&
-				!markdownContents[attachment.id] &&
-				!loadingMarkdown[attachment.id]
-			) {
-				loadMarkdownContent(attachment.id);
+			if (attachment) {
+				// Load markdown content
+				if (
+					isMarkdown(attachment.mimeType) &&
+					!markdownContents[attachment.id] &&
+					!loadingMarkdown[attachment.id]
+				) {
+					loadMarkdownContent(attachment.id);
+				}
+				// Load signed URL for trace files
+				if (
+					isTrace(attachment.mimeType) &&
+					!traceSignedUrls[attachment.id] &&
+					!loadingTraceUrl[attachment.id]
+				) {
+					loadTraceSignedUrl(attachment.id);
+				}
 			}
 		}
 	});
@@ -111,6 +123,25 @@
 			console.error('Failed to load markdown:', error);
 		} finally {
 			loadingMarkdown[attachmentId] = false;
+		}
+	}
+
+	async function loadTraceSignedUrl(attachmentId: string) {
+		if (traceSignedUrls[attachmentId] || loadingTraceUrl[attachmentId]) {
+			return;
+		}
+
+		loadingTraceUrl[attachmentId] = true;
+		try {
+			const response = await fetch(`/api/attachments/${attachmentId}/signed-url`);
+			if (response.ok) {
+				const data = await response.json();
+				traceSignedUrls[attachmentId] = data.signedUrl;
+			}
+		} catch (error) {
+			console.error('Failed to load trace signed URL:', error);
+		} finally {
+			loadingTraceUrl[attachmentId] = false;
 		}
 	}
 
@@ -218,13 +249,28 @@
 										</video>
 									{:else if isTrace(attachment.mimeType)}
 										<div class="h-full w-full bg-white">
-											<iframe
-												src="https://trace.playwright.dev/?trace={encodeURIComponent(
-													`${window.location.origin}/api/attachments/${attachment.id}`
-												)}"
-												class="h-full w-full border-0"
-												title="Playwright Trace Viewer"
-											></iframe>
+											{#if loadingTraceUrl[attachment.id]}
+												<div class="flex h-full w-full items-center justify-center">
+													<div class="text-center">
+														<div
+															class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent"
+														></div>
+														<p class="text-surface-600-300 mt-4">Loading trace viewer...</p>
+													</div>
+												</div>
+											{:else if traceSignedUrls[attachment.id]}
+												<iframe
+													src="https://trace.playwright.dev/?trace={encodeURIComponent(
+														traceSignedUrls[attachment.id]
+													)}"
+													class="h-full w-full border-0"
+													title="Playwright Trace Viewer"
+												></iframe>
+											{:else}
+												<div class="flex h-full w-full items-center justify-center">
+													<p class="text-error-500">Failed to load trace viewer</p>
+												</div>
+											{/if}
 										</div>
 									{:else if isMarkdown(attachment.mimeType)}
 										<div class="w-full max-w-4xl overflow-auto bg-surface-100-900 p-8">

@@ -1,6 +1,6 @@
-import { Resend } from 'resend';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+// TODO: Install resend package when email functionality is needed
+// import { Resend } from 'resend';
+// const resend = new Resend(process.env.RESEND_API_KEY);
 
 interface InvitationEmailData {
 	to: string;
@@ -20,7 +20,9 @@ export async function sendInvitationEmail(data: InvitationEmailData) {
 	const expiresIn = Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 
 	try {
-		const result = await resend.emails.send({
+		// TODO: Uncomment when resend is installed
+		throw new Error('Email functionality not yet implemented');
+		/* const result = await resend.emails.send({
 			from: 'QA Studio <invitations@qastudio.dev>',
 			to,
 			subject: `You've been invited to join ${teamName} on QA Studio`,
@@ -79,7 +81,7 @@ export async function sendInvitationEmail(data: InvitationEmailData) {
 			`
 		});
 
-		return result;
+		return result; */
 	} catch (error) {
 		console.error('Failed to send invitation email:', error);
 		throw new Error('Failed to send invitation email');
@@ -96,7 +98,9 @@ export async function sendInvitationAcceptedEmail(
 	memberEmail: string
 ) {
 	try {
-		await resend.emails.send({
+		// TODO: Uncomment when resend is installed
+		throw new Error('Email functionality not yet implemented');
+		/* await resend.emails.send({
 			from: 'QA Studio <notifications@qastudio.dev>',
 			to: adminEmail,
 			subject: `${memberName} joined ${teamName}`,
@@ -124,7 +128,7 @@ export async function sendInvitationAcceptedEmail(
 </body>
 </html>
 			`
-		});
+		}); */
 	} catch (error) {
 		console.error('Failed to send acceptance notification:', error);
 		// Don't throw - notification email is nice-to-have

@@ -16,6 +16,10 @@ export const POST: RequestHandler = async (event) => {
 	const userId = await requireAuth(event);
 	const user = await ensureUser(userId);
 
+	if (!user) {
+		throw error(401, { message: 'User not found' });
+	}
+
 	const invitation = await db.teamInvitation.findUnique({
 		where: { token },
 		include: {

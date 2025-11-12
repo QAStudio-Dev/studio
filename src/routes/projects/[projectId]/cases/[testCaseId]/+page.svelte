@@ -50,7 +50,9 @@
 			title: testCase.title,
 			description: testCase.description || '',
 			preconditions: testCase.preconditions || '',
-			steps: testCase.steps || '',
+			steps:
+				(typeof testCase.steps === 'string' ? testCase.steps : JSON.stringify(testCase.steps)) ||
+				'',
 			expectedResult: testCase.expectedResult || '',
 			priority: testCase.priority,
 			type: testCase.type,
@@ -430,7 +432,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 									<!-- Test Steps -->
 									{#if result.steps && result.steps.length > 0}
 										<div class="mt-3">
-											<TestStepsViewer steps={result.steps} compact={true} />
+											<TestStepsViewer steps={result.steps as any} compact={true} />
 										</div>
 									{/if}
 

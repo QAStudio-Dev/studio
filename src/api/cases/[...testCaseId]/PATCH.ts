@@ -2,6 +2,7 @@ import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { requireAuth } from '$lib/server/auth';
 import { serializeDates } from '$lib/utils/date';
+import { Prisma } from '@prisma/client';
 
 export const Param = z.object({
 	testCaseId: z.string()
@@ -133,7 +134,9 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 					...(input.preconditions !== undefined && {
 						preconditions: input.preconditions?.trim() || null
 					}),
-					...(input.steps !== undefined && { steps: input.steps?.trim() || null }),
+					...(input.steps !== undefined && {
+						steps: input.steps?.trim() ? input.steps.trim() : Prisma.JsonNull
+					}),
 					...(input.expectedResult !== undefined && {
 						expectedResult: input.expectedResult?.trim() || null
 					}),
