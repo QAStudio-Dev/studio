@@ -11,6 +11,36 @@ import {
 } from '$lib/server/ids';
 import { deleteCache, CacheKeys } from '$lib/server/redis';
 
+// Define recursive step schema
+const BaseTestStep: any = z.object({
+	title: z.string().describe('Step title'),
+	category: z
+		.enum(['hook', 'test.step', 'pw:api', 'expect', 'fixture', 'other'])
+		.optional()
+		.describe('Step category'),
+	status: z
+		.enum(['passed', 'failed', 'skipped', 'timedout'])
+		.optional()
+		.describe('Step execution status'),
+	startTime: z.string().optional().describe('ISO 8601 timestamp when step started'),
+	duration: z.number().optional().describe('Step duration in milliseconds'),
+	error: z.string().optional().describe('Error message if step failed'),
+	stackTrace: z.string().optional().describe('Stack trace for failures'),
+	location: z
+		.object({
+			file: z.string(),
+			line: z.number(),
+			column: z.number().optional()
+		})
+		.optional()
+		.describe('Source code location')
+});
+
+// Extend with recursive steps property
+const TestStep: z.ZodType<any> = BaseTestStep.extend({
+	steps: z.lazy(() => TestStep.array().optional().default([]))
+});
+
 export const Input = z.object({
 	testRunId: z.string().describe('ID of the test run'),
 	results: z
@@ -25,6 +55,40 @@ export const Input = z.object({
 				errorMessage: z.string().optional().describe('Error message if test failed'),
 				error: z.string().optional().describe('Alternative error field'),
 				stackTrace: z.string().optional().describe('Stack trace for failures'),
+				errorSnippet: z.string().optional().describe('Error context snippet'),
+				errorLocation: z
+					.object({
+						file: z.string(),
+						line: z.number(),
+						column: z.number().optional()
+					})
+					.optional()
+					.describe('Location where error occurred'),
+				startTime: z.string().optional().describe('ISO 8601 timestamp when test started'),
+				endTime: z.string().optional().describe('ISO 8601 timestamp when test ended'),
+				retry: z.number().optional().describe('Retry attempt number (0 for first attempt)'),
+				projectName: z.string().optional().describe('Project/browser name (e.g., "chromium")'),
+				metadata: z
+					.object({
+						tags: z.array(z.string()).optional(),
+						location: z
+							.object({
+								file: z.string(),
+								line: z.number(),
+								column: z.number().optional()
+							})
+							.optional()
+					})
+					.optional()
+					.describe('Additional test metadata'),
+				steps: z.array(TestStep).optional().default([]).describe('Test execution steps'),
+				consoleOutput: z
+					.object({
+						stdout: z.string().optional(),
+						stderr: z.string().optional()
+					})
+					.optional()
+					.describe('Console output captured during test'),
 				attachments: z
 					.array(
 						z.object({
@@ -166,6 +230,61 @@ function getExtensionFromMimeType(mimeType: string): string {
 		'application/x-ndjson': 'ndjson'
 	};
 	return mimeToExt[mimeType.toLowerCase()] || 'bin';
+}
+
+/**
+ * Helper function to recursively process test steps and save to database
+ */
+async function processTestSteps(
+	steps: any[],
+	testResultId: string,
+	parentStepId: string | null = null,
+	parentStepNumber: number = 0
+): Promise<void> {
+	if (!steps || steps.length === 0) return;
+
+	for (let i = 0; i < steps.length; i++) {
+		const step = steps[i];
+
+		// Map step status to TestStatus enum
+		let stepStatus: 'PASSED' | 'FAILED' | 'SKIPPED';
+		switch (step.status?.toLowerCase()) {
+			case 'passed':
+				stepStatus = 'PASSED';
+				break;
+			case 'failed':
+			case 'timedout':
+				stepStatus = 'FAILED';
+				break;
+			case 'skipped':
+				stepStatus = 'SKIPPED';
+				break;
+			default:
+				stepStatus = 'SKIPPED';
+		}
+
+		// Create the step record
+		const stepRecord = await db.testStepResult.create({
+			data: {
+				testResultId,
+				parentStepId,
+				stepNumber: i + parentStepNumber,
+				title: step.title || 'Untitled Step',
+				category: step.category || null,
+				status: stepStatus,
+				duration: step.duration || null,
+				startTime: step.startTime ? new Date(step.startTime) : null,
+				error: step.error || null,
+				stackTrace: step.stackTrace || null,
+				location: step.location ? step.location : null
+			}
+		});
+
+		// Recursively process nested steps
+		if (step.steps && Array.isArray(step.steps) && step.steps.length > 0) {
+			await processTestSteps(step.steps, testResultId, stepRecord.id, 0);
+		}
+	}
 }
 
 /**
@@ -503,6 +622,14 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 							duration: result.duration || 0,
 							errorMessage: result.errorMessage || result.error,
 							stackTrace: result.stackTrace,
+							errorSnippet: result.errorSnippet,
+							errorLocation: result.errorLocation,
+							startTime: result.startTime ? new Date(result.startTime) : null,
+							endTime: result.endTime ? new Date(result.endTime) : null,
+							retry: result.retry,
+							projectName: result.projectName,
+							metadata: result.metadata,
+							consoleOutput: result.consoleOutput,
 							executedBy: userId,
 							executedAt: new Date()
 						}
@@ -518,6 +645,11 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 							result.title,
 							attachmentErrors
 						);
+					}
+
+					// Process test steps if any
+					if (result.steps && Array.isArray(result.steps)) {
+						await processTestSteps(result.steps, testResult.id);
 					}
 
 					processedResults.push({
@@ -540,6 +672,14 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 							duration: result.duration || 0,
 							errorMessage: result.errorMessage || result.error,
 							stackTrace: result.stackTrace,
+							errorSnippet: result.errorSnippet,
+							errorLocation: result.errorLocation,
+							startTime: result.startTime ? new Date(result.startTime) : null,
+							endTime: result.endTime ? new Date(result.endTime) : null,
+							retry: result.retry,
+							projectName: result.projectName,
+							metadata: result.metadata,
+							consoleOutput: result.consoleOutput,
 							executedBy: userId,
 							executedAt: new Date()
 						}
@@ -555,6 +695,11 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 							result.title,
 							attachmentErrors
 						);
+					}
+
+					// Process test steps if any
+					if (result.steps && Array.isArray(result.steps)) {
+						await processTestSteps(result.steps, testResult.id);
 					}
 
 					processedResults.push({

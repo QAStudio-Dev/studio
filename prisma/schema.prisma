@@ -336,6 +336,16 @@ model TestResult {
   aiDiagnosis            String? // AI-generated diagnosis for failed tests
   aiDiagnosisGeneratedAt DateTime? // When the AI diagnosis was generated
 
+  // Additional test metadata (from Playwright/test runners)
+  errorSnippet  String? // Error context snippet
+  errorLocation Json? // {file, line, column} where error occurred
+  startTime     DateTime? // When test started
+  endTime       DateTime? // When test ended
+  retry         Int? // Retry attempt number (0 for first attempt)
+  projectName   String? // Project/browser name (e.g., "chromium")
+  metadata      Json? // Additional metadata {tags, location, etc.}
+  consoleOutput Json? // {stdout, stderr} console output
+
   executor    User             @relation("TestResultExecutor", fields: [executedBy], references: [id], onDelete: Cascade)
   testCase    TestCase         @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
   testRun     TestRun          @relation(fields: [testRunId], references: [id], onDelete: Cascade)
@@ -365,15 +375,26 @@ enum TestStatus {
 model TestStepResult {
   id           String     @id @default(cuid())
   testResultId String
-  stepNumber   Int
-  description  String
+  parentStepId String? // For nested steps (hierarchical structure)
+  stepNumber   Int // Order within parent
+  title        String // Step title
+  category     String? // hook, test.step, pw:api, expect, fixture, other
   status       TestStatus
   comment      String?
+  duration     Int? // Duration in milliseconds
+  startTime    DateTime? // When step started
+  error        String? // Error message if step failed
+  stackTrace   String? // Stack trace for failures
+  location     Json? // {file, line, column} source code location
   createdAt    DateTime   @default(now())
 
-  testResult TestResult @relation(fields: [testResultId], references: [id], onDelete: Cascade)
+  testResult  TestResult       @relation(fields: [testResultId], references: [id], onDelete: Cascade)
+  parentStep  TestStepResult?  @relation("StepHierarchy", fields: [parentStepId], references: [id], onDelete: Cascade)
+  childSteps  TestStepResult[] @relation("StepHierarchy")
 
   @@index([testResultId])
+  @@index([parentStepId])
+  @@index([testResultId, stepNumber])
 }
 
 // ============================================
