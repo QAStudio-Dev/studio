@@ -100,7 +100,7 @@ test.describe('Blog Page', () => {
 		const initialCount = await blogPage.getBlogPostCount();
 
 		// Search for something
-		await blogPage.search('');
+		await blogPage.search('asdasdasdasdas');
 		await blogPage.wait(500);
 
 		// Click clear button

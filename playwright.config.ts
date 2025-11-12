@@ -20,11 +20,8 @@ export default defineConfig({
 			'@qastudio-dev/playwright',
 			{
 				apiUrl: stripAnsi('https://qastudio.dev/api'),
-				// apiUrl: stripAnsi('http://localhost:5173/api'),
 				apiKey: stripAnsi(process.env.QA_STUDIO_API_KEY),
-				// apiKey: 'qas_nbOw_yvrRJX9Jcmw_1VMxl7l3o1NjlpA',
 				projectId: stripAnsi(process.env.QA_STUDIO_PROJECT_ID),
-				// projectId: 'ZZt8p4wP',
 				environment: process.env.CI ? 'CI' : 'local',
 				createTestRun: true
 				// verbose: true
