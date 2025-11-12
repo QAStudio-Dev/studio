@@ -23,8 +23,8 @@ export default defineConfig({
 				apiKey: stripAnsi(process.env.QA_STUDIO_API_KEY),
 				projectId: stripAnsi(process.env.QA_STUDIO_PROJECT_ID),
 				environment: process.env.CI ? 'CI' : 'local',
-				createTestRun: true,
-				verbose: true
+				createTestRun: true
+				// verbose: true
 			}
 		]
 	],
