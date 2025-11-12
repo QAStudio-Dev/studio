@@ -64,8 +64,9 @@ export const GET: RequestHandler = async ({ params, url }) => {
 };
 
 // POST /api/projects/[projectId]/test-runs - Create test run
-export const POST: RequestHandler = async ({ params, request }) => {
+export const POST: RequestHandler = async ({ params, request, locals }) => {
 	try {
+		const { userId } = locals.auth() || {};
 		const data = await request.json();
 		const { name, description, milestoneId, environmentId, status } = data;
 
@@ -76,12 +77,13 @@ export const POST: RequestHandler = async ({ params, request }) => {
 		const testRun = await db.testRun.create({
 			data: {
 				id: generateTestRunId(),
-				name,
-				description,
+				name: name,
+				description: description || null,
 				projectId: params.projectId,
 				milestoneId: milestoneId || null,
 				environmentId: environmentId || null,
-				status: status || 'PLANNED'
+				status: status || 'PLANNED',
+				createdBy: userId || 'anonymous'
 			}
 		});
 

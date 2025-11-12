@@ -40,7 +40,7 @@ describe('Slack integration service', () => {
 		});
 
 		it('should throw error if webhook URL is missing', () => {
-			const config = {
+			const config: any = {
 				teamId: 'T12345',
 				teamName: 'Test',
 				incomingWebhook: null

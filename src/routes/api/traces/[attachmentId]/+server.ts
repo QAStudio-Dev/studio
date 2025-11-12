@@ -4,6 +4,11 @@ import { db } from '$lib/server/db';
 import { verifySignedUrl } from '$lib/server/signed-urls';
 
 /**
+ * Allowed MIME types for trace files
+ */
+const ALLOWED_TRACE_MIME_TYPES = new Set(['application/zip', 'application/x-zip-compressed']);
+
+/**
  * Public endpoint for serving trace files with signed URL verification
  * This allows external services (like trace.playwright.dev) to access trace files
  * without authentication, using time-limited signed URLs instead.
@@ -39,7 +44,7 @@ export const GET: RequestHandler = async ({ params, url, fetch }) => {
 	}
 
 	// Only allow trace files through this endpoint for security
-	if (!attachment.mimeType.includes('zip') && !attachment.mimeType.includes('application/zip')) {
+	if (!ALLOWED_TRACE_MIME_TYPES.has(attachment.mimeType)) {
 		throw error(403, 'This endpoint only serves trace files');
 	}
 
@@ -47,10 +52,16 @@ export const GET: RequestHandler = async ({ params, url, fetch }) => {
 		// If it's a local file path, serve from uploads directory
 		if (attachment.url.startsWith('/api/attachments/local/')) {
 			const { readFile } = await import('fs/promises');
-			const { join } = await import('path');
+			const { join, resolve, normalize } = await import('path');
 
 			const filename = attachment.url.replace('/api/attachments/local/', '');
-			const filePath = join(process.cwd(), 'uploads', 'attachments', filename);
+			const uploadDir = resolve(process.cwd(), 'uploads', 'attachments');
+			const filePath = resolve(uploadDir, filename);
+
+			// Prevent path traversal attacks
+			if (!filePath.startsWith(uploadDir)) {
+				throw error(403, 'Invalid file path');
+			}
 
 			const buffer = await readFile(filePath);
 

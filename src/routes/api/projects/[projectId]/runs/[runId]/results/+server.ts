@@ -62,8 +62,9 @@ export const GET: RequestHandler = async ({ params, url }) => {
 };
 
 // POST /api/projects/[projectId]/test-runs/[runId]/results - Create test result
-export const POST: RequestHandler = async ({ params, request }) => {
+export const POST: RequestHandler = async ({ params, request, locals }) => {
 	try {
+		const { userId } = locals.auth() || {};
 		const data = await request.json();
 		const { testCaseId, status, comment, duration, stackTrace, errorMessage, steps } = data;
 
@@ -74,20 +75,21 @@ export const POST: RequestHandler = async ({ params, request }) => {
 		// Create result with steps if provided
 		const result = await db.testResult.create({
 			data: {
-				testCaseId,
+				testCaseId: testCaseId,
 				testRunId: params.runId,
-				status,
-				comment,
-				duration,
-				stackTrace,
-				errorMessage,
+				status: status,
+				comment: comment || null,
+				duration: duration || null,
+				stackTrace: stackTrace || null,
+				errorMessage: errorMessage || null,
+				executedBy: userId || 'anonymous',
 				steps: steps
 					? {
 							create: steps.map((step: any, index: number) => ({
 								stepNumber: index + 1,
 								description: step.description,
 								status: step.status,
-								comment: step.comment
+								comment: step.comment || null
 							}))
 						}
 					: undefined

@@ -697,8 +697,7 @@ export const TestSuitesApi = {
 			description: 'Test suite details',
 			example: {
 				name: 'Authentication',
-				description: 'All authentication-related test cases',
-				parentId: null
+				description: 'All authentication-related test cases'
 			} as CreateTestSuiteBody
 		},
 		responses: {
@@ -819,7 +818,6 @@ export const AttachmentsApi = {
 						url: 'https://storage.example.com/attachments/screenshot-2024-01-15.png',
 						testCaseId: null,
 						testResultId: 'result_123',
-						type: 'screenshot',
 						createdAt: '2024-01-15T10:30:00Z'
 					}
 				] as AttachmentResponse[]

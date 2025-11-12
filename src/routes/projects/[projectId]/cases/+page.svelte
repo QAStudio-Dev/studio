@@ -130,10 +130,10 @@
 		if (suiteId) {
 			const suite = project.testSuites.find((s) => s.id === suiteId);
 			if (suite) {
-				suite.testCases = [...(suite.testCases || []), optimisticTestCase];
+				suite.testCases = [...(suite.testCases || []), optimisticTestCase as any];
 			}
 		} else {
-			project.testCases = [...(project.testCases || []), optimisticTestCase];
+			project.testCases = [...(project.testCases || []), optimisticTestCase as any];
 		}
 		project = { ...project };
 

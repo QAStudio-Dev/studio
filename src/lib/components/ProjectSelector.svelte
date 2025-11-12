@@ -29,18 +29,18 @@
 	// Validate selected project against available projects
 	$effect(() => {
 		// Only validate if we have a selected project and haven't already validated this exact project
-		if (currentProject && currentProject.id !== lastValidatedProjectId) {
+		if (currentProject && currentProject?.id !== lastValidatedProjectId) {
 			// Check if project exists in the available projects list
-			const projectExists = projects.some((p) => p.id === currentProject.id);
+			const projectExists = projects.some((p) => p.id === currentProject?.id);
 
 			if (!projectExists && projects.length > 0) {
 				// Selected project doesn't belong to this user, clear it
-				console.log('[ProjectSelector] Clearing invalid project:', currentProject.name);
-				lastValidatedProjectId = currentProject.id; // Mark as validated to prevent loop
+				console.log('[ProjectSelector] Clearing invalid project:', currentProject?.name);
+				lastValidatedProjectId = currentProject?.id || ''; // Mark as validated to prevent loop
 				clearSelectedProject();
 			} else if (projectExists) {
 				// Valid project, update the last validated ID
-				lastValidatedProjectId = currentProject.id;
+				lastValidatedProjectId = currentProject?.id || '';
 			}
 		} else if (!currentProject) {
 			// No project selected, reset validation

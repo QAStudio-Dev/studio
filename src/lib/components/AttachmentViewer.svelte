@@ -255,7 +255,7 @@
 														<div
 															class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent"
 														></div>
-														<p class="mt-4 text-surface-600-300">Loading trace viewer...</p>
+														<p class="text-surface-600-300 mt-4">Loading trace viewer...</p>
 													</div>
 												</div>
 											{:else if traceSignedUrls[attachment.id]}

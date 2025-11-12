@@ -8,7 +8,7 @@ import { requireAuth } from '$lib/server/auth';
  * Update subscription seat count
  */
 export const POST: RequestHandler = async (event) => {
-	const userId = requireAuth(event);
+	const userId = await requireAuth(event);
 	const { seats } = await event.request.json();
 
 	// Validate seats
@@ -29,7 +29,7 @@ export const POST: RequestHandler = async (event) => {
 		}
 	});
 
-	if (!user?.team?.subscription) {
+	if (!user || !user.team?.subscription) {
 		return json({ error: 'No active subscription found' }, { status: 404 });
 	}
 
@@ -46,10 +46,12 @@ export const POST: RequestHandler = async (event) => {
 
 	try {
 		// Update Stripe subscription
-		const updatedSubscription = await updateSubscriptionSeats(
-			user.team.subscription.stripeSubscriptionId,
-			seats
-		);
+		const subscriptionId = user.team.subscription.stripeSubscriptionId;
+		if (!subscriptionId) {
+			return json({ error: 'No Stripe subscription ID found' }, { status: 404 });
+		}
+
+		const updatedSubscription = await updateSubscriptionSeats(subscriptionId, seats);
 
 		// Update database
 		await db.subscription.update({

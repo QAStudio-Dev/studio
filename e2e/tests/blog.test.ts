@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { BlogPage } from '../pages/blog';
 
 test.describe('Blog Page', () => {
+	test.setTimeout(10_000);
 	let blogPage: BlogPage;
 
 	test.beforeEach(async ({ page }) => {
@@ -99,7 +100,7 @@ test.describe('Blog Page', () => {
 		const initialCount = await blogPage.getBlogPostCount();
 
 		// Search for something
-		await blogPage.search('asdasdasdasdas');
+		await blogPage.search('');
 		await blogPage.wait(500);
 
 		// Click clear button

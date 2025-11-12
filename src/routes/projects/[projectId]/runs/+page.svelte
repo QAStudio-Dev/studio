@@ -86,7 +86,7 @@
 	// Load data on mount
 	onMount(() => {
 		// Set selectedProject to the projectId from URL
-		selectedProject = projectId;
+		selectedProject = projectId || '';
 
 		fetchTestRuns();
 		fetchProjects();

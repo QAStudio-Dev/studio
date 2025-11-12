@@ -8,7 +8,6 @@
 		if (browser) {
 			// Dynamically import and initialize Swagger UI
 			(async () => {
-				// @ts-expect-error - swagger-ui-dist doesn't have type definitions
 				const SwaggerUIBundle = (await import('swagger-ui-dist/swagger-ui-bundle.js')).default;
 				const SwaggerUIStandalonePreset = (
 					await import('swagger-ui-dist/swagger-ui-standalone-preset.js')

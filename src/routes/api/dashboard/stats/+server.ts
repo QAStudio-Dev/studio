@@ -153,8 +153,7 @@ export const GET: RequestHandler = async (event) => {
 	const passRate = executedTests > 0 ? Math.round((passedTests / executedTests) * 100) : 0;
 
 	// Check project limit
-	const hasActiveSubscription =
-		user.team?.subscription?.status === 'ACTIVE' || user.team?.subscription?.status === 'ACTIVE';
+	const hasActiveSubscription = user.team?.subscription?.status === ('ACTIVE' as any);
 	const projectLimit = hasActiveSubscription ? null : 1; // null = unlimited
 	const canCreateProject = projectLimit === null || projects.length < projectLimit;
 

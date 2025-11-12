@@ -6,7 +6,7 @@ if (!STRIPE_SECRET_KEY) {
 }
 
 export const stripe = new Stripe(STRIPE_SECRET_KEY, {
-	apiVersion: '2025-01-27.acacia',
+	apiVersion: '2025-10-29.clover',
 	typescript: true
 });
 

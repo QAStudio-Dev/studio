@@ -9,6 +9,7 @@ Playwright's hosted trace viewer (`trace.playwright.dev`) needs to load trace fi
 ## Solution
 
 **Signed URLs with HMAC signatures** - Time-limited, cryptographically signed URLs that:
+
 - Don't require authentication headers
 - Expire automatically (default: 1 hour)
 - Can only access specific trace files
@@ -17,6 +18,7 @@ Playwright's hosted trace viewer (`trace.playwright.dev`) needs to load trace fi
 ## How It Works
 
 ### 1. Frontend requests a signed URL
+
 ```typescript
 const response = await fetch(`/api/attachments/${attachmentId}/signed-url`);
 const { signedUrl } = await response.json();
@@ -24,11 +26,13 @@ const { signedUrl } = await response.json();
 ```
 
 ### 2. Pass signed URL to trace viewer
+
 ```html
 <iframe src="https://trace.playwright.dev/?trace={encodeURIComponent(signedUrl)}" />
 ```
 
 ### 3. Trace viewer loads the file
+
 - `trace.playwright.dev` fetches the signed URL
 - Server verifies signature and expiration
 - If valid, serves the trace file with CORS headers
@@ -80,24 +84,28 @@ const { signedUrl } = await response.json();
 ## API Endpoints
 
 ### GET `/api/attachments/{id}/signed-url`
+
 **Auth required**: Yes (via Clerk)
 **Purpose**: Generate a signed URL for a trace file
 
 **Query Parameters:**
+
 - `expiresIn` (optional): Expiration time in minutes (default: 60, max: 1440)
 
 **Response:**
+
 ```json
 {
-  "signedUrl": "https://qastudio.dev/api/traces/{id}?signature=abc&expires=123",
-  "expires": "2025-11-12T18:00:00.000Z",
-  "expiresIn": 3600000,
-  "attachmentId": "...",
-  "fileName": "trace.zip"
+	"signedUrl": "https://qastudio.dev/api/traces/{id}?signature=abc&expires=123",
+	"expires": "2025-11-12T18:00:00.000Z",
+	"expiresIn": 3600000,
+	"attachmentId": "...",
+	"fileName": "trace.zip"
 }
 ```
 
 ### GET `/api/traces/{id}?signature={sig}&expires={exp}`
+
 **Auth required**: No (signature-based)
 **Purpose**: Serve trace files to external services
 
@@ -136,6 +144,7 @@ openssl rand -hex 32
 ```
 
 Add to `.env`:
+
 ```bash
 URL_SIGNING_SECRET="your-generated-secret-here"
 ```
@@ -146,18 +155,18 @@ URL_SIGNING_SECRET="your-generated-secret-here"
 
 ```svelte
 <script>
-  let traceUrl = $state('');
+	let traceUrl = $state('');
 
-  async function loadTrace(attachmentId) {
-    const response = await fetch(`/api/attachments/${attachmentId}/signed-url`);
-    const data = await response.json();
-    traceUrl = data.signedUrl;
-  }
+	async function loadTrace(attachmentId) {
+		const response = await fetch(`/api/attachments/${attachmentId}/signed-url`);
+		const data = await response.json();
+		traceUrl = data.signedUrl;
+	}
 </script>
 
 <iframe
-  src="https://trace.playwright.dev/?trace={encodeURIComponent(traceUrl)}"
-  class="w-full h-full"
+	src="https://trace.playwright.dev/?trace={encodeURIComponent(traceUrl)}"
+	class="h-full w-full"
 />
 ```
 
@@ -165,9 +174,7 @@ URL_SIGNING_SECRET="your-generated-secret-here"
 
 ```typescript
 // Create URL that expires in 30 minutes
-const response = await fetch(
-  `/api/attachments/${attachmentId}/signed-url?expiresIn=30`
-);
+const response = await fetch(`/api/attachments/${attachmentId}/signed-url?expiresIn=30`);
 ```
 
 ### In API Routes
@@ -177,9 +184,9 @@ import { generateFullSignedUrl } from '$lib/server/signed-urls';
 
 // Generate signed URL programmatically
 const signedUrl = generateFullSignedUrl(
-  attachmentId,
-  'https://qastudio.dev',
-  30 * 60 * 1000 // 30 minutes
+	attachmentId,
+	'https://qastudio.dev',
+	30 * 60 * 1000 // 30 minutes
 );
 ```
 
@@ -212,18 +219,22 @@ curl "http://localhost:5173/api/traces/{id}?signature={sig}&expires=1000000000"
 ## Troubleshoads
 
 ### "Invalid signature" error
+
 - Check that `URL_SIGNING_SECRET` is consistent across restarts
 - Verify the signature wasn't modified or URL-encoded incorrectly
 
 ### "URL has expired" error
+
 - URL has passed its expiration time
 - Generate a new signed URL
 
 ### CORS errors in trace viewer
+
 - Verify `/api/traces` endpoint includes CORS headers
 - Check that `Access-Control-Allow-Origin: *` is set
 
 ### "File not found" error
+
 - Check attachment exists in database
 - Verify blob storage URL is accessible
 - For local files, check `uploads/attachments/` directory exists

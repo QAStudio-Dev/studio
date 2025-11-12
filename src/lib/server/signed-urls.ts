@@ -3,9 +3,16 @@ import { env } from '$env/dynamic/private';
 
 /**
  * Secret key for signing URLs
- * In production, this should be a strong random value from environment variables
+ * Must be configured via URL_SIGNING_SECRET environment variable
  */
-const SECRET_KEY = env.URL_SIGNING_SECRET || env.CLERK_SECRET_KEY || 'fallback-secret-key';
+const SECRET_KEY = env.URL_SIGNING_SECRET;
+
+if (!SECRET_KEY) {
+	throw new Error(
+		'URL_SIGNING_SECRET must be configured in environment variables. ' +
+			'Generate one with: openssl rand -hex 32'
+	);
+}
 
 /**
  * Default expiration time for signed URLs (1 hour)
