@@ -87,8 +87,12 @@
 		return mimeType === 'text/markdown' || mimeType === 'text/x-markdown';
 	}
 
+	function isTrace(mimeType: string): boolean {
+		return mimeType.includes('zip') || mimeType.includes('application/zip');
+	}
+
 	function isViewable(mimeType: string): boolean {
-		return isImage(mimeType) || isVideo(mimeType) || isMarkdown(mimeType);
+		return isImage(mimeType) || isVideo(mimeType) || isMarkdown(mimeType) || isTrace(mimeType);
 	}
 
 	async function loadMarkdownContent(attachmentId: string) {
@@ -212,6 +216,16 @@
 											<track kind="captions" />
 											Your browser does not support the video tag.
 										</video>
+									{:else if isTrace(attachment.mimeType)}
+										<div class="h-full w-full bg-white">
+											<iframe
+												src="https://trace.playwright.dev/?trace={encodeURIComponent(
+													`${window.location.origin}/api/attachments/${attachment.id}`
+												)}"
+												class="h-full w-full border-0"
+												title="Playwright Trace Viewer"
+											></iframe>
+										</div>
 									{:else if isMarkdown(attachment.mimeType)}
 										<div class="w-full max-w-4xl overflow-auto bg-surface-100-900 p-8">
 											{#if loadingMarkdown[attachment.id]}

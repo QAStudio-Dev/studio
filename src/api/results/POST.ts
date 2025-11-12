@@ -61,7 +61,7 @@ export const Input = z.object({
 				title: z.string().describe('Test case title'),
 				fullTitle: z.string().optional().describe('Full hierarchical title (e.g., "Suite > Test")'),
 				status: z
-					.enum(['passed', 'failed', 'skipped', 'timedout', 'interrupted'])
+					.enum(['passed', 'failed', 'skipped', 'timedout', 'interrupted', 'timedOut'])
 					.describe('Test execution status'),
 				duration: z.number().optional().describe('Test duration in milliseconds'),
 				errorMessage: z.string().optional().describe('Error message if test failed'),
@@ -253,7 +253,7 @@ function mapStatus(
 		case 'passed':
 			return 'PASSED';
 		case 'failed':
-		case 'timedout':
+		case 'timedout': // lowercase (API standard)
 			return 'FAILED';
 		case 'skipped':
 		case 'interrupted':

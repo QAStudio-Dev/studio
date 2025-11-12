@@ -25,7 +25,7 @@
 		"@inlang/paraglide-js": "^2.3.2",
 		"@neoconfetti/svelte": "^2.2.2",
 		"@playwright/test": "^1.55.1",
-		"@qastudio-dev/playwright": "^1.2.3",
+		"@qastudio-dev/playwright": "^1.2.5",
 		"@skeletonlabs/skeleton": "^4.1.4",
 		"@skeletonlabs/skeleton-svelte": "^4.1.4",
 		"@sveltejs/adapter-vercel": "^5.10.2",
@@ -84,8 +84,12 @@
 		"zod": "^4.1.12"
 	},
 	"overrides": {
+		"zod": "^4.1.12",
+		"zod-validation-error": "^5.0.0",
 		"sveltekit-api": {
-			"@asteasolutions/zod-to-openapi": "^8.1.0"
+			"@asteasolutions/zod-to-openapi": "^8.1.0",
+			"zod": "^4.1.12",
+			"zod-validation-error": "^5.0.0"
 		}
 	}
 }
