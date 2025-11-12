@@ -392,6 +392,12 @@ model TestStepResult {
   parentStep  TestStepResult?  @relation("StepHierarchy", fields: [parentStepId], references: [id], onDelete: Cascade)
   childSteps  TestStepResult[] @relation("StepHierarchy")
 
+  // Index strategy:
+  // - [testResultId]: Fast lookup of all steps for a test result
+  // - [parentStepId]: Fast lookup of child steps in hierarchy
+  // - [testResultId, stepNumber]: Ordered retrieval of steps within a test result
+  // Note: While [testResultId, stepNumber] can serve testResultId-only queries via leftmost prefix,
+  // we keep the dedicated single-column index for optimal performance on the common access pattern
   @@index([testResultId])
   @@index([parentStepId])
   @@index([testResultId, stepNumber])

@@ -11,8 +11,27 @@ import {
 } from '$lib/server/ids';
 import { deleteCache, CacheKeys } from '$lib/server/redis';
 
-// Define recursive step schema
-const BaseTestStep: any = z.object({
+// Define location schema for reuse
+const LocationSchema = z.object({
+	file: z.string(),
+	line: z.number(),
+	column: z.number().optional()
+});
+
+// Define recursive step schema with proper typing
+type TestStepInput = {
+	title: string;
+	category?: 'hook' | 'test.step' | 'pw:api' | 'expect' | 'fixture' | 'other';
+	status?: 'passed' | 'failed' | 'skipped' | 'timedout';
+	startTime?: string;
+	duration?: number;
+	error?: string;
+	stackTrace?: string;
+	location?: z.infer<typeof LocationSchema>;
+	steps?: TestStepInput[];
+};
+
+const BaseTestStep = z.object({
 	title: z.string().describe('Step title'),
 	category: z
 		.enum(['hook', 'test.step', 'pw:api', 'expect', 'fixture', 'other'])
@@ -26,18 +45,11 @@ const BaseTestStep: any = z.object({
 	duration: z.number().optional().describe('Step duration in milliseconds'),
 	error: z.string().optional().describe('Error message if step failed'),
 	stackTrace: z.string().optional().describe('Stack trace for failures'),
-	location: z
-		.object({
-			file: z.string(),
-			line: z.number(),
-			column: z.number().optional()
-		})
-		.optional()
-		.describe('Source code location')
+	location: LocationSchema.optional().describe('Source code location')
 });
 
-// Extend with recursive steps property
-const TestStep: z.ZodType<any> = BaseTestStep.extend({
+// Extend with recursive steps property using proper generic type
+const TestStep: z.ZodType<TestStepInput> = BaseTestStep.extend({
 	steps: z.lazy(() => TestStep.array().optional().default([]))
 });
 
@@ -56,14 +68,7 @@ export const Input = z.object({
 				error: z.string().optional().describe('Alternative error field'),
 				stackTrace: z.string().optional().describe('Stack trace for failures'),
 				errorSnippet: z.string().optional().describe('Error context snippet'),
-				errorLocation: z
-					.object({
-						file: z.string(),
-						line: z.number(),
-						column: z.number().optional()
-					})
-					.optional()
-					.describe('Location where error occurred'),
+				errorLocation: LocationSchema.optional().describe('Location where error occurred'),
 				startTime: z.string().optional().describe('ISO 8601 timestamp when test started'),
 				endTime: z.string().optional().describe('ISO 8601 timestamp when test ended'),
 				retry: z.number().optional().describe('Retry attempt number (0 for first attempt)'),
@@ -71,13 +76,7 @@ export const Input = z.object({
 				metadata: z
 					.object({
 						tags: z.array(z.string()).optional(),
-						location: z
-							.object({
-								file: z.string(),
-								line: z.number(),
-								column: z.number().optional()
-							})
-							.optional()
+						location: LocationSchema.optional()
 					})
 					.optional()
 					.describe('Additional test metadata'),
@@ -233,58 +232,164 @@ function getExtensionFromMimeType(mimeType: string): string {
 }
 
 /**
+ * Parse and validate ISO 8601 date string
+ */
+function parseDateTime(dateString: string | undefined): Date | null {
+	if (!dateString) return null;
+	const date = new Date(dateString);
+	// Check if date is valid
+	return isNaN(date.getTime()) ? null : date;
+}
+
+/**
+ * Map test/step status to TestStatus enum with validation
+ */
+function mapStatus(
+	status: string | undefined,
+	logWarning = false
+): 'PASSED' | 'FAILED' | 'SKIPPED' {
+	const normalized = status?.toLowerCase();
+	switch (normalized) {
+		case 'passed':
+			return 'PASSED';
+		case 'failed':
+		case 'timedout':
+			return 'FAILED';
+		case 'skipped':
+		case 'interrupted':
+			return 'SKIPPED';
+		default:
+			if (logWarning && status) {
+				console.warn(`Unknown status "${status}" defaulting to SKIPPED`);
+			}
+			return 'SKIPPED';
+	}
+}
+
+/**
  * Helper function to recursively process test steps and save to database
+ * Step numbering is scoped to each parent level (restarts at 0 for each nesting level)
+ * Errors in individual steps are logged but don't fail the entire result
  */
 async function processTestSteps(
-	steps: any[],
+	steps: TestStepInput[],
 	testResultId: string,
-	parentStepId: string | null = null,
-	parentStepNumber: number = 0
+	parentStepId: string | null = null
 ): Promise<void> {
 	if (!steps || steps.length === 0) return;
 
 	for (let i = 0; i < steps.length; i++) {
 		const step = steps[i];
 
-		// Map step status to TestStatus enum
-		let stepStatus: 'PASSED' | 'FAILED' | 'SKIPPED';
-		switch (step.status?.toLowerCase()) {
-			case 'passed':
-				stepStatus = 'PASSED';
-				break;
-			case 'failed':
-			case 'timedout':
-				stepStatus = 'FAILED';
-				break;
-			case 'skipped':
-				stepStatus = 'SKIPPED';
-				break;
-			default:
-				stepStatus = 'SKIPPED';
-		}
+		try {
+			// Create the step record
+			const stepRecord = await db.testStepResult.create({
+				data: {
+					testResultId,
+					parentStepId,
+					stepNumber: i, // Scoped to parent level
+					title: step.title || 'Untitled Step',
+					category: step.category || null,
+					status: mapStatus(step.status, true),
+					duration: step.duration || null,
+					startTime: parseDateTime(step.startTime),
+					error: step.error || null,
+					stackTrace: step.stackTrace || null,
+					location: step.location || undefined
+				}
+			});
 
-		// Create the step record
-		const stepRecord = await db.testStepResult.create({
-			data: {
-				testResultId,
-				parentStepId,
-				stepNumber: i + parentStepNumber,
-				title: step.title || 'Untitled Step',
-				category: step.category || null,
-				status: stepStatus,
-				duration: step.duration || null,
-				startTime: step.startTime ? new Date(step.startTime) : null,
-				error: step.error || null,
-				stackTrace: step.stackTrace || null,
-				location: step.location ? step.location : null
+			// Recursively process nested steps
+			if (step.steps && Array.isArray(step.steps) && step.steps.length > 0) {
+				await processTestSteps(step.steps, testResultId, stepRecord.id);
 			}
-		});
-
-		// Recursively process nested steps
-		if (step.steps && Array.isArray(step.steps) && step.steps.length > 0) {
-			await processTestSteps(step.steps, testResultId, stepRecord.id, 0);
+		} catch (err: any) {
+			console.error(
+				`Failed to process step ${i} for testResultId ${testResultId}:`,
+				err.message,
+				step
+			);
+			// Continue processing remaining steps instead of failing entire result
 		}
 	}
+}
+
+type TestResultData = {
+	title: string;
+	duration?: number;
+	errorMessage?: string;
+	error?: string;
+	stackTrace?: string;
+	errorSnippet?: string;
+	errorLocation?: any;
+	startTime?: string;
+	endTime?: string;
+	retry?: number;
+	projectName?: string;
+	metadata?: any;
+	consoleOutput?: any;
+	attachments?: any[];
+	steps?: TestStepInput[];
+};
+
+/**
+ * Helper function to create test result with attachments and steps
+ * Reduces duplication between new and existing test case paths
+ */
+async function createTestResultWithSteps(
+	testCaseId: string,
+	testRunId: string,
+	userId: string,
+	status: 'PASSED' | 'FAILED' | 'SKIPPED',
+	result: TestResultData,
+	attachmentErrors: any[]
+): Promise<{ testResult: any; attachmentCount: number }> {
+	// Create test result
+	const testResult = await db.testResult.create({
+		data: {
+			id: generateTestResultId(),
+			testCaseId,
+			testRunId,
+			status,
+			duration: result.duration || 0,
+			errorMessage: result.errorMessage || result.error,
+			stackTrace: result.stackTrace,
+			errorSnippet: result.errorSnippet,
+			errorLocation: result.errorLocation,
+			startTime: parseDateTime(result.startTime),
+			endTime: parseDateTime(result.endTime),
+			retry: result.retry,
+			projectName: result.projectName,
+			metadata: result.metadata,
+			consoleOutput: result.consoleOutput,
+			executedBy: userId,
+			executedAt: new Date()
+		}
+	});
+
+	// Process attachments if any
+	let attachmentCount = 0;
+	if (result.attachments && Array.isArray(result.attachments)) {
+		attachmentCount = await processAttachments(
+			result.attachments,
+			testRunId,
+			testResult.id,
+			result.title,
+			attachmentErrors
+		);
+	}
+
+	// Process test steps if any
+	if (result.steps && Array.isArray(result.steps)) {
+		try {
+			await processTestSteps(result.steps, testResult.id);
+		} catch (err: any) {
+			console.error(`Failed to process steps for testResultId ${testResult.id}:`, err.message);
+			// Don't fail the entire result if steps processing fails
+		}
+	}
+
+	return { testResult, attachmentCount };
 }
 
 /**
@@ -554,22 +659,7 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 		for (const result of input.results) {
 			try {
 				// Map Playwright status to QA Studio status
-				let status: 'PASSED' | 'FAILED' | 'SKIPPED';
-				switch (result.status?.toLowerCase()) {
-					case 'passed':
-						status = 'PASSED';
-						break;
-					case 'failed':
-					case 'timedout':
-						status = 'FAILED';
-						break;
-					case 'skipped':
-					case 'interrupted':
-						status = 'SKIPPED';
-						break;
-					default:
-						status = 'SKIPPED';
-				}
+				const status = mapStatus(result.status);
 
 				// Parse the fullTitle to extract suite hierarchy
 				let suiteId: string | null = null;
@@ -612,45 +702,15 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 						}
 					});
 
-					// Create test result
-					const testResult = await db.testResult.create({
-						data: {
-							id: generateTestResultId(),
-							testCaseId: newTestCase.id,
-							testRunId: input.testRunId,
-							status,
-							duration: result.duration || 0,
-							errorMessage: result.errorMessage || result.error,
-							stackTrace: result.stackTrace,
-							errorSnippet: result.errorSnippet,
-							errorLocation: result.errorLocation,
-							startTime: result.startTime ? new Date(result.startTime) : null,
-							endTime: result.endTime ? new Date(result.endTime) : null,
-							retry: result.retry,
-							projectName: result.projectName,
-							metadata: result.metadata,
-							consoleOutput: result.consoleOutput,
-							executedBy: userId,
-							executedAt: new Date()
-						}
-					});
-
-					// Process attachments if any
-					let attachmentCount = 0;
-					if (result.attachments && Array.isArray(result.attachments)) {
-						attachmentCount = await processAttachments(
-							result.attachments,
-							input.testRunId,
-							testResult.id,
-							result.title,
-							attachmentErrors
-						);
-					}
-
-					// Process test steps if any
-					if (result.steps && Array.isArray(result.steps)) {
-						await processTestSteps(result.steps, testResult.id);
-					}
+					// Create test result with attachments and steps
+					const { testResult, attachmentCount } = await createTestResultWithSteps(
+						newTestCase.id,
+						input.testRunId,
+						userId,
+						status,
+						result,
+						attachmentErrors
+					);
 
 					processedResults.push({
 						testCaseId: newTestCase.id,
@@ -662,45 +722,15 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 						attachmentCount
 					});
 				} else {
-					// Create test result for existing test case
-					const testResult = await db.testResult.create({
-						data: {
-							id: generateTestResultId(),
-							testCaseId: testCase.id,
-							testRunId: input.testRunId,
-							status,
-							duration: result.duration || 0,
-							errorMessage: result.errorMessage || result.error,
-							stackTrace: result.stackTrace,
-							errorSnippet: result.errorSnippet,
-							errorLocation: result.errorLocation,
-							startTime: result.startTime ? new Date(result.startTime) : null,
-							endTime: result.endTime ? new Date(result.endTime) : null,
-							retry: result.retry,
-							projectName: result.projectName,
-							metadata: result.metadata,
-							consoleOutput: result.consoleOutput,
-							executedBy: userId,
-							executedAt: new Date()
-						}
-					});
-
-					// Process attachments if any
-					let attachmentCount = 0;
-					if (result.attachments && Array.isArray(result.attachments)) {
-						attachmentCount = await processAttachments(
-							result.attachments,
-							input.testRunId,
-							testResult.id,
-							result.title,
-							attachmentErrors
-						);
-					}
-
-					// Process test steps if any
-					if (result.steps && Array.isArray(result.steps)) {
-						await processTestSteps(result.steps, testResult.id);
-					}
+					// Create test result with attachments and steps
+					const { testResult, attachmentCount } = await createTestResultWithSteps(
+						testCase.id,
+						input.testRunId,
+						userId,
+						status,
+						result,
+						attachmentErrors
+					);
 
 					processedResults.push({
 						testCaseId: testCase.id,
