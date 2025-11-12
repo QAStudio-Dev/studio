@@ -50,7 +50,9 @@ const BaseTestStep = z.object({
 
 // Extend with recursive steps property using proper generic type
 const TestStep: z.ZodType<TestStepInput> = BaseTestStep.extend({
-	steps: z.lazy(() => TestStep.array().optional().default([]))
+	steps: z
+		.lazy(() => TestStep.array().optional().default([]))
+		.openapi({ type: 'array', items: { type: 'object' } })
 });
 
 export const Input = z.object({
@@ -534,7 +536,7 @@ interface SuiteCache {
 async function findOrCreateSuiteHierarchy(
 	suitePath: string[],
 	projectId: string,
-	userId: string,
+	_userId: string, // Unused for now - TestSuite doesn't have createdBy field
 	suiteCache: SuiteCache
 ): Promise<string | null> {
 	if (suitePath.length === 0) return null;
