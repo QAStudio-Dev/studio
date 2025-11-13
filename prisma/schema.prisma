@@ -337,12 +337,13 @@ model TestResult {
   aiDiagnosisGeneratedAt DateTime? // When the AI diagnosis was generated
 
   // Additional test metadata (from Playwright/test runners)
+  fullTitle     String? // Full hierarchical test path (e.g., "Suite > Subsuite > Test")
   errorSnippet  String? // Error context snippet
   errorLocation Json? // {file, line, column} where error occurred
   startTime     DateTime? // When test started
   endTime       DateTime? // When test ended
-  retry         Int? // Retry attempt number (0 for first attempt)
-  projectName   String? // Project/browser name (e.g., "chromium")
+  retry         Int @default(0) // Retry attempt number (0 for first attempt)
+  projectName   String? @default("default") // Project/browser name (e.g., "chromium")
   metadata      Json? // Additional metadata {tags, location, etc.}
   consoleOutput Json? // {stdout, stderr} console output
 
@@ -353,6 +354,7 @@ model TestResult {
   steps       TestStepResult[]
   jiraIssues  JiraIssue[]
 
+  @@unique([testCaseId, testRunId, retry]) // Prevent duplicate results for same test case, run, and retry attempt
   @@index([testCaseId])
   @@index([testRunId])
   @@index([status])

@@ -61,7 +61,7 @@ export const Input = z.object({
 		.array(
 			z.object({
 				title: z.string().describe('Test case title'),
-				fullTitle: z.string().optional().describe('Full hierarchical title (e.g., "Suite > Test")'),
+				fullTitle: z.string().max(500).optional().describe('Full hierarchical title (e.g., "Suite > Test")'),
 				status: z
 					.enum(['passed', 'failed', 'skipped', 'timedout', 'interrupted', 'timedOut'])
 					.describe('Test execution status'),
@@ -318,6 +318,7 @@ async function processTestSteps(
 
 type TestResultData = {
 	title: string;
+	fullTitle?: string;
 	duration?: number;
 	errorMessage?: string;
 	error?: string;
@@ -337,6 +338,7 @@ type TestResultData = {
 /**
  * Helper function to create test result with attachments and steps
  * Reduces duplication between new and existing test case paths
+ * Uses upsert based on testCaseId + testRunId + retry to prevent duplicates when reporter retries
  */
 async function createTestResultWithSteps(
 	testCaseId: string,
@@ -345,29 +347,70 @@ async function createTestResultWithSteps(
 	status: 'PASSED' | 'FAILED' | 'SKIPPED',
 	result: TestResultData,
 	attachmentErrors: any[]
-): Promise<{ testResult: any; attachmentCount: number }> {
-	// Create test result
-	const testResult = await db.testResult.create({
-		data: {
-			id: generateTestResultId(),
-			testCaseId,
-			testRunId,
-			status,
-			duration: result.duration || 0,
-			errorMessage: result.errorMessage || result.error,
-			stackTrace: result.stackTrace,
-			errorSnippet: result.errorSnippet,
-			errorLocation: result.errorLocation,
-			startTime: parseDateTime(result.startTime),
-			endTime: parseDateTime(result.endTime),
-			retry: result.retry,
-			projectName: result.projectName,
-			metadata: result.metadata,
-			consoleOutput: result.consoleOutput,
-			executedBy: userId,
-			executedAt: new Date()
+): Promise<{ testResult: any; attachmentCount: number; isNew: boolean }> {
+	const retry = result.retry ?? 0;
+
+	let testResult;
+	let isNew = true;
+
+	try {
+		// Try to create new test result
+		testResult = await db.testResult.create({
+			data: {
+				id: generateTestResultId(),
+				testCaseId,
+				testRunId,
+				status,
+				fullTitle: result.fullTitle,
+				duration: result.duration || 0,
+				errorMessage: result.errorMessage || result.error,
+				stackTrace: result.stackTrace,
+				errorSnippet: result.errorSnippet,
+				errorLocation: result.errorLocation,
+				startTime: parseDateTime(result.startTime),
+				endTime: parseDateTime(result.endTime),
+				retry,
+				projectName: result.projectName || 'default',
+				metadata: result.metadata,
+				consoleOutput: result.consoleOutput,
+				executedBy: userId,
+				executedAt: new Date()
+			}
+		});
+	} catch (error: any) {
+		// Handle unique constraint violation (concurrent creation)
+		if (error.code === 'P2002') {
+			// Duplicate detected - fetch existing result
+			console.warn('Duplicate test result detected (concurrent creation):', {
+				testCaseId,
+				testRunId,
+				retry,
+				title: result.title
+			});
+
+			const existingResult = await db.testResult.findFirst({
+				where: {
+					testCaseId,
+					testRunId,
+					retry
+				},
+				include: {
+					attachments: true
+				}
+			});
+
+			if (existingResult) {
+				return {
+					testResult: existingResult,
+					attachmentCount: existingResult.attachments.length,
+					isNew: false
+				};
+			}
 		}
-	});
+
+		// Re-throw if not a unique constraint violation or if we couldn't find the existing result
+		throw error;
+	}
 
 	// Process attachments if any
 	let attachmentCount = 0;
@@ -391,7 +434,7 @@ async function createTestResultWithSteps(
 		}
 	}
 
-	return { testResult, attachmentCount };
+	return { testResult, attachmentCount, isNew };
 }
 
 /**
@@ -647,6 +690,7 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 			attachmentName: string;
 			error: string;
 		}> = [];
+		let duplicateCount = 0;
 
 		// Initialize suite cache for batch operations
 		// This prevents N+1 queries when multiple tests share the same suite hierarchy
@@ -705,7 +749,7 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 					});
 
 					// Create test result with attachments and steps
-					const { testResult, attachmentCount } = await createTestResultWithSteps(
+					const { testResult, attachmentCount, isNew } = await createTestResultWithSteps(
 						newTestCase.id,
 						input.testRunId,
 						userId,
@@ -713,6 +757,8 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 						result,
 						attachmentErrors
 					);
+
+					if (!isNew) duplicateCount++;
 
 					processedResults.push({
 						testCaseId: newTestCase.id,
@@ -725,7 +771,7 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 					});
 				} else {
 					// Create test result with attachments and steps
-					const { testResult, attachmentCount } = await createTestResultWithSteps(
+					const { testResult, attachmentCount, isNew } = await createTestResultWithSteps(
 						testCase.id,
 						input.testRunId,
 						userId,
@@ -733,6 +779,8 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 						result,
 						attachmentErrors
 					);
+
+					if (!isNew) duplicateCount++;
 
 					processedResults.push({
 						testCaseId: testCase.id,
@@ -851,6 +899,7 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 
 		return {
 			processedCount: processedResults.length,
+			duplicatesSkipped: duplicateCount,
 			results: processedResults,
 			errors: errors.length > 0 ? errors : undefined,
 			attachmentErrors: attachmentErrors.length > 0 ? attachmentErrors : undefined
