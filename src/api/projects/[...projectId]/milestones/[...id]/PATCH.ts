@@ -1,8 +1,9 @@
-import { Endpoint, z } from 'sveltekit-api';
+import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
+import { requireApiAuth } from '$lib/server/api-auth';
 import { serializeDates } from '$lib/utils/date';
 
-export const Params = z.object({
+export const Param = z.object({
 	projectId: z.string().describe('Project ID'),
 	id: z.string().describe('Milestone ID')
 });
@@ -36,19 +37,48 @@ export const Modifier = (r: any) => {
  * PATCH /api/projects/[projectId]/milestones/[id]
  * Update milestone
  */
-export default new Endpoint({ Params, Input, Output, Modifier }).handle(
-	async ({ projectId, id }, input): Promise<any> => {
+export default new Endpoint({ Param, Input, Output, Modifier }).handle(
+	async (input, event): Promise<any> => {
+		const { projectId, id, name, description, dueDate, status } = input;
+		const userId = await requireApiAuth(event);
+
+		// Verify project access
+		const project = await db.project.findUnique({
+			where: { id: projectId },
+			include: { team: true }
+		});
+
+		if (!project) {
+			throw error(404, 'Project not found');
+		}
+
+		// Get user with team info
+		const user = await db.user.findUnique({
+			where: { id: userId }
+		});
+
+		// Check access
+		const hasAccess =
+			project.createdBy === userId || (project.teamId && user?.teamId === project.teamId);
+
+		if (!hasAccess) {
+			throw error(403, 'You do not have access to this project');
+		}
+
 		const updateData: any = {};
-		if (input.name !== undefined) updateData.name = input.name;
-		if (input.description !== undefined) updateData.description = input.description;
-		if (input.dueDate !== undefined)
-			updateData.dueDate = input.dueDate ? new Date(input.dueDate) : null;
-		if (input.status !== undefined) updateData.status = input.status;
+		if (name !== undefined) updateData.name = name;
+		if (description !== undefined) updateData.description = description;
+		if (dueDate !== undefined) updateData.dueDate = dueDate ? new Date(dueDate) : null;
+		if (status !== undefined) updateData.status = status;
 
 		const milestone = await db.milestone.update({
 			where: { id },
 			data: updateData
 		});
+
+		if (!milestone) {
+			throw error(404, 'Milestone not found');
+		}
 
 		return serializeDates(milestone);
 	}

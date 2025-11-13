@@ -1,7 +1,7 @@
-import { Endpoint, z } from 'sveltekit-api';
+import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { uploadToBlob, generateAttachmentPath } from '$lib/server/blob-storage';
-import { requireAuth } from '$lib/server/auth';
+import { requireApiAuth } from '$lib/server/api-auth';
 
 export const Input = z.object({
 	name: z.string().describe('Attachment filename'),
@@ -64,16 +64,17 @@ function isValidMimeType(mimeType: string): boolean {
  */
 export default new Endpoint({ Input, Output, Modifier }).handle(
 	async (input, event): Promise<any> => {
-		const userId = requireAuth(event);
+		const userId = await requireApiAuth(event);
 
 		// Validate that either testCaseId or testResultId is provided
 		if (!input.testCaseId && !input.testResultId) {
-			throw new Error('Either testCaseId or testResultId is required');
+			throw error(400, 'Either testCaseId or testResultId is required');
 		}
 
-		// Validate MIME type
+		// Validate MIME type before decoding base64 (performance optimization)
 		if (!isValidMimeType(input.contentType)) {
-			throw new Error(
+			throw error(
+				400,
 				`Unsupported MIME type: ${input.contentType}. Allowed types: images (png, jpg, gif, webp, svg), videos (webm, mp4), archives (zip, gzip), text, logs, JSON`
 			);
 		}
@@ -83,41 +84,86 @@ export default new Endpoint({ Input, Output, Modifier }).handle(
 		try {
 			buffer = Buffer.from(input.data, 'base64');
 		} catch (err) {
-			throw new Error('Invalid base64 data');
+			throw error(400, 'Invalid base64 data');
 		}
 
 		const fileSize = buffer.length;
+
+		// Get user with team info for access control
+		const user = await db.user.findUnique({
+			where: { id: userId }
+		});
 
 		// Verify access to test case or test result
 		if (input.testCaseId) {
 			const testCase = await db.testCase.findUnique({
 				where: { id: input.testCaseId },
-				include: { project: true }
+				include: {
+					project: {
+						include: {
+							team: true
+						}
+					}
+				}
 			});
 
 			if (!testCase) {
-				throw new Error('Test case not found');
+				throw error(404, 'Test case not found');
 			}
 
-			// TODO: Add project access check when RBAC is implemented
+			// Check access to project
+			const hasAccess =
+				testCase.project.createdBy === userId ||
+				(testCase.project.teamId && user?.teamId === testCase.project.teamId);
+
+			if (!hasAccess) {
+				throw error(403, 'You do not have access to this test case');
+			}
 		}
 
 		if (input.testResultId) {
 			const testResult = await db.testResult.findUnique({
 				where: { id: input.testResultId },
-				include: { testRun: { include: { project: true } } }
+				include: {
+					testRun: {
+						include: {
+							project: {
+								include: {
+									team: true
+								}
+							}
+						}
+					}
+				}
 			});
 
 			if (!testResult) {
-				throw new Error('Test result not found');
+				throw error(404, 'Test result not found');
 			}
 
-			// TODO: Add project access check when RBAC is implemented
+			// Check access to project
+			const hasAccess =
+				testResult.testRun.project.createdBy === userId ||
+				(testResult.testRun.project.teamId && user?.teamId === testResult.testRun.project.teamId);
+
+			if (!hasAccess) {
+				throw error(403, 'You do not have access to this test result');
+			}
 		}
 
 		// Generate filename and upload to storage
-		const testRunId = input.testResultId || input.testCaseId || 'unknown';
-		const filename = generateAttachmentPath(input.name, testRunId, input.testResultId);
+		let filename: string;
+		if (input.testResultId) {
+			// For test results, use the testRunId from the test result
+			const testResult = await db.testResult.findUnique({
+				where: { id: input.testResultId },
+				select: { testRunId: true }
+			});
+			filename = generateAttachmentPath(input.name, testResult!.testRunId, input.testResultId);
+		} else {
+			// For test cases, generate a simpler path
+			filename = `attachments/${input.testCaseId}/${Date.now()}-${input.name}`;
+		}
 
 		const { url } = await uploadToBlob(filename, buffer, {
 			contentType: input.contentType,

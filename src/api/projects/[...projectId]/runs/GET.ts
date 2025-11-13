@@ -1,8 +1,9 @@
-import { Endpoint, z } from 'sveltekit-api';
+import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
+import { requireApiAuth } from '$lib/server/api-auth';
 import { serializeDates } from '$lib/utils/date';
 
-export const Params = z.object({
+export const Param = z.object({
 	projectId: z.string().describe('Project ID')
 });
 
@@ -76,21 +77,48 @@ export const Modifier = (r: any) => {
  * GET /api/projects/[projectId]/runs
  * List test runs for a project
  */
-export default new Endpoint({ Params, Query, Output, Modifier }).handle(
-	async ({ projectId }, query): Promise<any> => {
-		const skip = (query.page - 1) * query.limit;
+export default new Endpoint({ Param, Query, Output, Modifier }).handle(
+	async (input, event): Promise<any> => {
+		const { page, limit, milestoneId, environmentId, status } = input;
+		const userId = await requireApiAuth(event);
+		const { projectId } = input;
+
+		// Verify project access
+		const project = await db.project.findUnique({
+			where: { id: projectId },
+			include: { team: true }
+		});
+
+		if (!project) {
+			throw error(404, 'Project not found');
+		}
+
+		// Get user with team info
+		const user = await db.user.findUnique({
+			where: { id: userId }
+		});
+
+		// Check access
+		const hasAccess =
+			project.createdBy === userId || (project.teamId && user?.teamId === project.teamId);
+
+		if (!hasAccess) {
+			throw error(403, 'You do not have access to this project');
+		}
+
+		const skip = (page - 1) * limit;
 
 		const where: any = { projectId };
-		if (query.milestoneId) where.milestoneId = query.milestoneId;
-		if (query.environmentId) where.environmentId = query.environmentId;
-		if (query.status) where.status = query.status;
+		if (milestoneId) where.milestoneId = milestoneId;
+		if (environmentId) where.environmentId = environmentId;
+		if (status) where.status = status;
 
 		const [testRuns, total] = await Promise.all([
 			db.testRun.findMany({
 				where,
 				orderBy: { createdAt: 'desc' },
 				skip,
-				take: query.limit,
+				take: limit,
 				include: {
 					milestone: {
 						select: {
@@ -117,10 +145,10 @@ export default new Endpoint({ Params, Query, Output, Modifier }).handle(
 		return serializeDates({
 			data: testRuns,
 			pagination: {
-				page: query.page,
-				limit: query.limit,
+				page: page,
+				limit: limit,
 				total,
-				totalPages: Math.ceil(total / query.limit),
+				totalPages: Math.ceil(total / limit),
 				hasMore: skip + testRuns.length < total
 			}
 		});

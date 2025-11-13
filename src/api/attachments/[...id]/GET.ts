@@ -1,9 +1,9 @@
 import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
-import { requireAuth } from '$lib/server/auth';
+import { requireApiAuth } from '$lib/server/api-auth';
 import { serializeDates } from '$lib/utils/date';
 
-export const Params = z.object({
+export const Param = z.object({
 	id: z.string().describe('Attachment ID')
 });
 
@@ -84,10 +84,11 @@ export const Modifier = (r: any) => {
  * GET /api/attachments/[id]
  * Get attachment metadata or download attachment
  */
-export default new Endpoint({ Params, Query, Output, Modifier }).handle(
-	async ({ id }, query, event): Promise<any> => {
-		const userId = await requireAuth(event);
-		const metadata = query.metadata === 'true';
+export default new Endpoint({ Param, Query, Output, Modifier }).handle(
+	async (input, event): Promise<any> => {
+		const { id, metadata } = input;
+		const userId = await requireApiAuth(event);
+		const isMetadata = metadata === 'true';
 
 		const attachment = await db.attachment.findUnique({
 			where: { id },
@@ -126,7 +127,7 @@ export default new Endpoint({ Params, Query, Output, Modifier }).handle(
 		});
 
 		if (!attachment) {
-			throw error(404, { message: 'Attachment not found' });
+			throw error(404, 'Attachment not found');
 		}
 
 		// Check access control
@@ -137,18 +138,18 @@ export default new Endpoint({ Params, Query, Output, Modifier }).handle(
 		const project = attachment.testResult?.testRun.project || attachment.testCase?.project;
 
 		if (!project) {
-			throw error(404, { message: 'Associated project not found' });
+			throw error(404, 'Associated project not found');
 		}
 
 		const hasAccess =
 			project.createdBy === userId || (project.teamId && user?.teamId === project.teamId);
 
 		if (!hasAccess) {
-			throw error(403, { message: 'You do not have access to this attachment' });
+			throw error(403, 'You do not have access to this attachment');
 		}
 
 		// If metadata only, return JSON
-		if (metadata) {
+		if (isMetadata) {
 			return serializeDates(attachment);
 		}
 

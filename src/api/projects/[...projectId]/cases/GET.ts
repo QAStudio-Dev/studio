@@ -1,8 +1,9 @@
-import { Endpoint, z } from 'sveltekit-api';
+import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
+import { requireApiAuth } from '$lib/server/api-auth';
 import { serializeDates } from '$lib/utils/date';
 
-export const Params = z.object({
+export const Param = z.object({
 	projectId: z.string().describe('Project ID')
 });
 
@@ -104,43 +105,70 @@ export const Modifier = (r: any) => {
  * GET /api/projects/[projectId]/cases
  * List test cases for a project with filtering
  */
-export default new Endpoint({ Params, Query, Output, Modifier }).handle(
-	async ({ projectId }, query): Promise<any> => {
-		const skip = (query.page - 1) * query.limit;
+export default new Endpoint({ Param, Query, Output, Modifier }).handle(
+	async (input, event): Promise<any> => {
+		const { projectId, page, limit, search, suiteId, priority, type, automationStatus, tags } =
+			input;
+		const userId = await requireApiAuth(event);
+
+		// Verify project access
+		const project = await db.project.findUnique({
+			where: { id: projectId },
+			include: { team: true }
+		});
+
+		if (!project) {
+			throw error(404, 'Project not found');
+		}
+
+		// Get user with team info
+		const user = await db.user.findUnique({
+			where: { id: userId }
+		});
+
+		// Check access
+		const hasAccess =
+			project.createdBy === userId || (project.teamId && user?.teamId === project.teamId);
+
+		if (!hasAccess) {
+			throw error(403, 'You do not have access to this project');
+		}
+
+		const skip = (page - 1) * limit;
 
 		const where: any = { projectId };
 
 		// Filter by suite
-		if (query.suiteId) {
-			where.suiteId = query.suiteId;
+		if (suiteId) {
+			where.suiteId = suiteId;
 		}
 
 		// Search in title and description
-		if (query.search) {
+		if (search) {
 			where.OR = [
-				{ title: { contains: query.search, mode: 'insensitive' } },
-				{ description: { contains: query.search, mode: 'insensitive' } }
+				{ title: { contains: search, mode: 'insensitive' } },
+				{ description: { contains: search, mode: 'insensitive' } }
 			];
 		}
 
 		// Filter by priority
-		if (query.priority) {
-			where.priority = query.priority;
+		if (priority) {
+			where.priority = priority;
 		}
 
 		// Filter by type
-		if (query.type) {
-			where.type = query.type;
+		if (type) {
+			where.type = type;
 		}
 
 		// Filter by automation status
-		if (query.automationStatus) {
-			where.automationStatus = query.automationStatus;
+		if (automationStatus) {
+			where.automationStatus = automationStatus;
 		}
 
 		// Filter by tags
-		if (query.tags) {
-			const tagArray = query.tags.split(',').map((t) => t.trim());
+		if (tags) {
+			const tagArray = tags.split(',').map((t) => t.trim());
 			where.tags = { hasSome: tagArray };
 		}
 
@@ -149,7 +177,7 @@ export default new Endpoint({ Params, Query, Output, Modifier }).handle(
 				where,
 				orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
 				skip,
-				take: query.limit,
+				take: limit,
 				include: {
 					suite: {
 						select: {
@@ -171,10 +199,10 @@ export default new Endpoint({ Params, Query, Output, Modifier }).handle(
 		return serializeDates({
 			data: testCases,
 			pagination: {
-				page: query.page,
-				limit: query.limit,
+				page: page,
+				limit: limit,
 				total,
-				totalPages: Math.ceil(total / query.limit),
+				totalPages: Math.ceil(total / limit),
 				hasMore: skip + testCases.length < total
 			}
 		});

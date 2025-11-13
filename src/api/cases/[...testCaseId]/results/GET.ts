@@ -1,8 +1,9 @@
-import { Endpoint, z } from 'sveltekit-api';
+import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
+import { requireApiAuth } from '$lib/server/api-auth';
 import { serializeDates } from '$lib/utils/date';
 
-export const Params = z.object({
+export const Param = z.object({
 	testCaseId: z.string().describe('Test case ID')
 });
 
@@ -78,16 +79,49 @@ export const Modifier = (r: any) => {
  * GET /api/cases/[testCaseId]/results
  * Get paginated results for a test case
  */
-export default new Endpoint({ Params, Query, Output, Modifier }).handle(
-	async ({ testCaseId }, query): Promise<any> => {
-		const skip = (query.page - 1) * query.limit;
+export default new Endpoint({ Param, Query, Output, Modifier }).handle(
+	async (input, event): Promise<any> => {
+		const { testCaseId, page, limit } = input;
+		const userId = await requireApiAuth(event);
+
+		// Verify test case access
+		const testCase = await db.testCase.findUnique({
+			where: { id: testCaseId },
+			include: {
+				project: {
+					include: {
+						team: true
+					}
+				}
+			}
+		});
+
+		if (!testCase) {
+			throw error(404, 'Test case not found');
+		}
+
+		// Get user with team info
+		const user = await db.user.findUnique({
+			where: { id: userId }
+		});
+
+		// Check access to project
+		const hasAccess =
+			testCase.project.createdBy === userId ||
+			(testCase.project.teamId && user?.teamId === testCase.project.teamId);
+
+		if (!hasAccess) {
+			throw error(403, 'You do not have access to this test case');
+		}
+
+		const skip = (page - 1) * limit;
 
 		const [results, total] = await Promise.all([
 			db.testResult.findMany({
 				where: { testCaseId },
 				orderBy: { executedAt: 'desc' },
 				skip,
-				take: query.limit,
+				take: limit,
 				include: {
 					executor: {
 						select: {
@@ -138,10 +172,10 @@ export default new Endpoint({ Params, Query, Output, Modifier }).handle(
 		return serializeDates({
 			data: results,
 			pagination: {
-				page: query.page,
-				limit: query.limit,
+				page: page,
+				limit: limit,
 				total,
-				totalPages: Math.ceil(total / query.limit),
+				totalPages: Math.ceil(total / limit),
 				hasMore: skip + results.length < total
 			}
 		});

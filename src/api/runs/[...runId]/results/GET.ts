@@ -1,9 +1,9 @@
 import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
-import { requireAuth } from '$lib/server/auth';
+import { requireApiAuth } from '$lib/server/api-auth';
 import { serializeDates } from '$lib/utils/date';
 
-export const Params = z.object({
+export const Param = z.object({
 	runId: z.string().describe('Test run ID')
 });
 
@@ -131,11 +131,12 @@ export const Modifier = (r: any) => {
  * GET /api/runs/[runId]/results
  * Get test results for a specific test run with pagination, search, and filters
  */
-export default new Endpoint({ Params, Query, Output, Modifier }).handle(
-	async ({ runId }, query, event): Promise<any> => {
-		const userId = await requireAuth(event);
+export default new Endpoint({ Param, Query, Output, Modifier }).handle(
+	async (input, event): Promise<any> => {
+		const { runId, page, limit, search, status, priority, type } = input;
+		const userId = await requireApiAuth(event);
 
-		const skip = (query.page - 1) * query.limit;
+		const skip = (page - 1) * limit;
 
 		// Verify test run access
 		const testRun = await db.testRun.findUnique({
@@ -150,7 +151,7 @@ export default new Endpoint({ Params, Query, Output, Modifier }).handle(
 		});
 
 		if (!testRun) {
-			throw error(404, { message: 'Test run not found' });
+			throw error(404, 'Test run not found');
 		}
 
 		// Get user with team info
@@ -164,7 +165,7 @@ export default new Endpoint({ Params, Query, Output, Modifier }).handle(
 			(testRun.project.teamId && user?.teamId === testRun.project.teamId);
 
 		if (!hasAccess) {
-			throw error(403, { message: 'You do not have access to this test run' });
+			throw error(403, 'You do not have access to this test run');
 		}
 
 		// Build where clause for test results
@@ -173,26 +174,26 @@ export default new Endpoint({ Params, Query, Output, Modifier }).handle(
 		};
 
 		// Filter by status
-		if (query.status) {
-			where.status = query.status;
+		if (status) {
+			where.status = status;
 		}
 
 		// Build where clause for test case filtering
 		const testCaseWhere: any = {};
 
 		// Search in test case title
-		if (query.search) {
-			testCaseWhere.title = { contains: query.search, mode: 'insensitive' };
+		if (search) {
+			testCaseWhere.title = { contains: search, mode: 'insensitive' };
 		}
 
 		// Filter by priority
-		if (query.priority) {
-			testCaseWhere.priority = query.priority;
+		if (priority) {
+			testCaseWhere.priority = priority;
 		}
 
 		// Filter by type
-		if (query.type) {
-			testCaseWhere.type = query.type;
+		if (type) {
+			testCaseWhere.type = type;
 		}
 
 		// If there are test case filters, add them to the where clause
@@ -207,7 +208,7 @@ export default new Endpoint({ Params, Query, Output, Modifier }).handle(
 		const testResults = await db.testResult.findMany({
 			where,
 			skip,
-			take: query.limit,
+			take: limit,
 			orderBy: { executedAt: 'desc' },
 			include: {
 				testCase: {
@@ -272,10 +273,10 @@ export default new Endpoint({ Params, Query, Output, Modifier }).handle(
 		return serializeDates({
 			testResults: resultsWithSuitePath,
 			pagination: {
-				page: query.page,
-				limit: query.limit,
+				page: page,
+				limit: limit,
 				total,
-				totalPages: Math.ceil(total / query.limit)
+				totalPages: Math.ceil(total / limit)
 			}
 		});
 	}

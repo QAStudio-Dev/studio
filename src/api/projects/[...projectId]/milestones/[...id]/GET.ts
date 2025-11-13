@@ -1,8 +1,9 @@
-import { Endpoint, z } from 'sveltekit-api';
+import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
+import { requireApiAuth } from '$lib/server/api-auth';
 import { serializeDates } from '$lib/utils/date';
 
-export const Params = z.object({
+export const Param = z.object({
 	projectId: z.string().describe('Project ID'),
 	id: z.string().describe('Milestone ID')
 });
@@ -45,8 +46,34 @@ export const Modifier = (r: any) => {
  * GET /api/projects/[projectId]/milestones/[id]
  * Get detailed milestone with test runs
  */
-export default new Endpoint({ Params, Output, Modifier }).handle(
-	async ({ projectId, id }): Promise<any> => {
+export default new Endpoint({ Param, Output, Modifier }).handle(
+	async (input, event): Promise<any> => {
+		const { projectId, id } = input;
+		const userId = await requireApiAuth(event);
+
+		// Verify project access
+		const project = await db.project.findUnique({
+			where: { id: projectId },
+			include: { team: true }
+		});
+
+		if (!project) {
+			throw error(404, 'Project not found');
+		}
+
+		// Get user with team info
+		const user = await db.user.findUnique({
+			where: { id: userId }
+		});
+
+		// Check access
+		const hasAccess =
+			project.createdBy === userId || (project.teamId && user?.teamId === project.teamId);
+
+		if (!hasAccess) {
+			throw error(403, 'You do not have access to this project');
+		}
+
 		const milestone = await db.milestone.findFirst({
 			where: {
 				id,
@@ -64,7 +91,7 @@ export default new Endpoint({ Params, Output, Modifier }).handle(
 		});
 
 		if (!milestone) {
-			throw new Error('Milestone not found');
+			throw error(404, 'Milestone not found');
 		}
 
 		return serializeDates(milestone);
