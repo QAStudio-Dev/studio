@@ -2,6 +2,7 @@ import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { uploadToBlob, generateAttachmentPath } from '$lib/server/blob-storage';
 import { requireApiAuth } from '$lib/server/api-auth';
+import { MAX_UPLOAD_SIZE, MAX_UPLOAD_SIZE_MB } from '$lib/server/constants';
 
 export const Input = z.object({
 	name: z.string().describe('Attachment filename'),
@@ -59,6 +60,16 @@ function isValidMimeType(mimeType: string): boolean {
 }
 
 /**
+ * Sanitize filename to prevent path traversal attacks
+ * Removes path separators and other potentially dangerous characters
+ */
+function sanitizeFilename(filename: string): string {
+	// Replace path separators and dangerous characters with underscores
+	// Keep only alphanumeric, dots, hyphens, and underscores
+	return filename.replace(/[^a-zA-Z0-9._-]/g, '_');
+}
+
+/**
  * POST /api/attachments
  * Upload an attachment and link it to a test case or test result
  */
@@ -71,13 +82,12 @@ export default new Endpoint({ Input, Output, Modifier }).handle(
 			throw error(400, 'Either testCaseId or testResultId is required');
 		}
 
-	// Validate file size before decoding (prevent DoS attacks)
-	const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-	const estimatedSize = (input.data.length * 3) / 4; // Base64 size estimate
+		// Validate file size before decoding (prevent DoS attacks)
+		const estimatedSize = (input.data.length * 3) / 4; // Base64 size estimate
 
-	if (estimatedSize > MAX_FILE_SIZE) {
-		throw error(413, `File size exceeds maximum allowed size of ${MAX_FILE_SIZE / (1024 * 1024)}MB`);
-	}
+		if (estimatedSize > MAX_UPLOAD_SIZE) {
+			throw error(413, `File size exceeds maximum allowed size of ${MAX_UPLOAD_SIZE_MB}MB`);
+		}
 
 		// Validate MIME type before decoding base64 (performance optimization)
 		if (!isValidMimeType(input.contentType)) {
@@ -102,15 +112,10 @@ export default new Endpoint({ Input, Output, Modifier }).handle(
 			where: { id: userId }
 		});
 
-		// Verify actual file size matches estimate
-	if (fileSize > MAX_FILE_SIZE) {
-		throw error(413, `File size exceeds maximum allowed size of ${MAX_FILE_SIZE / (1024 * 1024)}MB`);
-	}
+		// Verify access to test case or test result
+		let testResultData: { testRunId: string } | null = null;
 
-	// Verify access to test case or test result
-	let testResultData: { testRunId: string } | null = null;
-
-	if (input.testCaseId) {
+		if (input.testCaseId) {
 			const testCase = await db.testCase.findUnique({
 				where: { id: input.testCaseId },
 				include: {
@@ -170,13 +175,19 @@ export default new Endpoint({ Input, Output, Modifier }).handle(
 		}
 
 		// Generate filename and upload to storage
+		// Sanitize filename to prevent path traversal attacks
+		const sanitizedName = sanitizeFilename(input.name);
 		let filename: string;
 		if (input.testResultId && testResultData) {
 			// For test results, use the testRunId from already fetched result
-			filename = generateAttachmentPath(input.name, testResultData.testRunId, input.testResultId);
+			filename = generateAttachmentPath(
+				sanitizedName,
+				testResultData.testRunId,
+				input.testResultId
+			);
 		} else {
 			// For test cases, generate a simpler path
-			filename = `attachments/${input.testCaseId}/${Date.now()}-${input.name}`;
+			filename = `attachments/${input.testCaseId}/${Date.now()}-${sanitizedName}`;
 		}
 
 		const { url } = await uploadToBlob(filename, buffer, {
