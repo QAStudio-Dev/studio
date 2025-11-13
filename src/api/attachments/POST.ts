@@ -5,12 +5,33 @@ import { requireApiAuth } from '$lib/server/api-auth';
 import { MAX_UPLOAD_SIZE, MAX_UPLOAD_SIZE_MB } from '$lib/server/constants';
 
 export const Input = z.object({
-	name: z.string().describe('Attachment filename'),
+	name: z.string().min(1).max(255).describe('Attachment filename (max 255 characters)'),
 	contentType: z.string().describe('MIME type of the file'),
 	data: z.string().describe('Base64-encoded file data'),
-	testCaseId: z.string().optional().describe('Test case ID to link attachment to'),
-	testResultId: z.string().optional().describe('Test result ID to link attachment to'),
-	type: z.string().optional().describe('Attachment type (screenshot, video, log, etc.)')
+	testCaseId: z
+		.string()
+		.refine(
+			(val) => !val || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val),
+			{
+				message: 'Must be a valid UUID'
+			}
+		)
+		.optional()
+		.describe('Test case ID to link attachment to'),
+	testResultId: z
+		.string()
+		.refine(
+			(val) => !val || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val),
+			{
+				message: 'Must be a valid UUID'
+			}
+		)
+		.optional()
+		.describe('Test result ID to link attachment to'),
+	type: z
+		.enum(['screenshot', 'video', 'log', 'trace', 'other'])
+		.optional()
+		.describe('Attachment type (screenshot, video, log, trace, other)')
 });
 
 export const Output = z.object({
@@ -82,19 +103,19 @@ export default new Endpoint({ Input, Output, Modifier }).handle(
 			throw error(400, 'Either testCaseId or testResultId is required');
 		}
 
-		// Validate file size before decoding (prevent DoS attacks)
-		const estimatedSize = (input.data.length * 3) / 4; // Base64 size estimate
-
-		if (estimatedSize > MAX_UPLOAD_SIZE) {
-			throw error(413, `File size exceeds maximum allowed size of ${MAX_UPLOAD_SIZE_MB}MB`);
-		}
-
 		// Validate MIME type before decoding base64 (performance optimization)
 		if (!isValidMimeType(input.contentType)) {
 			throw error(
 				400,
 				`Unsupported MIME type: ${input.contentType}. Allowed types: images (png, jpg, gif, webp, svg), videos (webm, mp4), archives (zip, gzip), text, logs, JSON`
 			);
+		}
+
+		// Validate file size before decoding (prevent DoS attacks)
+		const estimatedSize = (input.data.length * 3) / 4; // Base64 size estimate
+
+		if (estimatedSize > MAX_UPLOAD_SIZE) {
+			throw error(413, `File size exceeds maximum allowed size of ${MAX_UPLOAD_SIZE_MB}MB`);
 		}
 
 		// Decode base64 data
@@ -106,6 +127,11 @@ export default new Endpoint({ Input, Output, Modifier }).handle(
 		}
 
 		const fileSize = buffer.length;
+
+		// Validate actual decoded size (handles padding/whitespace edge cases)
+		if (fileSize > MAX_UPLOAD_SIZE) {
+			throw error(413, `File size exceeds maximum allowed size of ${MAX_UPLOAD_SIZE_MB}MB`);
+		}
 
 		// Get user with team info for access control
 		const user = await db.user.findUnique({
