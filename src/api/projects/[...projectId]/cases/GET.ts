@@ -2,6 +2,7 @@ import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
 import { serializeDates } from '$lib/utils/date';
+import { MAX_SEARCH_LENGTH } from '$lib/server/constants';
 
 export const Param = z.object({
 	projectId: z.string().describe('Project ID')
@@ -10,7 +11,11 @@ export const Param = z.object({
 export const Query = z.object({
 	page: z.coerce.number().min(1).default(1).describe('Page number (default: 1)'),
 	limit: z.coerce.number().min(1).max(100).default(50).describe('Results per page (default: 50)'),
-	search: z.string().max(200).optional().describe('Search in test case title and description'),
+	search: z
+		.string()
+		.max(MAX_SEARCH_LENGTH)
+		.optional()
+		.describe('Search in test case title and description'),
 	suiteId: z.string().optional().describe('Filter by test suite ID'),
 	priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).optional().describe('Filter by priority'),
 	type: z
@@ -145,9 +150,14 @@ export default new Endpoint({ Param, Query, Output, Modifier }).handle(
 
 		// Search in title and description
 		if (search) {
-			where.OR = [
-				{ title: { contains: search, mode: 'insensitive' } },
-				{ description: { contains: search, mode: 'insensitive' } }
+			where.AND = [
+				...(where.AND || []),
+				{
+					OR: [
+						{ title: { contains: search, mode: 'insensitive' } },
+						{ description: { contains: search, mode: 'insensitive' } }
+					]
+				}
 			];
 		}
 
@@ -166,10 +176,16 @@ export default new Endpoint({ Param, Query, Output, Modifier }).handle(
 			where.automationStatus = automationStatus;
 		}
 
-		// Filter by tags
+		// Filter by tags with validation
 		if (tags) {
-			const tagArray = tags.split(',').map((t) => t.trim());
-			where.tags = { hasSome: tagArray };
+			const tagArray = tags
+				.split(',')
+				.map((t) => t.trim())
+				.filter((t) => t.length > 0 && t.length <= 50) // Max tag length
+				.slice(0, 10); // Max 10 tags per query
+			if (tagArray.length > 0) {
+				where.tags = { hasSome: tagArray };
+			}
 		}
 
 		const [testCases, total] = await Promise.all([

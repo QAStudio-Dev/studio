@@ -78,36 +78,36 @@ export default new Endpoint({ Query, Output, Modifier }).handle(
 			where: { id: userId }
 		});
 
+		// Build access control conditions more defensively
+		const userTeamId = user?.teamId;
+		const baseAccess = userTeamId
+			? [{ createdBy: userId }, { teamId: userTeamId }]
+			: [{ createdBy: userId }];
+
 		// Build filter with access control
 		// Only return attachments from projects the user has access to
 		const where: any = {
-			OR: [
+			AND: [
 				{
-					testCase: {
-						project: {
-							OR: [{ createdBy: userId }, { teamId: user?.teamId ?? 'none' }]
-						}
-					}
+					OR: [
+						{ testCase: { project: { OR: baseAccess } } },
+						{ testResult: { testRun: { project: { OR: baseAccess } } } }
+					]
 				},
+				// Ensure attachment is linked to either a test case or test result
 				{
-					testResult: {
-						testRun: {
-							project: {
-								OR: [{ createdBy: userId }, { teamId: user?.teamId ?? 'none' }]
-							}
-						}
-					}
+					OR: [{ testCaseId: { not: null } }, { testResultId: { not: null } }]
 				}
 			]
 		};
 
 		// Add optional filters
 		if (testCaseId) {
-			where.testCaseId = testCaseId;
+			where.AND.push({ testCaseId });
 		}
 
 		if (testResultId) {
-			where.testResultId = testResultId;
+			where.AND.push({ testResultId });
 		}
 
 		const skip = (page - 1) * limit;

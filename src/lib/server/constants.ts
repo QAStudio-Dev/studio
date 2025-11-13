@@ -24,3 +24,9 @@ export const DEFAULT_PAGE_SIZE = 50;
  * Maximum allowed page size for pagination
  */
 export const MAX_PAGE_SIZE = 100;
+
+/**
+ * Maximum search string length
+ * Prevents ReDoS attacks via extremely long search queries
+ */
+export const MAX_SEARCH_LENGTH = 200;
