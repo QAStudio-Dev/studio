@@ -124,7 +124,7 @@ test.describe('API Documentation Page', () => {
 		test('should have test runs endpoints', async () => {
 			await docsPage.waitForSwaggerUIToLoad();
 
-			const hasRunsEndpoint = await docsPage.verifyEndpointExists('GET', '/api/projects');
+			const hasRunsEndpoint = await docsPage.verifyEndpointExists('GET', '/api/runs');
 			expect(hasRunsEndpoint).toBe(true);
 		});
 
@@ -141,10 +141,9 @@ test.describe('API Documentation Page', () => {
 			const spec = await response!.json();
 			const paths = Object.keys(spec.paths);
 
-			// Check if attachments endpoint exists, or at least verify we have API endpoints
+			// Check if attachments endpoint exists
 			const hasAttachmentsEndpoint = paths.some((path) => path.includes('attachment'));
-			// If no attachments endpoint, at least verify we have some API endpoints
-			expect(hasAttachmentsEndpoint || paths.length > 0).toBe(true);
+			expect(hasAttachmentsEndpoint).toBe(true);
 		});
 	});
 
@@ -189,10 +188,10 @@ test.describe('API Documentation Page', () => {
 			const operationBody = firstOperation.locator('.opblock-body');
 			await expect(operationBody).toBeVisible({ timeout: 5000 });
 
-			// "Try it out" button availability depends on API spec configuration
-			// At minimum, verify the operation expanded and shows interactive elements
+			// Verify the operation expanded and shows interactive elements or response information
 			const hasInteractiveElements = await operationBody.locator('button, input, textarea').count();
-			expect(hasInteractiveElements).toBeGreaterThanOrEqual(0);
+			const hasResponseSection = await operationBody.locator('.responses-wrapper').count();
+			expect(hasInteractiveElements + hasResponseSection).toBeGreaterThan(0);
 		});
 	});
 

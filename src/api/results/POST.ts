@@ -338,7 +338,7 @@ type TestResultData = {
 /**
  * Helper function to create test result with attachments and steps
  * Reduces duplication between new and existing test case paths
- * Uses upsert to prevent duplicate test results based on composite unique key
+ * Uses upsert based on testCaseId + testRunId + retry to prevent duplicates when reporter retries
  */
 async function createTestResultWithSteps(
 	testCaseId: string,
@@ -348,25 +348,33 @@ async function createTestResultWithSteps(
 	result: TestResultData,
 	attachmentErrors: any[]
 ): Promise<{ testResult: any; attachmentCount: number; isNew: boolean }> {
-	const fullTitle = result.fullTitle || result.title;
-	const startTime = parseDateTime(result.startTime);
 	const retry = result.retry ?? 0;
-	const projectName = result.projectName || 'default';
 
-	// Check if test result already exists using the composite unique key
+	// Check if a result already exists for this test case + run + retry attempt
 	const existingResult = await db.testResult.findFirst({
 		where: {
+			testCaseId,
 			testRunId,
-			fullTitle,
-			startTime,
-			retry,
-			projectName
+			retry
+		},
+		include: {
+			attachments: true
 		}
 	});
 
 	if (existingResult) {
-		// Result already exists - return it without creating a new one
-		return { testResult: existingResult, attachmentCount: 0, isNew: false };
+		// Result already exists - skip creating duplicate
+		console.log('Duplicate test result detected and skipped:', {
+			testCaseId,
+			testRunId,
+			retry,
+			title: result.title
+		});
+		return {
+			testResult: existingResult,
+			attachmentCount: existingResult.attachments.length,
+			isNew: false
+		};
 	}
 
 	// Create new test result
@@ -376,16 +384,16 @@ async function createTestResultWithSteps(
 			testCaseId,
 			testRunId,
 			status,
-			fullTitle,
+			fullTitle: result.fullTitle,
 			duration: result.duration || 0,
 			errorMessage: result.errorMessage || result.error,
 			stackTrace: result.stackTrace,
 			errorSnippet: result.errorSnippet,
 			errorLocation: result.errorLocation,
-			startTime,
+			startTime: parseDateTime(result.startTime),
 			endTime: parseDateTime(result.endTime),
 			retry,
-			projectName,
+			projectName: result.projectName || 'default',
 			metadata: result.metadata,
 			consoleOutput: result.consoleOutput,
 			executedBy: userId,

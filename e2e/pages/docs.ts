@@ -55,20 +55,11 @@ export class DocsPage extends BasePage {
 	}
 
 	/**
-	 * Fetch the OpenAPI spec and validate response
-	 * NOTE: This should be called BEFORE navigate() to catch the initial request
-	 */
-	async fetchOpenAPISpec(): Promise<Response | null> {
-		return await this.page.waitForResponse(
-			(response) => response.url().includes('/api/openapi') && response.status() === 200,
-			{ timeout: 10000 }
-		);
-	}
-
-	/**
 	 * Navigate to docs and wait for OpenAPI spec to load
+	 * Sets up response listener BEFORE navigation to avoid race conditions
 	 */
 	async navigateAndWaitForSpec(): Promise<Response | null> {
+		// Set up response listener BEFORE navigating to avoid race condition
 		const responsePromise = this.page.waitForResponse(
 			(response) => response.url().includes('/api/openapi'),
 			{ timeout: 10000 }
@@ -141,8 +132,9 @@ export class DocsPage extends BasePage {
 			.then((cls) => cls?.includes('is-open'));
 		if (!isExpanded) {
 			await this.click(summary);
-			// Wait for animation
-			await this.wait(300);
+			// Wait for the operation body to become visible
+			const operationBody = operation.locator('.opblock-body');
+			await operationBody.waitFor({ state: 'visible', timeout: 5000 });
 		}
 	}
 
@@ -261,7 +253,9 @@ export class DocsPage extends BasePage {
 	async expandTagSection(tagName: string) {
 		const tagButton = this.page.locator(`button.opblock-tag-section:has-text("${tagName}")`);
 		await this.click(tagButton);
-		await this.wait(300);
+		// Wait for tag content to expand
+		const tagSection = this.page.locator(`.opblock-tag-section:has-text("${tagName}")`);
+		await tagSection.waitFor({ state: 'visible', timeout: 5000 });
 	}
 
 	/**

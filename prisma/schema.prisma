@@ -343,7 +343,7 @@ model TestResult {
   startTime     DateTime? // When test started
   endTime       DateTime? // When test ended
   retry         Int? @default(0) // Retry attempt number (0 for first attempt)
-  projectName   String   @default("default") // Project/browser name (e.g., "chromium")
+  projectName   String? @default("default") // Project/browser name (e.g., "chromium")
   metadata      Json? // Additional metadata {tags, location, etc.}
   consoleOutput Json? // {stdout, stderr} console output
 
@@ -354,9 +354,9 @@ model TestResult {
   steps       TestStepResult[]
   jiraIssues  JiraIssue[]
 
-  @@unique([testRunId, fullTitle, startTime, retry, projectName], name: "unique_test_result")
   @@index([testCaseId])
   @@index([testRunId])
+  @@index([testCaseId, testRunId, retry]) // For deduplication check
   @@index([status])
   @@index([executedAt])
   @@index([executedBy])
