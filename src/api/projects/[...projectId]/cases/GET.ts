@@ -10,7 +10,7 @@ export const Param = z.object({
 export const Query = z.object({
 	page: z.coerce.number().min(1).default(1).describe('Page number (default: 1)'),
 	limit: z.coerce.number().min(1).max(100).default(50).describe('Results per page (default: 50)'),
-	search: z.string().optional().describe('Search in test case title and description'),
+	search: z.string().max(200).optional().describe('Search in test case title and description'),
 	suiteId: z.string().optional().describe('Filter by test suite ID'),
 	priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).optional().describe('Filter by priority'),
 	type: z

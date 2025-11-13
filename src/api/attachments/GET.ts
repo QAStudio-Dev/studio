@@ -2,12 +2,18 @@ import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
 import { serializeDates } from '$lib/utils/date';
+import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '$lib/server/constants';
 
 export const Query = z.object({
 	testCaseId: z.string().optional().describe('Filter by test case ID'),
 	testResultId: z.string().optional().describe('Filter by test result ID'),
 	page: z.coerce.number().min(1).default(1).describe('Page number (default: 1)'),
-	limit: z.coerce.number().min(1).max(100).default(50).describe('Results per page (default: 50)')
+	limit: z.coerce
+		.number()
+		.min(1)
+		.max(MAX_PAGE_SIZE)
+		.default(DEFAULT_PAGE_SIZE)
+		.describe(`Results per page (default: ${DEFAULT_PAGE_SIZE})`)
 });
 
 export const Output = z.object({

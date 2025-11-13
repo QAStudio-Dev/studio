@@ -8,26 +8,8 @@ export const Input = z.object({
 	name: z.string().min(1).max(255).describe('Attachment filename (max 255 characters)'),
 	contentType: z.string().describe('MIME type of the file'),
 	data: z.string().describe('Base64-encoded file data'),
-	testCaseId: z
-		.string()
-		.refine(
-			(val) => !val || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val),
-			{
-				message: 'Must be a valid UUID'
-			}
-		)
-		.optional()
-		.describe('Test case ID to link attachment to'),
-	testResultId: z
-		.string()
-		.refine(
-			(val) => !val || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val),
-			{
-				message: 'Must be a valid UUID'
-			}
-		)
-		.optional()
-		.describe('Test result ID to link attachment to'),
+	testCaseId: z.string().uuid().optional().describe('Test case ID to link attachment to'),
+	testResultId: z.string().uuid().optional().describe('Test result ID to link attachment to'),
 	type: z
 		.enum(['screenshot', 'video', 'log', 'trace', 'other'])
 		.optional()
@@ -139,7 +121,7 @@ export default new Endpoint({ Input, Output, Modifier }).handle(
 		});
 
 		// Verify access to test case or test result
-		let testResultData: { testRunId: string } | null = null;
+		let testRunIdForPath: string | undefined;
 
 		if (input.testCaseId) {
 			const testCase = await db.testCase.findUnique({
@@ -197,24 +179,15 @@ export default new Endpoint({ Input, Output, Modifier }).handle(
 			}
 
 			// Store testRunId for later use
-			testResultData = { testRunId: testResult.testRunId };
+			testRunIdForPath = testResult.testRunId;
 		}
 
 		// Generate filename and upload to storage
 		// Sanitize filename to prevent path traversal attacks
 		const sanitizedName = sanitizeFilename(input.name);
-		let filename: string;
-		if (input.testResultId && testResultData) {
-			// For test results, use the testRunId from already fetched result
-			filename = generateAttachmentPath(
-				sanitizedName,
-				testResultData.testRunId,
-				input.testResultId
-			);
-		} else {
-			// For test cases, generate a simpler path
-			filename = `attachments/${input.testCaseId}/${Date.now()}-${sanitizedName}`;
-		}
+		const filename = testRunIdForPath
+			? generateAttachmentPath(sanitizedName, testRunIdForPath, input.testResultId!)
+			: `attachments/${input.testCaseId}/${Date.now()}-${sanitizedName}`;
 
 		const { url } = await uploadToBlob(filename, buffer, {
 			contentType: input.contentType,
