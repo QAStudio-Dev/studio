@@ -71,6 +71,14 @@ export default new Endpoint({ Input, Output, Modifier }).handle(
 			throw error(400, 'Either testCaseId or testResultId is required');
 		}
 
+	// Validate file size before decoding (prevent DoS attacks)
+	const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+	const estimatedSize = (input.data.length * 3) / 4; // Base64 size estimate
+
+	if (estimatedSize > MAX_FILE_SIZE) {
+		throw error(413, `File size exceeds maximum allowed size of ${MAX_FILE_SIZE / (1024 * 1024)}MB`);
+	}
+
 		// Validate MIME type before decoding base64 (performance optimization)
 		if (!isValidMimeType(input.contentType)) {
 			throw error(
@@ -94,8 +102,15 @@ export default new Endpoint({ Input, Output, Modifier }).handle(
 			where: { id: userId }
 		});
 
-		// Verify access to test case or test result
-		if (input.testCaseId) {
+		// Verify actual file size matches estimate
+	if (fileSize > MAX_FILE_SIZE) {
+		throw error(413, `File size exceeds maximum allowed size of ${MAX_FILE_SIZE / (1024 * 1024)}MB`);
+	}
+
+	// Verify access to test case or test result
+	let testResultData: { testRunId: string } | null = null;
+
+	if (input.testCaseId) {
 			const testCase = await db.testCase.findUnique({
 				where: { id: input.testCaseId },
 				include: {
@@ -149,17 +164,16 @@ export default new Endpoint({ Input, Output, Modifier }).handle(
 			if (!hasAccess) {
 				throw error(403, 'You do not have access to this test result');
 			}
+
+			// Store testRunId for later use
+			testResultData = { testRunId: testResult.testRunId };
 		}
 
 		// Generate filename and upload to storage
 		let filename: string;
-		if (input.testResultId) {
-			// For test results, use the testRunId from the test result
-			const testResult = await db.testResult.findUnique({
-				where: { id: input.testResultId },
-				select: { testRunId: true }
-			});
-			filename = generateAttachmentPath(input.name, testResult!.testRunId, input.testResultId);
+		if (input.testResultId && testResultData) {
+			// For test results, use the testRunId from already fetched result
+			filename = generateAttachmentPath(input.name, testResultData.testRunId, input.testResultId);
 		} else {
 			// For test cases, generate a simpler path
 			filename = `attachments/${input.testCaseId}/${Date.now()}-${input.name}`;
