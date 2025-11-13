@@ -61,7 +61,11 @@ export const Input = z.object({
 		.array(
 			z.object({
 				title: z.string().describe('Test case title'),
-				fullTitle: z.string().max(500).optional().describe('Full hierarchical title (e.g., "Suite > Test")'),
+				fullTitle: z
+					.string()
+					.max(500)
+					.optional()
+					.describe('Full hierarchical title (e.g., "Suite > Test")'),
 				status: z
 					.enum(['passed', 'failed', 'skipped', 'timedout', 'interrupted', 'timedOut'])
 					.describe('Test execution status'),
