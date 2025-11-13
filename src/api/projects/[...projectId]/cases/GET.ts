@@ -1,0 +1,182 @@
+import { Endpoint, z } from 'sveltekit-api';
+import { db } from '$lib/server/db';
+import { serializeDates } from '$lib/utils/date';
+
+export const Params = z.object({
+	projectId: z.string().describe('Project ID')
+});
+
+export const Query = z.object({
+	page: z.coerce.number().min(1).default(1).describe('Page number (default: 1)'),
+	limit: z.coerce.number().min(1).max(100).default(50).describe('Results per page (default: 50)'),
+	search: z.string().optional().describe('Search in test case title and description'),
+	suiteId: z.string().optional().describe('Filter by test suite ID'),
+	priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).optional().describe('Filter by priority'),
+	type: z
+		.enum([
+			'FUNCTIONAL',
+			'REGRESSION',
+			'SMOKE',
+			'INTEGRATION',
+			'PERFORMANCE',
+			'SECURITY',
+			'UI',
+			'API',
+			'UNIT',
+			'E2E'
+		])
+		.optional()
+		.describe('Filter by test type'),
+	automationStatus: z
+		.enum(['AUTOMATED', 'NOT_AUTOMATED', 'CANDIDATE'])
+		.optional()
+		.describe('Filter by automation status'),
+	tags: z.string().optional().describe('Filter by tags (comma-separated)')
+});
+
+export const Output = z.object({
+	data: z.array(
+		z.object({
+			id: z.string().describe('Test case ID'),
+			title: z.string().describe('Test case title'),
+			description: z.string().nullable().describe('Test case description'),
+			preconditions: z.string().nullable().describe('Setup requirements'),
+			steps: z.any().nullable().describe('Array of test steps'),
+			expectedResult: z.string().nullable().describe('Expected test result'),
+			priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).describe('Test case priority'),
+			type: z
+				.enum([
+					'FUNCTIONAL',
+					'REGRESSION',
+					'SMOKE',
+					'INTEGRATION',
+					'PERFORMANCE',
+					'SECURITY',
+					'UI',
+					'API',
+					'UNIT',
+					'E2E'
+				])
+				.describe('Test case type'),
+			automationStatus: z
+				.enum(['AUTOMATED', 'NOT_AUTOMATED', 'CANDIDATE'])
+				.describe('Automation status'),
+			tags: z.array(z.string()).describe('Test case tags'),
+			projectId: z.string().describe('Project ID'),
+			suiteId: z.string().nullable().describe('Test suite ID'),
+			createdBy: z.string().describe('User ID who created the test case'),
+			order: z.number().describe('Display order'),
+			createdAt: z.coerce.string().describe('ISO 8601 creation timestamp'),
+			updatedAt: z.coerce.string().describe('ISO 8601 last update timestamp'),
+			suite: z
+				.object({
+					id: z.string(),
+					name: z.string()
+				})
+				.nullable()
+				.describe('Associated test suite'),
+			_count: z
+				.object({
+					results: z.number(),
+					attachments: z.number()
+				})
+				.describe('Count of related records')
+		})
+	),
+	pagination: z.object({
+		page: z.number(),
+		limit: z.number(),
+		total: z.number(),
+		totalPages: z.number(),
+		hasMore: z.boolean()
+	})
+});
+
+export const Modifier = (r: any) => {
+	r.tags = ['Projects'];
+	r.summary = 'List test cases for a project';
+	r.description =
+		'Retrieve paginated test cases for a specific project with optional filtering by suite, priority, type, automation status, and tags.';
+	return r;
+};
+
+/**
+ * GET /api/projects/[projectId]/cases
+ * List test cases for a project with filtering
+ */
+export default new Endpoint({ Params, Query, Output, Modifier }).handle(
+	async ({ projectId }, query): Promise<any> => {
+		const skip = (query.page - 1) * query.limit;
+
+		const where: any = { projectId };
+
+		// Filter by suite
+		if (query.suiteId) {
+			where.suiteId = query.suiteId;
+		}
+
+		// Search in title and description
+		if (query.search) {
+			where.OR = [
+				{ title: { contains: query.search, mode: 'insensitive' } },
+				{ description: { contains: query.search, mode: 'insensitive' } }
+			];
+		}
+
+		// Filter by priority
+		if (query.priority) {
+			where.priority = query.priority;
+		}
+
+		// Filter by type
+		if (query.type) {
+			where.type = query.type;
+		}
+
+		// Filter by automation status
+		if (query.automationStatus) {
+			where.automationStatus = query.automationStatus;
+		}
+
+		// Filter by tags
+		if (query.tags) {
+			const tagArray = query.tags.split(',').map((t) => t.trim());
+			where.tags = { hasSome: tagArray };
+		}
+
+		const [testCases, total] = await Promise.all([
+			db.testCase.findMany({
+				where,
+				orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
+				skip,
+				take: query.limit,
+				include: {
+					suite: {
+						select: {
+							id: true,
+							name: true
+						}
+					},
+					_count: {
+						select: {
+							results: true,
+							attachments: true
+						}
+					}
+				}
+			}),
+			db.testCase.count({ where })
+		]);
+
+		return serializeDates({
+			data: testCases,
+			pagination: {
+				page: query.page,
+				limit: query.limit,
+				total,
+				totalPages: Math.ceil(total / query.limit),
+				hasMore: skip + testCases.length < total
+			}
+		});
+	}
+);

@@ -263,7 +263,11 @@
 										<!-- Step Content -->
 										<div class="min-w-0 flex-1">
 											<div class="flex items-start gap-2">
-												<span class="text-sm {step.status === 'FAILED' ? 'font-medium' : ''}">
+												<span
+													class="text-surface-900-50 text-sm {step.status === 'FAILED'
+														? 'font-medium'
+														: ''}"
+												>
 													{step.title}
 												</span>
 												{#if step.category}
@@ -335,7 +339,9 @@
 													<div class="min-w-0 flex-1">
 														<div class="flex items-start gap-2">
 															<span
-																class="text-xs {childStep.status === 'FAILED' ? 'font-medium' : ''}"
+																class="text-surface-900-50 text-xs {childStep.status === 'FAILED'
+																	? 'font-medium'
+																	: ''}"
 															>
 																{childStep.title}
 															</span>

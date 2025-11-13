@@ -70,7 +70,7 @@
 
 <div class="min-h-screen bg-surface-50-950">
 	<!-- Header -->
-	<header class="border-b border-surface-300-700 bg-surface-100-900">
+	<!-- <header class="border-b border-surface-300-700 bg-surface-100-900">
 		<div class="container mx-auto px-4 py-6">
 			<div class="flex items-center justify-between">
 				<div>
@@ -81,7 +81,7 @@
 				</div>
 			</div>
 		</div>
-	</header>
+	</header> -->
 
 	<!-- Swagger UI Container -->
 	<div id="swagger-ui" bind:this={swaggerContainer}></div>
