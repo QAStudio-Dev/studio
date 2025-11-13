@@ -342,7 +342,7 @@ model TestResult {
   errorLocation Json? // {file, line, column} where error occurred
   startTime     DateTime? // When test started
   endTime       DateTime? // When test ended
-  retry         Int? @default(0) // Retry attempt number (0 for first attempt)
+  retry         Int @default(0) // Retry attempt number (0 for first attempt)
   projectName   String? @default("default") // Project/browser name (e.g., "chromium")
   metadata      Json? // Additional metadata {tags, location, etc.}
   consoleOutput Json? // {stdout, stderr} console output
@@ -354,9 +354,9 @@ model TestResult {
   steps       TestStepResult[]
   jiraIssues  JiraIssue[]
 
+  @@unique([testCaseId, testRunId, retry]) // Prevent duplicate results for same test case, run, and retry attempt
   @@index([testCaseId])
   @@index([testRunId])
-  @@index([testCaseId, testRunId, retry]) // For deduplication check
   @@index([status])
   @@index([executedAt])
   @@index([executedBy])

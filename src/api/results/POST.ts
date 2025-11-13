@@ -61,7 +61,7 @@ export const Input = z.object({
 		.array(
 			z.object({
 				title: z.string().describe('Test case title'),
-				fullTitle: z.string().optional().describe('Full hierarchical title (e.g., "Suite > Test")'),
+				fullTitle: z.string().max(500).optional().describe('Full hierarchical title (e.g., "Suite > Test")'),
 				status: z
 					.enum(['passed', 'failed', 'skipped', 'timedout', 'interrupted', 'timedOut'])
 					.describe('Test execution status'),
@@ -350,56 +350,67 @@ async function createTestResultWithSteps(
 ): Promise<{ testResult: any; attachmentCount: number; isNew: boolean }> {
 	const retry = result.retry ?? 0;
 
-	// Check if a result already exists for this test case + run + retry attempt
-	const existingResult = await db.testResult.findFirst({
-		where: {
-			testCaseId,
-			testRunId,
-			retry
-		},
-		include: {
-			attachments: true
-		}
-	});
+	let testResult;
+	let isNew = true;
 
-	if (existingResult) {
-		// Result already exists - skip creating duplicate
-		console.warn('Duplicate test result detected and skipped:', {
-			testCaseId,
-			testRunId,
-			retry,
-			title: result.title
+	try {
+		// Try to create new test result
+		testResult = await db.testResult.create({
+			data: {
+				id: generateTestResultId(),
+				testCaseId,
+				testRunId,
+				status,
+				fullTitle: result.fullTitle,
+				duration: result.duration || 0,
+				errorMessage: result.errorMessage || result.error,
+				stackTrace: result.stackTrace,
+				errorSnippet: result.errorSnippet,
+				errorLocation: result.errorLocation,
+				startTime: parseDateTime(result.startTime),
+				endTime: parseDateTime(result.endTime),
+				retry,
+				projectName: result.projectName || 'default',
+				metadata: result.metadata,
+				consoleOutput: result.consoleOutput,
+				executedBy: userId,
+				executedAt: new Date()
+			}
 		});
-		return {
-			testResult: existingResult,
-			attachmentCount: existingResult.attachments.length,
-			isNew: false
-		};
-	}
+	} catch (error: any) {
+		// Handle unique constraint violation (concurrent creation)
+		if (error.code === 'P2002') {
+			// Duplicate detected - fetch existing result
+			console.warn('Duplicate test result detected (concurrent creation):', {
+				testCaseId,
+				testRunId,
+				retry,
+				title: result.title
+			});
 
-	// Create new test result
-	const testResult = await db.testResult.create({
-		data: {
-			id: generateTestResultId(),
-			testCaseId,
-			testRunId,
-			status,
-			fullTitle: result.fullTitle,
-			duration: result.duration || 0,
-			errorMessage: result.errorMessage || result.error,
-			stackTrace: result.stackTrace,
-			errorSnippet: result.errorSnippet,
-			errorLocation: result.errorLocation,
-			startTime: parseDateTime(result.startTime),
-			endTime: parseDateTime(result.endTime),
-			retry,
-			projectName: result.projectName || 'default',
-			metadata: result.metadata,
-			consoleOutput: result.consoleOutput,
-			executedBy: userId,
-			executedAt: new Date()
+			const existingResult = await db.testResult.findFirst({
+				where: {
+					testCaseId,
+					testRunId,
+					retry
+				},
+				include: {
+					attachments: true
+				}
+			});
+
+			if (existingResult) {
+				return {
+					testResult: existingResult,
+					attachmentCount: existingResult.attachments.length,
+					isNew: false
+				};
+			}
 		}
-	});
+
+		// Re-throw if not a unique constraint violation or if we couldn't find the existing result
+		throw error;
+	}
 
 	// Process attachments if any
 	let attachmentCount = 0;
@@ -423,7 +434,7 @@ async function createTestResultWithSteps(
 		}
 	}
 
-	return { testResult, attachmentCount, isNew: true };
+	return { testResult, attachmentCount, isNew };
 }
 
 /**
