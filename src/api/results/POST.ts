@@ -318,6 +318,7 @@ async function processTestSteps(
 
 type TestResultData = {
 	title: string;
+	fullTitle?: string;
 	duration?: number;
 	errorMessage?: string;
 	error?: string;
@@ -337,6 +338,7 @@ type TestResultData = {
 /**
  * Helper function to create test result with attachments and steps
  * Reduces duplication between new and existing test case paths
+ * Uses upsert to prevent duplicate test results based on composite unique key
  */
 async function createTestResultWithSteps(
 	testCaseId: string,
@@ -345,23 +347,45 @@ async function createTestResultWithSteps(
 	status: 'PASSED' | 'FAILED' | 'SKIPPED',
 	result: TestResultData,
 	attachmentErrors: any[]
-): Promise<{ testResult: any; attachmentCount: number }> {
-	// Create test result
+): Promise<{ testResult: any; attachmentCount: number; isNew: boolean }> {
+	const fullTitle = result.fullTitle || result.title;
+	const startTime = parseDateTime(result.startTime);
+	const retry = result.retry ?? 0;
+	const projectName = result.projectName || 'default';
+
+	// Check if test result already exists using the composite unique key
+	const existingResult = await db.testResult.findFirst({
+		where: {
+			testRunId,
+			fullTitle,
+			startTime,
+			retry,
+			projectName
+		}
+	});
+
+	if (existingResult) {
+		// Result already exists - return it without creating a new one
+		return { testResult: existingResult, attachmentCount: 0, isNew: false };
+	}
+
+	// Create new test result
 	const testResult = await db.testResult.create({
 		data: {
 			id: generateTestResultId(),
 			testCaseId,
 			testRunId,
 			status,
+			fullTitle,
 			duration: result.duration || 0,
 			errorMessage: result.errorMessage || result.error,
 			stackTrace: result.stackTrace,
 			errorSnippet: result.errorSnippet,
 			errorLocation: result.errorLocation,
-			startTime: parseDateTime(result.startTime),
+			startTime,
 			endTime: parseDateTime(result.endTime),
-			retry: result.retry,
-			projectName: result.projectName,
+			retry,
+			projectName,
 			metadata: result.metadata,
 			consoleOutput: result.consoleOutput,
 			executedBy: userId,
@@ -391,7 +415,7 @@ async function createTestResultWithSteps(
 		}
 	}
 
-	return { testResult, attachmentCount };
+	return { testResult, attachmentCount, isNew: true };
 }
 
 /**
@@ -705,7 +729,7 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 					});
 
 					// Create test result with attachments and steps
-					const { testResult, attachmentCount } = await createTestResultWithSteps(
+					const { testResult, attachmentCount, isNew } = await createTestResultWithSteps(
 						newTestCase.id,
 						input.testRunId,
 						userId,
@@ -725,7 +749,7 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 					});
 				} else {
 					// Create test result with attachments and steps
-					const { testResult, attachmentCount } = await createTestResultWithSteps(
+					const { testResult, attachmentCount, isNew } = await createTestResultWithSteps(
 						testCase.id,
 						input.testRunId,
 						userId,
