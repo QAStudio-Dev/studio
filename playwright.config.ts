@@ -24,7 +24,6 @@ export default defineConfig({
 				projectId: stripAnsi(process.env.QA_STUDIO_PROJECT_ID),
 				environment: process.env.CI ? 'CI' : 'local',
 				createTestRun: true
-				// verbose: true
 			}
 		]
 	],

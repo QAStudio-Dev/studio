@@ -364,7 +364,7 @@ async function createTestResultWithSteps(
 
 	if (existingResult) {
 		// Result already exists - skip creating duplicate
-		console.log('Duplicate test result detected and skipped:', {
+		console.warn('Duplicate test result detected and skipped:', {
 			testCaseId,
 			testRunId,
 			retry,
@@ -679,6 +679,7 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 			attachmentName: string;
 			error: string;
 		}> = [];
+		let duplicateCount = 0;
 
 		// Initialize suite cache for batch operations
 		// This prevents N+1 queries when multiple tests share the same suite hierarchy
@@ -746,6 +747,8 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 						attachmentErrors
 					);
 
+					if (!isNew) duplicateCount++;
+
 					processedResults.push({
 						testCaseId: newTestCase.id,
 						testResultId: testResult.id,
@@ -765,6 +768,8 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 						result,
 						attachmentErrors
 					);
+
+					if (!isNew) duplicateCount++;
 
 					processedResults.push({
 						testCaseId: testCase.id,
@@ -883,6 +888,7 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 
 		return {
 			processedCount: processedResults.length,
+			duplicatesSkipped: duplicateCount,
 			results: processedResults,
 			errors: errors.length > 0 ? errors : undefined,
 			attachmentErrors: attachmentErrors.length > 0 ? attachmentErrors : undefined
