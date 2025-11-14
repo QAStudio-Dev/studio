@@ -1,6 +1,6 @@
 import { Endpoint, z } from 'sveltekit-api';
 import { db } from '$lib/server/db';
-import { requireAuth } from '$lib/server/auth';
+import { requireApiAuth } from '$lib/server/api-auth';
 import { serializeDates } from '$lib/utils/date';
 import { getCachedOrFetch, CacheKeys, CacheTTL } from '$lib/server/redis';
 
@@ -36,7 +36,7 @@ export const Modifier = (r: any) => {
 };
 
 export default new Endpoint({ Output, Modifier }).handle(async (input, evt): Promise<any> => {
-	const userId = await requireAuth(evt);
+	const userId = await requireApiAuth(evt);
 
 	// Use cache-aside pattern
 	return getCachedOrFetch(

@@ -1,6 +1,6 @@
 import { Endpoint, z } from 'sveltekit-api';
 import { db } from '$lib/server/db';
-import { requireAuth } from '$lib/server/auth';
+import { requireApiAuth } from '$lib/server/api-auth';
 import { serializeDates } from '$lib/utils/date';
 
 export const Query = z.object({
@@ -103,7 +103,7 @@ export const Modifier = (r: any) => {
  */
 export default new Endpoint({ Query, Output, Modifier }).handle(
 	async (query, event): Promise<any> => {
-		const userId = await requireAuth(event);
+		const userId = await requireApiAuth(event);
 
 		const skip = (query.page - 1) * query.limit;
 

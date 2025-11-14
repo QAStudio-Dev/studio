@@ -1,6 +1,6 @@
 import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
-import { requireAuth } from '$lib/server/auth';
+import { requireApiAuth } from '$lib/server/api-auth';
 import { serializeDates } from '$lib/utils/date';
 import { deleteCache, CacheKeys } from '$lib/server/redis';
 
@@ -41,7 +41,7 @@ export const Modifier = (r: any) => {
 
 export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 	async (input, evt): Promise<any> => {
-		const userId = await requireAuth(evt);
+		const userId = await requireApiAuth(evt);
 
 		// Get user with team and team members info BEFORE project creation
 		const user = await db.user.findUnique({

@@ -1,6 +1,7 @@
 import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { deleteCache, CacheKeys } from '$lib/server/redis';
+import { requireApiAuth } from '$lib/server/api-auth';
 
 export const Param = z.object({
 	id: z.string()
@@ -23,12 +24,27 @@ export const Modifier = (r: any) => {
 	return r;
 };
 
-export default new Endpoint({ Param, Output, Error, Modifier }).handle(async (input) => {
+export default new Endpoint({ Param, Output, Error, Modifier }).handle(async (input, evt) => {
+	const userId = await requireApiAuth(evt);
 	try {
-		// Get project with team members BEFORE deletion to avoid race condition
-		const project = await db.project.findUnique({
-			where: { id: input.id },
+		// Get user's team info for authorization check
+		const user = await db.user.findUnique({
+			where: { id: userId },
+			select: { teamId: true }
+		});
+
+		// Get project with team members, checking authorization in the same query
+		// This prevents timing attacks by making existence check and auth check atomic
+		const project = await db.project.findFirst({
+			where: {
+				id: input.id,
+				OR: [
+					{ createdBy: userId },
+					...(user?.teamId ? [{ teamId: user.teamId }] : [])
+				]
+			},
 			select: {
+				id: true,
 				createdBy: true,
 				teamId: true,
 				team: {
@@ -41,6 +57,8 @@ export default new Endpoint({ Param, Output, Error, Modifier }).handle(async (in
 			}
 		});
 
+		// Return 404 regardless of whether project doesn't exist or user lacks access
+		// This prevents leaking information about project existence
 		if (!project) {
 			throw Error[404];
 		}
