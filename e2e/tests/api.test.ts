@@ -245,7 +245,7 @@ test.describe('QA Studio API Tests', () => {
 
 	test.describe('Error Handling', () => {
 		test('should handle malformed JSON gracefully', async ({ request }) => {
-			const response = await request.post(`${BASE_URL}/api/projects`, {
+			const response = await request.post(`/api/projects`, {
 				headers: {
 					'X-API-Key': API_KEY,
 					'Content-Type': 'application/json'
@@ -257,7 +257,7 @@ test.describe('QA Studio API Tests', () => {
 		});
 
 		test('should return 401 for expired or invalid API keys', async ({ request }) => {
-			const response = await request.get(`${BASE_URL}/api/projects`, {
+			const response = await request.get(`/api/projects`, {
 				headers: {
 					'X-API-Key': 'qas_expired_or_invalid_key_123456789',
 					'Content-Type': 'application/json'

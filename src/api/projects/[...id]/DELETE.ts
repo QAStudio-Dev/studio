@@ -38,10 +38,7 @@ export default new Endpoint({ Param, Output, Error, Modifier }).handle(async (in
 		const project = await db.project.findFirst({
 			where: {
 				id: input.id,
-				OR: [
-					{ createdBy: userId },
-					...(user?.teamId ? [{ teamId: user.teamId }] : [])
-				]
+				OR: [{ createdBy: userId }, ...(user?.teamId ? [{ teamId: user.teamId }] : [])]
 			},
 			select: {
 				id: true,

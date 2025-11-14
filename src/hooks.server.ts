@@ -37,23 +37,9 @@ function isPublicApiRoute(pathname: string): boolean {
 		return true;
 	}
 
-	// API routes that support API key authentication
-	// These bypass Clerk and use requireApiAuth() in their handlers
-	const apiKeyRoutes = [
-		/^\/api\/projects(\/.*)?$/,
-		/^\/api\/runs(\/.*)?$/,
-		/^\/api\/results(\/.*)?$/,
-		/^\/api\/cases(\/.*)?$/,
-		/^\/api\/attachments(\/.*)?$/,
-		/^\/api\/environments(\/.*)?$/,
-		/^\/api\/milestones(\/.*)?$/
-	];
-
-	for (const pattern of apiKeyRoutes) {
-		if (pattern.test(pathname)) {
-			return true;
-		}
-	}
+	// Note: We no longer bypass Clerk for API routes
+	// The endpoints use requireApiAuth() which supports BOTH Clerk sessions and API keys
+	// This allows browser users (with Clerk sessions) and API clients (with API keys) to both work
 
 	// Match /api/test-runs (POST only - for creating test runs via API)
 	// This is checked in the endpoint itself, but we need Clerk context for session auth
