@@ -12,22 +12,19 @@ if (!process.env.QA_STUDIO_API_KEY) {
 		'QA_STUDIO_API_KEY environment variable is required. Please set it in your .env file.'
 	);
 }
-if (!process.env.PUBLIC_BASE_URL) {
-	throw new Error(
-		'PUBLIC_BASE_URL environment variable is required. Please set it in your .env file.'
-	);
-}
 
 const API_KEY = process.env.QA_STUDIO_API_KEY;
-const BASE_URL = process.env.PUBLIC_BASE_URL;
 
+// Note: baseURL is automatically provided by Playwright from playwright.config.ts
+// We pass empty string to ApiClient, and it will use relative URLs that Playwright resolves
 let createdProjectId: string;
 
 test.describe('QA Studio API Tests', () => {
 	// Clean up any created resources after all tests complete
 	test.afterAll(async ({ request }) => {
 		if (createdProjectId) {
-			const apiClient = new ApiClient(request, BASE_URL, API_KEY);
+			// request.fetch() uses baseURL from playwright.config.ts automatically
+			const apiClient = new ApiClient(request, '', API_KEY);
 			try {
 				await apiClient.deleteProject(createdProjectId);
 				console.log(`✓ Cleaned up test project: ${createdProjectId}`);
@@ -39,7 +36,7 @@ test.describe('QA Studio API Tests', () => {
 
 	test.describe('Authentication', () => {
 		test('should reject requests without API key', async ({ request }) => {
-			const response = await request.get(`${BASE_URL}/api/projects`, {
+			const response = await request.get('/api/projects', {
 				headers: {
 					'Content-Type': 'application/json'
 				}
@@ -49,7 +46,7 @@ test.describe('QA Studio API Tests', () => {
 		});
 
 		test('should reject requests with invalid API key', async ({ request }) => {
-			const response = await request.get(`${BASE_URL}/api/projects`, {
+			const response = await request.get('/api/projects', {
 				headers: {
 					'X-API-Key': 'invalid-api-key-12345',
 					'Content-Type': 'application/json'
@@ -60,7 +57,7 @@ test.describe('QA Studio API Tests', () => {
 		});
 
 		test('should accept requests with valid API key', async ({ request }) => {
-			const apiClient = new ApiClient(request, BASE_URL, API_KEY);
+			const apiClient = new ApiClient(request, '', API_KEY);
 			const response = await apiClient.listProjects();
 			expect(response.status()).toBe(200);
 		});
@@ -68,7 +65,7 @@ test.describe('QA Studio API Tests', () => {
 
 	test.describe('Projects API', () => {
 		test('should create a new project', async ({ request }) => {
-			const apiClient = new ApiClient(request, BASE_URL, API_KEY);
+			const apiClient = new ApiClient(request, '', API_KEY);
 			const timestamp = Date.now();
 			const projectData = {
 				name: `Test Project ${timestamp}`,
@@ -91,7 +88,7 @@ test.describe('QA Studio API Tests', () => {
 		});
 
 		test('should list all projects', async ({ request }) => {
-			const apiClient = new ApiClient(request, BASE_URL, API_KEY);
+			const apiClient = new ApiClient(request, '', API_KEY);
 			const response = await apiClient.listProjects();
 			expect(response.status()).toBe(200);
 
@@ -108,7 +105,7 @@ test.describe('QA Studio API Tests', () => {
 		});
 
 		test('should search projects by name', async ({ request }) => {
-			const apiClient = new ApiClient(request, BASE_URL, API_KEY);
+			const apiClient = new ApiClient(request, '', API_KEY);
 			const response = await apiClient.listProjects({ search: 'Test Project' });
 			expect(response.status()).toBe(200);
 
@@ -121,7 +118,7 @@ test.describe('QA Studio API Tests', () => {
 		});
 
 		test('should validate project creation with missing required fields', async ({ request }) => {
-			const apiClient = new ApiClient(request, BASE_URL, API_KEY);
+			const apiClient = new ApiClient(request, '', API_KEY);
 			const response = await apiClient.createProject({
 				name: '',
 				key: ''
@@ -131,7 +128,7 @@ test.describe('QA Studio API Tests', () => {
 		});
 
 		test('should validate project key format', async ({ request }) => {
-			const apiClient = new ApiClient(request, BASE_URL, API_KEY);
+			const apiClient = new ApiClient(request, '', API_KEY);
 			const timestamp = Date.now();
 
 			// Try to create project with invalid key (lowercase, special chars)
@@ -144,7 +141,7 @@ test.describe('QA Studio API Tests', () => {
 		});
 
 		test('should validate project key uniqueness', async ({ request }) => {
-			const apiClient = new ApiClient(request, BASE_URL, API_KEY);
+			const apiClient = new ApiClient(request, '', API_KEY);
 
 			// Get existing projects to find a key
 			const listResponse = await apiClient.listProjects();
@@ -166,7 +163,7 @@ test.describe('QA Studio API Tests', () => {
 
 	test.describe('Test Runs API', () => {
 		test('should list test runs', async ({ request }) => {
-			const apiClient = new ApiClient(request, BASE_URL, API_KEY);
+			const apiClient = new ApiClient(request, '', API_KEY);
 			const response = await apiClient.listTestRuns({ page: 1, limit: 10 });
 			expect(response.status()).toBe(200);
 
@@ -180,7 +177,7 @@ test.describe('QA Studio API Tests', () => {
 				test.skip();
 			}
 
-			const apiClient = new ApiClient(request, BASE_URL, API_KEY);
+			const apiClient = new ApiClient(request, '', API_KEY);
 			const response = await apiClient.listTestRuns({
 				projectId: createdProjectId,
 				page: 1,
@@ -199,7 +196,7 @@ test.describe('QA Studio API Tests', () => {
 		});
 
 		test('should list test runs with basic filters', async ({ request }) => {
-			const apiClient = new ApiClient(request, BASE_URL, API_KEY);
+			const apiClient = new ApiClient(request, '', API_KEY);
 			const response = await apiClient.listTestRuns({
 				page: 1,
 				limit: 10
@@ -212,7 +209,7 @@ test.describe('QA Studio API Tests', () => {
 		});
 
 		test('should support pagination parameters', async ({ request }) => {
-			const apiClient = new ApiClient(request, BASE_URL, API_KEY);
+			const apiClient = new ApiClient(request, '', API_KEY);
 			const response = await apiClient.listTestRuns({
 				page: 1,
 				limit: 5
@@ -229,7 +226,7 @@ test.describe('QA Studio API Tests', () => {
 		});
 
 		test('should enforce maximum page size', async ({ request }) => {
-			const apiClient = new ApiClient(request, BASE_URL, API_KEY);
+			const apiClient = new ApiClient(request, '', API_KEY);
 			const response = await apiClient.listTestRuns({
 				page: 1,
 				limit: 10000 // Way over max
@@ -271,7 +268,7 @@ test.describe('QA Studio API Tests', () => {
 		});
 
 		test('should validate required fields in request body', async ({ request }) => {
-			const apiClient = new ApiClient(request, BASE_URL, API_KEY);
+			const apiClient = new ApiClient(request, '', API_KEY);
 			const response = await apiClient.createProject({
 				name: '',
 				key: ''
