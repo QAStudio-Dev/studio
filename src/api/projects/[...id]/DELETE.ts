@@ -1,6 +1,7 @@
 import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { deleteCache, CacheKeys } from '$lib/server/redis';
+import { requireApiAuth } from '$lib/server/api-auth';
 
 export const Param = z.object({
 	id: z.string()
@@ -23,7 +24,8 @@ export const Modifier = (r: any) => {
 	return r;
 };
 
-export default new Endpoint({ Param, Output, Error, Modifier }).handle(async (input) => {
+export default new Endpoint({ Param, Output, Error, Modifier }).handle(async (input, evt) => {
+	const userId = await requireApiAuth(evt);
 	try {
 		// Get project with team members BEFORE deletion to avoid race condition
 		const project = await db.project.findUnique({
@@ -43,6 +45,15 @@ export default new Endpoint({ Param, Output, Error, Modifier }).handle(async (in
 
 		if (!project) {
 			throw Error[404];
+		}
+
+		// Check if user has permission to delete (creator or team member)
+		const user = await db.user.findUnique({ where: { id: userId }, select: { teamId: true } });
+		const hasAccess =
+			project.createdBy === userId || (user?.teamId && project.teamId === user.teamId);
+
+		if (!hasAccess) {
+			throw error(403, 'You do not have permission to delete this project');
 		}
 
 		// Build cache invalidation list BEFORE deletion

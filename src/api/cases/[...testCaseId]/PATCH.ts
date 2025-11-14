@@ -1,6 +1,6 @@
 import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
-import { requireAuth } from '$lib/server/auth';
+import { requireApiAuth } from '$lib/server/api-auth';
 import { serializeDates } from '$lib/utils/date';
 import { Prisma } from '@prisma/client';
 
@@ -98,7 +98,7 @@ export const Modifier = (r: any) => {
 
 export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 	async (input, evt): Promise<any> => {
-		const userId = await requireAuth(evt);
+		const userId = await requireApiAuth(evt);
 
 		// Validate required fields
 		if (input.title !== undefined && !input.title?.trim()) {
