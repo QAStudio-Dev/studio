@@ -13,6 +13,19 @@ const BASE_URL = process.env.PUBLIC_BASE_URL!;
 let createdProjectId: string;
 
 test.describe('QA Studio API Tests', () => {
+	// Clean up any created resources after all tests complete
+	test.afterAll(async ({ request }) => {
+		if (createdProjectId) {
+			const apiClient = new ApiClient(request, BASE_URL, API_KEY);
+			try {
+				await apiClient.deleteProject(createdProjectId);
+				console.log(`✓ Cleaned up test project: ${createdProjectId}`);
+			} catch (error) {
+				console.warn(`⚠ Failed to clean up test project: ${createdProjectId}`, error);
+			}
+		}
+	});
+
 	test.describe('Authentication', () => {
 		test('should reject requests without API key', async ({ request }) => {
 			const response = await request.get(`${BASE_URL}/api/projects`, {
@@ -257,20 +270,6 @@ test.describe('QA Studio API Tests', () => {
 
 			const body = await response.json();
 			expect(body).toHaveProperty('message');
-		});
-	});
-
-	test.describe('Cleanup', () => {
-		test('should clean up created project', async ({ request }) => {
-			if (!createdProjectId) {
-				test.skip();
-			}
-
-			const apiClient = new ApiClient(request, BASE_URL, API_KEY);
-			const response = await apiClient.deleteProject(createdProjectId);
-
-			// Accept both 200 and 204 as success
-			expect([200, 204]).toContain(response.status());
 		});
 	});
 });

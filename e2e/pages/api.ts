@@ -17,12 +17,20 @@ export class ApiClient {
 
 	/**
 	 * Get authorization headers
+	 * Prevents overriding critical authentication headers
 	 */
 	private getHeaders(additionalHeaders?: Record<string, string>): Record<string, string> {
+		// Remove any attempt to override critical headers
+		const safeHeaders = { ...additionalHeaders };
+		delete safeHeaders['X-API-Key'];
+		delete safeHeaders['x-api-key'];
+		delete safeHeaders['Authorization'];
+		delete safeHeaders['authorization'];
+
 		return {
 			'X-API-Key': this.apiKey,
 			'Content-Type': 'application/json',
-			...additionalHeaders
+			...safeHeaders
 		};
 	}
 
