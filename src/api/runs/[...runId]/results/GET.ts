@@ -12,9 +12,9 @@ export const Query = z.object({
 	limit: z.coerce
 		.number()
 		.min(1)
-		.max(100)
+		.max(1000)
 		.default(50)
-		.describe('Results per page (default: 50, max: 100)'),
+		.describe('Results per page (default: 50, max: 1000)'),
 	search: z.string().optional().describe('Search in test case title'),
 	status: z
 		.enum(['PASSED', 'FAILED', 'BLOCKED', 'SKIPPED', 'RETEST', 'UNTESTED'])

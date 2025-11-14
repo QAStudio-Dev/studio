@@ -41,7 +41,7 @@
 	let testResults = $state<any[]>([]);
 	let loading = $state(true);
 	let currentPage = $state(1);
-	let limit = $state(50);
+	let limit = $state(1000); // Set high limit to get all results on one page
 	let total = $state(0);
 	let totalPages = $state(0);
 	let search = $state('');
