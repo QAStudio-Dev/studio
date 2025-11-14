@@ -6,9 +6,20 @@ import { ApiClient } from '../pages/api';
  * Tests API endpoints that support API key authentication
  */
 
-// Get configuration from environment
-const API_KEY = process.env.QA_STUDIO_API_KEY!;
-const BASE_URL = process.env.PUBLIC_BASE_URL!;
+// Validate and get configuration from environment
+if (!process.env.QA_STUDIO_API_KEY) {
+	throw new Error(
+		'QA_STUDIO_API_KEY environment variable is required. Please set it in your .env file.'
+	);
+}
+if (!process.env.PUBLIC_BASE_URL) {
+	throw new Error(
+		'PUBLIC_BASE_URL environment variable is required. Please set it in your .env file.'
+	);
+}
+
+const API_KEY = process.env.QA_STUDIO_API_KEY;
+const BASE_URL = process.env.PUBLIC_BASE_URL;
 
 let createdProjectId: string;
 
