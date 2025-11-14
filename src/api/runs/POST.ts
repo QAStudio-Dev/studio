@@ -3,6 +3,7 @@ import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
 import { serializeDates } from '$lib/utils/date';
 import { deleteCache, CacheKeys } from '$lib/server/redis';
+import { generateTestRunId, generateEnvironmentId } from '$lib/server/ids';
 
 export const Input = z.object({
 	projectId: z.string().describe('Project ID'),
@@ -104,6 +105,7 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 			if (!env) {
 				env = await db.environment.create({
 					data: {
+						id: generateEnvironmentId(),
 						name: input.environment,
 						projectId: input.projectId
 					}
@@ -116,6 +118,7 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 		// Create the test run
 		const testRun = await db.testRun.create({
 			data: {
+				id: generateTestRunId(),
 				name: input.name,
 				description: input.description,
 				projectId: input.projectId,

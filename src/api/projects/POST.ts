@@ -3,6 +3,7 @@ import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
 import { serializeDates } from '$lib/utils/date';
 import { deleteCache, CacheKeys } from '$lib/server/redis';
+import { generateProjectId } from '$lib/server/ids';
 
 export const Input = z.object({
 	name: z.string().min(1),
@@ -63,6 +64,7 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 		try {
 			const project = await db.project.create({
 				data: {
+					id: generateProjectId(),
 					name,
 					description: description || null,
 					key: key.toUpperCase(),

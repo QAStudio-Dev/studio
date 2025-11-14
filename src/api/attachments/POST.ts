@@ -3,6 +3,7 @@ import { db } from '$lib/server/db';
 import { uploadToBlob, generateAttachmentPath } from '$lib/server/blob-storage';
 import { requireApiAuth } from '$lib/server/api-auth';
 import { MAX_UPLOAD_SIZE, MAX_UPLOAD_SIZE_MB } from '$lib/server/constants';
+import { generateAttachmentId } from '$lib/server/ids';
 
 export const Input = z.object({
 	name: z.string().min(1).max(255).describe('Attachment filename (max 255 characters)'),
@@ -197,6 +198,7 @@ export default new Endpoint({ Input, Output, Modifier }).handle(
 		// Create attachment record in database
 		const attachment = await db.attachment.create({
 			data: {
+				id: generateAttachmentId(),
 				filename,
 				originalName: input.name,
 				mimeType: input.contentType,
