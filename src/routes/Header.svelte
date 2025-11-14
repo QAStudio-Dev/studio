@@ -8,7 +8,7 @@
 
 	let projects = $state<any[]>([]);
 	let selectedProjectId = $state<string | null>(null);
-	let projectsFetched = $state(false);
+	let isLoadingProjects = $state(false);
 	let mobileMenuOpen = $state(false);
 
 	// Create popover instance
@@ -25,22 +25,30 @@
 		}
 	});
 
-	// Fetch projects only when user is signed in
+	// Fetch projects - always fetches fresh data, relies on Redis cache on backend
 	async function fetchProjects() {
-		if (projectsFetched) return;
+		if (isLoadingProjects) return;
 
+		isLoadingProjects = true;
 		try {
 			const response = await fetch('/api/projects');
 			if (response.ok) {
 				const data = await response.json();
 				projects = Array.isArray(data) ? data : [];
-				projectsFetched = true;
 			}
 		} catch (error) {
 			console.error('Failed to fetch projects:', error);
-			projectsFetched = true;
+		} finally {
+			isLoadingProjects = false;
 		}
 	}
+
+	// Refetch projects when user navigates (relies on backend Redis cache for performance)
+	$effect(() => {
+		// Watch pathname changes to refetch projects
+		page.url.pathname;
+		fetchProjects();
+	});
 
 	// Svelte action to fetch projects when element mounts (only used within SignedIn)
 	function initProjectFetch(node: HTMLElement) {
@@ -52,7 +60,7 @@
 
 	function switchProject(projectId: string) {
 		mobileMenuOpen = false;
-		goto(`/projects/${projectId}/runs`);
+		goto(`/projects/${projectId}`);
 	}
 
 	function closeMobileMenu() {
@@ -94,8 +102,8 @@
 				<!-- Project Selector (next to logo) -->
 				<SignedIn>
 					<div use:initProjectFetch class="hidden md:block">
-						{#if !projectsFetched}
-							<!-- Loading state -->
+						{#if isLoadingProjects && projects.length === 0}
+							<!-- Loading state (only show if no projects cached) -->
 							<div
 								class="flex items-center gap-2 rounded-base border border-surface-300-700 px-3 py-1.5"
 							>
@@ -280,8 +288,8 @@
 					<!-- Project Selector in Mobile Menu -->
 					<SignedIn>
 						<div use:initProjectFetch class="mb-2 px-2">
-							{#if !projectsFetched}
-								<!-- Loading state -->
+							{#if isLoadingProjects && projects.length === 0}
+								<!-- Loading state (only show if no projects cached) -->
 								<div
 									class="flex items-center gap-2 rounded-base border border-surface-300-700 px-3 py-2"
 								>

@@ -8,7 +8,8 @@
 		Users,
 		Settings,
 		FileText,
-		Edit
+		Edit,
+		Trash2
 	} from 'lucide-svelte';
 	import { setSelectedProject } from '$lib/stores/projectStore';
 	import { Dialog } from '@skeletonlabs/skeleton-svelte';
@@ -24,6 +25,12 @@
 	let editDescription = $state(project.description || '');
 	let isSaving = $state(false);
 	let errorMessage = $state('');
+
+	// Delete modal state
+	let showDeleteModal = $state(false);
+	let deleteConfirmation = $state('');
+	let isDeleting = $state(false);
+	let deleteError = $state('');
 
 	// Set this project as selected when page loads
 	$effect(() => {
@@ -109,6 +116,45 @@
 			isSaving = false;
 		}
 	}
+
+	function openDeleteModal() {
+		deleteConfirmation = '';
+		deleteError = '';
+		showDeleteModal = true;
+	}
+
+	async function deleteProject() {
+		if (deleteConfirmation !== project.key) {
+			deleteError = `Please type "${project.key}" to confirm deletion`;
+			return;
+		}
+
+		isDeleting = true;
+		deleteError = '';
+
+		try {
+			const response = await fetch(`/api/projects/${project.id}`, {
+				method: 'DELETE'
+			});
+
+			if (!response.ok) {
+				const error = await response.json();
+				deleteError = error.message || 'Failed to delete project';
+				return;
+			}
+
+			// Clear the selected project from the store
+			setSelectedProject(null);
+
+			// Redirect to projects list
+			await goto('/projects');
+		} catch (error) {
+			console.error('Error deleting project:', error);
+			deleteError = 'Failed to delete project';
+		} finally {
+			isDeleting = false;
+		}
+	}
 </script>
 
 <div class="container mx-auto max-w-7xl px-4 py-8">
@@ -124,10 +170,22 @@
 					<p class="text-surface-600-300 text-lg">{project.description}</p>
 				{/if}
 			</div>
-			<button onclick={openEditModal} class="btn flex items-center gap-2 preset-filled-surface-500">
-				<Edit class="h-4 w-4" />
-				Edit Project
-			</button>
+			<div class="flex gap-2">
+				<button
+					onclick={openDeleteModal}
+					class="btn flex items-center gap-2 preset-filled-error-500"
+				>
+					<Trash2 class="h-4 w-4" />
+					Delete
+				</button>
+				<button
+					onclick={openEditModal}
+					class="btn flex items-center gap-2 preset-filled-surface-500"
+				>
+					<Edit class="h-4 w-4" />
+					Edit
+				</button>
+			</div>
 		</div>
 
 		<!-- Stats Cards -->
@@ -404,6 +462,97 @@
 						</button>
 					</div>
 				</form>
+			</div>
+		</Dialog.Content>
+	</Dialog.Positioner>
+</Dialog>
+
+<!-- Delete Project Dialog -->
+<Dialog open={showDeleteModal} onOpenChange={(e) => (showDeleteModal = e.open)}>
+	<Dialog.Backdrop class="fixed inset-0 z-40 bg-black/50" />
+	<Dialog.Positioner class="fixed inset-0 z-50 flex items-center justify-center p-4">
+		<Dialog.Content class="w-full max-w-lg">
+			<div class="card rounded-container bg-surface-50-950 p-6 shadow-xl">
+				<div class="mb-6 flex items-center justify-between">
+					<h2 class="text-2xl font-bold text-error-500">Delete Project</h2>
+					<Dialog.CloseTrigger class="btn-icon preset-tonal">
+						<span class="text-xl">&times;</span>
+					</Dialog.CloseTrigger>
+				</div>
+
+				<div class="mb-6 space-y-4">
+					<!-- Warning -->
+					<div class="rounded-container border border-error-500/20 bg-error-500/10 p-4">
+						<div class="flex items-start gap-3">
+							<Trash2 class="mt-0.5 h-5 w-5 flex-shrink-0 text-error-500" />
+							<div class="flex-1">
+								<p class="mb-2 font-semibold text-error-500">This action cannot be undone!</p>
+								<p class="text-surface-600-300 text-sm">
+									Deleting this project will permanently remove:
+								</p>
+								<ul class="text-surface-600-300 mt-2 space-y-1 text-sm">
+									<li>• All test cases ({stats.totalTestCases})</li>
+									<li>• All test suites ({stats.totalSuites})</li>
+									<li>• All test runs ({stats.totalTestRuns})</li>
+									<li>• All test results ({stats.totalResults})</li>
+									<li>• All attachments and files</li>
+									<li>• All milestones and environments</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+
+					<!-- Project Info -->
+					<div class="rounded-container border border-surface-300-700 bg-surface-100-900 p-4">
+						<p class="text-surface-600-300 mb-2 text-sm">You are about to delete:</p>
+						<p class="text-lg font-semibold">{project.name}</p>
+						<p class="text-surface-600-300 mt-1 text-sm">Key: {project.key}</p>
+					</div>
+
+					{#if deleteError}
+						<div class="rounded-container bg-error-500/10 p-3 text-sm text-error-500">
+							{deleteError}
+						</div>
+					{/if}
+
+					<!-- Confirmation Input -->
+					<div>
+						<label for="delete-confirmation" class="mb-2 block text-sm font-medium">
+							Type <code class="rounded bg-surface-200-800 px-1.5 py-0.5 font-mono text-sm"
+								>{project.key}</code
+							> to confirm deletion
+						</label>
+						<input
+							id="delete-confirmation"
+							type="text"
+							bind:value={deleteConfirmation}
+							class="input"
+							placeholder={project.key}
+							autocomplete="off"
+							disabled={isDeleting}
+						/>
+					</div>
+				</div>
+
+				<!-- Actions -->
+				<div class="flex justify-end gap-3">
+					<button
+						type="button"
+						onclick={() => (showDeleteModal = false)}
+						class="btn preset-outlined"
+						disabled={isDeleting}
+					>
+						Cancel
+					</button>
+					<button
+						type="button"
+						onclick={deleteProject}
+						class="btn preset-filled-error-500"
+						disabled={isDeleting || deleteConfirmation !== project.key}
+					>
+						{isDeleting ? 'Deleting...' : 'Delete Project'}
+					</button>
+				</div>
 			</div>
 		</Dialog.Content>
 	</Dialog.Positioner>
