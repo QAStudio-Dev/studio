@@ -13,6 +13,10 @@ const initialProject: SelectedProject | null = storedProject ? JSON.parse(stored
 
 export const selectedProject = writable<SelectedProject | null>(initialProject);
 
+// Trigger to signal that projects list should be refetched
+// Incremented whenever projects are created/deleted
+export const projectsRefreshTrigger = writable<number>(0);
+
 // Subscribe to save to localStorage
 if (browser) {
 	selectedProject.subscribe((value) => {
@@ -30,4 +34,8 @@ export function setSelectedProject(project: SelectedProject | null) {
 
 export function clearSelectedProject() {
 	selectedProject.set(null);
+}
+
+export function triggerProjectsRefresh() {
+	projectsRefreshTrigger.update((n) => n + 1);
 }

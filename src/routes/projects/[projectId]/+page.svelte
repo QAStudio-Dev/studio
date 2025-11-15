@@ -11,7 +11,7 @@
 		Edit,
 		Trash2
 	} from 'lucide-svelte';
-	import { setSelectedProject } from '$lib/stores/projectStore';
+	import { setSelectedProject, triggerProjectsRefresh } from '$lib/stores/projectStore';
 	import { Dialog } from '@skeletonlabs/skeleton-svelte';
 	import { goto, invalidateAll } from '$app/navigation';
 
@@ -145,6 +145,9 @@
 
 			// Clear the selected project from the store
 			setSelectedProject(null);
+
+			// Trigger project list refresh in header
+			triggerProjectsRefresh();
 
 			// Redirect to projects list
 			await goto('/projects');

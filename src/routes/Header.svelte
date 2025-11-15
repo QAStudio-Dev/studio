@@ -5,6 +5,7 @@
 	import { goto } from '$app/navigation';
 	import { Popover, usePopover } from '@skeletonlabs/skeleton-svelte';
 	import { X, Menu } from 'lucide-svelte';
+	import { projectsRefreshTrigger } from '$lib/stores/projectStore';
 
 	let projects = $state<any[]>([]);
 	let selectedProjectId = $state<string | null>(null);
@@ -25,7 +26,9 @@
 		}
 	});
 
-	// Fetch projects - always fetches fresh data, relies on Redis cache on backend
+	let projectsFetched = $state(false);
+
+	// Fetch projects - cached in component state, only refetches on mount or manual trigger
 	async function fetchProjects() {
 		if (isLoadingProjects) return;
 
@@ -35,6 +38,7 @@
 			if (response.ok) {
 				const data = await response.json();
 				projects = Array.isArray(data) ? data : [];
+				projectsFetched = true;
 			}
 		} catch (error) {
 			console.error('Failed to fetch projects:', error);
@@ -43,16 +47,21 @@
 		}
 	}
 
-	// Refetch projects when user navigates (relies on backend Redis cache for performance)
+	// Watch for project refresh trigger (when projects are created/deleted)
 	$effect(() => {
-		// Watch pathname changes to refetch projects
-		page.url.pathname;
-		fetchProjects();
+		const trigger = $projectsRefreshTrigger;
+		// Only refetch if we've fetched before (skip initial trigger of 0)
+		if (trigger > 0 && projectsFetched) {
+			fetchProjects();
+		}
 	});
 
 	// Svelte action to fetch projects when element mounts (only used within SignedIn)
 	function initProjectFetch(node: HTMLElement) {
-		fetchProjects();
+		// Fetch once on mount
+		if (!projectsFetched) {
+			fetchProjects();
+		}
 		return {
 			destroy() {}
 		};
