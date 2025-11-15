@@ -3,6 +3,7 @@ import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
 import { serializeDates } from '$lib/utils/date';
 import { deleteCache, CacheKeys } from '$lib/server/redis';
+import { generateTestRunId, generateEnvironmentId } from '$lib/server/ids';
 
 export const Input = z.object({
 	projectId: z.string().describe('Project ID'),
@@ -104,6 +105,7 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 			if (!env) {
 				env = await db.environment.create({
 					data: {
+						id: generateEnvironmentId(),
 						name: input.environment,
 						projectId: input.projectId
 					}
@@ -113,34 +115,59 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 			resolvedEnvironmentId = env.id;
 		}
 
-		// Create the test run
-		const testRun = await db.testRun.create({
-			data: {
-				name: input.name,
-				description: input.description,
-				projectId: input.projectId,
-				environmentId: resolvedEnvironmentId,
-				milestoneId: input.milestoneId,
-				createdBy: userId,
-				status: 'IN_PROGRESS',
-				startedAt: new Date()
-			},
-			include: {
-				project: {
-					select: {
-						id: true,
-						name: true,
-						key: true
+		// Create the test run with retry on ID collision
+		const MAX_RETRIES = 3;
+		let attempts = 0;
+
+		while (attempts < MAX_RETRIES) {
+			try {
+				const testRun = await db.testRun.create({
+					data: {
+						id: generateTestRunId(),
+						name: input.name,
+						description: input.description,
+						projectId: input.projectId,
+						environmentId: resolvedEnvironmentId,
+						milestoneId: input.milestoneId,
+						createdBy: userId,
+						status: 'IN_PROGRESS',
+						startedAt: new Date()
+					},
+					include: {
+						project: {
+							select: {
+								id: true,
+								name: true,
+								key: true
+							}
+						},
+						environment: true,
+						milestone: true
 					}
-				},
-				environment: true,
-				milestone: true
+				});
+
+				// Invalidate project cache since it includes test run count
+				await deleteCache(CacheKeys.project(input.projectId));
+
+				return serializeDates(testRun);
+			} catch (err: any) {
+				// Handle potential ID collision (extremely rare with nanoid)
+				if (err.code === 'P2002' && err.meta?.target?.includes('id')) {
+					attempts++;
+					if (attempts >= MAX_RETRIES) {
+						console.error(
+							`Test run ID collision after ${MAX_RETRIES} attempts - this is extremely rare`
+						);
+						throw error(500, 'Failed to create test run - please try again');
+					}
+					console.warn(`Test run ID collision detected - retrying (attempt ${attempts + 1})`);
+					continue; // Retry with new ID
+				}
+				throw err;
 			}
-		});
+		}
 
-		// Invalidate project cache since it includes test run count
-		await deleteCache(CacheKeys.project(input.projectId));
-
-		return serializeDates(testRun);
+		// This should never be reached, but TypeScript needs it
+		throw error(500, 'Failed to create test run');
 	}
 );
