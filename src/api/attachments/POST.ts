@@ -196,27 +196,36 @@ export default new Endpoint({ Input, Output, Modifier }).handle(
 		});
 
 		// Create attachment record in database
-		const attachment = await db.attachment.create({
-			data: {
-				id: generateAttachmentId(),
-				filename,
-				originalName: input.name,
-				mimeType: input.contentType,
-				size: fileSize,
-				url,
-				testCaseId: input.testCaseId || null,
-				testResultId: input.testResultId || null
-			}
-		});
+		try {
+			const attachment = await db.attachment.create({
+				data: {
+					id: generateAttachmentId(),
+					filename,
+					originalName: input.name,
+					mimeType: input.contentType,
+					size: fileSize,
+					url,
+					testCaseId: input.testCaseId || null,
+					testResultId: input.testResultId || null
+				}
+			});
 
-		return {
-			attachment: {
-				id: attachment.id,
-				filename: attachment.filename,
-				url: attachment.url,
-				size: attachment.size,
-				mimeType: attachment.mimeType
+			return {
+				attachment: {
+					id: attachment.id,
+					filename: attachment.filename,
+					url: attachment.url,
+					size: attachment.size,
+					mimeType: attachment.mimeType
+				}
+			};
+		} catch (err: any) {
+			// Handle potential ID collision (extremely rare with nanoid)
+			if (err.code === 'P2002' && err.meta?.target?.includes('id')) {
+				console.error('Attachment ID collision detected - retrying would be handled here');
+				throw error(500, 'Failed to create attachment - please try again');
 			}
-		};
+			throw err;
+		}
 	}
 );

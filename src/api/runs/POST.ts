@@ -116,34 +116,43 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 		}
 
 		// Create the test run
-		const testRun = await db.testRun.create({
-			data: {
-				id: generateTestRunId(),
-				name: input.name,
-				description: input.description,
-				projectId: input.projectId,
-				environmentId: resolvedEnvironmentId,
-				milestoneId: input.milestoneId,
-				createdBy: userId,
-				status: 'IN_PROGRESS',
-				startedAt: new Date()
-			},
-			include: {
-				project: {
-					select: {
-						id: true,
-						name: true,
-						key: true
-					}
+		try {
+			const testRun = await db.testRun.create({
+				data: {
+					id: generateTestRunId(),
+					name: input.name,
+					description: input.description,
+					projectId: input.projectId,
+					environmentId: resolvedEnvironmentId,
+					milestoneId: input.milestoneId,
+					createdBy: userId,
+					status: 'IN_PROGRESS',
+					startedAt: new Date()
 				},
-				environment: true,
-				milestone: true
+				include: {
+					project: {
+						select: {
+							id: true,
+							name: true,
+							key: true
+						}
+					},
+					environment: true,
+					milestone: true
+				}
+			});
+
+			// Invalidate project cache since it includes test run count
+			await deleteCache(CacheKeys.project(input.projectId));
+
+			return serializeDates(testRun);
+		} catch (err: any) {
+			// Handle potential ID collision (extremely rare with nanoid)
+			if (err.code === 'P2002' && err.meta?.target?.includes('id')) {
+				console.error('Test run ID collision detected - retrying would be handled here');
+				throw error(500, 'Failed to create test run - please try again');
 			}
-		});
-
-		// Invalidate project cache since it includes test run count
-		await deleteCache(CacheKeys.project(input.projectId));
-
-		return serializeDates(testRun);
+			throw err;
+		}
 	}
 );

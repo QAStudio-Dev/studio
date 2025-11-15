@@ -88,8 +88,17 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 
 			return serializeDates(project);
 		} catch (err: any) {
+			// P2002: Unique constraint violation
 			if (err.code === 'P2002') {
-				throw Error[409];
+				// Check which field caused the violation
+				if (err.meta?.target?.includes('key')) {
+					throw Error[409];
+				}
+				// ID collision (extremely rare with nanoid, but handle it)
+				if (err.meta?.target?.includes('id')) {
+					console.error('Project ID collision detected - retrying would be handled here');
+					throw Error[500];
+				}
 			}
 			throw Error[500];
 		}
