@@ -26,7 +26,7 @@
 		}
 	});
 
-	let projectsFetched = $state(false);
+	let hasFetchedOnMount = $state(false);
 
 	// Fetch projects - cached in component state, only refetches on mount or manual trigger
 	async function fetchProjects() {
@@ -38,7 +38,6 @@
 			if (response.ok) {
 				const data = await response.json();
 				projects = Array.isArray(data) ? data : [];
-				projectsFetched = true;
 			}
 		} catch (error) {
 			console.error('Failed to fetch projects:', error);
@@ -47,25 +46,22 @@
 		}
 	}
 
-	// Watch for project refresh trigger (when projects are created/deleted)
+	// Fetch once on mount
 	$effect(() => {
-		const trigger = $projectsRefreshTrigger;
-		// Only refetch if we've fetched before (skip initial trigger of 0)
-		if (trigger > 0 && projectsFetched) {
+		if (!hasFetchedOnMount) {
 			fetchProjects();
+			hasFetchedOnMount = true;
 		}
 	});
 
-	// Svelte action to fetch projects when element mounts (only used within SignedIn)
-	function initProjectFetch(node: HTMLElement) {
-		// Fetch once on mount
-		if (!projectsFetched) {
+	// Watch for project refresh trigger (when projects are created/deleted)
+	$effect(() => {
+		const trigger = $projectsRefreshTrigger;
+		// Only refetch if trigger increments (skip initial value of 0)
+		if (trigger > 0) {
 			fetchProjects();
 		}
-		return {
-			destroy() {}
-		};
-	}
+	});
 
 	function switchProject(projectId: string) {
 		mobileMenuOpen = false;
@@ -110,7 +106,7 @@
 
 				<!-- Project Selector (next to logo) -->
 				<SignedIn>
-					<div use:initProjectFetch class="hidden md:block">
+					<div class="hidden md:block">
 						{#if isLoadingProjects && projects.length === 0}
 							<!-- Loading state (only show if no projects cached) -->
 							<div
@@ -296,7 +292,7 @@
 				<nav class="flex flex-col gap-1">
 					<!-- Project Selector in Mobile Menu -->
 					<SignedIn>
-						<div use:initProjectFetch class="mb-2 px-2">
+						<div class="mb-2 px-2">
 							{#if isLoadingProjects && projects.length === 0}
 								<!-- Loading state (only show if no projects cached) -->
 								<div
