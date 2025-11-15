@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { FolderPlus, AlertCircle, Sparkles } from 'lucide-svelte';
+	import { triggerProjectsRefresh } from '$lib/stores/projectStore';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -55,6 +56,9 @@
 			}
 
 			const { project } = await res.json();
+
+			// Trigger project list refresh in header
+			triggerProjectsRefresh();
 
 			// Redirect to project page
 			goto(`/projects/${project.id}`);
