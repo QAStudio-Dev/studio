@@ -195,37 +195,52 @@ export default new Endpoint({ Input, Output, Modifier }).handle(
 			access: 'public'
 		});
 
-		// Create attachment record in database
-		try {
-			const attachment = await db.attachment.create({
-				data: {
-					id: generateAttachmentId(),
-					filename,
-					originalName: input.name,
-					mimeType: input.contentType,
-					size: fileSize,
-					url,
-					testCaseId: input.testCaseId || null,
-					testResultId: input.testResultId || null
-				}
-			});
+		// Create attachment record in database with retry on ID collision
+		const MAX_RETRIES = 3;
+		let attempts = 0;
 
-			return {
-				attachment: {
-					id: attachment.id,
-					filename: attachment.filename,
-					url: attachment.url,
-					size: attachment.size,
-					mimeType: attachment.mimeType
+		while (attempts < MAX_RETRIES) {
+			try {
+				const attachment = await db.attachment.create({
+					data: {
+						id: generateAttachmentId(),
+						filename,
+						originalName: input.name,
+						mimeType: input.contentType,
+						size: fileSize,
+						url,
+						testCaseId: input.testCaseId || null,
+						testResultId: input.testResultId || null
+					}
+				});
+
+				return {
+					attachment: {
+						id: attachment.id,
+						filename: attachment.filename,
+						url: attachment.url,
+						size: attachment.size,
+						mimeType: attachment.mimeType
+					}
+				};
+			} catch (err: any) {
+				// Handle potential ID collision (extremely rare with nanoid)
+				if (err.code === 'P2002' && err.meta?.target?.includes('id')) {
+					attempts++;
+					if (attempts >= MAX_RETRIES) {
+						console.error(
+							`Attachment ID collision after ${MAX_RETRIES} attempts - this is extremely rare`
+						);
+						throw error(500, 'Failed to create attachment - please try again');
+					}
+					console.warn(`Attachment ID collision detected - retrying (attempt ${attempts + 1})`);
+					continue; // Retry with new ID
 				}
-			};
-		} catch (err: any) {
-			// Handle potential ID collision (extremely rare with nanoid)
-			if (err.code === 'P2002' && err.meta?.target?.includes('id')) {
-				console.error('Attachment ID collision detected - retrying would be handled here');
-				throw error(500, 'Failed to create attachment - please try again');
+				throw err;
 			}
-			throw err;
 		}
+
+		// This should never be reached, but TypeScript needs it
+		throw error(500, 'Failed to create attachment');
 	}
 );

@@ -61,46 +61,62 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 
 		const { name, description, key } = input;
 
-		try {
-			const project = await db.project.create({
-				data: {
-					id: generateProjectId(),
-					name,
-					description: description || null,
-					key: key.toUpperCase(),
-					createdBy: userId,
-					teamId: user?.teamId || null
-				}
-			});
+		// Create project with retry on ID collision
+		const MAX_RETRIES = 3;
+		let attempts = 0;
 
-			// Build cache invalidation list
-			const cachesToInvalidate = [CacheKeys.projects(userId)];
-
-			// Add team members' caches if user has a team
-			if (user?.team?.members) {
-				user.team.members.forEach((member) => {
-					cachesToInvalidate.push(CacheKeys.projects(member.id));
+		while (attempts < MAX_RETRIES) {
+			try {
+				const project = await db.project.create({
+					data: {
+						id: generateProjectId(),
+						name,
+						description: description || null,
+						key: key.toUpperCase(),
+						createdBy: userId,
+						teamId: user?.teamId || null
+					}
 				});
-			}
 
-			// Invalidate all affected caches
-			await deleteCache(cachesToInvalidate);
+				// Build cache invalidation list
+				const cachesToInvalidate = [CacheKeys.projects(userId)];
 
-			return serializeDates(project);
-		} catch (err: any) {
-			// P2002: Unique constraint violation
-			if (err.code === 'P2002') {
-				// Check which field caused the violation
-				if (err.meta?.target?.includes('key')) {
-					throw Error[409];
+				// Add team members' caches if user has a team
+				if (user?.team?.members) {
+					user.team.members.forEach((member) => {
+						cachesToInvalidate.push(CacheKeys.projects(member.id));
+					});
 				}
-				// ID collision (extremely rare with nanoid, but handle it)
-				if (err.meta?.target?.includes('id')) {
-					console.error('Project ID collision detected - retrying would be handled here');
-					throw Error[500];
+
+				// Invalidate all affected caches
+				await deleteCache(cachesToInvalidate);
+
+				return serializeDates(project);
+			} catch (err: any) {
+				// P2002: Unique constraint violation
+				if (err.code === 'P2002') {
+					// Check which field caused the violation
+					if (err.meta?.target?.includes('key')) {
+						throw Error[409];
+					}
+					// ID collision (extremely rare with nanoid, but handle it)
+					if (err.meta?.target?.includes('id')) {
+						attempts++;
+						if (attempts >= MAX_RETRIES) {
+							console.error(
+								`Project ID collision after ${MAX_RETRIES} attempts - this is extremely rare`
+							);
+							throw Error[500];
+						}
+						console.warn(`Project ID collision detected - retrying (attempt ${attempts + 1})`);
+						continue; // Retry with new ID
+					}
 				}
+				throw Error[500];
 			}
-			throw Error[500];
 		}
+
+		// This should never be reached, but TypeScript needs it
+		throw Error[500];
 	}
 );
