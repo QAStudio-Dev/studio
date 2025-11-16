@@ -107,48 +107,52 @@ export const POST: RequestHandler = async ({ request }) => {
 					subscriptionData.currentPeriodEnd = currentPeriodEnd;
 				}
 
-				await db.subscription.upsert({
-					where: { stripeSubscriptionId: subscription.id },
-					update: subscriptionData,
-					create: {
-						teamId,
-						stripeCustomerId: subscription.customer as string,
-						stripeSubscriptionId: subscription.id,
-						...subscriptionData
+				// Update subscription and team status atomically to prevent race conditions
+				await db.$transaction(async (tx) => {
+					// Update subscription
+					await tx.subscription.upsert({
+						where: { stripeSubscriptionId: subscription.id },
+						update: subscriptionData,
+						create: {
+							teamId,
+							stripeCustomerId: subscription.customer as string,
+							stripeSubscriptionId: subscription.id,
+							...subscriptionData
+						}
+					});
+
+					// Check if team is now over seat limit
+					const team = await tx.team.findUnique({
+						where: { id: teamId },
+						include: {
+							members: true
+						}
+					});
+
+					if (team) {
+						const newSeats = subscriptionItem?.quantity || 1;
+						const memberCount = team.members.length;
+						const isOverLimit = memberCount > newSeats;
+
+						// Update team's overSeatLimit flag if it changed
+						if (team.overSeatLimit !== isOverLimit) {
+							await tx.team.update({
+								where: { id: teamId },
+								data: { overSeatLimit: isOverLimit }
+							});
+
+							if (isOverLimit) {
+								console.warn(
+									`⚠️ Team ${teamId} is over seat limit: ${memberCount} members, ${newSeats} seats`
+								);
+							} else {
+								console.log(`✅ Team ${teamId} is now within seat limit`);
+							}
+						}
 					}
 				});
 
 				console.log(`✅ Subscription ${event.type} for team ${teamId}: ${status}`);
-
-				// Check if team is now over seat limit
-				const team = await db.team.findUnique({
-					where: { id: teamId },
-					include: {
-						members: true
-					}
-				});
-
-				if (team) {
-					const newSeats = subscriptionItem?.quantity || 1;
-					const memberCount = team.members.length;
-					const isOverLimit = memberCount > newSeats;
-
-					// Update team's overSeatLimit flag
-					if (team.overSeatLimit !== isOverLimit) {
-						await db.team.update({
-							where: { id: teamId },
-							data: { overSeatLimit: isOverLimit }
-						});
-
-						if (isOverLimit) {
-							console.warn(
-								`⚠️ Team ${teamId} is over seat limit: ${memberCount} members, ${newSeats} seats`
-							);
-						} else {
-							console.log(`✅ Team ${teamId} is now within seat limit`);
-						}
-					}
-				}
 
 				break;
 			}
