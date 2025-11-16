@@ -87,17 +87,7 @@ type TeamStatus = {
 const handleSeatLimitCheck: Handle = async ({ event, resolve }) => {
 	const { pathname } = event.url;
 
-	// Check for admin override parameter (emergency bypass)
-	// Usage: ?__override=true (double underscore to indicate system parameter)
-	const overrideParam = event.url.searchParams.get('__override');
-	if (overrideParam === 'true') {
-		console.warn(
-			`[Middleware] Admin override used for ${pathname} - seat limit check bypassed`
-		);
-		return resolve(event);
-	}
-
-	// Skip for routes that don't need team status checks
+	// Skip for routes that don't need team status checks (must be before searchParams access)
 	const shouldSkip =
 		pathname.startsWith('/api/') || // API routes handle their own checks
 		pathname.includes('.') || // Static files
@@ -106,10 +96,26 @@ const handleSeatLimitCheck: Handle = async ({ event, resolve }) => {
 		pathname.startsWith('/teams/new') ||
 		pathname === '/' || // Landing page
 		pathname.startsWith('/docs') || // Public docs
+		pathname.startsWith('/blog') || // Blog pages
+		pathname.startsWith('/about') || // About page
+		pathname.startsWith('/contact') || // Contact page
+		pathname.startsWith('/privacy') || // Privacy page
+		pathname.startsWith('/terms') || // Terms page
 		/^\/teams\/[^/]+\/over-limit/.test(pathname) || // Already on resolution page
 		/^\/teams\/[^/]+\/payment-required/.test(pathname); // Already on payment page
 
 	if (shouldSkip) {
+		return resolve(event);
+	}
+
+	// Check for admin override parameter (emergency bypass)
+	// Usage: ?__override=true (double underscore to indicate system parameter)
+	// Note: This must come after shouldSkip to avoid accessing searchParams during prerendering
+	const overrideParam = event.url.searchParams.get('__override');
+	if (overrideParam === 'true') {
+		console.warn(
+			`[Middleware] Admin override used for ${pathname} - seat limit check bypassed`
+		);
 		return resolve(event);
 	}
 

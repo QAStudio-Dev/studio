@@ -128,10 +128,10 @@ export const POST: RequestHandler = async ({ request }) => {
 						// Lock the team row and count members in a single query to prevent race conditions
 						// This uses a raw query with SELECT FOR UPDATE to ensure exclusive lock
 						const result = await tx.$queryRaw<
-							Array<{ memberCount: bigint; overSeatLimit: boolean }>
+							Array<{ memberCount: number; overSeatLimit: boolean }>
 						>`
 							SELECT
-								(SELECT COUNT(*) FROM "User" WHERE "teamId" = ${teamId})::int as "memberCount",
+								(SELECT COUNT(*)::int FROM "User" WHERE "teamId" = ${teamId}) as "memberCount",
 								"overSeatLimit"
 							FROM "Team"
 							WHERE id = ${teamId}
@@ -141,8 +141,7 @@ export const POST: RequestHandler = async ({ request }) => {
 						if (result.length > 0) {
 							const { memberCount, overSeatLimit } = result[0];
 							const newSeats = subscriptionItem?.quantity || 1;
-							const count = Number(memberCount);
-							const isOverLimit = count > newSeats;
+							const isOverLimit = memberCount > newSeats;
 
 							// Update team's overSeatLimit flag if it changed
 							if (overSeatLimit !== isOverLimit) {
@@ -153,7 +152,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
 								if (isOverLimit) {
 									console.warn(
-										`⚠️ Team ${teamId} is over seat limit: ${count} members, ${newSeats} seats`
+										`⚠️ Team ${teamId} is over seat limit: ${memberCount} members, ${newSeats} seats`
 									);
 								} else {
 									console.log(`✅ Team ${teamId} is now within seat limit`);
@@ -198,10 +197,10 @@ export const POST: RequestHandler = async ({ request }) => {
 
 						// Lock the team row and count members in a single query to prevent race conditions
 						const result = await tx.$queryRaw<
-							Array<{ memberCount: bigint; overSeatLimit: boolean }>
+							Array<{ memberCount: number; overSeatLimit: boolean }>
 						>`
 							SELECT
-								(SELECT COUNT(*) FROM "User" WHERE "teamId" = ${teamId})::int as "memberCount",
+								(SELECT COUNT(*)::int FROM "User" WHERE "teamId" = ${teamId}) as "memberCount",
 								"overSeatLimit"
 							FROM "Team"
 							WHERE id = ${teamId}
@@ -211,8 +210,7 @@ export const POST: RequestHandler = async ({ request }) => {
 						// When subscription is canceled, team reverts to free tier
 						if (result.length > 0) {
 							const { memberCount, overSeatLimit } = result[0];
-							const count = Number(memberCount);
-							const isOverLimit = count > FREE_TIER_LIMITS.MEMBERS;
+							const isOverLimit = memberCount > FREE_TIER_LIMITS.MEMBERS;
 
 							if (overSeatLimit !== isOverLimit) {
 								await tx.team.update({
@@ -222,10 +220,10 @@ export const POST: RequestHandler = async ({ request }) => {
 
 								if (isOverLimit) {
 									console.warn(
-										`⚠️ Team ${teamId} is now over free tier limit: ${count} members, ${FREE_TIER_LIMITS.MEMBERS} allowed`
+										`⚠️ Team ${teamId} is now over free tier limit: ${memberCount} members, ${FREE_TIER_LIMITS.MEMBERS} allowed`
 									);
 									// TODO: Send email notification to team admins when email system is implemented
-									// Notify: "Your subscription was canceled and your team has {count} members but the free tier only allows {FREE_TIER_LIMITS.MEMBERS}. Please remove members or resubscribe."
+									// Notify: "Your subscription was canceled and your team has {memberCount} members but the free tier only allows {FREE_TIER_LIMITS.MEMBERS}. Please remove members or resubscribe."
 								}
 							}
 						}
