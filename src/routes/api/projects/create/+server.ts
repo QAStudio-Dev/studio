@@ -1,7 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
-import { requireAuth } from '$lib/server/auth';
+import { requireCurrentSubscription } from '$lib/server/auth';
 import { generateProjectId } from '$lib/server/ids';
 
 /**
@@ -9,7 +9,8 @@ import { generateProjectId } from '$lib/server/ids';
  * POST /api/projects/create
  */
 export const POST: RequestHandler = async (event) => {
-	const userId = await requireAuth(event);
+	// Check subscription status (free users allowed for 1st project)
+	const { userId, user, isFree } = await requireCurrentSubscription(event);
 
 	const { name, description, key } = await event.request.json();
 
@@ -43,29 +44,8 @@ export const POST: RequestHandler = async (event) => {
 		});
 	}
 
-	// Get user with team info
-	const user = await db.user.findUnique({
-		where: { id: userId },
-		include: {
-			team: {
-				include: {
-					subscription: true
-				}
-			}
-		}
-	});
-
-	if (!user) {
-		throw error(404, {
-			message: 'User not found'
-		});
-	}
-
-	// Check project limits for free users
-	const hasActiveSubscription = user.team?.subscription?.status === ('ACTIVE' as any);
-
-	if (!hasActiveSubscription) {
-		// Free users can only create 1 project
+	// Check project limits for free users (pro users already checked by requireCurrentSubscription)
+	if (isFree) {
 		const projectCount = await db.project.count({
 			where: user.teamId
 				? {
@@ -80,7 +60,7 @@ export const POST: RequestHandler = async (event) => {
 		if (projectCount >= 1) {
 			throw error(402, {
 				message:
-					'Free plan is limited to 1 project. Upgrade to Pro for unlimited projects and AI features.'
+					'Free plan is limited to 1 project. Upgrade to Pro for unlimited projects and AI features at /teams/new'
 			});
 		}
 	}

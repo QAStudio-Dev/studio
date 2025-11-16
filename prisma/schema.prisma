@@ -61,11 +61,12 @@ model ApiKey {
 }
 
 model Team {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(cuid())
+  name           String
+  description    String?
+  overSeatLimit  Boolean  @default(false) // True when team has more members than paid seats
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   // Relations
   members      User[]
@@ -75,6 +76,7 @@ model Team {
   invitations  TeamInvitation[]
 
   @@index([name])
+  @@index([overSeatLimit])
 }
 
 model Subscription {

@@ -82,6 +82,81 @@
 		</div>
 	</div>
 
+	<!-- Payment Status Alerts -->
+	{#if team.subscription?.status === 'PAST_DUE'}
+		<div class="alert preset-filled-warning mb-6">
+			<AlertCircle class="h-5 w-5" />
+			<div class="flex-1">
+				<p class="font-medium">Payment Failed</p>
+				<p class="text-sm">
+					Your last payment failed. Please update your payment method to avoid service
+					interruption. Your subscription will be canceled if payment continues to fail.
+				</p>
+			</div>
+			{#if currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'}
+				<button onclick={openBillingPortal} class="btn preset-filled-warning" disabled={loading}>
+					{loading ? 'Loading...' : 'Update Payment'}
+				</button>
+			{/if}
+		</div>
+	{:else if team.subscription?.status === 'CANCELED' || team.subscription?.status === 'UNPAID'}
+		<div class="alert preset-filled-error mb-6">
+			<AlertCircle class="h-5 w-5" />
+			<div class="flex-1">
+				<p class="font-medium">Subscription Canceled</p>
+				<p class="text-sm">
+					Your subscription has been canceled. Reactivate your subscription to continue using premium
+					features.
+				</p>
+			</div>
+			{#if currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'}
+				<button onclick={openBillingPortal} class="btn preset-filled-error" disabled={loading}>
+					{loading ? 'Loading...' : 'Reactivate Subscription'}
+				</button>
+			{/if}
+		</div>
+	{:else if team.subscription?.status === 'INCOMPLETE'}
+		<div class="alert preset-filled-warning mb-6">
+			<AlertCircle class="h-5 w-5" />
+			<div class="flex-1">
+				<p class="font-medium">Payment Incomplete</p>
+				<p class="text-sm">
+					Your subscription setup is incomplete. Please complete the payment process to activate
+					premium features.
+				</p>
+			</div>
+			{#if currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'}
+				<button onclick={openBillingPortal} class="btn preset-filled-warning" disabled={loading}>
+					{loading ? 'Loading...' : 'Complete Setup'}
+				</button>
+			{/if}
+		</div>
+	{/if}
+
+	<!-- Over Seat Limit Alert -->
+	{#if team.overSeatLimit && team.subscription}
+		<div class="alert preset-filled-error mb-6">
+			<AlertCircle class="h-5 w-5" />
+			<div class="flex-1">
+				<p class="font-medium">Team Over Seat Limit</p>
+				<p class="text-sm">
+					Your subscription has {team.subscription.seats} seat{team.subscription.seats !== 1
+						? 's'
+						: ''}, but you have {team.members.length} member{team.members.length !== 1
+						? 's'
+						: ''}. Please remove {team.members.length - team.subscription.seats} member{team.members.length -
+						team.subscription.seats !==
+					1
+						? 's'
+						: ''} or upgrade your plan.
+				</p>
+			</div>
+			{#if currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'}
+				<a href="/teams/{team.id}/over-limit" class="btn preset-filled-error"> Resolve Now </a>
+			{/if}
+		</div>
+	{/if}
+
 	<!-- Checkout Status Alert -->
 	{#if checkoutStatus === 'success'}
 		<div class="alert preset-filled-success mb-6">

@@ -2,6 +2,9 @@ import type { Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { withClerkHandler } from 'svelte-clerk/server';
 import { paraglideMiddleware } from '$lib/paraglide/server';
+import { redirect } from '@sveltejs/kit';
+import { db } from '$lib/server/db';
+import { requiresPayment } from '$lib/server/subscriptions';
 
 const handleParaglide: Handle = ({ event, resolve }) =>
 	paraglideMiddleware(event.request, ({ request, locale }) => {
@@ -65,4 +68,60 @@ const handleClerkWithPublicRoutes: Handle = async ({ event, resolve }) => {
 	return clerkHandler({ event, resolve });
 };
 
-export const handle: Handle = sequence(handleClerkWithPublicRoutes, handleParaglide);
+// Middleware to check for over-seat-limit teams and redirect to resolution page
+const handleSeatLimitCheck: Handle = async ({ event, resolve }) => {
+	const { pathname } = event.url;
+
+	// Skip for API routes, static files, and special pages
+	if (
+		pathname.startsWith('/api/') ||
+		pathname.includes('.') ||
+		pathname.includes('/over-limit') ||
+		pathname.includes('/payment-required') ||
+		pathname.startsWith('/sign-in') ||
+		pathname.startsWith('/sign-up') ||
+		pathname.startsWith('/teams/new')
+	) {
+		return resolve(event);
+	}
+
+	// Get user ID from Clerk session
+	if (!event.locals.auth || typeof event.locals.auth !== 'function') {
+		return resolve(event);
+	}
+
+	const { userId } = event.locals.auth() || {};
+	if (!userId) {
+		return resolve(event);
+	}
+
+	// Check if user's team is over seat limit or has payment issues
+	const user = await db.user.findUnique({
+		where: { id: userId },
+		include: {
+			team: {
+				select: {
+					id: true,
+					overSeatLimit: true,
+					subscription: true
+				}
+			}
+		}
+	});
+
+	if (user?.team?.id) {
+		// Priority 1: Over seat limit (most urgent)
+		if (user.team.overSeatLimit) {
+			throw redirect(302, `/teams/${user.team.id}/over-limit`);
+		}
+
+		// Priority 2: Payment required (subscription issues)
+		if (requiresPayment(user.team.subscription)) {
+			throw redirect(302, `/teams/${user.team.id}/payment-required`);
+		}
+	}
+
+	return resolve(event);
+};
+
+export const handle: Handle = sequence(handleClerkWithPublicRoutes, handleSeatLimitCheck, handleParaglide);

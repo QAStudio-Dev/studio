@@ -119,6 +119,37 @@ export const POST: RequestHandler = async ({ request }) => {
 				});
 
 				console.log(`✅ Subscription ${event.type} for team ${teamId}: ${status}`);
+
+				// Check if team is now over seat limit
+				const team = await db.team.findUnique({
+					where: { id: teamId },
+					include: {
+						members: true
+					}
+				});
+
+				if (team) {
+					const newSeats = subscriptionItem?.quantity || 1;
+					const memberCount = team.members.length;
+					const isOverLimit = memberCount > newSeats;
+
+					// Update team's overSeatLimit flag
+					if (team.overSeatLimit !== isOverLimit) {
+						await db.team.update({
+							where: { id: teamId },
+							data: { overSeatLimit: isOverLimit }
+						});
+
+						if (isOverLimit) {
+							console.warn(
+								`⚠️ Team ${teamId} is over seat limit: ${memberCount} members, ${newSeats} seats`
+							);
+						} else {
+							console.log(`✅ Team ${teamId} is now within seat limit`);
+						}
+					}
+				}
+
 				break;
 			}
 

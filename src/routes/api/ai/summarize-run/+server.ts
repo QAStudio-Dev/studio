@@ -1,7 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
-import { requireAuth } from '$lib/server/auth';
+import { requirePremiumFeature } from '$lib/server/auth';
 import { summarizeTestRun, analyzeFailurePatterns } from '$lib/server/openai';
 
 /**
@@ -14,7 +14,9 @@ import { summarizeTestRun, analyzeFailurePatterns } from '$lib/server/openai';
  * - testRunId: string
  */
 export const POST: RequestHandler = async (event) => {
-	const userId = await requireAuth(event);
+	// Require active pro subscription for AI features
+	const { userId, user } = await requirePremiumFeature(event, 'AI-powered test run analysis');
+
 	const body = await event.request.json();
 	const { testRunId, regenerate: regenerateRaw } = body;
 
@@ -30,29 +32,6 @@ export const POST: RequestHandler = async (event) => {
 	if (!testRunId) {
 		throw error(400, { message: 'testRunId is required' });
 	}
-
-	// Get user with subscription info
-	const user = await db.user.findUnique({
-		where: { id: userId },
-		include: {
-			team: {
-				include: {
-					subscription: true
-				}
-			}
-		}
-	});
-
-	// Check if user has active subscription
-	const hasActiveSubscription =
-		user?.team?.subscription?.status === 'ACTIVE' ||
-		user?.team?.subscription?.status === 'PAST_DUE';
-
-	// if (!hasActiveSubscription) {
-	// 	throw error(403, {
-	// 		message: 'AI features require a Pro subscription. Upgrade to access AI-powered insights.'
-	// 	});
-	// }
 
 	// Get test run with results
 	const testRun = await db.testRun.findUnique({

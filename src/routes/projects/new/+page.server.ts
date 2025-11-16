@@ -1,6 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
+import { isSubscriptionCurrent } from '$lib/server/subscriptions';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const { userId } = locals.auth() || {};
@@ -25,8 +26,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 		throw redirect(302, '/sign-in');
 	}
 
-	// Check if user has active subscription
-	const hasActiveSubscription = user.team?.subscription?.status === ('ACTIVE' as any);
+	// Check if user has active subscription (ACTIVE or PAST_DUE for grace period)
+	const hasActiveSubscription = isSubscriptionCurrent(user.team?.subscription);
 
 	// Count existing projects
 	const projectCount = await db.project.count({

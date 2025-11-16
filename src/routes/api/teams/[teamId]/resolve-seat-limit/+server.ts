@@ -1,0 +1,121 @@
+import { json, error } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
+import { db } from '$lib/server/db';
+import { requireAuth } from '$lib/server/auth';
+
+/**
+ * Remove members to resolve over-seat-limit situation
+ * POST /api/teams/:teamId/resolve-seat-limit
+ */
+export const POST: RequestHandler = async (event) => {
+	const userId = await requireAuth(event);
+	const { teamId } = event.params;
+	const { memberIdsToRemove } = await event.request.json();
+
+	if (!memberIdsToRemove || !Array.isArray(memberIdsToRemove)) {
+		throw error(400, {
+			message: 'memberIdsToRemove must be an array of user IDs'
+		});
+	}
+
+	// Get team with members and subscription
+	const team = await db.team.findUnique({
+		where: { id: teamId },
+		include: {
+			members: true,
+			subscription: true
+		}
+	});
+
+	if (!team) {
+		throw error(404, {
+			message: 'Team not found'
+		});
+	}
+
+	// Verify user is a member
+	const currentMember = team.members.find((m) => m.id === userId);
+	if (!currentMember) {
+		throw error(403, {
+			message: 'You are not a member of this team'
+		});
+	}
+
+	// Only admins/managers can remove members
+	if (currentMember.role !== 'ADMIN' && currentMember.role !== 'MANAGER') {
+		throw error(403, {
+			message: 'Only team admins and managers can remove members'
+		});
+	}
+
+	// Verify team is actually over limit
+	if (!team.overSeatLimit) {
+		throw error(400, {
+			message: 'Team is not over seat limit'
+		});
+	}
+
+	if (!team.subscription) {
+		throw error(400, {
+			message: 'Team has no subscription'
+		});
+	}
+
+	// Verify removal count is correct
+	const seatsNeeded = team.subscription.seats;
+	const currentMembers = team.members.length;
+	const membersToRemove = currentMembers - seatsNeeded;
+
+	if (memberIdsToRemove.length !== membersToRemove) {
+		throw error(400, {
+			message: `You must remove exactly ${membersToRemove} member${membersToRemove !== 1 ? 's' : ''}`
+		});
+	}
+
+	// Prevent removing yourself
+	if (memberIdsToRemove.includes(userId)) {
+		throw error(400, {
+			message: 'You cannot remove yourself from the team'
+		});
+	}
+
+	// Verify all user IDs are valid team members
+	const invalidIds = memberIdsToRemove.filter(
+		(id) => !team.members.some((m) => m.id === id)
+	);
+
+	if (invalidIds.length > 0) {
+		throw error(400, {
+			message: 'Some user IDs are not members of this team'
+		});
+	}
+
+	// Remove members from team
+	await db.user.updateMany({
+		where: {
+			id: { in: memberIdsToRemove }
+		},
+		data: {
+			teamId: null
+		}
+	});
+
+	// Check if team is now within limits
+	const remainingMembers = team.members.length - memberIdsToRemove.length;
+	const isStillOverLimit = remainingMembers > seatsNeeded;
+
+	// Update team's overSeatLimit flag
+	await db.team.update({
+		where: { id: teamId },
+		data: {
+			overSeatLimit: isStillOverLimit
+		}
+	});
+
+	return json({
+		success: true,
+		removedCount: memberIdsToRemove.length,
+		remainingMembers,
+		message: `Successfully removed ${memberIdsToRemove.length} member${memberIdsToRemove.length !== 1 ? 's' : ''} from the team`
+	});
+};
