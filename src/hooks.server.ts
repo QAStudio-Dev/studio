@@ -125,6 +125,7 @@ const handleSeatLimitCheck: Handle = async ({ event, resolve }) => {
 	}
 
 	// Get team status with caching (5-minute TTL)
+	// Note: This will gracefully handle cache misses by falling back to DB query
 	const teamStatus = await getCachedOrFetch<TeamStatus>(
 		CacheKeys.teamStatus(user.teamId),
 		async () => {
@@ -140,12 +141,27 @@ const handleSeatLimitCheck: Handle = async ({ event, resolve }) => {
 					}
 				}
 			});
-			return team!;
+			if (!team) {
+				// Team was deleted - clear user's teamId
+				await db.user.update({
+					where: { id: userId },
+					data: { teamId: null }
+				});
+				return null as any; // Will be handled below
+			}
+			return team;
 		},
 		CacheTTL.teamStatus
 	);
 
+	// If team was deleted, allow navigation (user's teamId was cleared above)
+	if (!teamStatus) {
+		return resolve(event);
+	}
+
 	// Priority 1: Over seat limit (most urgent)
+	// Note: The over-limit and payment-required routes are excluded from this check
+	// via shouldSkip above to prevent redirect loops
 	if (teamStatus.overSeatLimit) {
 		throw redirect(302, `/teams/${teamStatus.id}/over-limit`);
 	}

@@ -110,6 +110,12 @@ export const POST: RequestHandler = async ({ request }) => {
 				}
 
 				// Update subscription and team status atomically to prevent race conditions
+				// Note: There's a theoretical race condition where a member could join/leave between
+				// reading member count and updating overSeatLimit. This is acceptable eventual consistency
+				// because:
+				// 1. The middleware will catch the correct state on next navigation (cached for 5min)
+				// 2. Member changes also update overSeatLimit and invalidate cache
+				// 3. The worst case is a brief inconsistency (5min max) that self-corrects
 				await db.$transaction(async (tx) => {
 					// Update subscription
 					await tx.subscription.upsert({
@@ -201,6 +207,8 @@ export const POST: RequestHandler = async ({ request }) => {
 								console.warn(
 									`⚠️ Team ${updatedSub.team.id} is now over free tier limit: ${memberCount} members, ${FREE_TIER_LIMITS.MEMBERS} allowed`
 								);
+								// TODO: Send email notification to team admins when email system is implemented
+								// Notify: "Your subscription was canceled and your team has {memberCount} members but the free tier only allows {FREE_TIER_LIMITS.MEMBERS}. Please remove members or resubscribe."
 							}
 						}
 					}
