@@ -1,4 +1,5 @@
 /test-results
+/coverage
 node_modules
 uploads
 

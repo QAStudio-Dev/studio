@@ -82,15 +82,14 @@ export const POST: RequestHandler = async ({ request }) => {
 				// Map Stripe status to our enum
 				const status = mapStripeStatus(subscription.status);
 
-				// Extract period dates from subscription object
+				// Extract period dates from subscription items
+				// Note: As of Stripe API version 2025-03-31, period dates are on subscription items, not the subscription itself
 				const subscriptionItem = subscription.items.data[0];
-				// Note: TypeScript definitions may not include these, but they exist in Stripe's API
-				const subData = subscription as any;
-				const currentPeriodStart = subData.current_period_start
-					? new Date(subData.current_period_start * 1000)
+				const currentPeriodStart = subscriptionItem?.current_period_start
+					? new Date(subscriptionItem.current_period_start * 1000)
 					: null;
-				const currentPeriodEnd = subData.current_period_end
-					? new Date(subData.current_period_end * 1000)
+				const currentPeriodEnd = subscriptionItem?.current_period_end
+					? new Date(subscriptionItem.current_period_end * 1000)
 					: null;
 
 				// Build update/create data
@@ -246,12 +245,11 @@ export const POST: RequestHandler = async ({ request }) => {
 			case 'invoice.payment_succeeded': {
 				const invoice = event.data.object as Stripe.Invoice;
 
-				// Extract subscription ID from invoice
-				// Note: invoice.subscription can be either a string ID or an expanded Subscription object
+				// Extract subscription ID from invoice.parent.subscription_details
+				// Note: subscription can be either a string ID or an expanded Subscription object
+				const subscription = invoice.parent?.subscription_details?.subscription;
 				const subscriptionId =
-					typeof (invoice as any).subscription === 'string'
-						? (invoice as any).subscription
-						: (invoice as any).subscription?.id || null;
+					typeof subscription === 'string' ? subscription : subscription?.id || null;
 
 				if (subscriptionId) {
 					await db.subscription.update({
@@ -270,12 +268,11 @@ export const POST: RequestHandler = async ({ request }) => {
 			case 'invoice.payment_failed': {
 				const invoice = event.data.object as Stripe.Invoice;
 
-				// Extract subscription ID from invoice
-				// Note: invoice.subscription can be either a string ID or an expanded Subscription object
+				// Extract subscription ID from invoice.parent.subscription_details
+				// Note: subscription can be either a string ID or an expanded Subscription object
+				const subscription = invoice.parent?.subscription_details?.subscription;
 				const subscriptionId =
-					typeof (invoice as any).subscription === 'string'
-						? (invoice as any).subscription
-						: (invoice as any).subscription?.id || null;
+					typeof subscription === 'string' ? subscription : subscription?.id || null;
 
 				if (subscriptionId) {
 					await db.subscription.update({
