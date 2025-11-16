@@ -158,8 +158,8 @@
 			{/each}
 
 			<!-- Current User (cannot be removed) -->
-			{@const currentMember = members.find((m) => m.id === currentUserId)}
-			{#if currentMember}
+			{#if members.find((m) => m.id === currentUserId)}
+				{@const currentMember = members.find((m) => m.id === currentUserId)!}
 				<div
 					class="bg-surface-100-800 w-full rounded-container p-4 border-2 border-surface-200-700 opacity-50"
 				>
