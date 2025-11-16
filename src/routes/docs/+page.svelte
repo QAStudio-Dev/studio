@@ -8,7 +8,8 @@
 		if (browser) {
 			// Dynamically import and initialize Swagger UI
 			(async () => {
-				const SwaggerUIBundle = (await import('swagger-ui-dist/swagger-ui-bundle.js')).default;
+				const SwaggerUIBundle = (await import('swagger-ui-dist/swagger-ui-bundle.js'))
+					.default;
 				const SwaggerUIStandalonePreset = (
 					await import('swagger-ui-dist/swagger-ui-standalone-preset.js')
 				).default;
@@ -38,7 +39,8 @@
 				const observer = new MutationObserver((mutations) => {
 					mutations.forEach((mutation) => {
 						if (mutation.attributeName === 'data-mode') {
-							const newIsDarkMode = document.documentElement.getAttribute('data-mode') === 'dark';
+							const newIsDarkMode =
+								document.documentElement.getAttribute('data-mode') === 'dark';
 							if (newIsDarkMode !== isDarkMode) {
 								// Reload the page to reinitialize Swagger UI with new theme
 								window.location.reload();

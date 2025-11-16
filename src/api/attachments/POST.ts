@@ -173,7 +173,8 @@ export default new Endpoint({ Input, Output, Modifier }).handle(
 			// Check access to project
 			const hasAccess =
 				testResult.testRun.project.createdBy === userId ||
-				(testResult.testRun.project.teamId && user?.teamId === testResult.testRun.project.teamId);
+				(testResult.testRun.project.teamId &&
+					user?.teamId === testResult.testRun.project.teamId);
 
 			if (!hasAccess) {
 				throw error(403, 'You do not have access to this test result');
@@ -233,7 +234,9 @@ export default new Endpoint({ Input, Output, Modifier }).handle(
 						);
 						throw error(500, 'Failed to create attachment - please try again');
 					}
-					console.warn(`Attachment ID collision detected - retrying (attempt ${attempts + 1})`);
+					console.warn(
+						`Attachment ID collision detected - retrying (attempt ${attempts + 1})`
+					);
 					continue; // Retry with new ID
 				}
 				throw err;

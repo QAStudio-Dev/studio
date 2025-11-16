@@ -190,7 +190,9 @@
 			{#if isAdmin}
 				<button
 					onclick={openBillingPortal}
-					class="btn w-full preset-filled-{statusInfo.color === 'error' ? 'error' : 'primary'}"
+					class="btn w-full preset-filled-{statusInfo.color === 'error'
+						? 'error'
+						: 'primary'}"
 					disabled={loading}
 				>
 					{loading ? 'Loading...' : statusInfo.action}
@@ -198,8 +200,8 @@
 			{:else}
 				<div class="rounded-container border border-warning-500/20 bg-warning-500/10 p-4">
 					<p class="text-center text-sm">
-						Only team admins and managers can manage billing. Please contact your team admin to
-						resolve this issue.
+						Only team admins and managers can manage billing. Please contact your team
+						admin to resolve this issue.
 					</p>
 				</div>
 			{/if}
@@ -211,14 +213,16 @@
 		<h3 class="mb-4 font-semibold">Need Help?</h3>
 		<div class="text-surface-600-300 space-y-3 text-sm">
 			<p>
-				If you're experiencing issues with your payment or subscription, our support team is here to
-				help.
+				If you're experiencing issues with your payment or subscription, our support team is
+				here to help.
 			</p>
 			<div class="flex gap-4">
 				<a href="mailto:support@qa-studio.com" class="text-primary-500 hover:underline">
 					Contact Support
 				</a>
-				<a href="/docs/billing" class="text-primary-500 hover:underline"> View Billing Docs </a>
+				<a href="/docs/billing" class="text-primary-500 hover:underline">
+					View Billing Docs
+				</a>
 			</div>
 		</div>
 	</div>

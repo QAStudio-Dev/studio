@@ -70,7 +70,9 @@ export const POST: RequestHandler = async (event) => {
 
 		// If we have a cached diagnosis and regeneration is not requested, return it
 		if (testResult.aiDiagnosis && !regenerate) {
-			console.log(`[AI Diagnosis] Returning cached diagnosis for test result: ${testResultId}`);
+			console.log(
+				`[AI Diagnosis] Returning cached diagnosis for test result: ${testResultId}`
+			);
 			return json(
 				{
 					diagnosis: testResult.aiDiagnosis,
@@ -92,7 +94,8 @@ export const POST: RequestHandler = async (event) => {
 		// Check for error-context.md attachment
 		let errorContext: string | undefined;
 		const errorContextAttachment = testResult.attachments?.find(
-			(att) => att.originalName === 'error-context.md' || att.filename.includes('error-context')
+			(att) =>
+				att.originalName === 'error-context.md' || att.filename.includes('error-context')
 		);
 
 		if (errorContextAttachment) {
@@ -102,7 +105,9 @@ export const POST: RequestHandler = async (event) => {
 				const response = await fetch(errorContextAttachment.url);
 				if (response.ok) {
 					errorContext = await response.text();
-					console.log(`[AI Diagnosis] Error context loaded: ${errorContext.length} chars`);
+					console.log(
+						`[AI Diagnosis] Error context loaded: ${errorContext.length} chars`
+					);
 				}
 			} catch (err) {
 				console.error('[AI Diagnosis] Failed to fetch error context:', err);
@@ -120,7 +125,9 @@ export const POST: RequestHandler = async (event) => {
 			errorContext
 		});
 
-		console.log(`[AI Diagnosis] Successfully generated diagnosis for test result: ${testResultId}`);
+		console.log(
+			`[AI Diagnosis] Successfully generated diagnosis for test result: ${testResultId}`
+		);
 		console.log(`[AI Diagnosis] Diagnosis length: ${diagnosis?.length || 0} characters`);
 
 		if (!diagnosis) {

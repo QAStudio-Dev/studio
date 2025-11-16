@@ -127,24 +127,24 @@ Fields:
 ### 4. Visual Enhancements
 
 - **Color-coded status**:
-  - 🟢 Green (`#36a64f`) for 100% pass rate
-  - 🟠 Orange (`#ffa500`) for 80-99% pass rate
-  - 🔴 Red (`#ff0000`) for <80% pass rate or failures
+    - 🟢 Green (`#36a64f`) for 100% pass rate
+    - 🟠 Orange (`#ffa500`) for 80-99% pass rate
+    - 🔴 Red (`#ff0000`) for <80% pass rate or failures
 
 - **Context-aware emojis**:
-  - ✅ Success
-  - ⚠️ Warning
-  - ❌ Failure
-  - 📊 Statistics
-  - 📝 Count
-  - 🧪 Test
-  - 🔍 View/Inspect
-  - 🔴 Critical
-  - ⏰ Time-based
+    - ✅ Success
+    - ⚠️ Warning
+    - ❌ Failure
+    - 📊 Statistics
+    - 📝 Count
+    - 🧪 Test
+    - 🔍 View/Inspect
+    - 🔴 Critical
+    - ⏰ Time-based
 
 - **Button styling**:
-  - Primary (blue) for successful test runs
-  - Danger (red) for failed test runs
+    - Primary (blue) for successful test runs
+    - Danger (red) for failed test runs
 
 ### 5. Environment Configuration
 
@@ -170,11 +170,11 @@ npx playwright test
 ```
 
 2. Check your Slack channel for notifications with:
-   - Better formatting and visual hierarchy
-   - Working "🔍 View Details" buttons that open the correct URL
-   - Color-coded left border (green/orange/red)
-   - Emoji-enhanced content
-   - Clear, scannable information
+    - Better formatting and visual hierarchy
+    - Working "🔍 View Details" buttons that open the correct URL
+    - Color-coded left border (green/orange/red)
+    - Emoji-enhanced content
+    - Clear, scannable information
 
 ## Interactive Button Fix
 

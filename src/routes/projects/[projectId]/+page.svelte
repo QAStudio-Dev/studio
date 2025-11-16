@@ -193,7 +193,10 @@
 
 		<!-- Stats Cards -->
 		<div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-			<a href="/projects/{project.id}/cases" class="card p-4 transition-shadow hover:shadow-lg">
+			<a
+				href="/projects/{project.id}/cases"
+				class="card p-4 transition-shadow hover:shadow-lg"
+			>
 				<div class="flex items-center gap-3">
 					<div class="rounded-container bg-primary-500/10 p-2">
 						<TestTube2 class="h-5 w-5 text-primary-500" />
@@ -205,7 +208,10 @@
 				</div>
 			</a>
 
-			<a href="/projects/{project.id}/cases" class="card p-4 transition-shadow hover:shadow-lg">
+			<a
+				href="/projects/{project.id}/cases"
+				class="card p-4 transition-shadow hover:shadow-lg"
+			>
 				<div class="flex items-center gap-3">
 					<div class="rounded-container bg-secondary-500/10 p-2">
 						<FolderOpen class="h-5 w-5 text-secondary-500" />
@@ -217,7 +223,10 @@
 				</div>
 			</a>
 
-			<a href="/projects/{project.id}/runs" class="card p-4 transition-shadow hover:shadow-lg">
+			<a
+				href="/projects/{project.id}/runs"
+				class="card p-4 transition-shadow hover:shadow-lg"
+			>
 				<div class="flex items-center gap-3">
 					<div class="rounded-container bg-tertiary-500/10 p-2">
 						<PlayCircle class="h-5 w-5 text-tertiary-500" />
@@ -252,7 +261,10 @@
 		<div class="card p-6">
 			<div class="mb-4 flex items-center justify-between">
 				<h2 class="text-xl font-bold">Recent Test Runs</h2>
-				<a href="/projects/{project.id}/runs" class="text-sm text-primary-500 hover:underline">
+				<a
+					href="/projects/{project.id}/runs"
+					class="text-sm text-primary-500 hover:underline"
+				>
 					View All
 				</a>
 			</div>
@@ -277,7 +289,11 @@
 						>
 							<div class="mb-2 flex items-center justify-between">
 								<h3 class="font-medium">{run.name}</h3>
-								<span class="badge {getStatusBgColor(run.status)} {getStatusColor(run.status)}">
+								<span
+									class="badge {getStatusBgColor(run.status)} {getStatusColor(
+										run.status
+									)}"
+								>
 									{run.status}
 								</span>
 							</div>
@@ -292,9 +308,15 @@
 							</div>
 							{#if run._count}
 								<div class="mt-2 flex items-center gap-3 text-sm">
-									<span class="text-success-500">{run._count.passedResults || 0} passed</span>
-									<span class="text-error-500">{run._count.failedResults || 0} failed</span>
-									<span class="text-surface-600-300">{run._count.totalResults || 0} total</span>
+									<span class="text-success-500"
+										>{run._count.passedResults || 0} passed</span
+									>
+									<span class="text-error-500"
+										>{run._count.failedResults || 0} failed</span
+									>
+									<span class="text-surface-600-300"
+										>{run._count.totalResults || 0} total</span
+									>
 								</div>
 							{/if}
 						</a>
@@ -336,7 +358,9 @@
 					<FileText class="h-5 w-5 text-secondary-500" />
 					<div>
 						<p class="font-medium">API Documentation</p>
-						<p class="text-surface-600-300 text-sm">Integrate with your test framework</p>
+						<p class="text-surface-600-300 text-sm">
+							Integrate with your test framework
+						</p>
 					</div>
 				</a>
 			</div>
@@ -460,7 +484,11 @@
 						>
 							Cancel
 						</button>
-						<button type="submit" class="btn preset-filled-primary-500" disabled={isSaving}>
+						<button
+							type="submit"
+							class="btn preset-filled-primary-500"
+							disabled={isSaving}
+						>
 							{isSaving ? 'Saving...' : 'Save Changes'}
 						</button>
 					</div>
@@ -489,7 +517,9 @@
 						<div class="flex items-start gap-3">
 							<Trash2 class="mt-0.5 h-5 w-5 flex-shrink-0 text-error-500" />
 							<div class="flex-1">
-								<p class="mb-2 font-semibold text-error-500">This action cannot be undone!</p>
+								<p class="mb-2 font-semibold text-error-500">
+									This action cannot be undone!
+								</p>
 								<p class="text-surface-600-300 text-sm">
 									Deleting this project will permanently remove:
 								</p>
@@ -506,7 +536,9 @@
 					</div>
 
 					<!-- Project Info -->
-					<div class="rounded-container border border-surface-300-700 bg-surface-100-900 p-4">
+					<div
+						class="rounded-container border border-surface-300-700 bg-surface-100-900 p-4"
+					>
 						<p class="text-surface-600-300 mb-2 text-sm">You are about to delete:</p>
 						<p class="text-lg font-semibold">{project.name}</p>
 						<p class="text-surface-600-300 mt-1 text-sm">Key: {project.key}</p>
@@ -521,7 +553,8 @@
 					<!-- Confirmation Input -->
 					<div>
 						<label for="delete-confirmation" class="mb-2 block text-sm font-medium">
-							Type <code class="rounded bg-surface-200-800 px-1.5 py-0.5 font-mono text-sm"
+							Type <code
+								class="rounded bg-surface-200-800 px-1.5 py-0.5 font-mono text-sm"
 								>{project.key}</code
 							> to confirm deletion
 						</label>

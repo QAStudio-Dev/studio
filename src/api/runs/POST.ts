@@ -160,7 +160,9 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 						);
 						throw error(500, 'Failed to create test run - please try again');
 					}
-					console.warn(`Test run ID collision detected - retrying (attempt ${attempts + 1})`);
+					console.warn(
+						`Test run ID collision detected - retrying (attempt ${attempts + 1})`
+					);
 					continue; // Retry with new ID
 				}
 				throw err;

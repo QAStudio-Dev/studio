@@ -5,6 +5,8 @@ import { paraglideMiddleware } from '$lib/paraglide/server';
 import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { requiresPayment } from '$lib/server/subscriptions';
+import { getCachedOrFetch, CacheKeys, CacheTTL } from '$lib/server/redis';
+import type { SubscriptionStatus } from '@prisma/client';
 
 const handleParaglide: Handle = ({ event, resolve }) =>
 	paraglideMiddleware(event.request, ({ request, locale }) => {
@@ -68,8 +70,20 @@ const handleClerkWithPublicRoutes: Handle = async ({ event, resolve }) => {
 	return clerkHandler({ event, resolve });
 };
 
+// Define the team status type for caching
+type TeamStatus = {
+	id: string;
+	overSeatLimit: boolean;
+	subscription: {
+		status: SubscriptionStatus;
+	} | null;
+};
+
 // Middleware to check for over-seat-limit teams and redirect to resolution page
 // Note: This only runs on main navigation routes, not API/static assets
+//
+// PERFORMANCE: This middleware uses Redis caching with a 5-minute TTL to reduce DB queries.
+// Cache is invalidated when team status changes (webhooks, member updates).
 const handleSeatLimitCheck: Handle = async ({ event, resolve }) => {
 	const { pathname } = event.url;
 
@@ -99,13 +113,23 @@ const handleSeatLimitCheck: Handle = async ({ event, resolve }) => {
 		return resolve(event);
 	}
 
-	// Only query team status for users who have a team
-	// This is a lightweight query with indexed fields
+	// First, get the user's team ID (lightweight query, not cached)
 	const user = await db.user.findUnique({
 		where: { id: userId },
-		select: {
-			teamId: true,
-			team: {
+		select: { teamId: true }
+	});
+
+	// If user has no team, skip checks
+	if (!user?.teamId) {
+		return resolve(event);
+	}
+
+	// Get team status with caching (5-minute TTL)
+	const teamStatus = await getCachedOrFetch<TeamStatus>(
+		CacheKeys.teamStatus(user.teamId),
+		async () => {
+			const team = await db.team.findUnique({
+				where: { id: user.teamId! },
 				select: {
 					id: true,
 					overSeatLimit: true,
@@ -115,23 +139,20 @@ const handleSeatLimitCheck: Handle = async ({ event, resolve }) => {
 						}
 					}
 				}
-			}
-		}
-	});
-
-	// If user has no team, skip checks
-	if (!user?.team?.id) {
-		return resolve(event);
-	}
+			});
+			return team!;
+		},
+		CacheTTL.teamStatus
+	);
 
 	// Priority 1: Over seat limit (most urgent)
-	if (user.team.overSeatLimit) {
-		throw redirect(302, `/teams/${user.team.id}/over-limit`);
+	if (teamStatus.overSeatLimit) {
+		throw redirect(302, `/teams/${teamStatus.id}/over-limit`);
 	}
 
 	// Priority 2: Payment required (subscription issues)
-	if (user.team.subscription && requiresPayment(user.team.subscription)) {
-		throw redirect(302, `/teams/${user.team.id}/payment-required`);
+	if (teamStatus.subscription && requiresPayment(teamStatus.subscription)) {
+		throw redirect(302, `/teams/${teamStatus.id}/payment-required`);
 	}
 
 	return resolve(event);

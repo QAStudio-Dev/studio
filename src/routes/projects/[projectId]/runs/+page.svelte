@@ -284,7 +284,10 @@
 								{#if testRun.milestone}
 									<span>• {testRun.milestone.name}</span>
 								{/if}
-								<span>• Created by {testRun.creator.firstName || testRun.creator.email}</span>
+								<span
+									>• Created by {testRun.creator.firstName ||
+										testRun.creator.email}</span
+								>
 							</div>
 						</div>
 
@@ -335,7 +338,12 @@
 						</div>
 						{#if testRun.completedAt}
 							<span>• Completed: {formatDate(testRun.completedAt)}</span>
-							<span>• Duration: {formatDuration(testRun.startedAt, testRun.completedAt)}</span>
+							<span
+								>• Duration: {formatDuration(
+									testRun.startedAt,
+									testRun.completedAt
+								)}</span
+							>
 						{/if}
 					</div>
 				</button>
@@ -354,7 +362,10 @@
 				</button>
 
 				{#if page > 2}
-					<button class="btn preset-outlined-surface-500 btn-sm" onclick={() => goToPage(1)}>
+					<button
+						class="btn preset-outlined-surface-500 btn-sm"
+						onclick={() => goToPage(1)}
+					>
 						1
 					</button>
 					{#if page > 3}
@@ -363,7 +374,10 @@
 				{/if}
 
 				{#if page > 1}
-					<button class="btn preset-outlined-surface-500 btn-sm" onclick={() => goToPage(page - 1)}>
+					<button
+						class="btn preset-outlined-surface-500 btn-sm"
+						onclick={() => goToPage(page - 1)}
+					>
 						{page - 1}
 					</button>
 				{/if}
@@ -373,7 +387,10 @@
 				</button>
 
 				{#if page < totalPages}
-					<button class="btn preset-outlined-surface-500 btn-sm" onclick={() => goToPage(page + 1)}>
+					<button
+						class="btn preset-outlined-surface-500 btn-sm"
+						onclick={() => goToPage(page + 1)}
+					>
 						{page + 1}
 					</button>
 				{/if}

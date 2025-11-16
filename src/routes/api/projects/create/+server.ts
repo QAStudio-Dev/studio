@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { requireCurrentSubscription } from '$lib/server/auth';
 import { generateProjectId } from '$lib/server/ids';
+import { FREE_TIER_LIMITS } from '$lib/constants';
 
 /**
  * Create a new project
@@ -29,7 +30,8 @@ export const POST: RequestHandler = async (event) => {
 	// Validate key format (uppercase letters and numbers only, 2-10 chars)
 	if (!/^[A-Z0-9]{2,10}$/.test(key)) {
 		throw error(400, {
-			message: 'Project key must be 2-10 uppercase letters or numbers (e.g., "PROJ", "TEST123")'
+			message:
+				'Project key must be 2-10 uppercase letters or numbers (e.g., "PROJ", "TEST123")'
 		});
 	}
 
@@ -57,10 +59,9 @@ export const POST: RequestHandler = async (event) => {
 					}
 		});
 
-		if (projectCount >= 1) {
+		if (projectCount >= FREE_TIER_LIMITS.PROJECTS) {
 			throw error(402, {
-				message:
-					'Free plan is limited to 1 project. Upgrade to Pro for unlimited projects and AI features at /teams/new'
+				message: `Free plan is limited to ${FREE_TIER_LIMITS.PROJECTS} project${FREE_TIER_LIMITS.PROJECTS !== 1 ? 's' : ''}. Upgrade to Pro for unlimited projects and AI features at /teams/new`
 			});
 		}
 	}

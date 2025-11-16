@@ -2,6 +2,7 @@ import { error, type RequestEvent } from '@sveltejs/kit';
 import { ensureUser } from './users';
 import { db } from './db';
 import { isSubscriptionCurrent, requiresPayment } from './subscriptions';
+import { FREE_TIER_LIMITS } from '$lib/constants';
 
 /**
  * Require authentication for API routes
@@ -93,14 +94,14 @@ export async function requireCurrentSubscription(event: RequestEvent, feature?: 
 	}
 
 	// If user has no team or no subscription, they're on free plan
-	// Free users get 1 project, so check project count
+	// Free users get limited projects, so check project count
 	if (!user.team?.subscription) {
 		const projectCount = user.team?.projects.length || 0;
 
-		// Free users can use API for their first project only (0 < 1)
-		// Once they have 1 project (projectCount === 1), they can still use basic API
+		// Free users can use API for their allowed projects
+		// Once they reach the limit, they can still use basic API for existing projects
 		// But they cannot create more projects (checked in create endpoint)
-		if (projectCount < 2 && !feature) {
+		if (projectCount <= FREE_TIER_LIMITS.PROJECTS && !feature) {
 			return { userId, user, isFree: true };
 		}
 
@@ -114,9 +115,11 @@ export async function requireCurrentSubscription(event: RequestEvent, feature?: 
 	// Check if subscription is current (ACTIVE or PAST_DUE)
 	if (!isSubscriptionCurrent(user.team.subscription)) {
 		const statusMessages: Record<string, string> = {
-			CANCELED: 'Your subscription has been canceled. Please reactivate at /teams/' + user.team.id,
+			CANCELED:
+				'Your subscription has been canceled. Please reactivate at /teams/' + user.team.id,
 			UNPAID:
-				'Your subscription is unpaid. Please update your payment method at /teams/' + user.team.id,
+				'Your subscription is unpaid. Please update your payment method at /teams/' +
+				user.team.id,
 			INCOMPLETE: 'Please complete your subscription setup at /teams/' + user.team.id,
 			INCOMPLETE_EXPIRED:
 				'Your subscription setup has expired. Please start a new subscription at /teams/new'
@@ -175,7 +178,9 @@ export async function requirePremiumFeature(event: RequestEvent, featureName: st
 	if (user.team.overSeatLimit) {
 		throw error(403, {
 			message:
-				'Your team is over the seat limit. Please resolve at /teams/' + user.team.id + '/over-limit'
+				'Your team is over the seat limit. Please resolve at /teams/' +
+				user.team.id +
+				'/over-limit'
 		});
 	}
 

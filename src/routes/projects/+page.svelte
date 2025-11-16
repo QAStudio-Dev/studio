@@ -60,7 +60,10 @@
 				</a>
 			{:else}
 				<div class="text-right">
-					<button disabled class="btn cursor-not-allowed preset-filled-surface-500 opacity-50">
+					<button
+						disabled
+						class="btn cursor-not-allowed preset-filled-surface-500 opacity-50"
+					>
 						<Plus class="mr-2 h-4 w-4" />
 						New Project
 					</button>
@@ -155,7 +158,10 @@
 					Create Your First Project
 				</a>
 			{:else}
-				<a href="/teams/new" class="btn inline-flex items-center gap-2 preset-filled-primary-500">
+				<a
+					href="/teams/new"
+					class="btn inline-flex items-center gap-2 preset-filled-primary-500"
+				>
 					Upgrade to Create Projects
 				</a>
 			{/if}
@@ -187,10 +193,14 @@
 									<FolderOpen class="h-5 w-5 text-primary-500" />
 								</div>
 								<div>
-									<h3 class="text-lg font-bold transition-colors group-hover:text-primary-500">
+									<h3
+										class="text-lg font-bold transition-colors group-hover:text-primary-500"
+									>
 										{project.name}
 									</h3>
-									<span class="badge preset-filled-surface-500 text-xs">{project.key}</span>
+									<span class="badge preset-filled-surface-500 text-xs"
+										>{project.key}</span
+									>
 								</div>
 							</div>
 						</div>

@@ -4,8 +4,15 @@
 	import { goto } from '$app/navigation';
 
 	let { data } = $props();
-	let { team, members, subscription, currentUserId, seatsNeeded, currentMembers, membersToRemove } =
-		$derived(data);
+	let {
+		team,
+		members,
+		subscription,
+		currentUserId,
+		seatsNeeded,
+		currentMembers,
+		membersToRemove
+	} = $derived(data);
 
 	let selectedToRemove = $state<string[]>([]);
 	let loading = $state(false);
@@ -75,8 +82,9 @@
 				<strong>{currentMembers} member{currentMembers !== 1 ? 's' : ''}</strong>.
 			</p>
 			<p class="mt-2 text-sm">
-				Please select <strong>{membersToRemove} member{membersToRemove !== 1 ? 's' : ''}</strong> to
-				remove from the team.
+				Please select <strong
+					>{membersToRemove} member{membersToRemove !== 1 ? 's' : ''}</strong
+				> to remove from the team.
 			</p>
 		</div>
 	</div>
@@ -96,7 +104,8 @@
 		</div>
 
 		<p class="text-surface-600-300 mb-6">
-			Selected: <strong>{selectedToRemove.length}</strong> of <strong>{membersToRemove}</strong> required
+			Selected: <strong>{selectedToRemove.length}</strong> of
+			<strong>{membersToRemove}</strong> required
 		</p>
 
 		<!-- Member List -->
@@ -167,10 +176,14 @@
 
 						<Avatar class="h-12 w-12">
 							{#if currentMember.imageUrl}
-								<Avatar.Image src={currentMember.imageUrl} alt={getMemberName(currentMember)} />
+								<Avatar.Image
+									src={currentMember.imageUrl}
+									alt={getMemberName(currentMember)}
+								/>
 							{/if}
 							<Avatar.Fallback>
-								{currentMember.firstName?.[0] || currentMember.email[0].toUpperCase()}
+								{currentMember.firstName?.[0] ||
+									currentMember.email[0].toUpperCase()}
 							</Avatar.Fallback>
 						</Avatar>
 
@@ -227,7 +240,8 @@
 		<div class="border-surface-200-700 mt-6 border-t pt-6">
 			<p class="text-surface-600-300 text-sm">
 				Need more seats? You can upgrade your subscription from the
-				<a href="/teams/{team.id}" class="text-primary-500 hover:underline">team settings</a>.
+				<a href="/teams/{team.id}" class="text-primary-500 hover:underline">team settings</a
+				>.
 			</p>
 		</div>
 	</div>

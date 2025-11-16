@@ -15,9 +15,9 @@ This guide explains how to set up Decap CMS for managing blog posts on QA Studio
 1. Go to GitHub Settings → Developer settings → OAuth Apps
 2. Click "New OAuth App"
 3. Fill in the details:
-   - **Application name**: `QA Studio CMS`
-   - **Homepage URL**: `https://qastudio.dev` (or your domain)
-   - **Authorization callback URL**: `https://qastudio.dev/api/auth/decap`
+    - **Application name**: `QA Studio CMS`
+    - **Homepage URL**: `https://qastudio.dev` (or your domain)
+    - **Authorization callback URL**: `https://qastudio.dev/api/auth/decap`
 4. Click "Register application"
 5. Note the **Client ID** and generate a **Client Secret**
 
@@ -37,10 +37,10 @@ Edit `/static/admin/config.yml` and update the repository:
 
 ```yaml
 backend:
-  name: github
-  repo: YOUR_USERNAME/qa-studio # ← Update this with your GitHub username
-  base_url: https://qastudio.dev
-  auth_endpoint: /api/auth/decap
+    name: github
+    repo: YOUR_USERNAME/qa-studio # ← Update this with your GitHub username
+    base_url: https://qastudio.dev
+    auth_endpoint: /api/auth/decap
 ```
 
 ### 4. Access the CMS
@@ -84,16 +84,16 @@ static/
 1. Go to `/admin`
 2. Click "New Blog Posts"
 3. Fill in the fields:
-   - **Title**: Post title
-   - **Publish Date**: When to publish
-   - **Description**: Short summary (for SEO)
-   - **Cover Image**: Featured image
-   - **Category**: Select from predefined categories
-   - **Tags**: Comma-separated tags
-   - **Author**: Defaults to "QA Studio Team"
-   - **Slug**: URL-friendly identifier
-   - **Published**: Toggle to publish/unpublish
-   - **Body**: Main content in Markdown
+    - **Title**: Post title
+    - **Publish Date**: When to publish
+    - **Description**: Short summary (for SEO)
+    - **Cover Image**: Featured image
+    - **Category**: Select from predefined categories
+    - **Tags**: Comma-separated tags
+    - **Author**: Defaults to "QA Studio Team"
+    - **Slug**: URL-friendly identifier
+    - **Published**: Toggle to publish/unpublish
+    - **Body**: Main content in Markdown
 4. Click "Save" → "Publish"
 
 ### Manually
@@ -134,21 +134,21 @@ For local development with Decap CMS:
 
 1. Install `decap-server`:
 
-   ```bash
-   npm install -g decap-server
-   ```
+    ```bash
+    npm install -g decap-server
+    ```
 
 2. Uncomment in `/static/admin/config.yml`:
 
-   ```yaml
-   local_backend: true
-   ```
+    ```yaml
+    local_backend: true
+    ```
 
 3. Run the local proxy:
 
-   ```bash
-   decap-server
-   ```
+    ```bash
+    decap-server
+    ```
 
 4. Access CMS at `http://localhost:5173/admin`
 

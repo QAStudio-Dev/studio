@@ -61,7 +61,10 @@ export default new Endpoint({ Param, Output, Error, Modifier }).handle(async (in
 		}
 
 		// Build cache invalidation list BEFORE deletion
-		const cachesToInvalidate = [CacheKeys.project(input.id), CacheKeys.projects(project.createdBy)];
+		const cachesToInvalidate = [
+			CacheKeys.project(input.id),
+			CacheKeys.projects(project.createdBy)
+		];
 
 		// Add team members' caches if project has a team
 		if (project.team?.members) {

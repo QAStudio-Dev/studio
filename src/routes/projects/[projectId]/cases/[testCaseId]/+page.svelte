@@ -51,8 +51,9 @@
 			description: testCase.description || '',
 			preconditions: testCase.preconditions || '',
 			steps:
-				(typeof testCase.steps === 'string' ? testCase.steps : JSON.stringify(testCase.steps)) ||
-				'',
+				(typeof testCase.steps === 'string'
+					? testCase.steps
+					: JSON.stringify(testCase.steps)) || '',
 			expectedResult: testCase.expectedResult || '',
 			priority: testCase.priority,
 			type: testCase.type,
@@ -133,7 +134,9 @@ ${testCase.expectedResult || 'See test case for details'}`;
 		loadingMore = true;
 		try {
 			const nextPage = resultsPage + 1;
-			const response = await fetch(`/api/cases/${testCase.id}/results?page=${nextPage}&limit=10`);
+			const response = await fetch(
+				`/api/cases/${testCase.id}/results?page=${nextPage}&limit=10`
+			);
 
 			if (response.ok) {
 				const data = await response.json();
@@ -251,9 +254,13 @@ ${testCase.expectedResult || 'See test case for details'}`;
 				</div>
 
 				<div class="flex items-center gap-3">
-					<span class="badge {getPriorityColor(testCase.priority)}">{testCase.priority}</span>
+					<span class="badge {getPriorityColor(testCase.priority)}"
+						>{testCase.priority}</span
+					>
 					<span class="badge preset-filled-surface-500">{testCase.type}</span>
-					<span class="badge preset-outlined-surface-500">{testCase.automationStatus}</span>
+					<span class="badge preset-outlined-surface-500"
+						>{testCase.automationStatus}</span
+					>
 					{#each testCase.tags as tag}
 						<span class="badge preset-outlined-primary-500">
 							<Tag class="mr-1 h-3 w-3" />
@@ -340,7 +347,9 @@ ${testCase.expectedResult || 'See test case for details'}`;
 												<StatusIcon class="mr-1 h-3 w-3" />
 												{result.status}
 											</span>
-											<span class="text-sm font-medium">{result.testRun.name}</span>
+											<span class="text-sm font-medium"
+												>{result.testRun.name}</span
+											>
 										</div>
 										<div class="flex items-center gap-4">
 											{#if result.duration}
@@ -358,10 +367,12 @@ ${testCase.expectedResult || 'See test case for details'}`;
 								<Accordion.ItemContent class="px-4 pb-4">
 									<div class="mb-3 flex items-center justify-between gap-4">
 										<div class="text-surface-600-300 text-sm">
-											Executed by: {result.executor.firstName || result.executor.email}
+											Executed by: {result.executor.firstName ||
+												result.executor.email}
 										</div>
 										<a
-											href="/projects/{testCase.project.id}/runs/{result.testRun.id}"
+											href="/projects/{testCase.project.id}/runs/{result
+												.testRun.id}"
 											class="preset-tonal-primary-500 btn btn-sm"
 										>
 											<Play class="h-3 w-3" />
@@ -370,7 +381,9 @@ ${testCase.expectedResult || 'See test case for details'}`;
 									</div>
 
 									{#if result.comment}
-										<p class="text-surface-600-300 mt-2 text-sm">{result.comment}</p>
+										<p class="text-surface-600-300 mt-2 text-sm">
+											{result.comment}
+										</p>
 									{/if}
 
 									<!-- Error/Stack Trace in nested accordion -->
@@ -392,7 +405,9 @@ ${testCase.expectedResult || 'See test case for details'}`;
 															</div>
 														</Accordion.ItemTrigger>
 														<Accordion.ItemContent class="px-2 pb-2">
-															<div class="mt-2 rounded-base bg-error-500/5 p-3">
+															<div
+																class="mt-2 rounded-base bg-error-500/5 p-3"
+															>
 																<p
 																	class="font-mono text-sm break-words whitespace-pre-wrap text-error-500"
 																>
@@ -408,7 +423,9 @@ ${testCase.expectedResult || 'See test case for details'}`;
 														<Accordion.ItemTrigger
 															class="mt-2 w-full rounded-base bg-surface-200-800 p-2 transition-colors hover:bg-surface-300-700"
 														>
-															<div class="flex items-center gap-2 text-sm font-medium">
+															<div
+																class="flex items-center gap-2 text-sm font-medium"
+															>
 																<ChevronRight
 																	class="h-3 w-3 transition-transform group-data-[state=open]:rotate-90"
 																/>
@@ -416,7 +433,9 @@ ${testCase.expectedResult || 'See test case for details'}`;
 															</div>
 														</Accordion.ItemTrigger>
 														<Accordion.ItemContent class="px-2 pb-2">
-															<div class="mt-2 rounded-base bg-surface-100-900 p-3">
+															<div
+																class="mt-2 rounded-base bg-surface-100-900 p-3"
+															>
 																<pre
 																	class="font-mono text-xs break-words whitespace-pre-wrap">{stripAnsi(
 																		result.stackTrace
@@ -432,7 +451,10 @@ ${testCase.expectedResult || 'See test case for details'}`;
 									<!-- Test Steps -->
 									{#if result.steps && result.steps.length > 0}
 										<div class="mt-3">
-											<TestStepsViewer steps={result.steps as any} compact={true} />
+											<TestStepsViewer
+												steps={result.steps as any}
+												compact={true}
+											/>
 										</div>
 									{/if}
 
@@ -448,7 +470,9 @@ ${testCase.expectedResult || 'See test case for details'}`;
 													Get AI Diagnosis
 												</button>
 											{:else if loadingDiagnosis.has(result.id)}
-												<div class="flex items-center gap-2 text-sm text-primary-500">
+												<div
+													class="flex items-center gap-2 text-sm text-primary-500"
+												>
 													<Loader2 class="h-4 w-4 animate-spin" />
 													<span>Analyzing failure with AI...</span>
 												</div>
@@ -456,25 +480,41 @@ ${testCase.expectedResult || 'See test case for details'}`;
 												<div
 													class="rounded-container border-2 border-primary-500 bg-primary-50-950 p-3"
 												>
-													<div class="mb-2 flex items-center justify-between gap-2">
+													<div
+														class="mb-2 flex items-center justify-between gap-2"
+													>
 														<div class="flex items-center gap-2">
-															<Sparkles class="h-4 w-4 text-primary-500" />
-															<h5 class="text-sm font-semibold text-primary-500">AI Diagnosis</h5>
+															<Sparkles
+																class="h-4 w-4 text-primary-500"
+															/>
+															<h5
+																class="text-sm font-semibold text-primary-500"
+															>
+																AI Diagnosis
+															</h5>
 															{#if aiDiagnoses.get(result.id)?.cached}
-																<span class="text-xs text-surface-500">(cached)</span>
+																<span
+																	class="text-xs text-surface-500"
+																	>(cached)</span
+																>
 															{/if}
 														</div>
 														<button
-															onclick={() => getDiagnosis(result.id, true)}
+															onclick={() =>
+																getDiagnosis(result.id, true)}
 															class="preset-tonal-primary-500 btn btn-sm"
 															title="Regenerate diagnosis"
-															disabled={loadingDiagnosis.has(result.id)}
+															disabled={loadingDiagnosis.has(
+																result.id
+															)}
 														>
 															<Sparkles class="h-3 w-3" />
 															Regenerate
 														</button>
 													</div>
-													<div class="prose prose-sm max-w-none text-xs whitespace-pre-wrap">
+													<div
+														class="prose prose-sm max-w-none text-xs whitespace-pre-wrap"
+													>
 														{aiDiagnoses.get(result.id)?.diagnosis}
 													</div>
 												</div>
@@ -521,10 +561,14 @@ ${testCase.expectedResult || 'See test case for details'}`;
 						<div class="flex items-center gap-2">
 							<Avatar class="h-6 w-6">
 								{#if testCase.creator.imageUrl}
-									<Avatar.Image src={testCase.creator.imageUrl} alt={testCase.creator.email} />
+									<Avatar.Image
+										src={testCase.creator.imageUrl}
+										alt={testCase.creator.email}
+									/>
 								{/if}
 								<Avatar.Fallback>
-									{testCase.creator.firstName?.[0] || testCase.creator.email[0].toUpperCase()}
+									{testCase.creator.firstName?.[0] ||
+										testCase.creator.email[0].toUpperCase()}
 								</Avatar.Fallback>
 							</Avatar>
 							<span>
@@ -585,8 +629,12 @@ ${testCase.expectedResult || 'See test case for details'}`;
 					</div>
 
 					{#if testCase.results.length > 0}
-						{@const passedCount = testCase.results.filter((r) => r.status === 'PASSED').length}
-						{@const failedCount = testCase.results.filter((r) => r.status === 'FAILED').length}
+						{@const passedCount = testCase.results.filter(
+							(r) => r.status === 'PASSED'
+						).length}
+						{@const failedCount = testCase.results.filter(
+							(r) => r.status === 'FAILED'
+						).length}
 						{@const executedTests = passedCount + failedCount}
 						{@const passRate =
 							executedTests > 0 ? Math.round((passedCount / executedTests) * 100) : 0}
@@ -695,7 +743,11 @@ ${testCase.expectedResult || 'See test case for details'}`;
 
 					<div class="label">
 						<span class="mb-2 block text-sm font-medium">Automation</span>
-						<select class="select" bind:value={editForm.automationStatus} disabled={savingEdit}>
+						<select
+							class="select"
+							bind:value={editForm.automationStatus}
+							disabled={savingEdit}
+						>
 							<option value="AUTOMATED">Automated</option>
 							<option value="NOT_AUTOMATED">Not Automated</option>
 							<option value="CANDIDATE">Candidate</option>
@@ -752,7 +804,11 @@ ${testCase.expectedResult || 'See test case for details'}`;
 					>
 						Cancel
 					</button>
-					<button type="submit" class="btn preset-filled-primary-500" disabled={savingEdit}>
+					<button
+						type="submit"
+						class="btn preset-filled-primary-500"
+						disabled={savingEdit}
+					>
 						{#if savingEdit}
 							<Loader2 class="mr-2 h-4 w-4 animate-spin" />
 							Saving...

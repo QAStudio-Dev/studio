@@ -194,7 +194,9 @@
 							/>
 						</div>
 					{:else}
-						<div class="aspect-video {getGradientForPost(post.slug || post.date)}"></div>
+						<div
+							class="aspect-video {getGradientForPost(post.slug || post.date)}"
+						></div>
 					{/if}
 
 					<!-- Content -->
@@ -209,7 +211,9 @@
 						{/if}
 
 						<!-- Title -->
-						<h2 class="mb-3 text-xl font-bold transition-colors group-hover:text-primary-500">
+						<h2
+							class="mb-3 text-xl font-bold transition-colors group-hover:text-primary-500"
+						>
 							{post.title}
 						</h2>
 

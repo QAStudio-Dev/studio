@@ -143,7 +143,8 @@ export const POST: RequestHandler = async (event) => {
 		// Free tier - only 1 member allowed
 		if (currentMembers >= 1) {
 			throw error(400, {
-				message: 'This team has reached its member limit. Please ask the team admin to upgrade.'
+				message:
+					'This team has reached its member limit. Please ask the team admin to upgrade.'
 			});
 		}
 	} else {

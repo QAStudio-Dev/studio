@@ -117,7 +117,9 @@ test.describe('QA Studio API Tests', () => {
 			}
 		});
 
-		test('should validate project creation with missing required fields', async ({ request }) => {
+		test('should validate project creation with missing required fields', async ({
+			request
+		}) => {
 			const apiClient = new ApiClient(request, '', API_KEY);
 			const response = await apiClient.createProject({
 				name: '',

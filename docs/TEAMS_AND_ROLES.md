@@ -75,9 +75,9 @@ The webhook automatically syncs users from Clerk to your database.
 2. Click **Add Endpoint**
 3. Set endpoint URL: `https://your-domain.com/api/webhooks/clerk`
 4. Select events:
-   - `user.created`
-   - `user.updated`
-   - `user.deleted`
+    - `user.created`
+    - `user.updated`
+    - `user.deleted`
 5. Copy the **Signing Secret**
 
 **In your `.env` file:**

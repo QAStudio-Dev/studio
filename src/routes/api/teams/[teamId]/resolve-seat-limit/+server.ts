@@ -2,6 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { requireAuth } from '$lib/server/auth';
+import { deleteCache, CacheKeys } from '$lib/server/redis';
 
 /**
  * Remove members to resolve over-seat-limit situation
@@ -88,11 +89,41 @@ export const POST: RequestHandler = async (event) => {
 		});
 	}
 
-	// Remove members from team and update flag atomically
-	const remainingMembers = team.members.length - memberIdsToRemove.length;
-	const isStillOverLimit = remainingMembers > seatsNeeded;
+	// Perform removal and validation inside transaction to prevent race conditions
+	const result = await db.$transaction(async (tx) => {
+		// Re-fetch team data inside transaction for up-to-date state
+		const freshTeam = await tx.team.findUnique({
+			where: { id: teamId },
+			include: {
+				members: true,
+				subscription: true
+			}
+		});
 
-	await db.$transaction(async (tx) => {
+		if (!freshTeam || !freshTeam.subscription) {
+			throw error(500, { message: 'Team state changed during operation' });
+		}
+
+		// Re-validate with fresh data
+		const freshSeatsNeeded = freshTeam.subscription.seats;
+		const freshCurrentMembers = freshTeam.members.length;
+		const freshMembersToRemove = freshCurrentMembers - freshSeatsNeeded;
+
+		// Verify removal count is still correct with fresh data
+		if (memberIdsToRemove.length !== freshMembersToRemove) {
+			throw error(400, {
+				message: `Team state changed. You must now remove exactly ${freshMembersToRemove} member${freshMembersToRemove !== 1 ? 's' : ''}`
+			});
+		}
+
+		// Verify all user IDs are still valid team members
+		const freshInvalidIds = memberIdsToRemove.filter(
+			(id) => !freshTeam.members.some((m) => m.id === id)
+		);
+		if (freshInvalidIds.length > 0) {
+			throw error(400, { message: 'Some user IDs are no longer members of this team' });
+		}
+
 		// Remove members from team
 		await tx.user.updateMany({
 			where: {
@@ -103,6 +134,10 @@ export const POST: RequestHandler = async (event) => {
 			}
 		});
 
+		// Calculate final state
+		const finalRemainingMembers = freshCurrentMembers - memberIdsToRemove.length;
+		const isStillOverLimit = finalRemainingMembers > freshSeatsNeeded;
+
 		// Update team's overSeatLimit flag
 		await tx.team.update({
 			where: { id: teamId },
@@ -110,12 +145,20 @@ export const POST: RequestHandler = async (event) => {
 				overSeatLimit: isStillOverLimit
 			}
 		});
+
+		return {
+			removedCount: memberIdsToRemove.length,
+			remainingMembers: finalRemainingMembers
+		};
 	});
+
+	// Invalidate team status cache after successful member removal
+	await deleteCache(CacheKeys.teamStatus(teamId));
 
 	return json({
 		success: true,
-		removedCount: memberIdsToRemove.length,
-		remainingMembers,
-		message: `Successfully removed ${memberIdsToRemove.length} member${memberIdsToRemove.length !== 1 ? 's' : ''} from the team`
+		removedCount: result.removedCount,
+		remainingMembers: result.remainingMembers,
+		message: `Successfully removed ${result.removedCount} member${result.removedCount !== 1 ? 's' : ''} from the team`
 	});
 };

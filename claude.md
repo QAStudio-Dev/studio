@@ -36,9 +36,9 @@ The database is organized into logical sections:
 
 - **TestSuite**: Hierarchical organization of tests (supports nesting)
 - **TestCase**: Individual test cases with steps, priorities, types, and automation status
-  - Supports multiple test types: Functional, Regression, Smoke, Integration, Performance, Security, UI, API, Unit, E2E
-  - Priorities: Critical, High, Medium, Low
-  - Automation tracking: Automated, Not Automated, Candidate
+    - Supports multiple test types: Functional, Regression, Smoke, Integration, Performance, Security, UI, API, Unit, E2E
+    - Priorities: Critical, High, Medium, Low
+    - Automation tracking: Automated, Not Automated, Candidate
 
 ### Test Runs & Results
 
@@ -245,10 +245,10 @@ DATABASE_URL="postgresql://user:password@localhost:5432/qa_studio?schema=public"
 ```
 
 2. **Get Clerk Keys**:
-   - Sign up at https://clerk.com
-   - Create a new application
-   - Choose "SvelteKit" as framework
-   - Copy keys from dashboard
+    - Sign up at https://clerk.com
+    - Create a new application
+    - Choose "SvelteKit" as framework
+    - Copy keys from dashboard
 
 ### Architecture
 

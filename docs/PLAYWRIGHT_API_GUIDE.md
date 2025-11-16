@@ -194,9 +194,9 @@ Example: `"Auth > Login > Success > should login with valid credentials"`
 This will create:
 
 - Suite: "Auth"
-  - Suite: "Login"
-    - Suite: "Success"
-      - Test Case: "should login with valid credentials"
+    - Suite: "Login"
+        - Suite: "Success"
+            - Test Case: "should login with valid credentials"
 
 **Attachment Body Formats:**
 The `body` field in attachments supports the following formats:
@@ -238,8 +238,8 @@ The `body` field in attachments supports the following formats:
 
 - `processedCount`: Number of results successfully processed
 - `results`: Array of processed test results
-  - `created`: `true` if the test case was newly created, `false` if it already existed
-  - `attachmentCount`: Number of attachments successfully uploaded
+    - `created`: `true` if the test case was newly created, `false` if it already existed
+    - `attachmentCount`: Number of attachments successfully uploaded
 - `errors`: Array of any errors encountered during processing (optional)
 
 ---

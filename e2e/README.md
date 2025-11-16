@@ -254,8 +254,8 @@ Tests are configured to work in CI environments. The reporter automatically dete
 ```yaml
 - name: Run Playwright tests
   env:
-    QA_STUDIO_API_KEY: ${{ secrets.QA_STUDIO_API_KEY }}
-    QA_STUDIO_PROJECT_ID: ${{ secrets.QA_STUDIO_PROJECT_ID }}
+      QA_STUDIO_API_KEY: ${{ secrets.QA_STUDIO_API_KEY }}
+      QA_STUDIO_PROJECT_ID: ${{ secrets.QA_STUDIO_PROJECT_ID }}
   run: npx playwright test
 ```
 

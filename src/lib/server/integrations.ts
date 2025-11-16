@@ -71,7 +71,9 @@ export async function sendNotification(
 			const isEnabled = notifications[payload.event] ?? true;
 
 			if (!isEnabled) {
-				console.log(`Notification ${payload.event} disabled for integration ${integration.id}`);
+				console.log(
+					`Notification ${payload.event} disabled for integration ${integration.id}`
+				);
 			}
 
 			return isEnabled;
@@ -293,7 +295,9 @@ async function sendSlackNotification(integrationId: string, payload: Notificatio
 
 	if (!response.ok) {
 		const errorText = await response.text();
-		throw new Error(`Slack API error: ${response.status} ${response.statusText} - ${errorText}`);
+		throw new Error(
+			`Slack API error: ${response.status} ${response.statusText} - ${errorText}`
+		);
 	}
 
 	return { status: response.status, statusText: response.statusText };
@@ -463,6 +467,8 @@ export async function notifyMilestoneDue(
 		title: `📅 Milestone Due Soon: ${milestone.name}`,
 		message: `*Project:* ${milestone.projectName}\n*Due Date:* ${milestone.dueDate.toLocaleDateString()}\n*Days Remaining:* ${milestone.daysUntilDue}`,
 		color: milestone.daysUntilDue <= 3 ? '#ff0000' : '#ffa500',
-		fields: [{ name: '⏰ Days Until Due', value: milestone.daysUntilDue.toString(), inline: true }]
+		fields: [
+			{ name: '⏰ Days Until Due', value: milestone.daysUntilDue.toString(), inline: true }
+		]
 	});
 }

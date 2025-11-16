@@ -216,13 +216,13 @@ Users can now configure notifications in the UI:
 2. Connect their Slack workspace (or other integration)
 3. Click the **⚙️ Settings** icon on the integration card
 4. Toggle which events they want to receive:
-   - ✅ Test Run Started
-   - ✅ Test Run Completed
-   - ✅ Test Run Failed
-   - ✅ Test Case Failed
-   - ⬜ Test Case Passed (off by default - can be noisy)
-   - ✅ Milestone Due Soon
-   - ⬜ Project Created (off by default)
+    - ✅ Test Run Started
+    - ✅ Test Run Completed
+    - ✅ Test Run Failed
+    - ✅ Test Case Failed
+    - ⬜ Test Case Passed (off by default - can be noisy)
+    - ✅ Milestone Due Soon
+    - ⬜ Project Created (off by default)
 
 The integration service automatically respects these settings - if a notification type is disabled, it won't be sent to that integration.
 

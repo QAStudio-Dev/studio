@@ -68,8 +68,12 @@ export const GET: RequestHandler = async (event) => {
 		}
 
 		// Encrypt sensitive tokens before storing
-		const encryptedAccessToken = tokenData.access_token ? encrypt(tokenData.access_token) : null;
-		const encryptedRefreshToken = tokenData.refresh_token ? encrypt(tokenData.refresh_token) : null;
+		const encryptedAccessToken = tokenData.access_token
+			? encrypt(tokenData.access_token)
+			: null;
+		const encryptedRefreshToken = tokenData.refresh_token
+			? encrypt(tokenData.refresh_token)
+			: null;
 
 		// Encrypt webhook URL if present (contains sensitive token)
 		const encryptedWebhookUrl = tokenData.incoming_webhook?.url

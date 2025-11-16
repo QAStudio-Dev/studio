@@ -114,7 +114,8 @@
 						ondragover={(e) => onInsertionDragOver(e, suite.id, index)}
 						ondragleave={onInsertionDragLeave}
 						ondrop={(e) => onInsertionDrop(e, suite.id, index)}
-						isOver={dragOverPosition?.suiteId === suite.id && dragOverPosition?.index === index}
+						isOver={dragOverPosition?.suiteId === suite.id &&
+							dragOverPosition?.index === index}
 						isDragging={!!draggedTestCase && draggedTestCase.id !== testCase.id}
 					/>
 					<DraggableTestCase
@@ -127,7 +128,8 @@
 					/>
 				{/each}
 				<TestCaseInsertionZone
-					ondragover={(e) => onInsertionDragOver(e, suite.id, suite.testCases?.length || 0)}
+					ondragover={(e) =>
+						onInsertionDragOver(e, suite.id, suite.testCases?.length || 0)}
 					ondragleave={onInsertionDragLeave}
 					ondrop={(e) => onInsertionDrop(e, suite.id, suite.testCases?.length || 0)}
 					isOver={dragOverPosition?.suiteId === suite.id &&

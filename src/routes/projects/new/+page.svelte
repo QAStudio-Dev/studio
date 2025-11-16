@@ -101,8 +101,8 @@
 				<div class="flex-1">
 					<h2 class="mb-2 text-2xl font-bold">Upgrade to Create More Projects</h2>
 					<p class="text-surface-600-300 mb-4">
-						You've reached the free plan limit of 1 project. Upgrade to Pro to create unlimited
-						projects and unlock powerful features:
+						You've reached the free plan limit of 1 project. Upgrade to Pro to create
+						unlimited projects and unlock powerful features:
 					</p>
 					<ul class="text-surface-700-200 mb-6 space-y-2">
 						<li class="flex items-center gap-2">
@@ -123,8 +123,12 @@
 						</li>
 					</ul>
 					<div class="flex gap-3">
-						<a href="/teams/new" class="btn preset-filled-primary-500"> Upgrade to Pro </a>
-						<a href="/projects" class="btn preset-outlined-surface-500"> View My Projects </a>
+						<a href="/teams/new" class="btn preset-filled-primary-500">
+							Upgrade to Pro
+						</a>
+						<a href="/projects" class="btn preset-outlined-surface-500">
+							View My Projects
+						</a>
 					</div>
 				</div>
 			</div>
@@ -172,7 +176,8 @@
 					required
 				/>
 				<p class="text-surface-600-300 mt-2 text-sm">
-					2-10 uppercase letters or numbers. Used to identify test cases (e.g., {key || 'PROJ'}-123)
+					2-10 uppercase letters or numbers. Used to identify test cases (e.g., {key ||
+						'PROJ'}-123)
 				</p>
 			</label>
 
@@ -217,8 +222,8 @@
 	<!-- Help Text -->
 	<div class="bg-surface-50-900 mt-6 rounded-container p-4 text-sm">
 		<p class="text-surface-600-300">
-			<strong>💡 Tip:</strong> Choose a short, memorable project key. It will be used as a prefix for
-			all test cases in this project.
+			<strong>💡 Tip:</strong> Choose a short, memorable project key. It will be used as a prefix
+			for all test cases in this project.
 		</p>
 	</div>
 </div>

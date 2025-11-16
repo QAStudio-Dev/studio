@@ -272,7 +272,9 @@ describe('JiraClient', () => {
 					},
 					{
 						type: 'paragraph',
-						content: [{ type: 'text', text: 'Expected behavior: User should be logged in.' }]
+						content: [
+							{ type: 'text', text: 'Expected behavior: User should be logged in.' }
+						]
 					}
 				]
 			};

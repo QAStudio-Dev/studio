@@ -22,7 +22,10 @@
 				<div class="mt-8 text-center">
 					<p class="text-sm text-surface-600-400">
 						Don't have an account?
-						<a href="/sign-up" class="font-medium text-primary-500 hover:text-primary-600">
+						<a
+							href="/sign-up"
+							class="font-medium text-primary-500 hover:text-primary-600"
+						>
 							Sign up - it's free!
 						</a>
 					</p>
@@ -52,7 +55,9 @@
 						</div>
 						<div>
 							<p class="font-semibold">Free Forever</p>
-							<p class="text-sm opacity-90">One project with unlimited test cases and runs</p>
+							<p class="text-sm opacity-90">
+								One project with unlimited test cases and runs
+							</p>
 						</div>
 					</div>
 
@@ -80,7 +85,9 @@
 						</div>
 						<div>
 							<p class="font-semibold">Seamless Integrations</p>
-							<p class="text-sm opacity-90">Connect with Jira, Slack, GitHub, and more (Pro)</p>
+							<p class="text-sm opacity-90">
+								Connect with Jira, Slack, GitHub, and more (Pro)
+							</p>
 						</div>
 					</div>
 
@@ -93,7 +100,9 @@
 						</div>
 						<div>
 							<p class="font-semibold">Multiple Projects</p>
-							<p class="text-sm opacity-90">Create and manage unlimited projects (Pro)</p>
+							<p class="text-sm opacity-90">
+								Create and manage unlimited projects (Pro)
+							</p>
 						</div>
 					</div>
 				</div>

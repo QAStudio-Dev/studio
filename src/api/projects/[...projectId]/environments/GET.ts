@@ -23,7 +23,8 @@ export const Output = z.array(
 export const Modifier = (r: any) => {
 	r.tags = ['Environments'];
 	r.summary = 'List environments';
-	r.description = 'Returns all testing environments for a project (Production, Staging, QA, etc.)';
+	r.description =
+		'Returns all testing environments for a project (Production, Staging, QA, etc.)';
 	return r;
 };
 

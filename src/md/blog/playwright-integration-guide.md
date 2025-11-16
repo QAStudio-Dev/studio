@@ -5,10 +5,10 @@ description: Learn how to seamlessly integrate your Playwright tests with QA Stu
 cover: ''
 category: Integrations
 tags:
-  - playwright
-  - automation
-  - ci-cd
-  - integration
+    - playwright
+    - automation
+    - ci-cd
+    - integration
 author: QA Studio Team
 slug: playwright-integration-guide
 published: true
@@ -136,24 +136,24 @@ name: Playwright Tests
 on: [push, pull_request]
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
+    test:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: 18
 
-      - name: Install dependencies
-        run: npm ci
+            - name: Install dependencies
+              run: npm ci
 
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+            - name: Install Playwright Browsers
+              run: npx playwright install --with-deps
 
-      - name: Run Playwright tests
-        env:
-          QA_STUDIO_API_KEY: ${{ secrets.QA_STUDIO_API_KEY }}
-        run: npx playwright test
+            - name: Run Playwright tests
+              env:
+                  QA_STUDIO_API_KEY: ${{ secrets.QA_STUDIO_API_KEY }}
+              run: npx playwright test
 ```
 
 Add `QA_STUDIO_API_KEY` to your GitHub repository secrets:
@@ -166,16 +166,16 @@ Add `QA_STUDIO_API_KEY` to your GitHub repository secrets:
 
 ```yaml
 stages:
-  - test
+    - test
 
 playwright-tests:
-  stage: test
-  image: mcr.microsoft.com/playwright:v1.40.0-focal
-  script:
-    - npm ci
-    - npx playwright test
-  variables:
-    QA_STUDIO_API_KEY: $QA_STUDIO_API_KEY
+    stage: test
+    image: mcr.microsoft.com/playwright:v1.40.0-focal
+    script:
+        - npm ci
+        - npx playwright test
+    variables:
+        QA_STUDIO_API_KEY: $QA_STUDIO_API_KEY
 ```
 
 Add `QA_STUDIO_API_KEY` to your GitLab CI/CD variables:
@@ -266,11 +266,11 @@ After running your tests, results will automatically appear in your QA Studio da
 2. Click on **Test Runs**
 3. Find your latest run by name or timestamp
 4. Click to view detailed results including:
-   - Pass/fail status for each test
-   - Execution duration
-   - Error messages and stack traces
-   - Screenshots and videos
-   - Browser and environment information
+    - Pass/fail status for each test
+    - Execution duration
+    - Error messages and stack traces
+    - Screenshots and videos
+    - Browser and environment information
 
 ## Troubleshooting
 
@@ -353,47 +353,47 @@ Here's a complete example integrating Playwright with QA Studio in GitHub Action
 name: E2E Tests
 
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
-  schedule:
-    - cron: '0 0 * * *' # Daily at midnight
+    push:
+        branches: [main, develop]
+    pull_request:
+        branches: [main]
+    schedule:
+        - cron: '0 0 * * *' # Daily at midnight
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        browser: [chromium, firefox, webkit]
+    test:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                browser: [chromium, firefox, webkit]
 
-    steps:
-      - uses: actions/checkout@v3
+        steps:
+            - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'npm'
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: 18
+                  cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+            - name: Install dependencies
+              run: npm ci
 
-      - name: Install Playwright
-        run: npx playwright install --with-deps ${{ matrix.browser }}
+            - name: Install Playwright
+              run: npx playwright install --with-deps ${{ matrix.browser }}
 
-      - name: Run tests
-        env:
-          QA_STUDIO_API_KEY: ${{ secrets.QA_STUDIO_API_KEY }}
-          BROWSER: ${{ matrix.browser }}
-        run: npx playwright test --project=${{ matrix.browser }}
+            - name: Run tests
+              env:
+                  QA_STUDIO_API_KEY: ${{ secrets.QA_STUDIO_API_KEY }}
+                  BROWSER: ${{ matrix.browser }}
+              run: npx playwright test --project=${{ matrix.browser }}
 
-      - name: Upload artifacts
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: playwright-report-${{ matrix.browser }}
-          path: playwright-report/
-          retention-days: 30
+            - name: Upload artifacts
+              if: always()
+              uses: actions/upload-artifact@v3
+              with:
+                  name: playwright-report-${{ matrix.browser }}
+                  path: playwright-report/
+                  retention-days: 30
 ```
 
 ## Next Steps

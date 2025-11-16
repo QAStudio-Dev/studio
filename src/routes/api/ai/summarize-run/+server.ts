@@ -153,7 +153,9 @@ export const POST: RequestHandler = async (event) => {
 				failures: failuresForPattern
 			});
 
-			console.log(`[AI Summary] Pattern analysis complete (${patternAnalysis?.length || 0} chars)`);
+			console.log(
+				`[AI Summary] Pattern analysis complete (${patternAnalysis?.length || 0} chars)`
+			);
 		}
 
 		if (!summary) {

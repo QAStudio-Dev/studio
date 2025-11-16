@@ -17,7 +17,10 @@ export const Query = z.object({
 		.optional()
 		.describe('Search in test case title and description'),
 	suiteId: z.string().optional().describe('Filter by test suite ID'),
-	priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).optional().describe('Filter by priority'),
+	priority: z
+		.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'])
+		.optional()
+		.describe('Filter by priority'),
 	type: z
 		.enum([
 			'FUNCTIONAL',

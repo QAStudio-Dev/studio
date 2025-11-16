@@ -114,7 +114,9 @@
 					{#if invitation.team.description}
 						<div class="flex items-start justify-between gap-4">
 							<span class="text-surface-600-300">Description</span>
-							<span class="max-w-xs text-right font-medium">{invitation.team.description}</span>
+							<span class="max-w-xs text-right font-medium"
+								>{invitation.team.description}</span
+							>
 						</div>
 					{/if}
 
@@ -195,12 +197,20 @@
 			<!-- Actions -->
 			<SignedIn>
 				<div class="flex gap-3">
-					<button onclick={acceptInvitation} class="btn flex-1 preset-filled" disabled={loading}>
+					<button
+						onclick={acceptInvitation}
+						class="btn flex-1 preset-filled"
+						disabled={loading}
+					>
 						<CheckCircle class="mr-2 h-4 w-4" />
 						{loading ? 'Joining...' : 'Accept Invitation'}
 					</button>
 
-					<button onclick={declineInvitation} class="btn preset-outlined" disabled={loading}>
+					<button
+						onclick={declineInvitation}
+						class="btn preset-outlined"
+						disabled={loading}
+					>
 						Decline
 					</button>
 				</div>
@@ -215,7 +225,9 @@
 							<p class="text-surface-600-300 mb-3 text-sm">
 								You need to sign in or create an account to accept this invitation.
 								{#if invitation.email}
-									Make sure to use the email address: <strong>{invitation.email}</strong>
+									Make sure to use the email address: <strong
+										>{invitation.email}</strong
+									>
 								{/if}
 							</p>
 						</div>

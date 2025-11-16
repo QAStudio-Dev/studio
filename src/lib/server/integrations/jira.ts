@@ -234,7 +234,9 @@ export class JiraClient {
 	 * Get issue types for a project
 	 */
 	async getIssueTypes(projectKey: string): Promise<{ data: JiraIssueType[]; error?: string }> {
-		const result = await this.request<{ issueTypes: JiraIssueType[] }>(`/project/${projectKey}`);
+		const result = await this.request<{ issueTypes: JiraIssueType[] }>(
+			`/project/${projectKey}`
+		);
 		if (result.error || !result.data) {
 			return { data: [], error: result.error };
 		}
@@ -356,7 +358,10 @@ export class JiraClient {
 	/**
 	 * Search issues using JQL
 	 */
-	async searchIssues(jql: string, maxResults = 50): Promise<{ data: JiraIssue[]; error?: string }> {
+	async searchIssues(
+		jql: string,
+		maxResults = 50
+	): Promise<{ data: JiraIssue[]; error?: string }> {
 		const result = await this.request<{ issues: JiraIssue[] }>(
 			`/search?jql=${encodeURIComponent(jql)}&maxResults=${maxResults}`
 		);

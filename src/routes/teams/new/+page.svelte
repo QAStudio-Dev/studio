@@ -13,9 +13,11 @@
 	// These should match your Stripe Price IDs from .env
 	const PRICE_IDS = {
 		pro_monthly:
-			env.PUBLIC_STRIPE_PRICE_ID_PRO_MONTHLY || import.meta.env.PUBLIC_STRIPE_PRICE_ID_PRO_MONTHLY,
+			env.PUBLIC_STRIPE_PRICE_ID_PRO_MONTHLY ||
+			import.meta.env.PUBLIC_STRIPE_PRICE_ID_PRO_MONTHLY,
 		pro_yearly:
-			env.PUBLIC_STRIPE_PRICE_ID_PRO_YEARLY || import.meta.env.PUBLIC_STRIPE_PRICE_ID_PRO_YEARLY
+			env.PUBLIC_STRIPE_PRICE_ID_PRO_YEARLY ||
+			import.meta.env.PUBLIC_STRIPE_PRICE_ID_PRO_YEARLY
 	};
 
 	const plans = {
@@ -24,7 +26,12 @@
 			price: 0,
 			description: 'Perfect for individuals',
 			tagline: 'Get started for free',
-			features: ['1 user (you)', 'Unlimited projects', 'Basic test management', 'Community support']
+			features: [
+				'1 user (you)',
+				'Unlimited projects',
+				'Basic test management',
+				'Community support'
+			]
 		},
 		pro: {
 			name: 'Pro',
@@ -73,7 +80,8 @@
 
 			// If Pro plan selected, redirect to Stripe Checkout
 			if (selectedPlan === 'pro') {
-				const priceId = billingPeriod === 'monthly' ? PRICE_IDS.pro_monthly : PRICE_IDS.pro_yearly;
+				const priceId =
+					billingPeriod === 'monthly' ? PRICE_IDS.pro_monthly : PRICE_IDS.pro_yearly;
 
 				// Validate price ID is set
 				if (!priceId) {
@@ -121,7 +129,8 @@
 			Create Your Team
 		</h1>
 		<p class="text-surface-600-300 mx-auto max-w-2xl text-lg">
-			Start collaborating with your team on test management. Choose the plan that fits your needs.
+			Start collaborating with your team on test management. Choose the plan that fits your
+			needs.
 		</p>
 	</div>
 
@@ -206,7 +215,9 @@
 			disabled={loading}
 		>
 			<div class="absolute -top-4 left-1/2 -translate-x-1/2">
-				<span class="badge preset-filled-primary-500 px-4 py-2 text-sm font-semibold shadow-lg">
+				<span
+					class="badge preset-filled-primary-500 px-4 py-2 text-sm font-semibold shadow-lg"
+				>
 					<Sparkles class="mr-1 inline h-4 w-4" />
 					{plans.pro.tagline}
 				</span>
@@ -228,7 +239,9 @@
 			<div class="mb-8">
 				<div class="flex items-baseline gap-2">
 					<span class="text-5xl font-bold">
-						${billingPeriod === 'monthly' ? plans.pro.priceMonthly : plans.pro.priceYearly}
+						${billingPeriod === 'monthly'
+							? plans.pro.priceMonthly
+							: plans.pro.priceYearly}
 					</span>
 					<span class="text-surface-600-300">/user/month</span>
 				</div>
@@ -327,13 +340,14 @@
 					{#if selectedPlan === 'free'}
 						<p class="mb-1 font-medium">Start for free - no credit card required</p>
 						<p class="text-surface-600-300 text-sm">
-							Upgrade to Pro anytime to unlock team collaboration and AI-powered features.
+							Upgrade to Pro anytime to unlock team collaboration and AI-powered
+							features.
 						</p>
 					{:else}
 						<p class="mb-1 font-medium">Secure payment powered by Stripe</p>
 						<p class="text-surface-600-300 text-sm">
-							You'll be redirected to Stripe to complete payment. Cancel anytime from your team
-							settings.
+							You'll be redirected to Stripe to complete payment. Cancel anytime from
+							your team settings.
 						</p>
 					{/if}
 				</div>

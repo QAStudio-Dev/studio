@@ -76,7 +76,8 @@ export const GET: RequestHandler = async ({ params }) => {
 export const PATCH: RequestHandler = async ({ params, request }) => {
 	try {
 		const data = await request.json();
-		const { name, description, milestoneId, environmentId, status, startedAt, completedAt } = data;
+		const { name, description, milestoneId, environmentId, status, startedAt, completedAt } =
+			data;
 
 		const updateData: any = {};
 		if (name !== undefined) updateData.name = name;

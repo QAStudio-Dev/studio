@@ -2,13 +2,13 @@
 title: Welcome to QA Studio
 date: 2025-11-01T10:00:00.000Z
 description: Introducing QA Studio - modern test management built by QA
-  engineers, for QA engineers.
+    engineers, for QA engineers.
 cover: ''
 category: Product Updates
 tags:
-  - announcement
-  - getting-started
-  - qa-engineering
+    - announcement
+    - getting-started
+    - qa-engineering
 author: QA Studio Team
 slug: welcome-to-qa-studio
 published: true

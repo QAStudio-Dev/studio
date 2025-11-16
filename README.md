@@ -41,52 +41,52 @@ QA Studio is a modern, open-source test management platform built by QA engineer
 
 1. **Clone the repository**
 
-   ```bash
-   git clone https://github.com/QAStudio-Dev/studio.git
-   cd studio
-   ```
+    ```bash
+    git clone https://github.com/QAStudio-Dev/studio.git
+    cd studio
+    ```
 
 2. **Install dependencies**
 
-   ```bash
-   npm install
-   ```
+    ```bash
+    npm install
+    ```
 
 3. **Set up environment variables**
 
-   ```bash
-   cp .env.example .env.local
-   ```
+    ```bash
+    cp .env.example .env.local
+    ```
 
-   Edit `.env.local` with your configuration:
+    Edit `.env.local` with your configuration:
 
-   ```env
-   # Database
-   DATABASE_URL="postgresql://user:password@localhost:5432/qa_studio"
+    ```env
+    # Database
+    DATABASE_URL="postgresql://user:password@localhost:5432/qa_studio"
 
-   # Clerk Authentication
-   PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
-   CLERK_SECRET_KEY=sk_test_...
+    # Clerk Authentication
+    PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+    CLERK_SECRET_KEY=sk_test_...
 
-   # Decap CMS (optional, for blog)
-   DECAP_GITHUB_CLIENT_ID=...
-   DECAP_GITHUB_CLIENT_SECRET=...
-   ```
+    # Decap CMS (optional, for blog)
+    DECAP_GITHUB_CLIENT_ID=...
+    DECAP_GITHUB_CLIENT_SECRET=...
+    ```
 
 4. **Set up the database**
 
-   ```bash
-   npx prisma generate
-   npx prisma db push
-   ```
+    ```bash
+    npx prisma generate
+    npx prisma db push
+    ```
 
 5. **Start the development server**
 
-   ```bash
-   npm run dev
-   ```
+    ```bash
+    npm run dev
+    ```
 
-   Open [http://localhost:5173](http://localhost:5173) in your browser.
+    Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ## Tech Stack
 
@@ -101,12 +101,12 @@ QA Studio is a modern, open-source test management platform built by QA engineer
 
 - 📚 **[API Documentation](https://qastudio.dev/docs)** - Complete REST API reference
 - 🔧 **[Setup Guides](docs/)** - Detailed setup instructions
-  - [Authentication Setup](docs/SETUP_AUTH.md)
-  - [Team Invitations](docs/TEAM_INVITATIONS.md) - Invite members with role-based access
-  - [Clerk Invitations Setup](docs/CLERK_INVITATIONS_SETUP.md) - Configure email invitations
-  - [Stripe Integration](docs/STRIPE_SETUP.md) - Team billing and subscriptions
-  - [Decap CMS Setup](docs/DECAP_CMS_SETUP.md) - Blog management
-  - [Slack Notifications](docs/INTEGRATIONS.md) - Team notifications
+    - [Authentication Setup](docs/SETUP_AUTH.md)
+    - [Team Invitations](docs/TEAM_INVITATIONS.md) - Invite members with role-based access
+    - [Clerk Invitations Setup](docs/CLERK_INVITATIONS_SETUP.md) - Configure email invitations
+    - [Stripe Integration](docs/STRIPE_SETUP.md) - Team billing and subscriptions
+    - [Decap CMS Setup](docs/DECAP_CMS_SETUP.md) - Blog management
+    - [Slack Notifications](docs/INTEGRATIONS.md) - Team notifications
 - 🎨 **[Project Structure](CLAUDE.md)** - Codebase organization and conventions
 
 ## Deployment

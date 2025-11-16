@@ -92,25 +92,25 @@ If you want to add more endpoints to public docs in the future:
 Internal/admin endpoints:
 
 - [ ] **Dashboard APIs**
-  - GET /api/dashboard/stats
-  - GET /api/dashboard/projects
-  - GET /api/dashboard/recent-results
-  - GET /api/dashboard/user-info
+    - GET /api/dashboard/stats
+    - GET /api/dashboard/projects
+    - GET /api/dashboard/recent-results
+    - GET /api/dashboard/user-info
 
 - [ ] **Teams & Billing**
-  - POST /api/teams/create
-  - POST /api/teams/leave
-  - POST /api/billing/portal
+    - POST /api/teams/create
+    - POST /api/teams/leave
+    - POST /api/billing/portal
 
 - [ ] **API Keys**
-  - GET /api/api-keys/list
-  - POST /api/api-keys/create
-  - DELETE /api/api-keys/[keyId]/delete
+    - GET /api/api-keys/list
+    - POST /api/api-keys/create
+    - DELETE /api/api-keys/[keyId]/delete
 
 - [ ] **Integrations**
-  - GET /api/integrations/list
-  - POST /api/integrations/slack/callback
-  - DELETE /api/integrations/[id]/delete
+    - GET /api/integrations/list
+    - POST /api/integrations/slack/callback
+    - DELETE /api/integrations/[id]/delete
 
 ## Migration Instructions
 

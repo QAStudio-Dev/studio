@@ -23,12 +23,13 @@
 		<section class="mb-8">
 			<h2>1. Acceptance of Terms</h2>
 			<p>
-				By accessing or using QA Studio ("Service"), you agree to be bound by these Terms of Service
-				("Terms"). If you disagree with any part of these terms, you may not use the Service.
+				By accessing or using QA Studio ("Service"), you agree to be bound by these Terms of
+				Service ("Terms"). If you disagree with any part of these terms, you may not use the
+				Service.
 			</p>
 			<p>
-				<strong>Self-Hosted Deployments:</strong> These Terms apply to our hosted service at qastudio.dev.
-				Self-hosted deployments are governed by our open-source license.
+				<strong>Self-Hosted Deployments:</strong> These Terms apply to our hosted service at
+				qastudio.dev. Self-hosted deployments are governed by our open-source license.
 			</p>
 		</section>
 
@@ -50,8 +51,8 @@
 			<h2>3. Account Registration</h2>
 			<h3>3.1 Eligibility</h3>
 			<p>
-				You must be at least 13 years old and capable of forming a binding contract to use the
-				Service.
+				You must be at least 13 years old and capable of forming a binding contract to use
+				the Service.
 			</p>
 
 			<h3>3.2 Account Security</h3>
@@ -64,8 +65,8 @@
 
 			<h3>3.3 Account Information</h3>
 			<p>
-				You must provide accurate, current, and complete information during registration and keep it
-				updated.
+				You must provide accurate, current, and complete information during registration and
+				keep it updated.
 			</p>
 		</section>
 
@@ -97,8 +98,8 @@
 
 			<h3>4.4 Payment Failures</h3>
 			<p>
-				If payment fails, we may suspend or downgrade your account after notification. You remain
-				responsible for any outstanding charges.
+				If payment fails, we may suspend or downgrade your account after notification. You
+				remain responsible for any outstanding charges.
 			</p>
 		</section>
 
@@ -126,7 +127,8 @@
 
 			<h3>6.1 Your Content</h3>
 			<p>
-				You retain ownership of all test data, attachments, and content you upload ("User Content").
+				You retain ownership of all test data, attachments, and content you upload ("User
+				Content").
 			</p>
 
 			<h3>6.2 License to Us</h3>
@@ -149,8 +151,8 @@
 
 			<h3>6.4 Content Removal</h3>
 			<p>
-				We may remove User Content that violates these Terms or applicable laws, with or without
-				notice.
+				We may remove User Content that violates these Terms or applicable laws, with or
+				without notice.
 			</p>
 		</section>
 
@@ -160,13 +162,15 @@
 			<h3>7.1 Our Rights</h3>
 			<p>
 				QA Studio and its original content, features, and functionality are owned by us and
-				protected by international copyright, trademark, and other intellectual property laws.
+				protected by international copyright, trademark, and other intellectual property
+				laws.
 			</p>
 
 			<h3>7.2 Open Source</h3>
 			<p>
-				QA Studio is open-source software. The source code is available under our open-source
-				license. These Terms govern the hosted service, not self-hosted deployments.
+				QA Studio is open-source software. The source code is available under our
+				open-source license. These Terms govern the hosted service, not self-hosted
+				deployments.
 			</p>
 
 			<h3>7.3 Trademarks</h3>
@@ -193,8 +197,8 @@
 
 			<h3>9.1 Integrations</h3>
 			<p>
-				QA Studio integrates with third-party services (Slack, Discord, GitHub, etc.). Your use of
-				these integrations is subject to their respective terms of service.
+				QA Studio integrates with third-party services (Slack, Discord, GitHub, etc.). Your
+				use of these integrations is subject to their respective terms of service.
 			</p>
 
 			<h3>9.2 Service Providers</h3>
@@ -211,8 +215,8 @@
 		<section class="mb-8">
 			<h2>10. Privacy and Data Protection</h2>
 			<p>
-				Our Privacy Policy (qastudio.dev/privacy) explains how we collect, use, and protect your
-				data. By using the Service, you agree to our Privacy Policy.
+				Our Privacy Policy (qastudio.dev/privacy) explains how we collect, use, and protect
+				your data. By using the Service, you agree to our Privacy Policy.
 			</p>
 		</section>
 
@@ -221,20 +225,20 @@
 
 			<h3>11.1 Uptime</h3>
 			<p>
-				We strive for high availability but do not guarantee uninterrupted access. We are not liable
-				for downtime or service interruptions.
+				We strive for high availability but do not guarantee uninterrupted access. We are
+				not liable for downtime or service interruptions.
 			</p>
 
 			<h3>11.2 Maintenance</h3>
 			<p>
-				We may perform scheduled maintenance with reasonable notice. Emergency maintenance may occur
-				without notice.
+				We may perform scheduled maintenance with reasonable notice. Emergency maintenance
+				may occur without notice.
 			</p>
 
 			<h3>11.3 Service Modifications</h3>
 			<p>
-				We may modify, suspend, or discontinue any part of the Service at any time with reasonable
-				notice.
+				We may modify, suspend, or discontinue any part of the Service at any time with
+				reasonable notice.
 			</p>
 		</section>
 
@@ -269,8 +273,8 @@
 		<section class="mb-8">
 			<h2>13. Disclaimers</h2>
 			<p>
-				THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EXPRESS
-				OR IMPLIED, INCLUDING BUT NOT LIMITED TO:
+				THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND,
+				EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO:
 			</p>
 			<ul>
 				<li>Warranties of merchantability</li>
@@ -280,16 +284,17 @@
 				<li>Uninterrupted or error-free operation</li>
 			</ul>
 			<p>
-				We do not warrant that the Service will meet your requirements or that defects will be
-				corrected.
+				We do not warrant that the Service will meet your requirements or that defects will
+				be corrected.
 			</p>
 		</section>
 
 		<section class="mb-8">
 			<h2>14. Limitation of Liability</h2>
 			<p>
-				TO THE MAXIMUM EXTENT PERMITTED BY LAW, WE SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-				SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING BUT NOT LIMITED TO:
+				TO THE MAXIMUM EXTENT PERMITTED BY LAW, WE SHALL NOT BE LIABLE FOR ANY INDIRECT,
+				INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING BUT NOT LIMITED
+				TO:
 			</p>
 			<ul>
 				<li>Loss of profits or revenue</li>
@@ -298,16 +303,16 @@
 				<li>Cost of substitute services</li>
 			</ul>
 			<p>
-				OUR TOTAL LIABILITY SHALL NOT EXCEED THE AMOUNT YOU PAID US IN THE 12 MONTHS PRECEDING THE
-				CLAIM, OR $100, WHICHEVER IS GREATER.
+				OUR TOTAL LIABILITY SHALL NOT EXCEED THE AMOUNT YOU PAID US IN THE 12 MONTHS
+				PRECEDING THE CLAIM, OR $100, WHICHEVER IS GREATER.
 			</p>
 		</section>
 
 		<section class="mb-8">
 			<h2>15. Indemnification</h2>
 			<p>
-				You agree to indemnify and hold us harmless from any claims, damages, or expenses arising
-				from:
+				You agree to indemnify and hold us harmless from any claims, damages, or expenses
+				arising from:
 			</p>
 			<ul>
 				<li>Your use of the Service</li>
@@ -322,53 +327,53 @@
 
 			<h3>16.1 Informal Resolution</h3>
 			<p>
-				Before filing a claim, you agree to contact us at legal@qastudio.dev to resolve the dispute
-				informally.
+				Before filing a claim, you agree to contact us at legal@qastudio.dev to resolve the
+				dispute informally.
 			</p>
 
 			<h3>16.2 Arbitration</h3>
 			<p>
-				Any disputes not resolved informally shall be resolved through binding arbitration, except
-				where prohibited by law.
+				Any disputes not resolved informally shall be resolved through binding arbitration,
+				except where prohibited by law.
 			</p>
 
 			<h3>16.3 Class Action Waiver</h3>
 			<p>
-				You agree to resolve disputes individually, not as part of a class action or collective
-				proceeding.
+				You agree to resolve disputes individually, not as part of a class action or
+				collective proceeding.
 			</p>
 		</section>
 
 		<section class="mb-8">
 			<h2>17. Governing Law</h2>
 			<p>
-				These Terms are governed by the laws of the United States, without regard to conflict of law
-				principles.
+				These Terms are governed by the laws of the United States, without regard to
+				conflict of law principles.
 			</p>
 		</section>
 
 		<section class="mb-8">
 			<h2>18. Changes to Terms</h2>
 			<p>
-				We may update these Terms periodically. Material changes will be notified via email or
-				in-app notification at least 30 days before taking effect. Continued use constitutes
-				acceptance.
+				We may update these Terms periodically. Material changes will be notified via email
+				or in-app notification at least 30 days before taking effect. Continued use
+				constitutes acceptance.
 			</p>
 		</section>
 
 		<section class="mb-8">
 			<h2>19. Severability</h2>
 			<p>
-				If any provision of these Terms is found unenforceable, the remaining provisions remain in
-				effect.
+				If any provision of these Terms is found unenforceable, the remaining provisions
+				remain in effect.
 			</p>
 		</section>
 
 		<section class="mb-8">
 			<h2>20. Entire Agreement</h2>
 			<p>
-				These Terms, along with our Privacy Policy, constitute the entire agreement between you and
-				us regarding the Service.
+				These Terms, along with our Privacy Policy, constitute the entire agreement between
+				you and us regarding the Service.
 			</p>
 		</section>
 
@@ -392,8 +397,8 @@
 		>
 			<h2 class="mt-0">Open Source License</h2>
 			<p>
-				QA Studio is open-source software. These Terms of Service apply to our hosted service at
-				qastudio.dev.
+				QA Studio is open-source software. These Terms of Service apply to our hosted
+				service at qastudio.dev.
 			</p>
 			<p>
 				For self-hosted deployments, please refer to our open-source license at <a
@@ -406,8 +411,8 @@
 
 		<section class="mb-8">
 			<p class="text-sm text-surface-600 dark:text-surface-400">
-				By using QA Studio, you acknowledge that you have read, understood, and agree to be bound by
-				these Terms of Service.
+				By using QA Studio, you acknowledge that you have read, understood, and agree to be
+				bound by these Terms of Service.
 			</p>
 		</section>
 	</div>

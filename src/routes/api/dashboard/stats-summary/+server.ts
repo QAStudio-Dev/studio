@@ -20,8 +20,8 @@ export const GET: RequestHandler = async (event) => {
 	}
 
 	// Run all counts in parallel
-	const [totalProjects, totalTestCases, totalTestRuns, passedTests, totalTests] = await Promise.all(
-		[
+	const [totalProjects, totalTestCases, totalTestRuns, passedTests, totalTests] =
+		await Promise.all([
 			db.project.count({
 				where: user.teamId ? { teamId: user.teamId } : { createdBy: userId, teamId: null }
 			}),
@@ -48,8 +48,7 @@ export const GET: RequestHandler = async (event) => {
 					? { testRun: { project: { teamId: user.teamId } } }
 					: { executedBy: userId, testRun: { project: { teamId: null } } }
 			})
-		]
-	);
+		]);
 
 	const passRate = totalTests > 0 ? Math.round((passedTests / totalTests) * 100) : 0;
 

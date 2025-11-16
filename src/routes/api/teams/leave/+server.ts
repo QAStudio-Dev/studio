@@ -47,7 +47,9 @@ export const POST: RequestHandler = async (event) => {
 						}
 					});
 
-					console.log(`✅ Canceled subscription ${user.team.subscription.stripeSubscriptionId}`);
+					console.log(
+						`✅ Canceled subscription ${user.team.subscription.stripeSubscriptionId}`
+					);
 				} catch (subError) {
 					console.error('Error canceling subscription:', subError);
 					// Continue with team deletion even if subscription cancellation fails
@@ -73,6 +75,8 @@ export const POST: RequestHandler = async (event) => {
 			return json({ message: 'Successfully deleted team and left' });
 		}
 
+		const teamId = user.teamId;
+
 		// Remove user from team by setting teamId to null
 		await db.user.update({
 			where: { id: userId },
@@ -81,8 +85,8 @@ export const POST: RequestHandler = async (event) => {
 			}
 		});
 
-		// Invalidate user's project cache - they no longer see team projects
-		await deleteCache(CacheKeys.projects(userId));
+		// Invalidate caches after member leaves team
+		await deleteCache([CacheKeys.projects(userId), CacheKeys.teamStatus(teamId)]);
 
 		return json({ message: 'Successfully left the team' });
 	} catch (error: any) {

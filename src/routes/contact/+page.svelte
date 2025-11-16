@@ -100,16 +100,16 @@
 			<div>
 				<h3 class="mb-2 text-lg font-semibold">How quickly can I expect a response?</h3>
 				<p class="text-surface-600 dark:text-surface-400">
-					For email support, we typically respond within 24-48 hours. For urgent issues, try our
-					Discord community for faster responses from the team and other users.
+					For email support, we typically respond within 24-48 hours. For urgent issues,
+					try our Discord community for faster responses from the team and other users.
 				</p>
 			</div>
 
 			<div>
 				<h3 class="mb-2 text-lg font-semibold">Do you offer enterprise support?</h3>
 				<p class="text-surface-600 dark:text-surface-400">
-					Yes! For enterprise support plans, dedicated onboarding, and custom integrations, please
-					reach out to
+					Yes! For enterprise support plans, dedicated onboarding, and custom
+					integrations, please reach out to
 					<a href="mailto:ben@qastudio.dev" class="text-primary-500 hover:underline"
 						>ben@qastudio.dev</a
 					>.
@@ -136,7 +136,8 @@
 	<div class="mt-6 card bg-primary-50/50 p-8 dark:bg-primary-950/50">
 		<h2 class="mb-2 text-xl font-bold">Business Inquiries</h2>
 		<p class="mb-4 text-surface-600 dark:text-surface-400">
-			For partnerships, press inquiries, or business development opportunities, please contact:
+			For partnerships, press inquiries, or business development opportunities, please
+			contact:
 		</p>
 		<a href="mailto:ben@qastudio.dev" class="font-medium text-primary-500 hover:underline">
 			ben@qastudio.dev

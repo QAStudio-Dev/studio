@@ -24,7 +24,10 @@
 				<div class="mt-8 text-center">
 					<p class="text-sm text-surface-600-400">
 						Already have an account?
-						<a href="/sign-in" class="font-medium text-primary-500 hover:text-primary-600">
+						<a
+							href="/sign-in"
+							class="font-medium text-primary-500 hover:text-primary-600"
+						>
 							Sign in
 						</a>
 					</p>
@@ -38,7 +41,9 @@
 				class="card rounded-container bg-gradient-to-br from-success-500 to-tertiary-500 p-8 text-white"
 			>
 				<div class="mb-6">
-					<div class="mb-4 inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-2">
+					<div
+						class="mb-4 inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-2"
+					>
 						<Zap class="h-4 w-4" />
 						<span class="text-sm font-semibold">Free Forever</span>
 					</div>
@@ -58,7 +63,9 @@
 						</div>
 						<div>
 							<p class="font-semibold">Complete Test Management</p>
-							<p class="text-sm opacity-90">One project with unlimited test cases and runs</p>
+							<p class="text-sm opacity-90">
+								One project with unlimited test cases and runs
+							</p>
 						</div>
 					</div>
 
@@ -104,7 +111,9 @@
 						</div>
 						<div>
 							<p class="font-semibold">AI-Powered Testing</p>
-							<p class="text-sm opacity-90">Auto-generate test cases and get smart insights</p>
+							<p class="text-sm opacity-90">
+								Auto-generate test cases and get smart insights
+							</p>
 						</div>
 					</div>
 

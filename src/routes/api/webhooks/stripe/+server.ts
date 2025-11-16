@@ -3,7 +3,9 @@ import type { RequestHandler } from './$types';
 import { stripe } from '$lib/server/stripe';
 import { db } from '$lib/server/db';
 import { STRIPE_WEBHOOK_SECRET } from '$env/static/private';
+import { FREE_TIER_LIMITS } from '$lib/constants';
 import type Stripe from 'stripe';
+import { deleteCache, CacheKeys } from '$lib/server/redis';
 
 /**
  * Stripe Webhook Handler
@@ -152,6 +154,9 @@ export const POST: RequestHandler = async ({ request }) => {
 					}
 				});
 
+				// Invalidate team status cache after transaction completes
+				await deleteCache(CacheKeys.teamStatus(teamId));
+
 				console.log(`✅ Subscription ${event.type} for team ${teamId}: ${status}`);
 
 				break;
@@ -160,6 +165,8 @@ export const POST: RequestHandler = async ({ request }) => {
 			// Subscription deleted
 			case 'customer.subscription.deleted': {
 				const subscription = event.data.object as Stripe.Subscription;
+
+				let teamId: string | undefined;
 
 				// Update subscription status and check if team is now over free tier limit
 				await db.$transaction(async (tx) => {
@@ -178,10 +185,11 @@ export const POST: RequestHandler = async ({ request }) => {
 						}
 					});
 
-					// When subscription is canceled, team reverts to free tier (1 member limit)
+					// When subscription is canceled, team reverts to free tier
 					if (updatedSub.team) {
+						teamId = updatedSub.team.id;
 						const memberCount = updatedSub.team.members.length;
-						const isOverLimit = memberCount > 1; // Free tier allows 1 member
+						const isOverLimit = memberCount > FREE_TIER_LIMITS.MEMBERS;
 
 						if (updatedSub.team.overSeatLimit !== isOverLimit) {
 							await tx.team.update({
@@ -191,12 +199,17 @@ export const POST: RequestHandler = async ({ request }) => {
 
 							if (isOverLimit) {
 								console.warn(
-									`⚠️ Team ${updatedSub.team.id} is now over free tier limit: ${memberCount} members, 1 allowed`
+									`⚠️ Team ${updatedSub.team.id} is now over free tier limit: ${memberCount} members, ${FREE_TIER_LIMITS.MEMBERS} allowed`
 								);
 							}
 						}
 					}
 				});
+
+				// Invalidate team status cache after transaction completes
+				if (teamId) {
+					await deleteCache(CacheKeys.teamStatus(teamId));
+				}
 
 				console.log(`✅ Subscription canceled: ${subscription.id}`);
 				break;

@@ -53,7 +53,11 @@
 			if (category === 'hook') {
 				// Use title to determine if it's setup or teardown
 				const title = step.title.toLowerCase();
-				if (title.includes('before') || title.includes('setup') || title.includes('fixture')) {
+				if (
+					title.includes('before') ||
+					title.includes('setup') ||
+					title.includes('fixture')
+				) {
 					setupSteps.push(step);
 				} else if (title.includes('after') || title.includes('teardown')) {
 					teardownSteps.push(step);
@@ -245,33 +249,42 @@
 										disabled={!hasChildren}
 									>
 										<!-- Expand indicator -->
-										<div class="flex h-5 w-4 flex-shrink-0 items-center justify-center">
+										<div
+											class="flex h-5 w-4 flex-shrink-0 items-center justify-center"
+										>
 											{#if hasChildren}
 												{#if isStepExpanded}
 													<ChevronDown class="h-3 w-3 text-surface-500" />
 												{:else}
-													<ChevronRight class="h-3 w-3 text-surface-500" />
+													<ChevronRight
+														class="h-3 w-3 text-surface-500"
+													/>
 												{/if}
 											{/if}
 										</div>
 
 										<!-- Status Icon -->
 										<StatusIcon
-											class="mt-0.5 h-4 w-4 flex-shrink-0 {getStatusColor(step.status)}"
+											class="mt-0.5 h-4 w-4 flex-shrink-0 {getStatusColor(
+												step.status
+											)}"
 										/>
 
 										<!-- Step Content -->
 										<div class="min-w-0 flex-1">
 											<div class="flex items-start gap-2">
 												<span
-													class="text-surface-900-50 text-sm {step.status === 'FAILED'
+													class="text-surface-900-50 text-sm {step.status ===
+													'FAILED'
 														? 'font-medium'
 														: ''}"
 												>
 													{step.title}
 												</span>
 												{#if step.category}
-													<span class="badge-sm badge flex-shrink-0 preset-outlined-surface-500">
+													<span
+														class="badge-sm badge flex-shrink-0 preset-outlined-surface-500"
+													>
 														<CategoryIcon class="mr-1 h-3 w-3" />
 														{step.category}
 													</span>
@@ -281,7 +294,9 @@
 											<!-- Error Message -->
 											{#if step.error}
 												<div class="mt-1 rounded-base bg-error-500/10 p-2">
-													<p class="font-mono text-xs break-words text-error-500">
+													<p
+														class="font-mono text-xs break-words text-error-500"
+													>
 														{step.error}
 													</p>
 												</div>
@@ -312,7 +327,9 @@
 												</div>
 											{/if}
 											{#if step.location && !compact}
-												<code class="text-xs">{formatLocation(step.location)}</code>
+												<code class="text-xs"
+													>{formatLocation(step.location)}</code
+												>
 											{/if}
 										</div>
 									</button>
@@ -321,8 +338,12 @@
 									{#if hasChildren && isStepExpanded && step.childSteps}
 										<div class="border-surface-200-700 border-l-2 pl-6">
 											{#each step.childSteps as childStep}
-												{@const ChildStatusIcon = getStatusIcon(childStep.status)}
-												{@const ChildCategoryIcon = getCategoryIcon(childStep.category)}
+												{@const ChildStatusIcon = getStatusIcon(
+													childStep.status
+												)}
+												{@const ChildCategoryIcon = getCategoryIcon(
+													childStep.category
+												)}
 
 												<div
 													class="border-surface-200-700 flex items-start gap-2 border-b px-3 py-2 last:border-b-0 hover:bg-surface-100-900 {childStep.status ===
@@ -339,7 +360,8 @@
 													<div class="min-w-0 flex-1">
 														<div class="flex items-start gap-2">
 															<span
-																class="text-surface-900-50 text-xs {childStep.status === 'FAILED'
+																class="text-surface-900-50 text-xs {childStep.status ===
+																'FAILED'
 																	? 'font-medium'
 																	: ''}"
 															>
@@ -349,15 +371,21 @@
 																<span
 																	class="badge-sm badge flex-shrink-0 preset-outlined-surface-500"
 																>
-																	<ChildCategoryIcon class="mr-1 h-2.5 w-2.5" />
+																	<ChildCategoryIcon
+																		class="mr-1 h-2.5 w-2.5"
+																	/>
 																	{childStep.category}
 																</span>
 															{/if}
 														</div>
 
 														{#if childStep.error}
-															<div class="mt-1 rounded-base bg-error-500/10 p-2">
-																<p class="font-mono text-xs break-words text-error-500">
+															<div
+																class="mt-1 rounded-base bg-error-500/10 p-2"
+															>
+																<p
+																	class="font-mono text-xs break-words text-error-500"
+																>
 																	{childStep.error}
 																</p>
 															</div>
@@ -365,7 +393,9 @@
 													</div>
 
 													{#if childStep.duration}
-														<div class="text-surface-600-300 flex-shrink-0 text-xs">
+														<div
+															class="text-surface-600-300 flex-shrink-0 text-xs"
+														>
 															{formatDuration(childStep.duration)}
 														</div>
 													{/if}

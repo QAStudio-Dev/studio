@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { db } from './db';
 import type { SubscriptionStatus, Subscription } from '@prisma/client';
+import { FREE_TIER_LIMITS } from '$lib/constants';
 
 /**
  * Check if a team has an active subscription
@@ -46,9 +47,9 @@ export async function hasAvailableSeats(teamId: string): Promise<boolean> {
 		return false;
 	}
 
-	// Free teams (no subscription) only allow 1 member
+	// Free teams (no subscription) only allow limited members
 	if (!team.subscription) {
-		return team.members.length < 1;
+		return team.members.length < FREE_TIER_LIMITS.MEMBERS;
 	}
 
 	// Check if current members are within seat limit

@@ -78,7 +78,10 @@ export const Input = z.object({
 				startTime: z.string().optional().describe('ISO 8601 timestamp when test started'),
 				endTime: z.string().optional().describe('ISO 8601 timestamp when test ended'),
 				retry: z.number().optional().describe('Retry attempt number (0 for first attempt)'),
-				projectName: z.string().optional().describe('Project/browser name (e.g., "chromium")'),
+				projectName: z
+					.string()
+					.optional()
+					.describe('Project/browser name (e.g., "chromium")'),
 				metadata: z
 					.object({
 						tags: z.array(z.string()).optional(),
@@ -433,7 +436,10 @@ async function createTestResultWithSteps(
 		try {
 			await processTestSteps(result.steps, testResult.id);
 		} catch (err: any) {
-			console.error(`Failed to process steps for testResultId ${testResult.id}:`, err.message);
+			console.error(
+				`Failed to process steps for testResultId ${testResult.id}:`,
+				err.message
+			);
 			// Don't fail the entire result if steps processing fails
 		}
 	}
@@ -734,7 +740,8 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 
 				// Try to find matching test case by title and suite
 				const testCase = testRun.project.testCases.find(
-					(tc) => tc.title.toLowerCase() === testTitle.toLowerCase() && tc.suiteId === suiteId
+					(tc) =>
+						tc.title.toLowerCase() === testTitle.toLowerCase() && tc.suiteId === suiteId
 				);
 
 				if (!testCase) {

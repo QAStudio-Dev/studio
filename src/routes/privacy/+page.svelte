@@ -23,14 +23,15 @@
 		<section class="mb-8">
 			<h2>1. Introduction</h2>
 			<p>
-				QA Studio ("we," "our," or "us") is committed to protecting your privacy. This Privacy
-				Policy explains how we collect, use, disclose, and safeguard your information when you use
-				our test management platform at qastudio.dev (the "Service").
+				QA Studio ("we," "our," or "us") is committed to protecting your privacy. This
+				Privacy Policy explains how we collect, use, disclose, and safeguard your
+				information when you use our test management platform at qastudio.dev (the
+				"Service").
 			</p>
 			<p>
-				<strong>Self-Hosted Deployments:</strong> If you self-host QA Studio, you are the data controller
-				and this privacy policy does not apply to your deployment. You are responsible for complying
-				with applicable privacy laws.
+				<strong>Self-Hosted Deployments:</strong> If you self-host QA Studio, you are the data
+				controller and this privacy policy does not apply to your deployment. You are responsible
+				for complying with applicable privacy laws.
 			</p>
 		</section>
 
@@ -40,39 +41,40 @@
 			<h3>2.1 Information You Provide</h3>
 			<ul>
 				<li>
-					<strong>Account Information:</strong> Email address, name, and authentication credentials managed
-					through Clerk.
+					<strong>Account Information:</strong> Email address, name, and authentication credentials
+					managed through Clerk.
 				</li>
 				<li>
 					<strong>Test Data:</strong> Test cases, test results, test runs, attachments (screenshots,
 					logs, videos), comments, and related metadata.
 				</li>
 				<li>
-					<strong>Team Information:</strong> Team name, member information, and organization details.
+					<strong>Team Information:</strong> Team name, member information, and organization
+					details.
 				</li>
 				<li>
-					<strong>Payment Information:</strong> Processed securely by Stripe. We do not store complete
-					credit card numbers.
+					<strong>Payment Information:</strong> Processed securely by Stripe. We do not store
+					complete credit card numbers.
 				</li>
 				<li>
-					<strong>Integration Data:</strong> Webhook URLs, API tokens for third-party integrations (Slack,
-					Discord, GitHub, etc.).
+					<strong>Integration Data:</strong> Webhook URLs, API tokens for third-party integrations
+					(Slack, Discord, GitHub, etc.).
 				</li>
 			</ul>
 
 			<h3>2.2 Automatically Collected Information</h3>
 			<ul>
 				<li>
-					<strong>Usage Data:</strong> IP address, browser type, device information, pages visited, features
-					used, and interaction patterns.
+					<strong>Usage Data:</strong> IP address, browser type, device information, pages
+					visited, features used, and interaction patterns.
 				</li>
 				<li>
-					<strong>Cookies:</strong> Session cookies for authentication, preference cookies for user settings,
-					and analytics cookies.
+					<strong>Cookies:</strong> Session cookies for authentication, preference cookies
+					for user settings, and analytics cookies.
 				</li>
 				<li>
-					<strong>API Usage:</strong> API requests, response times, and error logs for monitoring and
-					debugging.
+					<strong>API Usage:</strong> API requests, response times, and error logs for monitoring
+					and debugging.
 				</li>
 			</ul>
 
@@ -95,7 +97,8 @@
 			<p>We use collected information for:</p>
 			<ul>
 				<li>
-					<strong>Service Delivery:</strong> Providing and maintaining the test management platform.
+					<strong>Service Delivery:</strong> Providing and maintaining the test management
+					platform.
 				</li>
 				<li>
 					<strong>Test Management:</strong> Storing, organizing, and displaying your test data.
@@ -113,7 +116,9 @@
 				<li>
 					<strong>Billing:</strong> Processing payments and managing subscriptions.
 				</li>
-				<li><strong>Legal Compliance:</strong> Complying with applicable laws and regulations.</li>
+				<li>
+					<strong>Legal Compliance:</strong> Complying with applicable laws and regulations.
+				</li>
 			</ul>
 		</section>
 
@@ -126,23 +131,27 @@
 				<li><strong>Clerk:</strong> Authentication and user management</li>
 				<li><strong>Vercel:</strong> Hosting and infrastructure</li>
 				<li><strong>Stripe:</strong> Payment processing</li>
-				<li><strong>OpenAI:</strong> AI-powered features (only when you use AI diagnostics)</li>
+				<li>
+					<strong>OpenAI:</strong> AI-powered features (only when you use AI diagnostics)
+				</li>
 				<li><strong>Vercel Blob:</strong> File storage for attachments</li>
 			</ul>
 
 			<h3>4.2 Team Members</h3>
 			<p>
-				If you're part of a team, your test data, activity, and profile information may be visible
-				to other team members.
+				If you're part of a team, your test data, activity, and profile information may be
+				visible to other team members.
 			</p>
 
 			<h3>4.3 Legal Requirements</h3>
-			<p>We may disclose information if required by law, court order, or government request.</p>
+			<p>
+				We may disclose information if required by law, court order, or government request.
+			</p>
 
 			<h3>4.4 Business Transfers</h3>
 			<p>
-				In the event of a merger, acquisition, or sale, your information may be transferred to the
-				new owner.
+				In the event of a merger, acquisition, or sale, your information may be transferred
+				to the new owner.
 			</p>
 		</section>
 
@@ -150,17 +159,19 @@
 			<h2>5. Data Retention</h2>
 			<ul>
 				<li>
-					<strong>Active Accounts:</strong> We retain your data as long as your account is active.
+					<strong>Active Accounts:</strong> We retain your data as long as your account is
+					active.
 				</li>
 				<li>
-					<strong>Deleted Accounts:</strong> Data is deleted within 30 days of account deletion, except
-					where required by law.
+					<strong>Deleted Accounts:</strong> Data is deleted within 30 days of account deletion,
+					except where required by law.
 				</li>
 				<li>
 					<strong>Backups:</strong> Backup data may persist for up to 90 days after deletion.
 				</li>
 				<li>
-					<strong>Legal Requirements:</strong> We may retain certain data longer if required by law.
+					<strong>Legal Requirements:</strong> We may retain certain data longer if required
+					by law.
 				</li>
 			</ul>
 		</section>
@@ -171,14 +182,16 @@
 			<ul>
 				<li><strong>Encryption:</strong> Data encrypted in transit (TLS) and at rest.</li>
 				<li><strong>Access Controls:</strong> Role-based access and authentication.</li>
-				<li><strong>Regular Audits:</strong> Security reviews and vulnerability assessments.</li>
+				<li>
+					<strong>Regular Audits:</strong> Security reviews and vulnerability assessments.
+				</li>
 				<li>
 					<strong>Secure Infrastructure:</strong> Hosted on Vercel with enterprise-grade security.
 				</li>
 			</ul>
 			<p>
-				<strong>Note:</strong> No system is 100% secure. While we strive to protect your data, we cannot
-				guarantee absolute security.
+				<strong>Note:</strong> No system is 100% secure. While we strive to protect your data,
+				we cannot guarantee absolute security.
 			</p>
 		</section>
 
@@ -203,8 +216,8 @@
 		<section class="mb-8">
 			<h2>8. International Data Transfers</h2>
 			<p>
-				Your data may be transferred to and processed in countries outside your residence. We ensure
-				appropriate safeguards are in place through:
+				Your data may be transferred to and processed in countries outside your residence.
+				We ensure appropriate safeguards are in place through:
 			</p>
 			<ul>
 				<li>Standard contractual clauses</li>
@@ -217,8 +230,8 @@
 			<h2>9. Children's Privacy</h2>
 			<p>
 				QA Studio is not intended for users under 13 years old. We do not knowingly collect
-				information from children. If we discover we have collected data from a child, we will
-				delete it immediately.
+				information from children. If we discover we have collected data from a child, we
+				will delete it immediately.
 			</p>
 		</section>
 
@@ -237,7 +250,9 @@
 			<h2>11. Cookies and Tracking</h2>
 			<p>We use cookies for:</p>
 			<ul>
-				<li><strong>Essential:</strong> Authentication and session management (required).</li>
+				<li>
+					<strong>Essential:</strong> Authentication and session management (required).
+				</li>
 				<li><strong>Preferences:</strong> Storing your settings and preferences.</li>
 				<li><strong>Analytics:</strong> Understanding usage patterns (can be disabled).</li>
 			</ul>
@@ -247,18 +262,18 @@
 		<section class="mb-8">
 			<h2>12. Third-Party Links</h2>
 			<p>
-				Our Service may contain links to third-party websites or services. We are not responsible
-				for their privacy practices. Please review their privacy policies before providing
-				information.
+				Our Service may contain links to third-party websites or services. We are not
+				responsible for their privacy practices. Please review their privacy policies before
+				providing information.
 			</p>
 		</section>
 
 		<section class="mb-8">
 			<h2>13. Changes to This Policy</h2>
 			<p>
-				We may update this Privacy Policy periodically. We will notify you of material changes via
-				email or in-app notification. Continued use of the Service constitutes acceptance of the
-				updated policy.
+				We may update this Privacy Policy periodically. We will notify you of material
+				changes via email or in-app notification. Continued use of the Service constitutes
+				acceptance of the updated policy.
 			</p>
 		</section>
 
@@ -267,15 +282,15 @@
 			<p>If you are in the European Economic Area (EEA):</p>
 			<ul>
 				<li>
-					<strong>Legal Basis:</strong> We process data based on consent, contract, legitimate interest,
-					or legal obligation.
+					<strong>Legal Basis:</strong> We process data based on consent, contract, legitimate
+					interest, or legal obligation.
 				</li>
 				<li>
 					<strong>Data Protection Officer:</strong> Contact privacy@qastudio.dev for GDPR inquiries.
 				</li>
 				<li>
-					<strong>Supervisory Authority:</strong> You have the right to lodge a complaint with your local
-					data protection authority.
+					<strong>Supervisory Authority:</strong> You have the right to lodge a complaint with
+					your local data protection authority.
 				</li>
 			</ul>
 		</section>

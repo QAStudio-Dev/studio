@@ -108,7 +108,9 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 							);
 							throw Error[500];
 						}
-						console.warn(`Project ID collision detected - retrying (attempt ${attempts + 1})`);
+						console.warn(
+							`Project ID collision detected - retrying (attempt ${attempts + 1})`
+						);
 						continue; // Retry with new ID
 					}
 				}

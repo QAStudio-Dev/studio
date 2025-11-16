@@ -35,13 +35,13 @@ The test results submission endpoint processes test results from automated runne
 ### Existing Optimizations
 
 1. **Test Case Pre-loading**
-   - All test cases for a project are loaded upfront in memory
-   - Fast in-memory lookups to check if test case exists
-   - Avoids database query per test case lookup
+    - All test cases for a project are loaded upfront in memory
+    - Fast in-memory lookups to check if test case exists
+    - Avoids database query per test case lookup
 
 2. **Batch Operations**
-   - Notification sending uses `Promise.allSettled()` for parallel execution
-   - Multiple integrations can be notified simultaneously
+    - Notification sending uses `Promise.allSettled()` for parallel execution
+    - Multiple integrations can be notified simultaneously
 
 ### Future Optimizations
 
@@ -99,28 +99,28 @@ See [DATABASE_INDEXES.md](./DATABASE_INDEXES.md) for index recommendations.
 ## General Best Practices
 
 1. **Avoid SELECT N+1 Queries**
-   - Use `include` or `select` with Prisma to pre-load related data
-   - Cache frequently accessed data in memory during request processing
-   - Consider using Prisma's `findUnique` with `include` instead of separate queries
+    - Use `include` or `select` with Prisma to pre-load related data
+    - Cache frequently accessed data in memory during request processing
+    - Consider using Prisma's `findUnique` with `include` instead of separate queries
 
 2. **Use Batch Operations**
-   - `createMany()` instead of multiple `create()` calls
-   - `updateMany()` instead of loops with individual updates
-   - `deleteMany()` instead of loops with individual deletes
+    - `createMany()` instead of multiple `create()` calls
+    - `updateMany()` instead of loops with individual updates
+    - `deleteMany()` instead of loops with individual deletes
 
 3. **Optimize Database Queries**
-   - Add indexes on frequently queried fields
-   - Use `select` to limit fields returned
-   - Avoid loading unnecessary related data
+    - Add indexes on frequently queried fields
+    - Use `select` to limit fields returned
+    - Avoid loading unnecessary related data
 
 4. **Parallel Processing**
-   - Use `Promise.all()` or `Promise.allSettled()` for independent operations
-   - Consider using libraries like `p-limit` for controlled concurrency
+    - Use `Promise.all()` or `Promise.allSettled()` for independent operations
+    - Consider using libraries like `p-limit` for controlled concurrency
 
 5. **Caching Strategies**
-   - Request-level caching for data used multiple times
-   - Consider Redis for cross-request caching if needed
-   - Cache invalidation strategy is crucial
+    - Request-level caching for data used multiple times
+    - Consider Redis for cross-request caching if needed
+    - Cache invalidation strategy is crucial
 
 ## Performance Testing
 
@@ -138,16 +138,16 @@ DATABASE_URL="..." npx prisma studio
 ## Monitoring Recommendations
 
 1. **Application Performance Monitoring (APM)**
-   - Track endpoint response times
-   - Monitor database query counts and duration
-   - Alert on slow queries (>1s)
+    - Track endpoint response times
+    - Monitor database query counts and duration
+    - Alert on slow queries (>1s)
 
 2. **Database Monitoring**
-   - Query execution plans
-   - Index usage statistics
-   - Connection pool utilization
+    - Query execution plans
+    - Index usage statistics
+    - Connection pool utilization
 
 3. **Custom Metrics**
-   - Test result batch size distribution
-   - Suite cache hit rate
-   - Notification success/failure rates
+    - Test result batch size distribution
+    - Suite cache hit rate
+    - Notification success/failure rates

@@ -72,7 +72,9 @@
 		{#if post.tags && post.tags.length > 0}
 			<div class="mt-6 flex flex-wrap gap-2">
 				{#each post.tags as tag}
-					<span class="flex items-center gap-1 rounded-full bg-surface-200-800 px-3 py-1 text-sm">
+					<span
+						class="flex items-center gap-1 rounded-full bg-surface-200-800 px-3 py-1 text-sm"
+					>
 						<Tag class="h-3.5 w-3.5" />
 						{tag}
 					</span>

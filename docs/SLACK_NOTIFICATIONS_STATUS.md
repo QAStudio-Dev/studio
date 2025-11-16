@@ -57,13 +57,16 @@ class QAStudioReporter implements Reporter {
 		// NEW: Mark test run as complete
 		if (this.testRunId) {
 			try {
-				const response = await fetch(`${this.apiUrl}/test-runs/${this.testRunId}/complete`, {
-					method: 'POST',
-					headers: {
-						Authorization: `Bearer ${this.apiKey}`,
-						'Content-Type': 'application/json'
+				const response = await fetch(
+					`${this.apiUrl}/test-runs/${this.testRunId}/complete`,
+					{
+						method: 'POST',
+						headers: {
+							Authorization: `Bearer ${this.apiKey}`,
+							'Content-Type': 'application/json'
+						}
 					}
-				});
+				);
 
 				if (response.ok) {
 					console.log('✅ Test run marked as complete, notifications sent');
@@ -90,10 +93,10 @@ class QAStudioReporter implements Reporter {
 1. Hover over your Slack integration
 2. Click the ⚙️ Settings icon
 3. Toggle notification preferences:
-   - ✅ Test Run Failed (recommended)
-   - ✅ Test Run Completed
-   - ✅ Test Case Failed
-   - ⬜ Test Case Passed (off by default - can be noisy)
+    - ✅ Test Run Failed (recommended)
+    - ✅ Test Run Completed
+    - ✅ Test Case Failed
+    - ⬜ Test Case Passed (off by default - can be noisy)
 
 ### 3. **Run Tests**
 
