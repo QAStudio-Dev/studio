@@ -49,9 +49,25 @@ export const POST: RequestHandler = async (event) => {
 
 	const { memberIdsToRemove } = await event.request.json();
 
-	if (!memberIdsToRemove || !Array.isArray(memberIdsToRemove)) {
+	// Input validation
+	if (!Array.isArray(memberIdsToRemove) || memberIdsToRemove.length === 0) {
 		throw error(400, {
-			message: 'memberIdsToRemove must be an array of user IDs'
+			message: 'memberIdsToRemove must be a non-empty array of user IDs'
+		});
+	}
+
+	// Prevent DoS with excessively large arrays
+	if (memberIdsToRemove.length > 100) {
+		throw error(400, {
+			message: 'Cannot remove more than 100 members at once'
+		});
+	}
+
+	// Validate ID format (Clerk IDs are alphanumeric strings)
+	const validIdPattern = /^[a-zA-Z0-9_-]+$/;
+	if (!memberIdsToRemove.every((id) => typeof id === 'string' && validIdPattern.test(id))) {
+		throw error(400, {
+			message: 'Invalid member ID format'
 		});
 	}
 
