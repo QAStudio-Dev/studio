@@ -171,7 +171,8 @@
 			if (suiteId) {
 				const suite = project.testSuites.find((s) => s.id === suiteId);
 				if (suite) {
-					suite.testCases = suite.testCases?.filter((tc) => tc.id !== optimisticTestCase.id) || [];
+					suite.testCases =
+						suite.testCases?.filter((tc) => tc.id !== optimisticTestCase.id) || [];
 				}
 			} else {
 				project.testCases =
@@ -179,7 +180,8 @@
 			}
 			project = { ...project };
 			alert(
-				'Failed to create test case: ' + (err instanceof Error ? err.message : 'Unknown error')
+				'Failed to create test case: ' +
+					(err instanceof Error ? err.message : 'Unknown error')
 			);
 		}
 	}
@@ -625,7 +627,10 @@
 		<div class="card p-6">
 			<div class="mb-6 flex items-center justify-between">
 				<h2 class="text-2xl font-bold">Test Cases</h2>
-				<button onclick={() => startCreatingTestCase(null)} class="btn preset-filled-primary-500">
+				<button
+					onclick={() => startCreatingTestCase(null)}
+					class="btn preset-filled-primary-500"
+				>
 					<Plus class="mr-2 h-4 w-4" />
 					New Test Case
 				</button>
@@ -711,8 +716,10 @@
 									ondragover={(e) => handleInsertionDragOver(e, null, index)}
 									ondragleave={handleInsertionDragLeave}
 									ondrop={(e) => handleInsertionDrop(e, null, index)}
-									isOver={dragOverPosition?.suiteId === null && dragOverPosition?.index === index}
-									isDragging={!!draggedTestCase && draggedTestCase.id !== testCase.id}
+									isOver={dragOverPosition?.suiteId === null &&
+										dragOverPosition?.index === index}
+									isDragging={!!draggedTestCase &&
+										draggedTestCase.id !== testCase.id}
 								/>
 								<DraggableTestCase
 									{testCase}
@@ -724,9 +731,15 @@
 								/>
 							{/each}
 							<TestCaseInsertionZone
-								ondragover={(e) => handleInsertionDragOver(e, null, project.testCases?.length || 0)}
+								ondragover={(e) =>
+									handleInsertionDragOver(
+										e,
+										null,
+										project.testCases?.length || 0
+									)}
 								ondragleave={handleInsertionDragLeave}
-								ondrop={(e) => handleInsertionDrop(e, null, project.testCases?.length || 0)}
+								ondrop={(e) =>
+									handleInsertionDrop(e, null, project.testCases?.length || 0)}
 								isOver={dragOverPosition?.suiteId === null &&
 									dragOverPosition?.index === (project.testCases?.length || 0)}
 								isDragging={!!draggedTestCase}
@@ -777,10 +790,16 @@
 										<h2 class="text-2xl font-bold">{selectedTestCase.title}</h2>
 									</Dialog.Title>
 									<div class="flex items-center gap-3">
-										<span class="badge {getPriorityColor(selectedTestCase.priority)}">
+										<span
+											class="badge {getPriorityColor(
+												selectedTestCase.priority
+											)}"
+										>
 											{selectedTestCase.priority}
 										</span>
-										<span class="badge preset-filled-surface-500">{selectedTestCase.type}</span>
+										<span class="badge preset-filled-surface-500"
+											>{selectedTestCase.type}</span
+										>
 										<span class="badge preset-outlined-surface-500">
 											{selectedTestCase.automationStatus}
 										</span>
@@ -798,21 +817,27 @@
 								{#if selectedTestCase.description}
 									<div>
 										<h3 class="mb-2 font-bold">Description</h3>
-										<p class="text-surface-600-300">{selectedTestCase.description}</p>
+										<p class="text-surface-600-300">
+											{selectedTestCase.description}
+										</p>
 									</div>
 								{/if}
 
 								{#if selectedTestCase.preconditions}
 									<div>
 										<h3 class="mb-2 font-bold">Preconditions</h3>
-										<p class="text-surface-600-300">{selectedTestCase.preconditions}</p>
+										<p class="text-surface-600-300">
+											{selectedTestCase.preconditions}
+										</p>
 									</div>
 								{/if}
 
 								{#if selectedTestCase.expectedResult}
 									<div>
 										<h3 class="mb-2 font-bold">Expected Result</h3>
-										<p class="text-surface-600-300">{selectedTestCase.expectedResult}</p>
+										<p class="text-surface-600-300">
+											{selectedTestCase.expectedResult}
+										</p>
 									</div>
 								{/if}
 							</Dialog.Description>

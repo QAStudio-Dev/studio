@@ -316,7 +316,9 @@ export class ProductsPage {
 	}
 
 	async isProductOutOfStock(productName: string): Promise<boolean> {
-		const badge = this.getProductByName(productName).locator('[data-testid="out-of-stock-badge"]');
+		const badge = this.getProductByName(productName).locator(
+			'[data-testid="out-of-stock-badge"]'
+		);
 		return await badge.isVisible();
 	}
 }

@@ -1,7 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
-import { requireAuth, requireRole } from '$lib/server/auth';
+import { requireAuth, requireRole, requireCurrentSubscription } from '$lib/server/auth';
 import { requireAvailableSeats } from '$lib/server/subscriptions';
 import { clerkClient } from 'svelte-clerk/server';
 import crypto from 'crypto';
@@ -12,6 +12,9 @@ import crypto from 'crypto';
  */
 export const POST: RequestHandler = async (event) => {
 	const { teamId } = event.params;
+
+	// Check subscription status first (blocks if CANCELED/UNPAID/etc)
+	await requireCurrentSubscription(event);
 
 	// Require ADMIN or MANAGER role
 	const user = await requireRole(event, ['ADMIN', 'MANAGER']);

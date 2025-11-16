@@ -92,16 +92,16 @@ Submit results for multiple test cases in a single request. This is the format u
 
 - If a test case doesn't exist, it will be **automatically created**
 - If `fullTitle` is provided (e.g., `"Suite A > Suite B > Test"`), the system will:
-  - Parse the suite hierarchy from the path
-  - **Automatically create nested test suites** if they don't exist
-  - Create the test case in the appropriate suite
+    - Parse the suite hierarchy from the path
+    - **Automatically create nested test suites** if they don't exist
+    - Create the test case in the appropriate suite
 - Test cases are marked as `AUTOMATED` automatically
 - Suites are reused if they already exist (no duplicates)
 - **Attachments are automatically uploaded** to Vercel Blob storage
-  - Supports screenshots (PNG, JPG)
-  - Supports videos (WebM, MP4)
-  - Supports trace files (ZIP)
-  - Files are stored with unique paths and linked to test results
+    - Supports screenshots (PNG, JPG)
+    - Supports videos (WebM, MP4)
+    - Supports trace files (ZIP)
+    - Files are stored with unique paths and linked to test results
 
 **Status Values:**
 
@@ -186,7 +186,11 @@ class QAStudioReporter implements Reporter {
 	async onTestEnd(test: TestCase, result: TestResult) {
 		// 2. Submit test result
 		const status =
-			result.status === 'passed' ? 'PASSED' : result.status === 'failed' ? 'FAILED' : 'SKIPPED';
+			result.status === 'passed'
+				? 'PASSED'
+				: result.status === 'failed'
+					? 'FAILED'
+					: 'SKIPPED';
 
 		await fetch(`${this.apiUrl}/test-results`, {
 			method: 'POST',

@@ -82,6 +82,97 @@
 		</div>
 	</div>
 
+	<!-- Payment Status Alerts -->
+	{#if team.subscription?.status === 'PAST_DUE'}
+		<div class="alert preset-filled-warning mb-6">
+			<AlertCircle class="h-5 w-5" />
+			<div class="flex-1">
+				<p class="font-medium">Payment Failed</p>
+				<p class="text-sm">
+					Your last payment failed. Please update your payment method to avoid service
+					interruption. Your subscription will be canceled if payment continues to fail.
+				</p>
+			</div>
+			{#if currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'}
+				<button
+					onclick={openBillingPortal}
+					class="preset-filled-warning btn"
+					disabled={loading}
+				>
+					{loading ? 'Loading...' : 'Update Payment'}
+				</button>
+			{/if}
+		</div>
+	{:else if team.subscription?.status === 'CANCELED' || team.subscription?.status === 'UNPAID'}
+		<div class="alert preset-filled-error mb-6">
+			<AlertCircle class="h-5 w-5" />
+			<div class="flex-1">
+				<p class="font-medium">Subscription Canceled</p>
+				<p class="text-sm">
+					Your subscription has been canceled. Reactivate your subscription to continue
+					using premium features.
+				</p>
+			</div>
+			{#if currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'}
+				<button
+					onclick={openBillingPortal}
+					class="preset-filled-error btn"
+					disabled={loading}
+				>
+					{loading ? 'Loading...' : 'Reactivate Subscription'}
+				</button>
+			{/if}
+		</div>
+	{:else if team.subscription?.status === 'INCOMPLETE'}
+		<div class="alert preset-filled-warning mb-6">
+			<AlertCircle class="h-5 w-5" />
+			<div class="flex-1">
+				<p class="font-medium">Payment Incomplete</p>
+				<p class="text-sm">
+					Your subscription setup is incomplete. Please complete the payment process to
+					activate premium features.
+				</p>
+			</div>
+			{#if currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'}
+				<button
+					onclick={openBillingPortal}
+					class="preset-filled-warning btn"
+					disabled={loading}
+				>
+					{loading ? 'Loading...' : 'Complete Setup'}
+				</button>
+			{/if}
+		</div>
+	{/if}
+
+	<!-- Over Seat Limit Alert -->
+	{#if team.overSeatLimit && team.subscription}
+		<div class="alert preset-filled-error mb-6">
+			<AlertCircle class="h-5 w-5" />
+			<div class="flex-1">
+				<p class="font-medium">Team Over Seat Limit</p>
+				<p class="text-sm">
+					Your subscription has {team.subscription.seats} seat{team.subscription.seats !==
+					1
+						? 's'
+						: ''}, but you have {team.members.length} member{team.members.length !== 1
+						? 's'
+						: ''}. Please remove {team.members.length - team.subscription.seats} member{team
+						.members.length -
+						team.subscription.seats !==
+					1
+						? 's'
+						: ''} or upgrade your plan.
+				</p>
+			</div>
+			{#if currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'}
+				<a href="/teams/{team.id}/over-limit" class="preset-filled-error btn">
+					Resolve Now
+				</a>
+			{/if}
+		</div>
+	{/if}
+
 	<!-- Checkout Status Alert -->
 	{#if checkoutStatus === 'success'}
 		<div class="alert preset-filled-success mb-6">
@@ -129,14 +220,17 @@
 
 						<div class="flex items-center justify-between">
 							<span class="text-surface-600-300">Seats</span>
-							<span class="font-medium">{team.subscription.seats} / {team.members.length} used</span
+							<span class="font-medium"
+								>{team.subscription.seats} / {team.members.length} used</span
 							>
 						</div>
 
 						{#if team.subscription.currentPeriodEnd}
 							<div class="flex items-center justify-between">
 								<span class="text-surface-600-300">
-									{team.subscription.cancelAtPeriodEnd ? 'Expires on' : 'Next billing date'}
+									{team.subscription.cancelAtPeriodEnd
+										? 'Expires on'
+										: 'Next billing date'}
 								</span>
 								<span class="font-medium">
 									{formatDate(team.subscription.currentPeriodEnd)}
@@ -168,7 +262,9 @@
 			<div class="card p-6">
 				<div class="mb-4 flex items-center justify-between">
 					<h2 class="h3">Recent Projects</h2>
-					<a href="/projects/new" class="preset-filled-primary btn btn-sm"> New Project </a>
+					<a href="/projects/new" class="preset-filled-primary btn btn-sm">
+						New Project
+					</a>
 				</div>
 
 				{#if team.projects.length > 0}
@@ -181,7 +277,9 @@
 								<div class="flex items-center justify-between">
 									<div>
 										<h3 class="font-medium">{project.name}</h3>
-										<p class="text-surface-600-300 text-sm">Key: {project.key}</p>
+										<p class="text-surface-600-300 text-sm">
+											Key: {project.key}
+										</p>
 									</div>
 									<span class="text-surface-600-300 text-sm">
 										{formatDate(project.createdAt)}

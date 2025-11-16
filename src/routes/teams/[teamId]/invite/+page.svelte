@@ -126,9 +126,13 @@
 					{availableSeats}/{maxSeats}
 				</div>
 				{#if !team.subscription}
-					<a href="/teams/new" class="text-sm text-primary-500 underline">Upgrade to add more</a>
+					<a href="/teams/new" class="text-sm text-primary-500 underline"
+						>Upgrade to add more</a
+					>
 				{:else if availableSeats === 0}
-					<a href="/teams/{team.id}" class="text-sm text-primary-500 underline">Manage billing</a>
+					<a href="/teams/{team.id}" class="text-sm text-primary-500 underline"
+						>Manage billing</a
+					>
 				{/if}
 			</div>
 		</div>
@@ -214,16 +218,22 @@
 
 			<div class="space-y-3">
 				{#each team.invitations as invitation}
-					<div class="hover:bg-surface-100-800 rounded-container border border-surface-300-700 p-4">
+					<div
+						class="hover:bg-surface-100-800 rounded-container border border-surface-300-700 p-4"
+					>
 						<div class="flex items-start justify-between gap-4">
 							<div class="flex-1">
 								<div class="flex items-center gap-2">
 									<Mail class="text-surface-600-300 h-4 w-4" />
 									<span class="font-medium">{invitation.email}</span>
-									<span class="preset-filled-surface badge text-xs">{invitation.role}</span>
+									<span class="preset-filled-surface badge text-xs"
+										>{invitation.role}</span
+									>
 								</div>
 
-								<div class="text-surface-600-300 mt-2 flex items-center gap-4 text-sm">
+								<div
+									class="text-surface-600-300 mt-2 flex items-center gap-4 text-sm"
+								>
 									<span class="flex items-center gap-1">
 										<Clock class="h-3 w-3" />
 										Sent {formatDate(invitation.createdAt)}

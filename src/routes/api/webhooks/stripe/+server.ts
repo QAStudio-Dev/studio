@@ -3,7 +3,9 @@ import type { RequestHandler } from './$types';
 import { stripe } from '$lib/server/stripe';
 import { db } from '$lib/server/db';
 import { STRIPE_WEBHOOK_SECRET } from '$env/static/private';
+import { FREE_TIER_LIMITS } from '$lib/constants';
 import type Stripe from 'stripe';
+import { deleteCache, CacheKeys } from '$lib/server/redis';
 
 /**
  * Stripe Webhook Handler
@@ -80,15 +82,15 @@ export const POST: RequestHandler = async ({ request }) => {
 				// Map Stripe status to our enum
 				const status = mapStripeStatus(subscription.status);
 
-				// Extract period dates from the first subscription item
-				// Stripe stores current_period_start/end in the subscription items, not the subscription itself
+				// Extract period dates from subscription object
 				const subscriptionItem = subscription.items.data[0];
-				const itemData = subscriptionItem as any;
-				const currentPeriodStart = itemData?.current_period_start
-					? new Date(itemData.current_period_start * 1000)
+				// Note: TypeScript definitions may not include these, but they exist in Stripe's API
+				const subData = subscription as any;
+				const currentPeriodStart = subData.current_period_start
+					? new Date(subData.current_period_start * 1000)
 					: null;
-				const currentPeriodEnd = itemData?.current_period_end
-					? new Date(itemData.current_period_end * 1000)
+				const currentPeriodEnd = subData.current_period_end
+					? new Date(subData.current_period_end * 1000)
 					: null;
 
 				// Build update/create data
@@ -107,18 +109,67 @@ export const POST: RequestHandler = async ({ request }) => {
 					subscriptionData.currentPeriodEnd = currentPeriodEnd;
 				}
 
-				await db.subscription.upsert({
-					where: { stripeSubscriptionId: subscription.id },
-					update: subscriptionData,
-					create: {
-						teamId,
-						stripeCustomerId: subscription.customer as string,
-						stripeSubscriptionId: subscription.id,
-						...subscriptionData
+				// Update subscription and team status atomically to prevent race conditions
+				// Use interactive transaction with appropriate isolation level
+				await db.$transaction(
+					async (tx) => {
+						// Update subscription
+						await tx.subscription.upsert({
+							where: { stripeSubscriptionId: subscription.id },
+							update: subscriptionData,
+							create: {
+								teamId,
+								stripeCustomerId: subscription.customer as string,
+								stripeSubscriptionId: subscription.id,
+								...subscriptionData
+							}
+						});
+
+						// Lock the team row and count members in a single query to prevent race conditions
+						// This uses a raw query with SELECT FOR UPDATE to ensure exclusive lock
+						const result = await tx.$queryRaw<
+							Array<{ memberCount: number; overSeatLimit: boolean }>
+						>`
+							SELECT
+								(SELECT COUNT(*)::int FROM "User" WHERE "teamId" = ${teamId}) as "memberCount",
+								"overSeatLimit"
+							FROM "Team"
+							WHERE id = ${teamId}
+							FOR UPDATE
+						`;
+
+						if (result.length > 0) {
+							const { memberCount, overSeatLimit } = result[0];
+							const newSeats = subscriptionItem?.quantity || 1;
+							const isOverLimit = memberCount > newSeats;
+
+							// Update team's overSeatLimit flag if it changed
+							if (overSeatLimit !== isOverLimit) {
+								await tx.team.update({
+									where: { id: teamId },
+									data: { overSeatLimit: isOverLimit }
+								});
+
+								if (isOverLimit) {
+									console.warn(
+										`⚠️ Team ${teamId} is over seat limit: ${memberCount} members, ${newSeats} seats`
+									);
+								} else {
+									console.log(`✅ Team ${teamId} is now within seat limit`);
+								}
+							}
+						}
+					},
+					{
+						isolationLevel: 'ReadCommitted' // Prevent dirty reads while allowing concurrent updates
 					}
-				});
+				);
+
+				// Invalidate team status cache after transaction completes
+				await deleteCache(CacheKeys.teamStatus(teamId));
 
 				console.log(`✅ Subscription ${event.type} for team ${teamId}: ${status}`);
+
 				break;
 			}
 
@@ -126,12 +177,66 @@ export const POST: RequestHandler = async ({ request }) => {
 			case 'customer.subscription.deleted': {
 				const subscription = event.data.object as Stripe.Subscription;
 
-				await db.subscription.update({
-					where: { stripeSubscriptionId: subscription.id },
-					data: {
-						status: 'CANCELED'
+				let teamId: string | undefined;
+
+				// Update subscription status and check if team is now over free tier limit
+				await db.$transaction(
+					async (tx) => {
+						// Update subscription to CANCELED and get team ID
+						const updatedSub = await tx.subscription.update({
+							where: { stripeSubscriptionId: subscription.id },
+							data: {
+								status: 'CANCELED'
+							},
+							select: {
+								teamId: true
+							}
+						});
+
+						teamId = updatedSub.teamId;
+
+						// Lock the team row and count members in a single query to prevent race conditions
+						const result = await tx.$queryRaw<
+							Array<{ memberCount: number; overSeatLimit: boolean }>
+						>`
+							SELECT
+								(SELECT COUNT(*)::int FROM "User" WHERE "teamId" = ${teamId}) as "memberCount",
+								"overSeatLimit"
+							FROM "Team"
+							WHERE id = ${teamId}
+							FOR UPDATE
+						`;
+
+						// When subscription is canceled, team reverts to free tier
+						if (result.length > 0) {
+							const { memberCount, overSeatLimit } = result[0];
+							const isOverLimit = memberCount > FREE_TIER_LIMITS.MEMBERS;
+
+							if (overSeatLimit !== isOverLimit) {
+								await tx.team.update({
+									where: { id: teamId },
+									data: { overSeatLimit: isOverLimit }
+								});
+
+								if (isOverLimit) {
+									console.warn(
+										`⚠️ Team ${teamId} is now over free tier limit: ${memberCount} members, ${FREE_TIER_LIMITS.MEMBERS} allowed`
+									);
+									// TODO: Send email notification to team admins when email system is implemented
+									// Notify: "Your subscription was canceled and your team has {memberCount} members but the free tier only allows {FREE_TIER_LIMITS.MEMBERS}. Please remove members or resubscribe."
+								}
+							}
+						}
+					},
+					{
+						isolationLevel: 'ReadCommitted'
 					}
-				});
+				);
+
+				// Invalidate team status cache after transaction completes
+				if (teamId) {
+					await deleteCache(CacheKeys.teamStatus(teamId));
+				}
 
 				console.log(`✅ Subscription canceled: ${subscription.id}`);
 				break;
@@ -141,14 +246,12 @@ export const POST: RequestHandler = async ({ request }) => {
 			case 'invoice.payment_succeeded': {
 				const invoice = event.data.object as Stripe.Invoice;
 
-				// Extract subscription ID from parent subscription details
+				// Extract subscription ID from invoice
+				// Note: invoice.subscription can be either a string ID or an expanded Subscription object
 				const subscriptionId =
-					invoice.parent?.type === 'subscription_details' &&
-					invoice.parent.subscription_details?.subscription
-						? typeof invoice.parent.subscription_details.subscription === 'string'
-							? invoice.parent.subscription_details.subscription
-							: invoice.parent.subscription_details.subscription.id
-						: null;
+					typeof (invoice as any).subscription === 'string'
+						? (invoice as any).subscription
+						: (invoice as any).subscription?.id || null;
 
 				if (subscriptionId) {
 					await db.subscription.update({
@@ -167,14 +270,12 @@ export const POST: RequestHandler = async ({ request }) => {
 			case 'invoice.payment_failed': {
 				const invoice = event.data.object as Stripe.Invoice;
 
-				// Extract subscription ID from parent subscription details
+				// Extract subscription ID from invoice
+				// Note: invoice.subscription can be either a string ID or an expanded Subscription object
 				const subscriptionId =
-					invoice.parent?.type === 'subscription_details' &&
-					invoice.parent.subscription_details?.subscription
-						? typeof invoice.parent.subscription_details.subscription === 'string'
-							? invoice.parent.subscription_details.subscription
-							: invoice.parent.subscription_details.subscription.id
-						: null;
+					typeof (invoice as any).subscription === 'string'
+						? (invoice as any).subscription
+						: (invoice as any).subscription?.id || null;
 
 				if (subscriptionId) {
 					await db.subscription.update({

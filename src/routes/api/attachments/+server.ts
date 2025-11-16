@@ -117,7 +117,8 @@ export const POST: RequestHandler = async (event) => {
 		// Check access
 		const hasAccess =
 			testResult.testRun.project.createdBy === userId ||
-			(testResult.testRun.project.teamId && user?.teamId === testResult.testRun.project.teamId);
+			(testResult.testRun.project.teamId &&
+				user?.teamId === testResult.testRun.project.teamId);
 
 		if (!hasAccess) {
 			throw error(403, { message: 'You do not have access to this test result' });
@@ -254,7 +255,8 @@ export const GET: RequestHandler = async (event) => {
 
 		const hasAccess =
 			testResult.testRun.project.createdBy === userId ||
-			(testResult.testRun.project.teamId && user?.teamId === testResult.testRun.project.teamId);
+			(testResult.testRun.project.teamId &&
+				user?.teamId === testResult.testRun.project.teamId);
 
 		if (!hasAccess) {
 			throw error(403, { message: 'You do not have access to this test result' });

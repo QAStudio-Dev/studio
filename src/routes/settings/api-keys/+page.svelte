@@ -75,7 +75,9 @@
 	}
 
 	async function handleDeleteKey(keyId: string) {
-		if (!confirm('Are you sure you want to delete this API key? This action cannot be undone.')) {
+		if (
+			!confirm('Are you sure you want to delete this API key? This action cannot be undone.')
+		) {
 			return;
 		}
 
@@ -127,7 +129,8 @@
 	}
 
 	function getPlaywrightConfig(apiKey: string) {
-		const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://qastudio.dev';
+		const baseUrl =
+			typeof window !== 'undefined' ? window.location.origin : 'https://qastudio.dev';
 		return `import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
@@ -229,14 +232,19 @@ export default defineConfig({
 		<div class="mb-6 flex items-start justify-between">
 			<div>
 				<h1 class="mb-2 text-4xl font-bold">API Keys</h1>
-				<p class="text-surface-600-300 text-lg">Manage API keys for integrating with QA Studio</p>
+				<p class="text-surface-600-300 text-lg">
+					Manage API keys for integrating with QA Studio
+				</p>
 			</div>
 			<div class="flex gap-2">
 				<button onclick={() => (showPlaywrightDialog = true)} class="btn preset-outlined">
 					<Code class="mr-2 h-4 w-4" />
 					Playwright Config
 				</button>
-				<button onclick={() => (showCreateDialog = true)} class="btn preset-filled-primary-500">
+				<button
+					onclick={() => (showCreateDialog = true)}
+					class="btn preset-filled-primary-500"
+				>
 					<Plus class="mr-2 h-4 w-4" />
 					Create API Key
 				</button>
@@ -250,8 +258,9 @@ export default defineConfig({
 				<div class="text-sm">
 					<p class="mb-1 font-medium">Security Notice</p>
 					<p class="text-surface-600-300">
-						API keys provide full access to your account. Keep them secure and never share them in
-						public repositories. You'll only see the full key once when you create it.
+						API keys provide full access to your account. Keep them secure and never
+						share them in public repositories. You'll only see the full key once when
+						you create it.
 					</p>
 				</div>
 			</div>
@@ -281,7 +290,9 @@ export default defineConfig({
 								<Key class="h-5 w-5 text-primary-500" />
 								<h3 class="text-lg font-bold">{apiKey.name}</h3>
 								{#if apiKey.expiresAt && isExpired(apiKey.expiresAt)}
-									<span class="badge preset-filled-error-500 text-xs">Expired</span>
+									<span class="badge preset-filled-error-500 text-xs"
+										>Expired</span
+									>
 								{/if}
 							</div>
 
@@ -441,8 +452,8 @@ export default defineConfig({
 					<div class="text-sm">
 						<p class="mb-1 font-medium">Important: Save this key now!</p>
 						<p class="text-surface-600-300">
-							This is the only time you'll see the full API key. Make sure to copy it and store it
-							securely.
+							This is the only time you'll see the full API key. Make sure to copy it
+							and store it securely.
 						</p>
 					</div>
 				</div>
@@ -539,7 +550,9 @@ export default defineConfig({
 						<li class="flex gap-2">
 							<span class="font-bold text-primary-500">1.</span>
 							<div>
-								<p class="mb-1 font-medium">Install the QA Studio Playwright reporter</p>
+								<p class="mb-1 font-medium">
+									Install the QA Studio Playwright reporter
+								</p>
 								<pre
 									class="overflow-x-auto rounded bg-surface-900 p-2 text-xs text-surface-50"><code
 										>npm install --save-dev @qa-studio/playwright-reporter</code
@@ -549,7 +562,9 @@ export default defineConfig({
 						<li class="flex gap-2">
 							<span class="font-bold text-primary-500">2.</span>
 							<div>
-								<p class="mb-1 font-medium">Create or update <code>playwright.config.ts</code></p>
+								<p class="mb-1 font-medium">
+									Create or update <code>playwright.config.ts</code>
+								</p>
 								<p class="text-surface-600-300">Copy the configuration below</p>
 							</div>
 						</li>
@@ -559,7 +574,8 @@ export default defineConfig({
 								<p class="mb-1 font-medium">Update the configuration</p>
 								<ul class="text-surface-600-300 mt-1 ml-4 list-disc space-y-1">
 									<li>
-										Replace <code>YOUR_PROJECT_KEY</code> with your project key (e.g., 'PROJ')
+										Replace <code>YOUR_PROJECT_KEY</code> with your project key (e.g.,
+										'PROJ')
 									</li>
 									<li>Replace the API key with your actual key from above</li>
 									<li>Configure test run name and environment as needed</li>
@@ -598,14 +614,18 @@ export default defineConfig({
 				>
 					<pre class="p-4 text-xs leading-relaxed text-surface-50"><code
 							>{getPlaywrightConfig(
-								apiKeys.length > 0 ? `${apiKeys[0].prefix}...` : 'qas_your_api_key_here'
+								apiKeys.length > 0
+									? `${apiKeys[0].prefix}...`
+									: 'qas_your_api_key_here'
 							)}</code
 						></pre>
 				</div>
 			</div>
 
 			<!-- Environment Variables Section -->
-			<div class="mb-6 rounded-container border border-surface-300-700 bg-surface-100-900 p-4">
+			<div
+				class="mb-6 rounded-container border border-surface-300-700 bg-surface-100-900 p-4"
+			>
 				<h3 class="mb-3 text-sm font-semibold">Optional: Using Environment Variables</h3>
 				<p class="text-surface-600-300 mb-3 text-sm">
 					For better security, store your API key in environment variables:
@@ -614,7 +634,8 @@ export default defineConfig({
 				<div class="space-y-3">
 					<div>
 						<p class="mb-1 text-xs font-medium">1. Create <code>.env</code> file:</p>
-						<pre class="overflow-x-auto rounded bg-surface-900 p-2 text-xs text-surface-50"><code
+						<pre
+							class="overflow-x-auto rounded bg-surface-900 p-2 text-xs text-surface-50"><code
 								>QA_STUDIO_API_KEY={apiKeys.length > 0
 									? apiKeys[0].prefix + '...'
 									: 'qas_your_api_key_here'}
@@ -625,7 +646,8 @@ ENVIRONMENT=QA</code
 
 					<div>
 						<p class="mb-1 text-xs font-medium">2. Update playwright.config.ts:</p>
-						<pre class="overflow-x-auto rounded bg-surface-900 p-2 text-xs text-surface-50"><code
+						<pre
+							class="overflow-x-auto rounded bg-surface-900 p-2 text-xs text-surface-50"><code
 								>['@qa-studio/playwright-reporter', {'{'}
   apiUrl: '{typeof window !== 'undefined' ? window.location.origin : 'https://qastudio.dev'}/api',
   apiKey: process.env.QA_STUDIO_API_KEY,
@@ -641,7 +663,8 @@ ENVIRONMENT=QA</code
 						<p class="mb-1 text-xs font-medium">
 							3. Add <code>.env</code> to <code>.gitignore</code>:
 						</p>
-						<pre class="overflow-x-auto rounded bg-surface-900 p-2 text-xs text-surface-50"><code
+						<pre
+							class="overflow-x-auto rounded bg-surface-900 p-2 text-xs text-surface-50"><code
 								># Keep API keys secure
 .env
 .env.local</code
@@ -651,14 +674,19 @@ ENVIRONMENT=QA</code
 			</div>
 
 			<!-- CI/CD Integration -->
-			<div class="mb-6 rounded-container border border-surface-300-700 bg-surface-100-900 p-4">
+			<div
+				class="mb-6 rounded-container border border-surface-300-700 bg-surface-100-900 p-4"
+			>
 				<h3 class="mb-3 text-sm font-semibold">CI/CD Integration Examples</h3>
 
 				<div class="space-y-4">
 					<!-- GitHub Actions -->
 					<div>
-						<p class="mb-2 text-xs font-medium">GitHub Actions (.github/workflows/test.yml):</p>
-						<pre class="overflow-x-auto rounded bg-surface-900 p-2 text-xs text-surface-50"><code
+						<p class="mb-2 text-xs font-medium">
+							GitHub Actions (.github/workflows/test.yml):
+						</p>
+						<pre
+							class="overflow-x-auto rounded bg-surface-900 p-2 text-xs text-surface-50"><code
 								>name: Playwright Tests
 on: [push, pull_request]
 
@@ -681,7 +709,8 @@ jobs:
 					<!-- GitLab CI -->
 					<div>
 						<p class="mb-2 text-xs font-medium">GitLab CI (.gitlab-ci.yml):</p>
-						<pre class="overflow-x-auto rounded bg-surface-900 p-2 text-xs text-surface-50"><code
+						<pre
+							class="overflow-x-auto rounded bg-surface-900 p-2 text-xs text-surface-50"><code
 								>test:
   image: mcr.microsoft.com/playwright:latest
   script:

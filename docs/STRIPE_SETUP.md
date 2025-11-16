@@ -52,23 +52,23 @@ model Subscription {
 1. Go to **Products** → **Add Product**
 
 2. Create the Pro plan:
-   - **Name**: QA Studio Pro
-   - **Description**: Team collaboration with AI-powered features
-   - **Pricing Model**: Recurring
+    - **Name**: QA Studio Pro
+    - **Description**: Team collaboration with AI-powered features
+    - **Pricing Model**: Recurring
 
 3. Add pricing options:
 
-   **Monthly Price:**
-   - **Price**: $15/month
-   - **Billing period**: Monthly
-   - **Usage type**: Licensed (per seat)
-   - Copy the **Price ID** (starts with `price_`)
+    **Monthly Price:**
+    - **Price**: $15/month
+    - **Billing period**: Monthly
+    - **Usage type**: Licensed (per seat)
+    - Copy the **Price ID** (starts with `price_`)
 
-   **Yearly Price:**
-   - **Price**: $144/year ($12/month)
-   - **Billing period**: Yearly
-   - **Usage type**: Licensed (per seat)
-   - Copy the **Price ID** (starts with `price_`)
+    **Yearly Price:**
+    - **Price**: $144/year ($12/month)
+    - **Billing period**: Yearly
+    - **Usage type**: Licensed (per seat)
+    - Copy the **Price ID** (starts with `price_`)
 
 ## Step 3: Configure Environment Variables
 
@@ -98,20 +98,20 @@ Webhooks keep your database in sync with Stripe subscription events.
 
 2. **Login to Stripe**:
 
-   ```bash
-   stripe login
-   ```
+    ```bash
+    stripe login
+    ```
 
 3. **Forward webhooks to your local server**:
 
-   ```bash
-   stripe listen --forward-to localhost:5173/api/webhooks/stripe
-   ```
+    ```bash
+    stripe listen --forward-to localhost:5173/api/webhooks/stripe
+    ```
 
 4. **Copy the webhook signing secret** (starts with `whsec_`) and add to `.env`:
-   ```bash
-   STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-   ```
+    ```bash
+    STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    ```
 
 ### Production (Vercel/hosting)
 
@@ -122,12 +122,12 @@ Webhooks keep your database in sync with Stripe subscription events.
 3. **Endpoint URL**: `https://your-domain.com/api/webhooks/stripe`
 
 4. **Events to listen for**:
-   - `checkout.session.completed`
-   - `customer.subscription.created`
-   - `customer.subscription.updated`
-   - `customer.subscription.deleted`
-   - `invoice.payment_succeeded`
-   - `invoice.payment_failed`
+    - `checkout.session.completed`
+    - `customer.subscription.created`
+    - `customer.subscription.updated`
+    - `customer.subscription.deleted`
+    - `invoice.payment_succeeded`
+    - `invoice.payment_failed`
 
 5. Copy the **Signing Secret** and add to your production environment variables
 
@@ -140,11 +140,11 @@ The Customer Portal allows users to manage their subscriptions, update payment m
 2. Enable the portal
 
 3. Configure settings:
-   - ✅ Allow customers to update payment methods
-   - ✅ Allow customers to update billing information
-   - ✅ Allow customers to view invoices
-   - ✅ Allow customers to cancel subscriptions
-   - ✅ Allow customers to update subscription quantities (seats)
+    - ✅ Allow customers to update payment methods
+    - ✅ Allow customers to update billing information
+    - ✅ Allow customers to view invoices
+    - ✅ Allow customers to cancel subscriptions
+    - ✅ Allow customers to update subscription quantities (seats)
 
 ## Step 6: Test the Integration
 
@@ -152,15 +152,15 @@ The Customer Portal allows users to manage their subscriptions, update payment m
 
 1. Start your dev server:
 
-   ```bash
-   npm run dev
-   ```
+    ```bash
+    npm run dev
+    ```
 
 2. Start Stripe CLI webhook forwarding:
 
-   ```bash
-   stripe listen --forward-to localhost:5173/api/webhooks/stripe
-   ```
+    ```bash
+    stripe listen --forward-to localhost:5173/api/webhooks/stripe
+    ```
 
 3. Sign in to your app
 
@@ -169,9 +169,9 @@ The Customer Portal allows users to manage their subscriptions, update payment m
 5. Create a team with the Pro plan
 
 6. Use Stripe test card: `4242 4242 4242 4242`
-   - Any future expiry date
-   - Any 3-digit CVC
-   - Any ZIP code
+    - Any future expiry date
+    - Any 3-digit CVC
+    - Any ZIP code
 
 ### Verify Webhooks
 
@@ -200,10 +200,10 @@ Verify:
 2. Click **Manage Billing**
 
 3. Verify you can:
-   - Update payment method
-   - Change subscription quantity (seats)
-   - View invoices
-   - Cancel subscription
+    - Update payment method
+    - Change subscription quantity (seats)
+    - View invoices
+    - Cancel subscription
 
 ## Usage Examples
 

@@ -284,7 +284,8 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 			const allSuiteIds = new Set<string>(['uncategorized']);
 			testResults.forEach((result) => {
 				if (result.testCase.suitePath && result.testCase.suitePath.length > 0) {
-					const parentSuite = result.testCase.suitePath[result.testCase.suitePath.length - 1];
+					const parentSuite =
+						result.testCase.suitePath[result.testCase.suitePath.length - 1];
 					allSuiteIds.add(parentSuite.id);
 				}
 			});
@@ -446,7 +447,9 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 				<Clock class="mt-1 h-5 w-5 text-surface-500" />
 				<div>
 					<div class="text-surface-600-300 text-xs">Started</div>
-					<div class="font-semibold">{formatDate(testRun.startedAt?.toISOString() || null)}</div>
+					<div class="font-semibold">
+						{formatDate(testRun.startedAt?.toISOString() || null)}
+					</div>
 					{#if testRun.completedAt}
 						<div class="text-xs text-surface-500">
 							Completed: {formatDate(testRun.completedAt?.toISOString())}
@@ -521,7 +524,9 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 								Regenerate
 							</button>
 						</div>
-						<div class="rounded-container border border-primary-200-800 bg-primary-50-950 p-4">
+						<div
+							class="rounded-container border border-primary-200-800 bg-primary-50-950 p-4"
+						>
 							<div class="prose prose-sm max-w-none text-sm whitespace-pre-wrap">
 								{runSummary.summary}
 							</div>
@@ -533,8 +538,12 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 									<TrendingUp class="h-5 w-5 text-warning-500" />
 									<h3 class="font-semibold">Failure Pattern Analysis</h3>
 								</div>
-								<div class="rounded-container border border-warning-200-800 bg-warning-50-950 p-4">
-									<div class="prose prose-sm max-w-none text-sm whitespace-pre-wrap">
+								<div
+									class="rounded-container border border-warning-200-800 bg-warning-50-950 p-4"
+								>
+									<div
+										class="prose prose-sm max-w-none text-sm whitespace-pre-wrap"
+									>
 										{runSummary.patternAnalysis}
 									</div>
 								</div>
@@ -704,10 +713,18 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 										<!-- Test Case Info -->
 										<div class="min-w-0 flex-1">
 											<div class="mb-1">
-												<h4 class="truncate font-medium">{result.testCase.title}</h4>
+												<h4 class="truncate font-medium">
+													{result.testCase.title}
+												</h4>
 											</div>
-											<div class="text-surface-600-300 flex items-center gap-3 text-xs">
-												<span class={getPriorityColor(result.testCase.priority)}>
+											<div
+												class="text-surface-600-300 flex items-center gap-3 text-xs"
+											>
+												<span
+													class={getPriorityColor(
+														result.testCase.priority
+													)}
+												>
 													{result.testCase.priority}
 												</span>
 												<span>• {result.testCase.type}</span>
@@ -729,12 +746,16 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 
 									<!-- Expanded Details -->
 									{#if expandedResults.has(result.id)}
-										<div class="bg-surface-50-900 border-surface-200-700 border-t p-4">
+										<div
+											class="bg-surface-50-900 border-surface-200-700 border-t p-4"
+										>
 											<div class="space-y-4">
 												<!-- Test Case Details -->
 												{#if result.testCase.description}
 													<div>
-														<h4 class="mb-1 text-sm font-semibold">Description</h4>
+														<h4 class="mb-1 text-sm font-semibold">
+															Description
+														</h4>
 														<p class="text-surface-600-300 text-sm">
 															{result.testCase.description}
 														</p>
@@ -746,7 +767,8 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 													<div class="flex flex-wrap gap-2">
 														{#if !aiDiagnoses.has(result.id) && !loadingDiagnosis.has(result.id)}
 															<button
-																onclick={() => getDiagnosis(result.id)}
+																onclick={() =>
+																	getDiagnosis(result.id)}
 																class="btn flex-1 preset-tonal-primary"
 															>
 																<Sparkles class="h-4 w-4" />
@@ -762,11 +784,14 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 														</button>
 														{#if result.attachments && result.attachments.length > 0}
 															<div class="flex-1">
-																<AttachmentViewer attachments={result.attachments} />
+																<AttachmentViewer
+																	attachments={result.attachments}
+																/>
 															</div>
 														{/if}
 														<a
-															href="/projects/{projectId}/cases/{result.testCase.id}"
+															href="/projects/{projectId}/cases/{result
+																.testCase.id}"
 															class="btn flex-1 preset-tonal-tertiary"
 														>
 															<FileText class="h-4 w-4" />
@@ -781,35 +806,63 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 														<div
 															class="rounded-container border border-primary-200-800 bg-primary-50-950 p-4"
 														>
-															<div class="flex items-center gap-3 text-primary-500">
-																<Loader2 class="h-5 w-5 animate-spin" />
-																<span class="font-medium">Analyzing failure with AI...</span>
+															<div
+																class="flex items-center gap-3 text-primary-500"
+															>
+																<Loader2
+																	class="h-5 w-5 animate-spin"
+																/>
+																<span class="font-medium"
+																	>Analyzing failure with AI...</span
+																>
 															</div>
 														</div>
 													{:else if aiDiagnoses.has(result.id)}
 														<div
 															class="rounded-container border-2 border-primary-500 bg-primary-50-950 p-4"
 														>
-															<div class="mb-3 flex items-center justify-between gap-2">
-																<div class="flex items-center gap-2">
-																	<Sparkles class="h-5 w-5 text-primary-500" />
-																	<h5 class="font-semibold text-primary-500">AI Diagnosis</h5>
+															<div
+																class="mb-3 flex items-center justify-between gap-2"
+															>
+																<div
+																	class="flex items-center gap-2"
+																>
+																	<Sparkles
+																		class="h-5 w-5 text-primary-500"
+																	/>
+																	<h5
+																		class="font-semibold text-primary-500"
+																	>
+																		AI Diagnosis
+																	</h5>
 																	{#if aiDiagnoses.get(result.id)?.cached}
-																		<span class="text-xs text-surface-500">(cached)</span>
+																		<span
+																			class="text-xs text-surface-500"
+																			>(cached)</span
+																		>
 																	{/if}
 																</div>
 																<button
-																	onclick={() => getDiagnosis(result.id, true)}
+																	onclick={() =>
+																		getDiagnosis(
+																			result.id,
+																			true
+																		)}
 																	class="preset-tonal-primary-500 btn btn-sm"
 																	title="Regenerate diagnosis"
-																	disabled={loadingDiagnosis.has(result.id)}
+																	disabled={loadingDiagnosis.has(
+																		result.id
+																	)}
 																>
 																	<Sparkles class="h-4 w-4" />
 																	Regenerate
 																</button>
 															</div>
-															<div class="prose prose-sm max-w-none text-sm whitespace-pre-wrap">
-																{aiDiagnoses.get(result.id)?.diagnosis}
+															<div
+																class="prose prose-sm max-w-none text-sm whitespace-pre-wrap"
+															>
+																{aiDiagnoses.get(result.id)
+																	?.diagnosis}
 															</div>
 														</div>
 													{/if}
@@ -830,13 +883,19 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 												<!-- Comment -->
 												{#if result.comment}
 													<div>
-														<h4 class="mb-1 text-sm font-semibold">Comment</h4>
-														<p class="text-surface-600-300 text-sm">{result.comment}</p>
+														<h4 class="mb-1 text-sm font-semibold">
+															Comment
+														</h4>
+														<p class="text-surface-600-300 text-sm">
+															{result.comment}
+														</p>
 													</div>
 												{/if}
 
 												<!-- Execution Info -->
-												<div class="text-surface-600-300 flex items-center gap-6 text-xs">
+												<div
+													class="text-surface-600-300 flex items-center gap-6 text-xs"
+												>
 													<span>
 														Executed by: {result.executor.firstName
 															? `${result.executor.firstName} ${result.executor.lastName || ''}`
@@ -850,11 +909,14 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 													<div class="flex gap-2">
 														{#if result.attachments && result.attachments.length > 0}
 															<div class="flex-1">
-																<AttachmentViewer attachments={result.attachments} />
+																<AttachmentViewer
+																	attachments={result.attachments}
+																/>
 															</div>
 														{/if}
 														<a
-															href="/projects/{projectId}/cases/{result.testCase.id}"
+															href="/projects/{projectId}/cases/{result
+																.testCase.id}"
 															class="btn flex-1 preset-tonal-tertiary"
 														>
 															<FileText class="h-4 w-4" />
@@ -885,7 +947,10 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 				</button>
 
 				{#if currentPage > 2}
-					<button class="btn preset-outlined-surface-500 btn-sm" onclick={() => goToPage(1)}>
+					<button
+						class="btn preset-outlined-surface-500 btn-sm"
+						onclick={() => goToPage(1)}
+					>
 						1
 					</button>
 					{#if currentPage > 3}

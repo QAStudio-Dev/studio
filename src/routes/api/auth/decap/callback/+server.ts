@@ -30,9 +30,9 @@ export const GET: RequestHandler = async ({ url }) => {
         const receiveMessage = (message) => {
           window.opener.postMessage(
             'authorization:${provider}:success:${JSON.stringify({
-							token: tokenData.access_token,
-							provider
-						})}',
+				token: tokenData.access_token,
+				provider
+			})}',
             message.origin
           );
 

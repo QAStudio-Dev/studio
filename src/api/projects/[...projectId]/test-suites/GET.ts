@@ -7,7 +7,10 @@ export const Param = z.object({
 });
 
 export const Query = z.object({
-	parentId: z.string().optional().describe('Filter by parent suite ID (use "null" for root level)')
+	parentId: z
+		.string()
+		.optional()
+		.describe('Filter by parent suite ID (use "null" for root level)')
 });
 
 export const Output = z.array(

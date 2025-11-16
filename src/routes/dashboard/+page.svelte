@@ -159,7 +159,9 @@
 					</a>
 				{:else}
 					<div class="text-right">
-						<div class="mb-2 badge preset-filled-warning-500">Project limit reached</div>
+						<div class="mb-2 badge preset-filled-warning-500">
+							Project limit reached
+						</div>
 						<a href="/teams/new" class="btn preset-filled-primary-500 btn-sm">
 							<Crown class="mr-2 h-4 w-4" />
 							Upgrade to Pro
@@ -263,7 +265,10 @@
 						<div class="mb-6 flex items-center justify-between">
 							<h2 class="text-2xl font-bold">Your Projects</h2>
 							{#if subscription.canCreateProject}
-								<a href="/projects/new" class="btn preset-outlined-surface-500 btn-sm">
+								<a
+									href="/projects/new"
+									class="btn preset-outlined-surface-500 btn-sm"
+								>
 									<Plus class="mr-1 h-4 w-4" />
 									New Project
 								</a>
@@ -277,7 +282,8 @@
 								>
 									<!-- Delete button -->
 									<button
-										onclick={(e) => handleDeleteProject(e, project.id, project.name)}
+										onclick={(e) =>
+											handleDeleteProject(e, project.id, project.name)}
 										disabled={deletingProjectId === project.id}
 										class="text-surface-600-300 absolute top-4 right-4 z-10 rounded-container p-2 opacity-0 transition-colors group-hover:opacity-100 hover:bg-error-500/10 hover:text-error-500"
 										title="Delete project"
@@ -293,17 +299,28 @@
 										<div class="flex items-start justify-between">
 											<div class="flex-1 pr-12">
 												<div class="mb-2 flex items-center gap-3">
-													<h3 class="text-lg font-bold">{project.name}</h3>
-													<span class="badge preset-filled-surface-500 text-xs">{project.key}</span>
+													<h3 class="text-lg font-bold">
+														{project.name}
+													</h3>
+													<span
+														class="badge preset-filled-surface-500 text-xs"
+														>{project.key}</span
+													>
 												</div>
 												{#if project.description}
-													<p class="text-surface-600-300 mb-3 text-sm">{project.description}</p>
+													<p class="text-surface-600-300 mb-3 text-sm">
+														{project.description}
+													</p>
 												{/if}
 
-												<div class="text-surface-600-300 flex items-center gap-6 text-sm">
+												<div
+													class="text-surface-600-300 flex items-center gap-6 text-sm"
+												>
 													<div class="flex items-center gap-2">
 														<TestTube2 class="h-4 w-4" />
-														<span>{project._count.testCases} test cases</span>
+														<span
+															>{project._count.testCases} test cases</span
+														>
 													</div>
 													<div class="flex items-center gap-2">
 														<Play class="h-4 w-4" />
@@ -331,13 +348,19 @@
 						<div class="space-y-4">
 							{#each stats.recentResults as result}
 								{@const StatusIcon = getStatusIcon(result.status)}
-								<div class="border-surface-200-700 border-b pb-4 last:border-0 last:pb-0">
+								<div
+									class="border-surface-200-700 border-b pb-4 last:border-0 last:pb-0"
+								>
 									<div class="flex items-start gap-3">
 										<StatusIcon
-											class="mt-0.5 h-5 w-5 flex-shrink-0 {getStatusColor(result.status)}"
+											class="mt-0.5 h-5 w-5 flex-shrink-0 {getStatusColor(
+												result.status
+											)}"
 										/>
 										<div class="min-w-0 flex-1">
-											<p class="truncate text-sm font-medium">{result.testCase.title}</p>
+											<p class="truncate text-sm font-medium">
+												{result.testCase.title}
+											</p>
 											<p class="text-surface-600-300 truncate text-xs">
 												{result.testRun.project.key} · {result.testRun.name}
 											</p>
@@ -371,10 +394,13 @@
 							<div class="flex-1">
 								<h3 class="mb-1 text-lg font-bold">Unlock Pro Features</h3>
 								<p class="text-surface-600-300 text-sm">
-									Unlimited projects · AI-powered failure analysis · Priority support
+									Unlimited projects · AI-powered failure analysis · Priority
+									support
 								</p>
 							</div>
-							<a href="/teams/new" class="btn preset-filled-primary-500"> Upgrade to Pro </a>
+							<a href="/teams/new" class="btn preset-filled-primary-500">
+								Upgrade to Pro
+							</a>
 						</div>
 					</div>
 				</div>

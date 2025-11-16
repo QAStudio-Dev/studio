@@ -28,27 +28,27 @@ QA Studio uses Clerk's built-in invitation system to send team invitation emails
 2. Find the **Invitation** email template
 3. Click **Edit** to customize:
 
-   **Subject Line:**
+    **Subject Line:**
 
-   ```
-   You've been invited to join {{application.name}}
-   ```
+    ```
+    You've been invited to join {{application.name}}
+    ```
 
-   **Email Body** (example):
+    **Email Body** (example):
 
-   ```html
-   Hi there, You've been invited to join {{invitation.team_name}} on QA Studio! Role:
-   {{invitation.role}} Click the button below to accept your invitation: {{invitation.url}} This
-   invitation will expire in 7 days. Best regards, The QA Studio Team
-   ```
+    ```html
+    Hi there, You've been invited to join {{invitation.team_name}} on QA Studio! Role:
+    {{invitation.role}} Click the button below to accept your invitation: {{invitation.url}} This
+    invitation will expire in 7 days. Best regards, The QA Studio Team
+    ```
 
 4. You can use these variables:
-   - `{{application.name}}` - Your app name (QA Studio)
-   - `{{invitation.email_address}}` - Invitee's email
-   - `{{invitation.url}}` - The invitation acceptance URL
-   - Custom metadata (accessed via publicMetadata):
-     - `{{invitation.team_name}}`
-     - `{{invitation.role}}`
+    - `{{application.name}}` - Your app name (QA Studio)
+    - `{{invitation.email_address}}` - Invitee's email
+    - `{{invitation.url}}` - The invitation acceptance URL
+    - Custom metadata (accessed via publicMetadata):
+        - `{{invitation.team_name}}`
+        - `{{invitation.role}}`
 
 ### 3. Customize Email Branding
 
@@ -73,20 +73,20 @@ For better deliverability and branding, use a custom email domain:
 3. Add your domain (e.g., `qastudio.dev`)
 4. Follow DNS verification steps:
 
-   ```
-   Add these DNS records to your domain:
+    ```
+    Add these DNS records to your domain:
 
-   TXT record:
-   Name: @
-   Value: [Clerk verification code]
+    TXT record:
+    Name: @
+    Value: [Clerk verification code]
 
-   MX records:
-   Priority 10: mx1.clerk.com
-   Priority 20: mx2.clerk.com
+    MX records:
+    Priority 10: mx1.clerk.com
+    Priority 20: mx2.clerk.com
 
-   SPF record (add to existing TXT):
-   v=spf1 include:_spf.clerk.com ~all
-   ```
+    SPF record (add to existing TXT):
+    v=spf1 include:_spf.clerk.com ~all
+    ```
 
 5. Wait for verification (can take up to 48 hours)
 6. Once verified, invitations will come from `invitations@qastudio.dev`
@@ -107,9 +107,9 @@ For better deliverability and branding, use a custom email domain:
 2. Send a real invitation
 3. Verify email delivery
 4. Test acceptance with both:
-   - New user (sign up flow)
-   - Existing user (sign in flow)
-   - OAuth (Google/Microsoft)
+    - New user (sign up flow)
+    - Existing user (sign in flow)
+    - OAuth (Google/Microsoft)
 
 ### 6. Monitor Invitation Status
 
@@ -269,9 +269,9 @@ PUBLIC_BASE_URL=https://qastudio.dev  # Used for invitation URLs
 1. Set up custom email domain (best solution)
 2. Add SPF/DKIM records for your domain
 3. Ensure email content isn't spammy:
-   - Don't use all caps in subject
-   - Include unsubscribe link
-   - Use proper HTML structure
+    - Don't use all caps in subject
+    - Include unsubscribe link
+    - Use proper HTML structure
 
 ### User Can't Accept Invitation
 

@@ -11,7 +11,8 @@ export const OPTIONS: RequestHandler = async () => {
 		headers: {
 			'Access-Control-Allow-Origin': '*',
 			'Access-Control-Allow-Methods': 'POST, OPTIONS',
-			'Access-Control-Allow-Headers': 'Content-Type, X-Slack-Signature, X-Slack-Request-Timestamp'
+			'Access-Control-Allow-Headers':
+				'Content-Type, X-Slack-Signature, X-Slack-Request-Timestamp'
 		}
 	});
 };

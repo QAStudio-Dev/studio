@@ -163,7 +163,9 @@
 				<Dialog.Content
 					class="flex max-h-[90vh] w-full max-w-5xl flex-col space-y-4 overflow-hidden card bg-surface-100-900 p-6 shadow-xl"
 				>
-					<Dialog.Title class="text-2xl font-bold">Attachments ({attachments.length})</Dialog.Title>
+					<Dialog.Title class="text-2xl font-bold"
+						>Attachments ({attachments.length})</Dialog.Title
+					>
 
 					<div class="flex-1 space-y-3 overflow-y-auto">
 						{#each attachments as attachment}
@@ -177,11 +179,16 @@
 											/>
 										</div>
 										<div class="min-w-0 flex-1">
-											<div class="truncate text-sm font-medium" title={attachment.originalName}>
+											<div
+												class="truncate text-sm font-medium"
+												title={attachment.originalName}
+											>
 												{attachment.originalName}
 											</div>
 											<div class="text-surface-600-300 mt-1 text-xs">
-												{getAttachmentType(attachment.mimeType)} • {formatBytes(attachment.size)}
+												{getAttachmentType(attachment.mimeType)} • {formatBytes(
+													attachment.size
+												)}
 											</div>
 										</div>
 									</div>
@@ -211,7 +218,9 @@
 						{/each}
 					</div>
 
-					<Dialog.CloseTrigger class="btn preset-filled-surface-500">Close</Dialog.CloseTrigger>
+					<Dialog.CloseTrigger class="btn preset-filled-surface-500"
+						>Close</Dialog.CloseTrigger
+					>
 				</Dialog.Content>
 			</Dialog.Positioner>
 		</Portal>
@@ -270,12 +279,16 @@
 									{:else if isTrace(attachment.mimeType)}
 										<div class="h-full w-full bg-white">
 											{#if loadingTraceUrl[attachment.id]}
-												<div class="flex h-full w-full items-center justify-center">
+												<div
+													class="flex h-full w-full items-center justify-center"
+												>
 													<div class="text-center">
 														<div
 															class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent"
 														></div>
-														<p class="text-surface-600-300 mt-4">Loading trace viewer...</p>
+														<p class="text-surface-600-300 mt-4">
+															Loading trace viewer...
+														</p>
 													</div>
 												</div>
 											{:else if traceSignedUrls[attachment.id]}
@@ -287,13 +300,19 @@
 													title="Playwright Trace Viewer"
 												></iframe>
 											{:else}
-												<div class="flex h-full w-full items-center justify-center">
-													<p class="text-error-500">Failed to load trace viewer</p>
+												<div
+													class="flex h-full w-full items-center justify-center"
+												>
+													<p class="text-error-500">
+														Failed to load trace viewer
+													</p>
 												</div>
 											{/if}
 										</div>
 									{:else if isMarkdown(attachment.mimeType)}
-										<div class="w-full max-w-4xl overflow-auto bg-surface-100-900 p-8">
+										<div
+											class="w-full max-w-4xl overflow-auto bg-surface-100-900 p-8"
+										>
 											{#if loadingMarkdown[attachment.id]}
 												<div class="text-surface-600-300 py-8 text-center">
 													<div
@@ -302,8 +321,12 @@
 													<span class="ml-2">Loading markdown...</span>
 												</div>
 											{:else if markdownContents[attachment.id]}
-												<div class="prose prose-sm max-w-none dark:prose-invert">
-													{@html marked.parse(markdownContents[attachment.id])}
+												<div
+													class="prose prose-sm max-w-none dark:prose-invert"
+												>
+													{@html marked.parse(
+														markdownContents[attachment.id]
+													)}
 												</div>
 											{/if}
 										</div>
@@ -312,12 +335,18 @@
 
 								<!-- Info Bar (hidden for trace files) -->
 								{#if !isTrace(attachment.mimeType)}
-									<div class="border-surface-200-700 border-t bg-surface-100-900 p-4">
+									<div
+										class="border-surface-200-700 border-t bg-surface-100-900 p-4"
+									>
 										<div class="flex items-center justify-between gap-4">
 											<div class="min-w-0 flex-1">
-												<div class="truncate text-sm font-medium">{attachment.originalName}</div>
+												<div class="truncate text-sm font-medium">
+													{attachment.originalName}
+												</div>
 												<div class="text-surface-600-300 text-xs">
-													{getAttachmentType(attachment.mimeType)} • {formatBytes(attachment.size)}
+													{getAttachmentType(attachment.mimeType)} • {formatBytes(
+														attachment.size
+													)}
 												</div>
 											</div>
 											<div class="flex gap-2">
@@ -329,7 +358,9 @@
 													<Download class="h-4 w-4" />
 													Download
 												</a>
-												<Dialog.CloseTrigger class="btn preset-filled-surface-500 btn-sm">
+												<Dialog.CloseTrigger
+													class="btn preset-filled-surface-500 btn-sm"
+												>
 													Close
 												</Dialog.CloseTrigger>
 											</div>
@@ -442,7 +473,8 @@
 	}
 
 	.prose :global(blockquote) {
-		border-left: 4px solid light-dark(rgb(var(--color-surface-300)), rgb(var(--color-surface-600)));
+		border-left: 4px solid
+			light-dark(rgb(var(--color-surface-300)), rgb(var(--color-surface-600)));
 		padding-left: 1rem;
 		margin: 1rem 0;
 		font-style: italic;
@@ -451,7 +483,8 @@
 
 	.prose :global(hr) {
 		border: 0;
-		border-top: 1px solid light-dark(rgb(var(--color-surface-300)), rgb(var(--color-surface-700)));
+		border-top: 1px solid
+			light-dark(rgb(var(--color-surface-300)), rgb(var(--color-surface-700)));
 		margin: 2rem 0;
 	}
 

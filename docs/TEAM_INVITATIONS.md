@@ -42,10 +42,10 @@ When inviting members:
 2. Click **"Invite Members"** button
 3. Enter the invitee's email address
 4. Select their role:
-   - **Viewer**: Read-only access to projects and results
-   - **Tester**: Create and execute tests, view team projects
-   - **Manager**: Manage projects and teams, invite members
-   - **Admin**: Full system access (use sparingly)
+    - **Viewer**: Read-only access to projects and results
+    - **Tester**: Create and execute tests, view team projects
+    - **Manager**: Manage projects and teams, invite members
+    - **Admin**: Full system access (use sparingly)
 5. Click **"Send Invitation"**
 
 The invitation will:
@@ -70,10 +70,10 @@ If you reach your seat limit:
 
 1. **Free Tier**: Upgrade to Pro to add team members
 2. **Pro Tier**:
-   - Go to team page
-   - Click "Manage Billing"
-   - Update your subscription to add more seats
-   - Stripe will prorate the charges
+    - Go to team page
+    - Click "Manage Billing"
+    - Update your subscription to add more seats
+    - Stripe will prorate the charges
 
 ## For Invitees
 
@@ -90,10 +90,10 @@ https://qastudio.dev/invitations/[unique-token]
 1. Click the invitation link
 2. **Sign in** if you have an account, or **sign up** if you're new
 3. Review the team details:
-   - Team name and description
-   - Your assigned role
-   - Current team members
-   - What permissions you'll have
+    - Team name and description
+    - Your assigned role
+    - Current team members
+    - What permissions you'll have
 4. Click **"Accept Invitation"**
 5. You'll be redirected to the team page
 
@@ -290,15 +290,15 @@ When you subscribe to QA Studio Pro:
 1. Select number of seats (members) you need
 2. Price = `base_price × number_of_seats`
 3. Example: $15/month per seat
-   - 5 seats = $75/month
-   - 10 seats = $150/month
+    - 5 seats = $75/month
+    - 10 seats = $150/month
 
 ### Adding More Seats
 
 1. Go to team page → **Manage Billing**
 2. In Stripe Customer Portal:
-   - Update quantity for your subscription
-   - Changes are prorated automatically
+    - Update quantity for your subscription
+    - Changes are prorated automatically
 3. New seats available immediately
 
 ### What Happens When Seats Are Full
@@ -412,19 +412,19 @@ The invitation was already used. If the user isn't in the team:
 ### For Team Admins
 
 1. **Assign Appropriate Roles**:
-   - Most team members should be Testers
-   - Only trusted users should be Managers
-   - Limit Admin role to 1-2 people
+    - Most team members should be Testers
+    - Only trusted users should be Managers
+    - Limit Admin role to 1-2 people
 
 2. **Monitor Seat Usage**:
-   - Regularly review team members
-   - Remove inactive members to free seats
-   - Plan ahead for team growth
+    - Regularly review team members
+    - Remove inactive members to free seats
+    - Plan ahead for team growth
 
 3. **Invitation Management**:
-   - Cancel invitations if plans change
-   - Re-send if someone loses the link
-   - Set calendar reminder for seat reviews
+    - Cancel invitations if plans change
+    - Re-send if someone loses the link
+    - Set calendar reminder for seat reviews
 
 ### For Invitees
 

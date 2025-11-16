@@ -1,6 +1,7 @@
 import { KV_REST_API_URL, KV_REST_API_TOKEN } from '$env/static/private';
 import { Redis } from '@upstash/redis';
 import { dev } from '$app/environment';
+import { CACHE_TTL } from '$lib/constants';
 
 // Validate Redis environment variables
 if (!KV_REST_API_URL || !KV_REST_API_TOKEN) {
@@ -71,6 +72,10 @@ export const CacheKeys = {
 	apiKey: (key: string) => {
 		validateCacheKeyInput(key, 'api key');
 		return `apikey:${key}`;
+	},
+	teamStatus: (teamId: string) => {
+		validateCacheKeyInput(teamId, 'team id');
+		return `team:status:${teamId}`;
 	}
 } as const;
 
@@ -82,7 +87,8 @@ export const CacheTTL = {
 	testRun: 2592000, // 30 days - immutable once completed
 	testResult: 2592000, // 30 days - immutable once created
 	testCase: 2592000, // 30 days - rarely changes, invalidated on updates
-	apiKey: 300 // 5 minutes - security sensitive, keep short
+	apiKey: 300, // 5 minutes - security sensitive, keep short
+	teamStatus: CACHE_TTL.TEAM_STATUS // 5 minutes - from app constants
 } as const;
 
 /**

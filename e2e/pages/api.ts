@@ -176,9 +176,12 @@ export class ApiClient {
 	 * Get a test case by ID
 	 */
 	async getTestCase(projectId: string, testCaseId: string): Promise<APIResponse> {
-		return await this.request.get(`${this.baseURL}/api/projects/${projectId}/cases/${testCaseId}`, {
-			headers: this.getHeaders()
-		});
+		return await this.request.get(
+			`${this.baseURL}/api/projects/${projectId}/cases/${testCaseId}`,
+			{
+				headers: this.getHeaders()
+			}
+		);
 	}
 
 	/**
@@ -294,9 +297,12 @@ export class ApiClient {
 	 * Delete a test run
 	 */
 	async deleteTestRun(projectId: string, runId: string): Promise<APIResponse> {
-		return await this.request.delete(`${this.baseURL}/api/projects/${projectId}/runs/${runId}`, {
-			headers: this.getHeaders()
-		});
+		return await this.request.delete(
+			`${this.baseURL}/api/projects/${projectId}/runs/${runId}`,
+			{
+				headers: this.getHeaders()
+			}
+		);
 	}
 
 	// ==================== TEST RESULTS ====================

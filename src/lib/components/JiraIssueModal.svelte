@@ -149,7 +149,12 @@
 	}
 
 	async function handleSubmit() {
-		if (!selectedIntegrationId || !selectedProjectKey || !selectedIssueType || !summary.trim()) {
+		if (
+			!selectedIntegrationId ||
+			!selectedProjectKey ||
+			!selectedIssueType ||
+			!summary.trim()
+		) {
 			error = 'Please fill in all required fields';
 			return;
 		}
@@ -234,7 +239,11 @@
 			<div class="mb-6 flex items-start justify-between">
 				<div>
 					<div class="mb-2 flex items-center gap-3">
-						<svg class="h-6 w-6 text-primary-500" viewBox="0 0 24 24" fill="currentColor">
+						<svg
+							class="h-6 w-6 text-primary-500"
+							viewBox="0 0 24 24"
+							fill="currentColor"
+						>
 							<path
 								d="M11.5 2C10.5 2 9.7 2.8 9.7 3.8v7.5c0 1 .8 1.8 1.8 1.8h7.5c1 0 1.8-.8 1.8-1.8V3.8c0-1-.8-1.8-1.8-1.8h-7.5z"
 							/>
@@ -245,7 +254,9 @@
 						</svg>
 						<h2 class="text-2xl font-bold">Create Jira Issue</h2>
 					</div>
-					<p class="text-surface-600-300">Create a new issue in Jira linked to this test</p>
+					<p class="text-surface-600-300">
+						Create a new issue in Jira linked to this test
+					</p>
 				</div>
 				<button class="preset-ghost-surface-500 btn btn-sm" onclick={handleClose}>
 					<X class="h-4 w-4" />
@@ -254,7 +265,9 @@
 
 			{#if success && createdIssueKey}
 				<!-- Success Message -->
-				<div class="mb-4 rounded-container border-2 border-success-500 bg-success-50-950 p-4">
+				<div
+					class="mb-4 rounded-container border-2 border-success-500 bg-success-50-950 p-4"
+				>
 					<div class="mb-2 flex items-center gap-2">
 						<svg
 							class="h-5 w-5 text-success-500"
@@ -272,7 +285,8 @@
 						<h3 class="font-semibold text-success-500">Issue Created Successfully!</h3>
 					</div>
 					<p class="mb-3 text-sm">
-						Jira issue <strong>{createdIssueKey}</strong> has been created and linked to this test.
+						Jira issue <strong>{createdIssueKey}</strong> has been created and linked to
+						this test.
 					</p>
 					{#if createdIssueUrl}
 						<a
@@ -359,7 +373,9 @@
 									{loadingProjects ? 'Loading projects...' : 'Select project...'}
 								</option>
 								{#each projects as project}
-									<option value={project.key}>{project.name} ({project.key})</option>
+									<option value={project.key}
+										>{project.name} ({project.key})</option
+									>
 								{/each}
 							</select>
 						</div>
@@ -377,7 +393,9 @@
 								disabled={loading || loadingIssueTypes || !selectedProjectKey}
 							>
 								<option value="">
-									{loadingIssueTypes ? 'Loading issue types...' : 'Select issue type...'}
+									{loadingIssueTypes
+										? 'Loading issue types...'
+										: 'Select issue type...'}
 								</option>
 								{#each issueTypes as issueType}
 									<option value={issueType.name}>{issueType.name}</option>
@@ -387,7 +405,9 @@
 
 						<!-- Priority -->
 						<div>
-							<label for="priority" class="mb-2 block text-sm font-medium">Priority</label>
+							<label for="priority" class="mb-2 block text-sm font-medium"
+								>Priority</label
+							>
 							<select
 								id="priority"
 								class="select w-full"
@@ -420,7 +440,9 @@
 
 						<!-- Description -->
 						<div>
-							<label for="description" class="mb-2 block text-sm font-medium">Description</label>
+							<label for="description" class="mb-2 block text-sm font-medium"
+								>Description</label
+							>
 							<textarea
 								id="description"
 								class="textarea w-full"
@@ -430,7 +452,8 @@
 								disabled={loading}
 							></textarea>
 							<p class="text-surface-500-400 mt-1 text-xs">
-								Test case details and error information will be automatically included
+								Test case details and error information will be automatically
+								included
 							</p>
 						</div>
 

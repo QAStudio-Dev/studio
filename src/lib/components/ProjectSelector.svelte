@@ -130,7 +130,9 @@
 						<div class="flex items-center gap-3">
 							<FolderOpen class="h-4 w-4 text-primary-500" />
 							<div>
-								<div class="text-sm font-medium transition-colors group-hover:text-primary-500">
+								<div
+									class="text-sm font-medium transition-colors group-hover:text-primary-500"
+								>
 									{project.name}
 								</div>
 								<div class="text-surface-600-300 text-xs">{project.key}</div>

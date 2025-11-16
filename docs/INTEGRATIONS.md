@@ -34,16 +34,16 @@ QA Studio supports integrations with popular tools to send notifications about t
 
 1. In your app settings, go to "OAuth & Permissions"
 2. Under "Scopes" → "Bot Token Scopes", add:
-   - `incoming-webhook` - Post messages to channels
-   - `chat:write` - Send messages as the app
-   - `channels:read` - View basic channel info
-   - `groups:read` - View private channel info
-   - `im:read` - View direct message info
-   - `mpim:read` - View group direct message info
+    - `incoming-webhook` - Post messages to channels
+    - `chat:write` - Send messages as the app
+    - `channels:read` - View basic channel info
+    - `groups:read` - View private channel info
+    - `im:read` - View direct message info
+    - `mpim:read` - View group direct message info
 
 3. Under "Redirect URLs", add:
-   - Development: `http://localhost:5173/api/integrations/slack/callback`
-   - Production: `https://yourdomain.com/api/integrations/slack/callback`
+    - Development: `http://localhost:5173/api/integrations/slack/callback`
+    - Production: `https://yourdomain.com/api/integrations/slack/callback`
 
 #### 3. Enable Incoming Webhooks
 
@@ -57,8 +57,8 @@ This step is required to prevent the warning icon when users click buttons in Sl
 1. Go to "Interactivity & Shortcuts"
 2. Toggle "Interactivity" to **On**
 3. Set the **Request URL** to:
-   - Development: `http://localhost:5173/api/integrations/slack/interactions`
-   - Production: `https://yourdomain.com/api/integrations/slack/interactions`
+    - Development: `http://localhost:5173/api/integrations/slack/interactions`
+    - Production: `https://yourdomain.com/api/integrations/slack/interactions`
 4. Click "Save Changes"
 
 **Note:** This endpoint handles callbacks when users interact with buttons in notifications. Even though our "View Details" buttons simply navigate to URLs, Slack requires this configuration.

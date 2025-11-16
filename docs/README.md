@@ -57,20 +57,20 @@ QA Studio uses cryptographically signed, time-limited URLs to serve Playwright t
 
 1. Generate signing secret:
 
-   ```bash
-   openssl rand -hex 32
-   ```
+    ```bash
+    openssl rand -hex 32
+    ```
 
 2. Add to `.env`:
 
-   ```bash
-   URL_SIGNING_SECRET=your_generated_secret_here
-   ```
+    ```bash
+    URL_SIGNING_SECRET=your_generated_secret_here
+    ```
 
 3. For production (Vercel):
-   ```bash
-   vercel env add URL_SIGNING_SECRET production
-   ```
+    ```bash
+    vercel env add URL_SIGNING_SECRET production
+    ```
 
 ### Security Features
 

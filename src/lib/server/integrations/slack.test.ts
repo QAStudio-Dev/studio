@@ -9,7 +9,8 @@ describe('Slack integration service', () => {
 		it('should decrypt webhook URL before sending notification', async () => {
 			const { encrypt, decrypt } = await import('../encryption');
 
-			const plainWebhookUrl = 'https://hooks.example.com/services/T12345/B12345/secretToken123';
+			const plainWebhookUrl =
+				'https://hooks.example.com/services/T12345/B12345/secretToken123';
 			const encryptedWebhookUrl = encrypt(plainWebhookUrl);
 
 			// Verify encryption worked
@@ -350,7 +351,9 @@ describe('Slack integration service', () => {
 
 			invalidUrls.forEach((url) => {
 				if (url) {
-					expect(url).not.toMatch(/^https:\/\/hooks\.example\.com\/services\/T\w+\/B\w+\/\w+$/);
+					expect(url).not.toMatch(
+						/^https:\/\/hooks\.example\.com\/services\/T\w+\/B\w+\/\w+$/
+					);
 				}
 			});
 		});

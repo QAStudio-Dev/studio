@@ -105,7 +105,10 @@
 		>
 			<GripVertical class="h-3.5 w-3.5" />
 		</div>
-		<button onclick={() => toggleSuite(suite.id)} class="flex flex-1 items-center gap-2 text-left">
+		<button
+			onclick={() => toggleSuite(suite.id)}
+			class="flex flex-1 items-center gap-2 text-left"
+		>
 			{#if isExpanded}
 				<ChevronDown class="h-4 w-4 flex-shrink-0" />
 			{:else}

@@ -24,11 +24,11 @@ npx prisma db push
 
 - **Location**: `/settings/api-keys`
 - Users can:
-  - Create new API keys with custom names
-  - Set expiration dates (optional)
-  - View all their API keys (only prefix shown)
-  - See last used date
-  - Delete API keys
+    - Create new API keys with custom names
+    - Set expiration dates (optional)
+    - View all their API keys (only prefix shown)
+    - See last used date
+    - Delete API keys
 
 ### 2. API Key Security
 
@@ -160,24 +160,24 @@ Authorization: Bearer <session-or-api-key>
 ## Security Best Practices
 
 1. **Never commit API keys to version control**
-   - Use environment variables
-   - Add to `.gitignore`
+    - Use environment variables
+    - Add to `.gitignore`
 
 2. **Set expiration dates**
-   - Especially for temporary integrations
-   - Rotate keys periodically
+    - Especially for temporary integrations
+    - Rotate keys periodically
 
 3. **Use descriptive names**
-   - Helps identify where each key is used
-   - Easier to revoke when needed
+    - Helps identify where each key is used
+    - Easier to revoke when needed
 
 4. **Monitor usage**
-   - Check "last used" dates
-   - Remove unused keys
+    - Check "last used" dates
+    - Remove unused keys
 
 5. **Limit key access**
-   - One key per integration
-   - Revoke immediately if compromised
+    - One key per integration
+    - Revoke immediately if compromised
 
 ## Environment Variables Example
 
@@ -201,9 +201,9 @@ Users can access API key management at:
 - **API Utils**: `src/lib/server/api-keys.ts`
 - **Auth Helper**: `src/lib/server/api-auth.ts`
 - **API Routes**:
-  - `src/routes/api/api-keys/list/+server.ts`
-  - `src/routes/api/api-keys/create/+server.ts`
-  - `src/routes/api/api-keys/[keyId]/delete/+server.ts`
+    - `src/routes/api/api-keys/list/+server.ts`
+    - `src/routes/api/api-keys/create/+server.ts`
+    - `src/routes/api/api-keys/[keyId]/delete/+server.ts`
 - **Settings Page**:
-  - `src/routes/settings/api-keys/+page.server.ts`
-  - `src/routes/settings/api-keys/+page.svelte`
+    - `src/routes/settings/api-keys/+page.server.ts`
+    - `src/routes/settings/api-keys/+page.svelte`

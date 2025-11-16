@@ -29,12 +29,15 @@
 	}
 
 	// Parse stack trace to highlight file paths and line numbers
-	function parseStackTrace(stack: string): Array<{ text: string; isFile: boolean; line?: string }> {
+	function parseStackTrace(
+		stack: string
+	): Array<{ text: string; isFile: boolean; line?: string }> {
 		const lines = stack.split('\n');
 		return lines.map((line) => {
 			// Match common stack trace patterns
 			// e.g., "at functionName (file.js:123:45)" or "at file.js:123:45"
-			const fileMatch = line.match(/\((.*?):(\d+):(\d+)\)/) || line.match(/at (.*?):(\d+):(\d+)/);
+			const fileMatch =
+				line.match(/\((.*?):(\d+):(\d+)\)/) || line.match(/at (.*?):(\d+):(\d+)/);
 			if (fileMatch) {
 				return {
 					text: line,

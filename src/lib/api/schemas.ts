@@ -331,7 +331,8 @@ export const TestResultsApi = {
 					},
 					{
 						title: 'should show error for invalid credentials',
-						fullTitle: 'Auth > Login > Failure > should show error for invalid credentials',
+						fullTitle:
+							'Auth > Login > Failure > should show error for invalid credentials',
 						status: 'failed',
 						duration: 800,
 						errorMessage: 'Expected error message to be visible',
@@ -473,7 +474,8 @@ export const TestCasesApi = {
 			description: 'Test case details',
 			example: {
 				title: 'User can login with valid credentials',
-				description: 'Verify that users can successfully login using valid email and password',
+				description:
+					'Verify that users can successfully login using valid email and password',
 				preconditions: 'User account exists in the system',
 				steps: [
 					{ step: 'Navigate to login page', expected: 'Login page is displayed' },
@@ -496,13 +498,20 @@ export const TestCasesApi = {
 					testCase: {
 						id: 'tc_123',
 						title: 'User can login with valid credentials',
-						description: 'Verify that users can successfully login using valid email and password',
+						description:
+							'Verify that users can successfully login using valid email and password',
 						preconditions: 'User account exists in the system',
 						steps: [
 							{ step: 'Navigate to login page', expected: 'Login page is displayed' },
 							{ step: 'Enter valid email', expected: 'Email field accepts input' },
-							{ step: 'Enter valid password', expected: 'Password field accepts input' },
-							{ step: 'Click Login button', expected: 'User is redirected to dashboard' }
+							{
+								step: 'Enter valid password',
+								expected: 'Password field accepts input'
+							},
+							{
+								step: 'Click Login button',
+								expected: 'User is redirected to dashboard'
+							}
 						],
 						expectedResult: 'User successfully logs in and sees dashboard',
 						priority: 'HIGH',

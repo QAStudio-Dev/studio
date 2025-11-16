@@ -31,7 +31,8 @@ export const Error = {
 export const Modifier = (r: any) => {
 	r.tags = ['Environments'];
 	r.summary = 'Create an environment';
-	r.description = 'Create a new testing environment for organizing test runs by deployment target.';
+	r.description =
+		'Create a new testing environment for organizing test runs by deployment target.';
 	return r;
 };
 

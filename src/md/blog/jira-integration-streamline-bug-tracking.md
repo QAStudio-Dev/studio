@@ -5,10 +5,10 @@ description: Create Jira issues directly from failed tests with one click. No mo
 cover: ''
 category: Integrations
 tags:
-  - jira
-  - integrations
-  - bug-tracking
-  - workflow
+    - jira
+    - integrations
+    - bug-tracking
+    - workflow
 author: QA Studio Team
 slug: jira-integration-streamline-bug-tracking
 published: true
@@ -119,9 +119,9 @@ Getting started takes less than 5 minutes:
 2. Click **"Add Integration"**
 3. Select **Jira Cloud** or **Jira Server**
 4. Enter your Jira details:
-   - **Base URL**: `https://yourcompany.atlassian.net`
-   - **Email**: Your Jira email
-   - **API Token**: Generate one from [Atlassian API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
+    - **Base URL**: `https://yourcompany.atlassian.net`
+    - **Email**: Your Jira email
+    - **API Token**: Generate one from [Atlassian API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
 5. Click **"Test Connection"** to verify
 6. Save the integration
 

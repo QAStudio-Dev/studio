@@ -112,7 +112,9 @@
 							<div
 								class="flex items-center gap-2 rounded-base border border-surface-300-700 px-3 py-1.5"
 							>
-								<span class="text-surface-600-300 text-sm font-medium">Loading...</span>
+								<span class="text-surface-600-300 text-sm font-medium"
+									>Loading...</span
+								>
 							</div>
 						{:else if projects.length === 0}
 							<!-- No projects - show New Project button -->
@@ -130,13 +132,16 @@
 								>
 									<span class="text-sm font-medium">
 										{#if selectedProjectId}
-											{projects.find((p) => p.id === selectedProjectId)?.name || 'Select Project'}
+											{projects.find((p) => p.id === selectedProjectId)
+												?.name || 'Select Project'}
 										{:else}
 											Select Project
 										{/if}
 									</span>
 									<svg
-										class="h-3.5 w-3.5 transition-transform {popover().open ? 'rotate-180' : ''}"
+										class="h-3.5 w-3.5 transition-transform {popover().open
+											? 'rotate-180'
+											: ''}"
 										fill="none"
 										stroke="currentColor"
 										viewBox="0 0 24 24"
@@ -175,7 +180,9 @@
 											>
 												<div class="flex flex-col">
 													<span class="font-medium">{project.name}</span>
-													<span class="text-surface-500-400 text-xs">{project.key}</span>
+													<span class="text-surface-500-400 text-xs"
+														>{project.key}</span
+													>
 												</div>
 											</button>
 										{/each}
@@ -253,7 +260,9 @@
 				<!-- API Docs - Hidden on mobile -->
 				<a
 					href="/docs"
-					class="hidden rounded-base px-4 py-2 transition-colors md:block {isActive('/docs')
+					class="hidden rounded-base px-4 py-2 transition-colors md:block {isActive(
+						'/docs'
+					)
 						? 'bg-primary-500 text-white'
 						: 'hover:bg-surface-200-800'}"
 				>
@@ -298,7 +307,9 @@
 								<div
 									class="flex items-center gap-2 rounded-base border border-surface-300-700 px-3 py-2"
 								>
-									<span class="text-surface-600-300 text-sm font-medium">Loading projects...</span>
+									<span class="text-surface-600-300 text-sm font-medium"
+										>Loading projects...</span
+									>
 								</div>
 							{:else if projects.length === 0}
 								<!-- No projects -->
@@ -312,7 +323,9 @@
 							{:else}
 								<!-- Project Selector -->
 								<div class="rounded-base border border-surface-300-700 p-2">
-									<div class="mb-2 px-1 text-xs font-semibold text-surface-500 uppercase">
+									<div
+										class="mb-2 px-1 text-xs font-semibold text-surface-500 uppercase"
+									>
 										Projects
 									</div>
 									<a
@@ -331,8 +344,12 @@
 												: ''}"
 										>
 											<div class="flex flex-col">
-												<span class="text-sm font-medium">{project.name}</span>
-												<span class="text-surface-500-400 text-xs">{project.key}</span>
+												<span class="text-sm font-medium"
+													>{project.name}</span
+												>
+												<span class="text-surface-500-400 text-xs"
+													>{project.key}</span
+												>
 											</div>
 										</button>
 									{/each}

@@ -1,7 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
-import { requireAuth } from '$lib/server/auth';
+import { requirePremiumFeature } from '$lib/server/auth';
 import { diagnoseFailedTest } from '$lib/server/openai';
 
 /**
@@ -14,7 +14,9 @@ import { diagnoseFailedTest } from '$lib/server/openai';
  * - testResultId: string
  */
 export const POST: RequestHandler = async (event) => {
-	const userId = await requireAuth(event);
+	// Require active pro subscription for AI features
+	const { userId, user } = await requirePremiumFeature(event, 'AI-powered failure analysis');
+
 	const body = await event.request.json();
 	const { testResultId, regenerate: regenerateRaw } = body;
 
@@ -24,29 +26,6 @@ export const POST: RequestHandler = async (event) => {
 	if (!testResultId) {
 		throw error(400, { message: 'testResultId is required' });
 	}
-
-	// Get user with subscription info
-	const user = await db.user.findUnique({
-		where: { id: userId },
-		include: {
-			team: {
-				include: {
-					subscription: true
-				}
-			}
-		}
-	});
-
-	// Check if user has active subscription
-	const hasActiveSubscription =
-		user?.team?.subscription?.status === 'ACTIVE' ||
-		user?.team?.subscription?.status === 'PAST_DUE';
-
-	// if (!hasActiveSubscription) {
-	// 	throw error(403, {
-	// 		message: 'AI features require a Pro subscription. Upgrade to access AI-powered insights.'
-	// 	});
-	// }
 
 	// Get test result with details
 	const testResult = await db.testResult.findUnique({
@@ -91,7 +70,9 @@ export const POST: RequestHandler = async (event) => {
 
 		// If we have a cached diagnosis and regeneration is not requested, return it
 		if (testResult.aiDiagnosis && !regenerate) {
-			console.log(`[AI Diagnosis] Returning cached diagnosis for test result: ${testResultId}`);
+			console.log(
+				`[AI Diagnosis] Returning cached diagnosis for test result: ${testResultId}`
+			);
 			return json(
 				{
 					diagnosis: testResult.aiDiagnosis,
@@ -113,7 +94,8 @@ export const POST: RequestHandler = async (event) => {
 		// Check for error-context.md attachment
 		let errorContext: string | undefined;
 		const errorContextAttachment = testResult.attachments?.find(
-			(att) => att.originalName === 'error-context.md' || att.filename.includes('error-context')
+			(att) =>
+				att.originalName === 'error-context.md' || att.filename.includes('error-context')
 		);
 
 		if (errorContextAttachment) {
@@ -123,7 +105,9 @@ export const POST: RequestHandler = async (event) => {
 				const response = await fetch(errorContextAttachment.url);
 				if (response.ok) {
 					errorContext = await response.text();
-					console.log(`[AI Diagnosis] Error context loaded: ${errorContext.length} chars`);
+					console.log(
+						`[AI Diagnosis] Error context loaded: ${errorContext.length} chars`
+					);
 				}
 			} catch (err) {
 				console.error('[AI Diagnosis] Failed to fetch error context:', err);
@@ -141,7 +125,9 @@ export const POST: RequestHandler = async (event) => {
 			errorContext
 		});
 
-		console.log(`[AI Diagnosis] Successfully generated diagnosis for test result: ${testResultId}`);
+		console.log(
+			`[AI Diagnosis] Successfully generated diagnosis for test result: ${testResultId}`
+		);
 		console.log(`[AI Diagnosis] Diagnosis length: ${diagnosis?.length || 0} characters`);
 
 		if (!diagnosis) {

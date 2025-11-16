@@ -59,7 +59,8 @@
 		}
 
 		// Use window.location if available (browser), fallback to placeholder for SSR
-		const origin = typeof window !== 'undefined' ? window.location.origin : 'https://qastudio.dev';
+		const origin =
+			typeof window !== 'undefined' ? window.location.origin : 'https://qastudio.dev';
 		const redirectUri = `${origin}/api/integrations/slack/callback`;
 		const scopes = [
 			'incoming-webhook',
@@ -423,15 +424,20 @@
 				</div>
 
 				<!-- Quick Overview -->
-				<div class="bg-surface-50-900 mb-6 rounded-container border border-primary-500/20 p-6">
+				<div
+					class="bg-surface-50-900 mb-6 rounded-container border border-primary-500/20 p-6"
+				>
 					<div class="mb-4 flex items-start gap-4">
-						<div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary-500/10">
+						<div
+							class="flex h-12 w-12 items-center justify-center rounded-full bg-primary-500/10"
+						>
 							<Key class="h-6 w-6 text-primary-500" />
 						</div>
 						<div class="flex-1">
 							<h3 class="mb-2 font-bold">Full API Keys Management</h3>
 							<p class="text-surface-600-300 mb-4 text-sm">
-								Access the dedicated API Keys page for complete management including:
+								Access the dedicated API Keys page for complete management
+								including:
 							</p>
 							<ul class="text-surface-600-300 space-y-2 text-sm">
 								<li class="flex items-center gap-2">
@@ -474,7 +480,9 @@
 					</div>
 				{:else}
 					<div>
-						<h3 class="mb-3 text-sm font-semibold">Your API Keys ({user.apiKeys.length})</h3>
+						<h3 class="mb-3 text-sm font-semibold">
+							Your API Keys ({user.apiKeys.length})
+						</h3>
 						<div class="space-y-2">
 							{#each user.apiKeys.slice(0, 3) as apiKey}
 								<div class="border-surface-200-700 rounded-container border p-3">
@@ -487,10 +495,15 @@
 						</div>
 						{#if user.apiKeys.length > 3}
 							<div class="text-surface-600-300 mt-3 text-center text-sm">
-								And {user.apiKeys.length - 3} more key{user.apiKeys.length - 3 !== 1 ? 's' : ''}
+								And {user.apiKeys.length - 3} more key{user.apiKeys.length - 3 !== 1
+									? 's'
+									: ''}
 							</div>
 						{/if}
-						<a href="/settings/api-keys" class="mt-4 btn w-full preset-outlined-primary-500">
+						<a
+							href="/settings/api-keys"
+							class="mt-4 btn w-full preset-outlined-primary-500"
+						>
 							View All Keys & Get Playwright Config
 						</a>
 					</div>
@@ -520,7 +533,9 @@
 						</div>
 
 						{#if user.team.subscription}
-							<div class="border-surface-200-700 grid gap-4 border-t pt-4 md:grid-cols-2">
+							<div
+								class="border-surface-200-700 grid gap-4 border-t pt-4 md:grid-cols-2"
+							>
 								<div>
 									<div class="text-surface-600-300 text-sm">Plan</div>
 									<div class="font-semibold">
@@ -530,7 +545,9 @@
 								<div>
 									<div class="text-surface-600-300 mb-1 text-sm">Seats</div>
 									<div class="flex items-center gap-2">
-										<span class="font-semibold">{user.team.subscription.seats}</span>
+										<span class="font-semibold"
+											>{user.team.subscription.seats}</span
+										>
 										<button
 											onclick={openSeatUpdateDialog}
 											class="btn preset-outlined-primary-500 btn-sm"
@@ -544,7 +561,9 @@
 								{#if user.team.subscription.currentPeriodEnd}
 									<div>
 										<div class="text-surface-600-300 text-sm">
-											{user.team.subscription.cancelAtPeriodEnd ? 'Cancels On' : 'Renews On'}
+											{user.team.subscription.cancelAtPeriodEnd
+												? 'Cancels On'
+												: 'Renews On'}
 										</div>
 										<div class="font-semibold">
 											{formatDate(user.team.subscription.currentPeriodEnd)}
@@ -558,8 +577,13 @@
 					<!-- Team Members Card -->
 					<div class="card p-6">
 						<div class="mb-4 flex items-center justify-between">
-							<h3 class="text-xl font-bold">Team Members ({user.team.members.length})</h3>
-							<a href="/teams/{user.team.id}/invite" class="btn preset-filled-primary-500 btn-sm">
+							<h3 class="text-xl font-bold">
+								Team Members ({user.team.members.length})
+							</h3>
+							<a
+								href="/teams/{user.team.id}/invite"
+								class="btn preset-filled-primary-500 btn-sm"
+							>
 								<Users class="mr-2 h-4 w-4" />
 								Invite Members
 							</a>
@@ -576,9 +600,13 @@
 												? `${member.firstName} ${member.lastName || ''}`
 												: member.email}
 										</div>
-										<div class="text-surface-600-300 text-sm">{member.email}</div>
+										<div class="text-surface-600-300 text-sm">
+											{member.email}
+										</div>
 									</div>
-									<span class="badge preset-outlined-surface-500">{member.role}</span>
+									<span class="badge preset-outlined-surface-500"
+										>{member.role}</span
+									>
 								</div>
 							{/each}
 						</div>
@@ -589,8 +617,8 @@
 						<div class="card p-6">
 							<h3 class="mb-4 text-xl font-bold">Billing</h3>
 							<p class="text-surface-600-300 mb-4">
-								Manage your subscription, update payment methods, and view invoices through the
-								Stripe Customer Portal.
+								Manage your subscription, update payment methods, and view invoices
+								through the Stripe Customer Portal.
 							</p>
 							<button
 								onclick={handleManageBilling}
@@ -617,8 +645,9 @@
 								</h4>
 								<p class="text-surface-600-300 text-sm">
 									{#if user.team.members.length === 1}
-										You are the only member. Leaving will permanently delete the team and all
-										associated data (projects, test cases, test runs, etc.).
+										You are the only member. Leaving will permanently delete the
+										team and all associated data (projects, test cases, test
+										runs, etc.).
 										{#if user.team.subscription}
 											Your subscription will also be canceled immediately.
 										{/if}
@@ -634,10 +663,18 @@
 								class="btn preset-filled-error-500 whitespace-nowrap"
 							>
 								{#if leavingTeam}
-									<span>{user.team.members.length === 1 ? 'Deleting...' : 'Leaving...'}</span>
+									<span
+										>{user.team.members.length === 1
+											? 'Deleting...'
+											: 'Leaving...'}</span
+									>
 								{:else}
 									<LogOut class="mr-2 h-4 w-4" />
-									<span>{user.team.members.length === 1 ? 'Delete Team' : 'Leave Team'}</span>
+									<span
+										>{user.team.members.length === 1
+											? 'Delete Team'
+											: 'Leave Team'}</span
+									>
 								{/if}
 							</button>
 						</div>
@@ -655,8 +692,8 @@
 					</div>
 					<h2 class="mb-2 text-3xl font-bold">Unlock Team Features</h2>
 					<p class="text-surface-600-300 mx-auto mb-8 max-w-2xl text-lg">
-						Create a team to collaborate with others, manage unlimited projects, and access advanced
-						features.
+						Create a team to collaborate with others, manage unlimited projects, and
+						access advanced features.
 					</p>
 
 					<div class="mx-auto mb-8 max-w-md">
@@ -680,7 +717,10 @@
 						</div>
 					</div>
 
-					<a href="/teams/new" class="btn inline-flex items-center gap-2 preset-filled-primary-500">
+					<a
+						href="/teams/new"
+						class="btn inline-flex items-center gap-2 preset-filled-primary-500"
+					>
 						<Crown class="h-4 w-4" />
 						Create a Team
 					</a>
@@ -695,8 +735,8 @@
 				<div class="card p-6">
 					<h2 class="mb-2 text-2xl font-bold">Integrations</h2>
 					<p class="text-surface-600-300">
-						Connect QA Studio with your favorite tools to receive notifications and automate
-						workflows
+						Connect QA Studio with your favorite tools to receive notifications and
+						automate workflows
 					</p>
 				</div>
 
@@ -712,7 +752,11 @@
 									<div
 										class="flex h-12 w-12 items-center justify-center rounded-container bg-[#4A154B]"
 									>
-										<svg class="h-7 w-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+										<svg
+											class="h-7 w-7 text-white"
+											viewBox="0 0 24 24"
+											fill="currentColor"
+										>
 											<path
 												d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"
 											/>
@@ -759,7 +803,11 @@
 									<div
 										class="flex h-12 w-12 items-center justify-center rounded-container bg-[#0052CC]"
 									>
-										<svg class="h-7 w-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+										<svg
+											class="h-7 w-7 text-white"
+											viewBox="0 0 24 24"
+											fill="currentColor"
+										>
 											<path
 												d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005zm5.723-5.756H5.736a5.215 5.215 0 0 0 5.215 5.214h2.129v2.058a5.218 5.218 0 0 0 5.215 5.214V6.758a1.001 1.001 0 0 0-1.001-1.001zM23.013 0H11.455a5.215 5.215 0 0 0 5.215 5.215h2.129v2.057A5.215 5.215 0 0 0 24 12.483V1.005A1.001 1.001 0 0 0 23.013 0z"
 											/>
@@ -804,7 +852,9 @@
 									</p>
 								</div>
 							</div>
-							<button class="btn w-full preset-outlined-surface-500" disabled> Coming Soon </button>
+							<button class="btn w-full preset-outlined-surface-500" disabled>
+								Coming Soon
+							</button>
 						</div>
 					</div>
 				</div>
@@ -817,14 +867,20 @@
 						<div class="space-y-3">
 							{#each user.team.integrations as integration}
 								{@const StatusIcon = getStatusIcon(integration.status)}
-								<div class="border-surface-200-700 group relative rounded-container border p-4">
+								<div
+									class="border-surface-200-700 group relative rounded-container border p-4"
+								>
 									<!-- Action buttons -->
 									<div
 										class="absolute top-4 right-4 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100"
 									>
 										<!-- Configure button -->
 										<button
-											onclick={() => handleConfigureIntegration(integration.id, integration.config)}
+											onclick={() =>
+												handleConfigureIntegration(
+													integration.id,
+													integration.config
+												)}
 											class="text-surface-600-300 rounded-container p-2 transition-colors hover:bg-primary-500/10 hover:text-primary-500"
 											title="Configure notifications"
 										>
@@ -833,7 +889,11 @@
 
 										<!-- Delete button -->
 										<button
-											onclick={() => handleDeleteIntegration(integration.id, integration.name)}
+											onclick={() =>
+												handleDeleteIntegration(
+													integration.id,
+													integration.name
+												)}
 											disabled={deletingIntegrationId === integration.id}
 											class="text-surface-600-300 rounded-container p-2 transition-colors hover:bg-error-500/10 hover:text-error-500"
 											title="Remove integration"
@@ -849,7 +909,9 @@
 									<div class="pr-24">
 										<div class="mb-2 flex items-center gap-2">
 											<h4 class="font-bold">{integration.name}</h4>
-											<StatusIcon class="h-4 w-4 {getStatusColor(integration.status)}" />
+											<StatusIcon
+												class="h-4 w-4 {getStatusColor(integration.status)}"
+											/>
 											<span
 												class="rounded-base px-2 py-0.5 text-xs {getStatusColor(
 													integration.status
@@ -863,13 +925,19 @@
 											Type: {integration.type}
 										</div>
 
-										<div class="text-surface-600-300 flex items-center gap-4 text-xs">
+										<div
+											class="text-surface-600-300 flex items-center gap-4 text-xs"
+										>
 											<div>
-												Connected: {new Date(integration.createdAt).toLocaleDateString()}
+												Connected: {new Date(
+													integration.createdAt
+												).toLocaleDateString()}
 											</div>
 											{#if integration.lastSyncedAt}
 												<div>
-													• Last synced: {new Date(integration.lastSyncedAt).toLocaleDateString()}
+													• Last synced: {new Date(
+														integration.lastSyncedAt
+													).toLocaleDateString()}
 												</div>
 											{/if}
 										</div>
@@ -909,8 +977,8 @@
 
 			<!-- Description -->
 			<p class="text-surface-600-300 mb-6">
-				Configure which events trigger notifications. Notifications will be sent to your configured
-				channel or webhook.
+				Configure which events trigger notifications. Notifications will be sent to your
+				configured channel or webhook.
 			</p>
 
 			<!-- Notification Toggles -->
@@ -926,7 +994,9 @@
 						/>
 						<div class="flex-1">
 							<div class="mb-1 font-semibold">{getEventLabel(event)}</div>
-							<div class="text-surface-600-300 text-sm">{getEventDescription(event)}</div>
+							<div class="text-surface-600-300 text-sm">
+								{getEventDescription(event)}
+							</div>
 						</div>
 					</label>
 				{/each}
@@ -1004,8 +1074,8 @@
 
 				{#if newSeats < (user.team?.members.length || 0)}
 					<p class="mt-2 text-sm text-error-500">
-						Cannot reduce seats below current member count ({user.team?.members.length || 0}).
-						Please remove members first.
+						Cannot reduce seats below current member count ({user.team?.members
+							.length || 0}). Please remove members first.
 					</p>
 				{/if}
 

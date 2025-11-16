@@ -27,23 +27,23 @@ File location: [src/routes/api/integrations/slack/interactions/+server.ts](src/r
 4. Scroll to **"App Credentials"**
 5. Copy the **"Signing Secret"** (click "Show" to reveal it)
 6. Add it to your `.env` file:
-   ```bash
-   SLACK_SIGNING_SECRET=your_signing_secret_here
-   ```
+    ```bash
+    SLACK_SIGNING_SECRET=your_signing_secret_here
+    ```
 7. Also add it to **Vercel** environment variables:
-   - Go to your Vercel project settings
-   - Navigate to "Environment Variables"
-   - Add `SLACK_SIGNING_SECRET` with the value
-   - Redeploy your app
+    - Go to your Vercel project settings
+    - Navigate to "Environment Variables"
+    - Add `SLACK_SIGNING_SECRET` with the value
+    - Redeploy your app
 
 ### Step 3: Configure Interactivity URL
 
 1. Still in your Slack app settings, click **"Interactivity & Shortcuts"** in the left sidebar
 2. Toggle **"Interactivity"** to **On**
 3. Set the **Request URL** to:
-   ```
-   https://qastudio.dev/api/integrations/slack/interactions
-   ```
+    ```
+    https://qastudio.dev/api/integrations/slack/interactions
+    ```
 4. Click **"Save Changes"**
 
 ### Step 4: Verify the Setup
@@ -54,9 +54,9 @@ Slack will immediately verify the endpoint by sending a test request. If everyth
 
 1. Run a new Playwright test to trigger a notification:
 
-   ```bash
-   npx playwright test
-   ```
+    ```bash
+    npx playwright test
+    ```
 
 2. Wait for the Slack notification to arrive
 3. Click the "🔍 View Details" button

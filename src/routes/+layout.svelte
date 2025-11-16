@@ -262,7 +262,9 @@
 
 				<!-- Bottom Bar -->
 				<div class="mt-8 border-t border-surface-300-700 pt-8">
-					<div class="flex flex-col items-center justify-between gap-4 text-sm md:flex-row">
+					<div
+						class="flex flex-col items-center justify-between gap-4 text-sm md:flex-row"
+					>
 						<div class="flex items-center gap-2 text-surface-600-400">
 							<span>© {currentYear} QA Studio</span>
 							<span class="text-surface-400-600">•</span>

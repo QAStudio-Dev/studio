@@ -103,14 +103,20 @@
 					? 'animate-fade-in-down'
 					: 'opacity-0'}"
 			>
-				<svg class="h-4 w-4 animate-pulse text-white" fill="currentColor" viewBox="0 0 20 20">
+				<svg
+					class="h-4 w-4 animate-pulse text-white"
+					fill="currentColor"
+					viewBox="0 0 20 20"
+				>
 					<path
 						fill-rule="evenodd"
 						d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
 						clip-rule="evenodd"
 					/>
 				</svg>
-				<span class="text-sm font-medium text-white">Built by QA Engineers, for QA Engineers</span>
+				<span class="text-sm font-medium text-white"
+					>Built by QA Engineers, for QA Engineers</span
+				>
 			</div>
 
 			<!-- Main Headline with Gradient -->
@@ -213,7 +219,9 @@
 					<div class="mb-2 text-4xl font-black text-primary-600 dark:text-primary-400">
 						{stat.value}
 					</div>
-					<div class="text-sm font-medium text-surface-600 dark:text-surface-400">{stat.label}</div>
+					<div class="text-sm font-medium text-surface-600 dark:text-surface-400">
+						{stat.label}
+					</div>
 				</div>
 			{/each}
 		</div>
@@ -245,7 +253,9 @@
 				class="absolute top-0 right-0 h-32 w-32 rounded-full bg-success-500/10 blur-3xl transition-all group-hover:scale-150"
 			></div>
 			<div class="relative">
-				<div class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-success-500/10">
+				<div
+					class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-success-500/10"
+				>
 					<svg
 						class="h-8 w-8 text-success-500"
 						fill="none"
@@ -266,8 +276,9 @@
 						>No vendor lock-in. No proprietary formats. No artificial limits.</strong
 					>
 					<br /><br />
-					QA Studio is completely open source and free to use. Fork it, customize it, self-host it. The
-					code belongs to the community, and you have full control over your testing data and infrastructure.
+					QA Studio is completely open source and free to use. Fork it, customize it, self-host
+					it. The code belongs to the community, and you have full control over your testing
+					data and infrastructure.
 				</p>
 				<div class="flex flex-wrap gap-2">
 					<span
@@ -290,9 +301,13 @@
 		<div
 			class="group relative overflow-hidden card p-6 transition-all hover:-translate-y-1 hover:shadow-xl"
 		>
-			<div class="absolute top-0 right-0 h-24 w-24 rounded-full bg-primary-500/10 blur-2xl"></div>
+			<div
+				class="absolute top-0 right-0 h-24 w-24 rounded-full bg-primary-500/10 blur-2xl"
+			></div>
 			<div class="relative">
-				<div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary-500/10">
+				<div
+					class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary-500/10"
+				>
 					<svg
 						class="h-6 w-6 text-primary-500"
 						fill="none"
@@ -318,9 +333,13 @@
 		<div
 			class="group relative overflow-hidden card p-6 transition-all hover:-translate-y-1 hover:shadow-xl"
 		>
-			<div class="absolute top-0 right-0 h-24 w-24 rounded-full bg-secondary-500/10 blur-2xl"></div>
+			<div
+				class="absolute top-0 right-0 h-24 w-24 rounded-full bg-secondary-500/10 blur-2xl"
+			></div>
 			<div class="relative">
-				<div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-secondary-500/10">
+				<div
+					class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-secondary-500/10"
+				>
 					<svg
 						class="h-6 w-6 text-secondary-500"
 						fill="none"
@@ -346,9 +365,13 @@
 		<div
 			class="group relative overflow-hidden card p-6 transition-all hover:-translate-y-1 hover:shadow-xl"
 		>
-			<div class="absolute top-0 right-0 h-24 w-24 rounded-full bg-warning-500/10 blur-2xl"></div>
+			<div
+				class="absolute top-0 right-0 h-24 w-24 rounded-full bg-warning-500/10 blur-2xl"
+			></div>
 			<div class="relative">
-				<div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-warning-500/10">
+				<div
+					class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-warning-500/10"
+				>
 					<svg
 						class="h-6 w-6 text-warning-500"
 						fill="none"
@@ -374,9 +397,13 @@
 		<div
 			class="group relative overflow-hidden card p-6 transition-all hover:-translate-y-1 hover:shadow-xl md:col-span-2"
 		>
-			<div class="absolute top-0 right-0 h-32 w-32 rounded-full bg-tertiary-500/10 blur-3xl"></div>
+			<div
+				class="absolute top-0 right-0 h-32 w-32 rounded-full bg-tertiary-500/10 blur-3xl"
+			></div>
 			<div class="relative">
-				<div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-tertiary-500/10">
+				<div
+					class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-tertiary-500/10"
+				>
 					<svg
 						class="h-6 w-6 text-tertiary-500"
 						fill="none"
@@ -393,7 +420,8 @@
 				</div>
 				<h3 class="mb-2 text-lg font-bold">Real-Time Analytics</h3>
 				<p class="text-surface-600 dark:text-surface-400">
-					Track pass rates, trends, and bottlenecks. Make data-driven decisions about quality.
+					Track pass rates, trends, and bottlenecks. Make data-driven decisions about
+					quality.
 				</p>
 			</div>
 		</div>
@@ -494,7 +522,9 @@
 							/>
 						</div>
 					{:else}
-						<div class="aspect-video {getGradientForPost(post.slug || post.date)}"></div>
+						<div
+							class="aspect-video {getGradientForPost(post.slug || post.date)}"
+						></div>
 					{/if}
 
 					<!-- Content -->
@@ -509,7 +539,9 @@
 						{/if}
 
 						<!-- Title -->
-						<h3 class="mb-2 text-xl font-bold transition-colors group-hover:text-primary-500">
+						<h3
+							class="mb-2 text-xl font-bold transition-colors group-hover:text-primary-500"
+						>
 							{post.title}
 						</h3>
 

@@ -189,7 +189,9 @@ test.describe('API Documentation Page', () => {
 			await expect(operationBody).toBeVisible({ timeout: 5000 });
 
 			// Verify the operation expanded and shows interactive elements or response information
-			const hasInteractiveElements = await operationBody.locator('button, input, textarea').count();
+			const hasInteractiveElements = await operationBody
+				.locator('button, input, textarea')
+				.count();
 			const hasResponseSection = await operationBody.locator('.responses-wrapper').count();
 			expect(hasInteractiveElements + hasResponseSection).toBeGreaterThan(0);
 		});

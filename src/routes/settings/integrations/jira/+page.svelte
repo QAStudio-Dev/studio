@@ -112,7 +112,9 @@
 					class="w-full rounded-base border border-surface-300-700 bg-surface-100-900 px-3 py-2"
 					required
 				/>
-				<p class="text-surface-500-400 mt-1 text-xs">A friendly name to identify this connection</p>
+				<p class="text-surface-500-400 mt-1 text-xs">
+					A friendly name to identify this connection
+				</p>
 			</div>
 
 			<!-- Jira Base URL -->
@@ -178,7 +180,9 @@
 
 			<!-- Submit Button -->
 			<div class="flex justify-end gap-3 pt-4">
-				<a href="/settings?tab=integrations" class="btn preset-outlined-surface-500"> Cancel </a>
+				<a href="/settings?tab=integrations" class="btn preset-outlined-surface-500">
+					Cancel
+				</a>
 				<button type="submit" disabled={connecting} class="btn preset-filled-primary-500">
 					{#if connecting}
 						<span>Connecting...</span>
@@ -274,7 +278,8 @@
 				<div>
 					<h3 class="mb-1 font-semibold">Create issues from test failures</h3>
 					<p class="text-surface-600-300 text-sm">
-						Automatically or manually create Jira issues when tests fail, with full test context
+						Automatically or manually create Jira issues when tests fail, with full test
+						context
 					</p>
 				</div>
 			</div>

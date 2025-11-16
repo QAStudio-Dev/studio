@@ -249,7 +249,9 @@ describe('Redis Caching Layer', () => {
 		it('should delete all keys matching pattern using SCAN', async () => {
 			// First scan returns cursor 10 with 2 keys
 			// Second scan returns cursor 0 (done) with 1 key
-			mockScan.mockResolvedValueOnce([10, ['key1', 'key2']]).mockResolvedValueOnce([0, ['key3']]);
+			mockScan
+				.mockResolvedValueOnce([10, ['key1', 'key2']])
+				.mockResolvedValueOnce([0, ['key3']]);
 			mockDel.mockResolvedValue(3);
 
 			const result = await deleteCachePattern('projects:user:*');
@@ -408,7 +410,9 @@ describe('Redis Caching Layer', () => {
 			mockGet.mockResolvedValue(null);
 			const fetchFn = vi.fn().mockRejectedValue(new Error('Database error'));
 
-			await expect(getCachedOrFetch('fail-key', fetchFn, 60)).rejects.toThrow('Database error');
+			await expect(getCachedOrFetch('fail-key', fetchFn, 60)).rejects.toThrow(
+				'Database error'
+			);
 
 			expect(mockGet).toHaveBeenCalled();
 			expect(fetchFn).toHaveBeenCalled();

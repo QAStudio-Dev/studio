@@ -317,7 +317,9 @@ export class DocsPage extends BasePage {
 		);
 
 		if (!response.ok()) {
-			throw new Error(`OpenAPI spec failed to load: ${response.status()} ${response.statusText()}`);
+			throw new Error(
+				`OpenAPI spec failed to load: ${response.status()} ${response.statusText()}`
+			);
 		}
 
 		return await response.json();

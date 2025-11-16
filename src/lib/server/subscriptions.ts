@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { db } from './db';
-import type { SubscriptionStatus } from '@prisma/client';
+import type { SubscriptionStatus, Subscription } from '@prisma/client';
+import { FREE_TIER_LIMITS } from '$lib/constants';
 
 /**
  * Check if a team has an active subscription
@@ -46,9 +47,9 @@ export async function hasAvailableSeats(teamId: string): Promise<boolean> {
 		return false;
 	}
 
-	// Free teams (no subscription) only allow 1 member
+	// Free teams (no subscription) only allow limited members
 	if (!team.subscription) {
-		return team.members.length < 1;
+		return team.members.length < FREE_TIER_LIMITS.MEMBERS;
 	}
 
 	// Check if current members are within seat limit
@@ -163,4 +164,48 @@ export async function getTeamLimits(teamId: string) {
 				}
 			: null
 	};
+}
+
+/**
+ * Check if subscription status allows feature access (no DB call, pure function)
+ * ACTIVE = full access
+ * PAST_DUE = grace period, allow access
+ * All others = blocked
+ */
+export function isSubscriptionCurrent(
+	subscription: Subscription | { status: SubscriptionStatus } | null | undefined
+): boolean {
+	if (!subscription) return false;
+	return subscription.status === 'ACTIVE' || subscription.status === 'PAST_DUE';
+}
+
+/**
+ * Check if subscription requires immediate payment attention
+ * Returns true for CANCELED, UNPAID, INCOMPLETE, INCOMPLETE_EXPIRED
+ */
+export function requiresPayment(
+	subscription: Subscription | { status: SubscriptionStatus } | null | undefined
+): boolean {
+	if (!subscription) return false;
+	return ['CANCELED', 'UNPAID', 'INCOMPLETE', 'INCOMPLETE_EXPIRED'].includes(subscription.status);
+}
+
+/**
+ * Get user-friendly status message for subscription
+ */
+export function getSubscriptionStatusMessage(
+	subscription: Subscription | null | undefined
+): string | null {
+	if (!subscription) return null;
+
+	const messages: Record<string, string> = {
+		ACTIVE: 'Your subscription is active',
+		PAST_DUE: 'Payment failed - please update your payment method',
+		CANCELED: 'Your subscription has been canceled',
+		UNPAID: 'Your subscription is unpaid - please update payment',
+		INCOMPLETE: 'Please complete your subscription setup',
+		INCOMPLETE_EXPIRED: 'Your subscription setup has expired - please start over'
+	};
+
+	return messages[subscription.status] || null;
 }
