@@ -26,11 +26,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run unit tests
-        run: npm run test:unit -- --run
-
-      - name: Generate coverage report
-        if: always()
+      - name: Run unit tests with coverage
         run: npm run test:unit -- --run --coverage
 
       - name: Upload coverage to artifacts

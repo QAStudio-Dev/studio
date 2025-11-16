@@ -22,7 +22,7 @@ const config = {
 			handleHttpError: 'warn' // Don't fail on 404s during prerender
 		},
 		csrf: {
-			checkOrigin: false // Disable CSRF for API routes with API key auth
+			trustedOrigins: [] // Allow all origins for API routes with API key auth
 		}
 	},
 	extensions: ['.svelte', '.svx']
