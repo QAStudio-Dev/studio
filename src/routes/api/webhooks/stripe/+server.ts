@@ -110,55 +110,61 @@ export const POST: RequestHandler = async ({ request }) => {
 				}
 
 				// Update subscription and team status atomically to prevent race conditions
-				// Note: There's a theoretical race condition where a member could join/leave between
-				// reading member count and updating overSeatLimit. This is acceptable eventual consistency
-				// because:
-				// 1. The middleware will catch the correct state on next navigation (cached for 5min)
-				// 2. Member changes also update overSeatLimit and invalidate cache
-				// 3. The worst case is a brief inconsistency (5min max) that self-corrects
-				await db.$transaction(async (tx) => {
-					// Update subscription
-					await tx.subscription.upsert({
-						where: { stripeSubscriptionId: subscription.id },
-						update: subscriptionData,
-						create: {
-							teamId,
-							stripeCustomerId: subscription.customer as string,
-							stripeSubscriptionId: subscription.id,
-							...subscriptionData
-						}
-					});
+				// Use interactive transaction with appropriate isolation level
+				await db.$transaction(
+					async (tx) => {
+						// Update subscription
+						await tx.subscription.upsert({
+							where: { stripeSubscriptionId: subscription.id },
+							update: subscriptionData,
+							create: {
+								teamId,
+								stripeCustomerId: subscription.customer as string,
+								stripeSubscriptionId: subscription.id,
+								...subscriptionData
+							}
+						});
 
-					// Check if team is now over seat limit
-					const team = await tx.team.findUnique({
-						where: { id: teamId },
-						include: {
-							members: true
-						}
-					});
+						// Lock the team row and count members in a single query to prevent race conditions
+						// This uses a raw query with SELECT FOR UPDATE to ensure exclusive lock
+						const result = await tx.$queryRaw<
+							Array<{ memberCount: bigint; overSeatLimit: boolean }>
+						>`
+							SELECT
+								(SELECT COUNT(*) FROM "User" WHERE "teamId" = ${teamId})::int as "memberCount",
+								"overSeatLimit"
+							FROM "Team"
+							WHERE id = ${teamId}
+							FOR UPDATE
+						`;
 
-					if (team) {
-						const newSeats = subscriptionItem?.quantity || 1;
-						const memberCount = team.members.length;
-						const isOverLimit = memberCount > newSeats;
+						if (result.length > 0) {
+							const { memberCount, overSeatLimit } = result[0];
+							const newSeats = subscriptionItem?.quantity || 1;
+							const count = Number(memberCount);
+							const isOverLimit = count > newSeats;
 
-						// Update team's overSeatLimit flag if it changed
-						if (team.overSeatLimit !== isOverLimit) {
-							await tx.team.update({
-								where: { id: teamId },
-								data: { overSeatLimit: isOverLimit }
-							});
+							// Update team's overSeatLimit flag if it changed
+							if (overSeatLimit !== isOverLimit) {
+								await tx.team.update({
+									where: { id: teamId },
+									data: { overSeatLimit: isOverLimit }
+								});
 
-							if (isOverLimit) {
-								console.warn(
-									`⚠️ Team ${teamId} is over seat limit: ${memberCount} members, ${newSeats} seats`
-								);
-							} else {
-								console.log(`✅ Team ${teamId} is now within seat limit`);
+								if (isOverLimit) {
+									console.warn(
+										`⚠️ Team ${teamId} is over seat limit: ${count} members, ${newSeats} seats`
+									);
+								} else {
+									console.log(`✅ Team ${teamId} is now within seat limit`);
+								}
 							}
 						}
+					},
+					{
+						isolationLevel: 'ReadCommitted' // Prevent dirty reads while allowing concurrent updates
 					}
-				});
+				);
 
 				// Invalidate team status cache after transaction completes
 				await deleteCache(CacheKeys.teamStatus(teamId));
@@ -175,44 +181,59 @@ export const POST: RequestHandler = async ({ request }) => {
 				let teamId: string | undefined;
 
 				// Update subscription status and check if team is now over free tier limit
-				await db.$transaction(async (tx) => {
-					// Update subscription to CANCELED
-					const updatedSub = await tx.subscription.update({
-						where: { stripeSubscriptionId: subscription.id },
-						data: {
-							status: 'CANCELED'
-						},
-						include: {
-							team: {
-								include: {
-									members: true
+				await db.$transaction(
+					async (tx) => {
+						// Update subscription to CANCELED and get team ID
+						const updatedSub = await tx.subscription.update({
+							where: { stripeSubscriptionId: subscription.id },
+							data: {
+								status: 'CANCELED'
+							},
+							select: {
+								teamId: true
+							}
+						});
+
+						teamId = updatedSub.teamId;
+
+						// Lock the team row and count members in a single query to prevent race conditions
+						const result = await tx.$queryRaw<
+							Array<{ memberCount: bigint; overSeatLimit: boolean }>
+						>`
+							SELECT
+								(SELECT COUNT(*) FROM "User" WHERE "teamId" = ${teamId})::int as "memberCount",
+								"overSeatLimit"
+							FROM "Team"
+							WHERE id = ${teamId}
+							FOR UPDATE
+						`;
+
+						// When subscription is canceled, team reverts to free tier
+						if (result.length > 0) {
+							const { memberCount, overSeatLimit } = result[0];
+							const count = Number(memberCount);
+							const isOverLimit = count > FREE_TIER_LIMITS.MEMBERS;
+
+							if (overSeatLimit !== isOverLimit) {
+								await tx.team.update({
+									where: { id: teamId },
+									data: { overSeatLimit: isOverLimit }
+								});
+
+								if (isOverLimit) {
+									console.warn(
+										`⚠️ Team ${teamId} is now over free tier limit: ${count} members, ${FREE_TIER_LIMITS.MEMBERS} allowed`
+									);
+									// TODO: Send email notification to team admins when email system is implemented
+									// Notify: "Your subscription was canceled and your team has {count} members but the free tier only allows {FREE_TIER_LIMITS.MEMBERS}. Please remove members or resubscribe."
 								}
 							}
 						}
-					});
-
-					// When subscription is canceled, team reverts to free tier
-					if (updatedSub.team) {
-						teamId = updatedSub.team.id;
-						const memberCount = updatedSub.team.members.length;
-						const isOverLimit = memberCount > FREE_TIER_LIMITS.MEMBERS;
-
-						if (updatedSub.team.overSeatLimit !== isOverLimit) {
-							await tx.team.update({
-								where: { id: updatedSub.team.id },
-								data: { overSeatLimit: isOverLimit }
-							});
-
-							if (isOverLimit) {
-								console.warn(
-									`⚠️ Team ${updatedSub.team.id} is now over free tier limit: ${memberCount} members, ${FREE_TIER_LIMITS.MEMBERS} allowed`
-								);
-								// TODO: Send email notification to team admins when email system is implemented
-								// Notify: "Your subscription was canceled and your team has {memberCount} members but the free tier only allows {FREE_TIER_LIMITS.MEMBERS}. Please remove members or resubscribe."
-							}
-						}
+					},
+					{
+						isolationLevel: 'ReadCommitted'
 					}
-				});
+				);
 
 				// Invalidate team status cache after transaction completes
 				if (teamId) {

@@ -87,6 +87,16 @@ type TeamStatus = {
 const handleSeatLimitCheck: Handle = async ({ event, resolve }) => {
 	const { pathname } = event.url;
 
+	// Check for admin override parameter (emergency bypass)
+	// Usage: ?__override=true (double underscore to indicate system parameter)
+	const overrideParam = event.url.searchParams.get('__override');
+	if (overrideParam === 'true') {
+		console.warn(
+			`[Middleware] Admin override used for ${pathname} - seat limit check bypassed`
+		);
+		return resolve(event);
+	}
+
 	// Skip for routes that don't need team status checks
 	const shouldSkip =
 		pathname.startsWith('/api/') || // API routes handle their own checks
@@ -126,7 +136,7 @@ const handleSeatLimitCheck: Handle = async ({ event, resolve }) => {
 
 	// Get team status with caching (5-minute TTL)
 	// Note: This will gracefully handle cache misses by falling back to DB query
-	const teamStatus = await getCachedOrFetch<TeamStatus>(
+	const teamStatus = await getCachedOrFetch<TeamStatus | null>(
 		CacheKeys.teamStatus(user.teamId),
 		async () => {
 			const team = await db.team.findUnique({
@@ -143,11 +153,14 @@ const handleSeatLimitCheck: Handle = async ({ event, resolve }) => {
 			});
 			if (!team) {
 				// Team was deleted - clear user's teamId
+				console.warn(
+					`[Middleware] Team ${user.teamId} was deleted, clearing user ${userId}'s teamId`
+				);
 				await db.user.update({
 					where: { id: userId },
 					data: { teamId: null }
 				});
-				return null as any; // Will be handled below
+				return null;
 			}
 			return team;
 		},
