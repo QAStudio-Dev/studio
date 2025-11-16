@@ -108,18 +108,7 @@ const handleSeatLimitCheck: Handle = async ({ event, resolve }) => {
 		return resolve(event);
 	}
 
-	// Check for admin override parameter (emergency bypass)
-	// Usage: ?__override=true (double underscore to indicate system parameter)
-	// Note: This must come after shouldSkip to avoid accessing searchParams during prerendering
-	const overrideParam = event.url.searchParams.get('__override');
-	if (overrideParam === 'true') {
-		console.warn(
-			`[Middleware] Admin override used for ${pathname} - seat limit check bypassed`
-		);
-		return resolve(event);
-	}
-
-	// Get user ID from Clerk session
+	// Get user ID from Clerk session (needed for both override check and seat limit check)
 	if (!event.locals.auth || typeof event.locals.auth !== 'function') {
 		return resolve(event);
 	}
@@ -129,11 +118,28 @@ const handleSeatLimitCheck: Handle = async ({ event, resolve }) => {
 		return resolve(event);
 	}
 
-	// First, get the user's team ID (lightweight query, not cached)
+	// Get user's teamId and role (single query for efficiency)
 	const user = await db.user.findUnique({
 		where: { id: userId },
-		select: { teamId: true }
+		select: { teamId: true, role: true }
 	});
+
+	// Check for admin override parameter (emergency bypass)
+	// Usage: ?__override=true (double underscore to indicate system parameter)
+	// Note: This must come after shouldSkip to avoid accessing searchParams during prerendering
+	const overrideParam = event.url.searchParams.get('__override');
+	if (overrideParam === 'true') {
+		// Verify user has ADMIN role
+		if (user?.role === 'ADMIN') {
+			console.warn(
+				`[Middleware] Admin override used by ${userId} for ${pathname} - seat limit check bypassed`
+			);
+			return resolve(event);
+		} else {
+			console.error(`[Security] Unauthorized override attempt by ${userId} on ${pathname}`);
+			// Continue with normal seat limit check instead of bypassing
+		}
+	}
 
 	// If user has no team, skip checks
 	if (!user?.teamId) {

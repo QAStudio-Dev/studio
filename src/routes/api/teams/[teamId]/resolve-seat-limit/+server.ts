@@ -138,8 +138,8 @@ export const POST: RequestHandler = async (event) => {
 		});
 
 		// Calculate final state
-		const finalRemainingMembers = freshCurrentMembers - memberIdsToRemove.length;
-		const isStillOverLimit = finalRemainingMembers > freshSeatsNeeded;
+		const finalRemainingMembers = currentMembers - memberIdsToRemove.length;
+		const isStillOverLimit = finalRemainingMembers > seatsNeeded;
 
 		// Update team's overSeatLimit flag
 		await tx.team.update({
