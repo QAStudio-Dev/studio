@@ -89,12 +89,12 @@
 			<div class="flex-1">
 				<p class="font-medium">Payment Failed</p>
 				<p class="text-sm">
-					Your last payment failed. Please update your payment method to avoid service
-					interruption. Your subscription will be canceled if payment continues to fail.
+					Your last payment failed. Please update your payment method to avoid service interruption.
+					Your subscription will be canceled if payment continues to fail.
 				</p>
 			</div>
 			{#if currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'}
-				<button onclick={openBillingPortal} class="btn preset-filled-warning" disabled={loading}>
+				<button onclick={openBillingPortal} class="preset-filled-warning btn" disabled={loading}>
 					{loading ? 'Loading...' : 'Update Payment'}
 				</button>
 			{/if}
@@ -105,12 +105,12 @@
 			<div class="flex-1">
 				<p class="font-medium">Subscription Canceled</p>
 				<p class="text-sm">
-					Your subscription has been canceled. Reactivate your subscription to continue using premium
-					features.
+					Your subscription has been canceled. Reactivate your subscription to continue using
+					premium features.
 				</p>
 			</div>
 			{#if currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'}
-				<button onclick={openBillingPortal} class="btn preset-filled-error" disabled={loading}>
+				<button onclick={openBillingPortal} class="preset-filled-error btn" disabled={loading}>
 					{loading ? 'Loading...' : 'Reactivate Subscription'}
 				</button>
 			{/if}
@@ -126,7 +126,7 @@
 				</p>
 			</div>
 			{#if currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'}
-				<button onclick={openBillingPortal} class="btn preset-filled-warning" disabled={loading}>
+				<button onclick={openBillingPortal} class="preset-filled-warning btn" disabled={loading}>
 					{loading ? 'Loading...' : 'Complete Setup'}
 				</button>
 			{/if}
@@ -142,9 +142,8 @@
 				<p class="text-sm">
 					Your subscription has {team.subscription.seats} seat{team.subscription.seats !== 1
 						? 's'
-						: ''}, but you have {team.members.length} member{team.members.length !== 1
-						? 's'
-						: ''}. Please remove {team.members.length - team.subscription.seats} member{team.members.length -
+						: ''}, but you have {team.members.length} member{team.members.length !== 1 ? 's' : ''}.
+					Please remove {team.members.length - team.subscription.seats} member{team.members.length -
 						team.subscription.seats !==
 					1
 						? 's'
@@ -152,7 +151,7 @@
 				</p>
 			</div>
 			{#if currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'}
-				<a href="/teams/{team.id}/over-limit" class="btn preset-filled-error"> Resolve Now </a>
+				<a href="/teams/{team.id}/over-limit" class="preset-filled-error btn"> Resolve Now </a>
 			{/if}
 		</div>
 	{/if}

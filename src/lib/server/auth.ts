@@ -97,14 +97,17 @@ export async function requireCurrentSubscription(event: RequestEvent, feature?: 
 	if (!user.team?.subscription) {
 		const projectCount = user.team?.projects.length || 0;
 
-		// Free users can use API for their first project
-		if (projectCount <= 1 && !feature) {
+		// Free users can use API for their first project only (0 < 1)
+		// Once they have 1 project (projectCount === 1), they can still use basic API
+		// But they cannot create more projects (checked in create endpoint)
+		if (projectCount < 2 && !feature) {
 			return { userId, user, isFree: true };
 		}
 
 		// Premium features require subscription
 		throw error(402, {
-			message: 'This feature requires an active subscription. Please upgrade your plan at /teams/new'
+			message:
+				'This feature requires an active subscription. Please upgrade your plan at /teams/new'
 		});
 	}
 
@@ -112,12 +115,15 @@ export async function requireCurrentSubscription(event: RequestEvent, feature?: 
 	if (!isSubscriptionCurrent(user.team.subscription)) {
 		const statusMessages: Record<string, string> = {
 			CANCELED: 'Your subscription has been canceled. Please reactivate at /teams/' + user.team.id,
-			UNPAID: 'Your subscription is unpaid. Please update your payment method at /teams/' + user.team.id,
+			UNPAID:
+				'Your subscription is unpaid. Please update your payment method at /teams/' + user.team.id,
 			INCOMPLETE: 'Please complete your subscription setup at /teams/' + user.team.id,
-			INCOMPLETE_EXPIRED: 'Your subscription setup has expired. Please start a new subscription at /teams/new'
+			INCOMPLETE_EXPIRED:
+				'Your subscription setup has expired. Please start a new subscription at /teams/new'
 		};
 
-		const message = statusMessages[user.team.subscription.status] ||
+		const message =
+			statusMessages[user.team.subscription.status] ||
 			'Your subscription is not active. Please update your payment at /teams/' + user.team.id;
 
 		throw error(402, { message });
@@ -126,7 +132,10 @@ export async function requireCurrentSubscription(event: RequestEvent, feature?: 
 	// Check if team is over seat limit
 	if (user.team.overSeatLimit) {
 		throw error(403, {
-			message: 'Your team is over the seat limit. Please remove members or upgrade at /teams/' + user.team.id + '/over-limit'
+			message:
+				'Your team is over the seat limit. Please remove members or upgrade at /teams/' +
+				user.team.id +
+				'/over-limit'
 		});
 	}
 
@@ -165,7 +174,8 @@ export async function requirePremiumFeature(event: RequestEvent, featureName: st
 	// Check if team is over seat limit
 	if (user.team.overSeatLimit) {
 		throw error(403, {
-			message: 'Your team is over the seat limit. Please resolve at /teams/' + user.team.id + '/over-limit'
+			message:
+				'Your team is over the seat limit. Please resolve at /teams/' + user.team.id + '/over-limit'
 		});
 	}
 

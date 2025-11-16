@@ -171,7 +171,9 @@ export async function getTeamLimits(teamId: string) {
  * PAST_DUE = grace period, allow access
  * All others = blocked
  */
-export function isSubscriptionCurrent(subscription: Subscription | null | undefined): boolean {
+export function isSubscriptionCurrent(
+	subscription: Subscription | { status: SubscriptionStatus } | null | undefined
+): boolean {
 	if (!subscription) return false;
 	return subscription.status === 'ACTIVE' || subscription.status === 'PAST_DUE';
 }
@@ -180,11 +182,11 @@ export function isSubscriptionCurrent(subscription: Subscription | null | undefi
  * Check if subscription requires immediate payment attention
  * Returns true for CANCELED, UNPAID, INCOMPLETE, INCOMPLETE_EXPIRED
  */
-export function requiresPayment(subscription: Subscription | null | undefined): boolean {
+export function requiresPayment(
+	subscription: Subscription | { status: SubscriptionStatus } | null | undefined
+): boolean {
 	if (!subscription) return false;
-	return ['CANCELED', 'UNPAID', 'INCOMPLETE', 'INCOMPLETE_EXPIRED'].includes(
-		subscription.status
-	);
+	return ['CANCELED', 'UNPAID', 'INCOMPLETE', 'INCOMPLETE_EXPIRED'].includes(subscription.status);
 }
 
 /**

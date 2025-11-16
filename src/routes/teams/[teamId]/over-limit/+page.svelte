@@ -67,17 +67,16 @@
 	<div class="alert preset-filled-warning mb-8">
 		<AlertTriangle class="h-6 w-6" />
 		<div>
-			<h1 class="h3 mb-1">Team Over Seat Limit</h1>
+			<h1 class="mb-1 h3">Team Over Seat Limit</h1>
 			<p class="text-sm">
-				Your team subscription was reduced to <strong>{seatsNeeded} seat{seatsNeeded !== 1
-					? 's'
-					: ''}</strong>, but you currently have
+				Your team subscription was reduced to <strong
+					>{seatsNeeded} seat{seatsNeeded !== 1 ? 's' : ''}</strong
+				>, but you currently have
 				<strong>{currentMembers} member{currentMembers !== 1 ? 's' : ''}</strong>.
 			</p>
-			<p class="text-sm mt-2">
-				Please select <strong>{membersToRemove} member{membersToRemove !== 1
-					? 's'
-					: ''}</strong> to remove from the team.
+			<p class="mt-2 text-sm">
+				Please select <strong>{membersToRemove} member{membersToRemove !== 1 ? 's' : ''}</strong> to
+				remove from the team.
 			</p>
 		</div>
 	</div>
@@ -101,14 +100,14 @@
 		</p>
 
 		<!-- Member List -->
-		<div class="space-y-3 mb-6">
+		<div class="mb-6 space-y-3">
 			{#each removableMembers as member}
 				{@const isSelected = selectedToRemove.includes(member.id)}
 				{@const canSelect = isSelected || selectedToRemove.length < membersToRemove}
 
 				<button
 					onclick={() => canSelect && toggleMember(member.id)}
-					class="hover:bg-surface-100-800 w-full rounded-container p-4 text-left transition-all border-2"
+					class="hover:bg-surface-100-800 w-full rounded-container border-2 p-4 text-left transition-all"
 					class:border-error-500={isSelected}
 					class:border-surface-200-700={!isSelected}
 					class:opacity-50={!canSelect}
@@ -151,7 +150,7 @@
 						<div class="min-w-0 flex-1">
 							<p class="font-medium">{getMemberName(member)}</p>
 							<p class="text-surface-600-300 text-sm">{member.email}</p>
-							<p class="text-surface-600-300 text-xs mt-1">{member.role}</p>
+							<p class="text-surface-600-300 mt-1 text-xs">{member.role}</p>
 						</div>
 					</div>
 				</button>
@@ -161,7 +160,7 @@
 			{#if members.find((m) => m.id === currentUserId)}
 				{@const currentMember = members.find((m) => m.id === currentUserId)!}
 				<div
-					class="bg-surface-100-800 w-full rounded-container p-4 border-2 border-surface-200-700 opacity-50"
+					class="bg-surface-100-800 border-surface-200-700 w-full rounded-container border-2 p-4 opacity-50"
 				>
 					<div class="flex items-center gap-3">
 						<div class="flex h-6 w-6 items-center justify-center"></div>
@@ -178,7 +177,7 @@
 						<div class="min-w-0 flex-1">
 							<p class="font-medium">{getMemberName(currentMember)} (You)</p>
 							<p class="text-surface-600-300 text-sm">{currentMember.email}</p>
-							<p class="text-surface-600-300 text-xs mt-1">{currentMember.role}</p>
+							<p class="text-surface-600-300 mt-1 text-xs">{currentMember.role}</p>
 						</div>
 
 						<span class="preset-filled-primary badge text-xs">Cannot Remove</span>
@@ -188,21 +187,23 @@
 		</div>
 
 		<!-- Actions -->
-		<div class="flex items-center justify-between gap-4 pt-6 border-t border-surface-200-700">
+		<div class="border-surface-200-700 flex items-center justify-between gap-4 border-t pt-6">
 			<a href="/teams/{team.id}" class="btn preset-outlined"> Cancel </a>
 
 			<button
 				onclick={removeMembers}
-				class="btn preset-filled-error"
+				class="preset-filled-error btn"
 				disabled={!isValid || loading}
 			>
-				{loading ? 'Removing...' : `Remove ${selectedToRemove.length} Member${selectedToRemove.length !== 1 ? 's' : ''}`}
+				{loading
+					? 'Removing...'
+					: `Remove ${selectedToRemove.length} Member${selectedToRemove.length !== 1 ? 's' : ''}`}
 			</button>
 		</div>
 	</div>
 
 	<!-- Subscription Info -->
-	<div class="card p-6 mt-6">
+	<div class="mt-6 card p-6">
 		<div class="mb-4 flex items-center gap-3">
 			<CreditCard class="h-5 w-5" />
 			<h2 class="h4">Subscription Details</h2>
@@ -223,7 +224,7 @@
 			</div>
 		</div>
 
-		<div class="mt-6 pt-6 border-t border-surface-200-700">
+		<div class="border-surface-200-700 mt-6 border-t pt-6">
 			<p class="text-surface-600-300 text-sm">
 				Need more seats? You can upgrade your subscription from the
 				<a href="/teams/{team.id}" class="text-primary-500 hover:underline">team settings</a>.

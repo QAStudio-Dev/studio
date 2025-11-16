@@ -80,9 +80,7 @@ export const POST: RequestHandler = async (event) => {
 	}
 
 	// Verify all user IDs are valid team members
-	const invalidIds = memberIdsToRemove.filter(
-		(id) => !team.members.some((m) => m.id === id)
-	);
+	const invalidIds = memberIdsToRemove.filter((id) => !team.members.some((m) => m.id === id));
 
 	if (invalidIds.length > 0) {
 		throw error(400, {
@@ -90,26 +88,28 @@ export const POST: RequestHandler = async (event) => {
 		});
 	}
 
-	// Remove members from team
-	await db.user.updateMany({
-		where: {
-			id: { in: memberIdsToRemove }
-		},
-		data: {
-			teamId: null
-		}
-	});
-
-	// Check if team is now within limits
+	// Remove members from team and update flag atomically
 	const remainingMembers = team.members.length - memberIdsToRemove.length;
 	const isStillOverLimit = remainingMembers > seatsNeeded;
 
-	// Update team's overSeatLimit flag
-	await db.team.update({
-		where: { id: teamId },
-		data: {
-			overSeatLimit: isStillOverLimit
-		}
+	await db.$transaction(async (tx) => {
+		// Remove members from team
+		await tx.user.updateMany({
+			where: {
+				id: { in: memberIdsToRemove }
+			},
+			data: {
+				teamId: null
+			}
+		});
+
+		// Update team's overSeatLimit flag
+		await tx.team.update({
+			where: { id: teamId },
+			data: {
+				overSeatLimit: isStillOverLimit
+			}
+		});
 	});
 
 	return json({

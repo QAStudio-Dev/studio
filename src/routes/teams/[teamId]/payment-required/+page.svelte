@@ -99,7 +99,7 @@
 	{/if}
 
 	<!-- Main Card -->
-	<div class="card p-8 mb-8">
+	<div class="mb-8 card p-8">
 		<div class="mb-6 flex items-center gap-3">
 			<CreditCard class="h-6 w-6" />
 			<h2 class="h3">Subscription Status</h2>
@@ -107,7 +107,7 @@
 
 		<div class="space-y-6">
 			<!-- Status Display -->
-			<div class="rounded-container bg-surface-100-800 p-6">
+			<div class="bg-surface-100-800 rounded-container p-6">
 				<div class="mb-4 flex items-center justify-between">
 					<span class="text-surface-600-300">Current Status</span>
 					<span
@@ -145,23 +145,23 @@
 				<h3 class="mb-3 font-semibold">What's Affected</h3>
 				<ul class="space-y-2">
 					<li class="flex items-start gap-2">
-						<span class="text-error-500 mt-1">✗</span>
+						<span class="mt-1 text-error-500">✗</span>
 						<span>Cannot create new projects (limited to 1 project)</span>
 					</li>
 					<li class="flex items-start gap-2">
-						<span class="text-error-500 mt-1">✗</span>
+						<span class="mt-1 text-error-500">✗</span>
 						<span>Cannot invite new team members</span>
 					</li>
 					<li class="flex items-start gap-2">
-						<span class="text-error-500 mt-1">✗</span>
+						<span class="mt-1 text-error-500">✗</span>
 						<span>AI-powered failure analysis disabled</span>
 					</li>
 					<li class="flex items-start gap-2">
-						<span class="text-error-500 mt-1">✗</span>
+						<span class="mt-1 text-error-500">✗</span>
 						<span>Advanced reporting features unavailable</span>
 					</li>
 					<li class="flex items-start gap-2">
-						<span class="text-error-500 mt-1">✗</span>
+						<span class="mt-1 text-error-500">✗</span>
 						<span>Custom integrations disabled</span>
 					</li>
 				</ul>
@@ -172,15 +172,15 @@
 				<h3 class="mb-3 font-semibold">What Still Works</h3>
 				<ul class="space-y-2">
 					<li class="flex items-start gap-2">
-						<span class="text-success-500 mt-1">✓</span>
+						<span class="mt-1 text-success-500">✓</span>
 						<span>View existing projects and test data</span>
 					</li>
 					<li class="flex items-start gap-2">
-						<span class="text-success-500 mt-1">✓</span>
+						<span class="mt-1 text-success-500">✓</span>
 						<span>Export test results</span>
 					</li>
 					<li class="flex items-start gap-2">
-						<span class="text-success-500 mt-1">✓</span>
+						<span class="mt-1 text-success-500">✓</span>
 						<span>Access basic reporting</span>
 					</li>
 				</ul>
@@ -196,8 +196,8 @@
 					{loading ? 'Loading...' : statusInfo.action}
 				</button>
 			{:else}
-				<div class="rounded-container bg-warning-500/10 p-4 border border-warning-500/20">
-					<p class="text-sm text-center">
+				<div class="rounded-container border border-warning-500/20 bg-warning-500/10 p-4">
+					<p class="text-center text-sm">
 						Only team admins and managers can manage billing. Please contact your team admin to
 						resolve this issue.
 					</p>
@@ -209,10 +209,10 @@
 	<!-- Help Section -->
 	<div class="card p-6">
 		<h3 class="mb-4 font-semibold">Need Help?</h3>
-		<div class="space-y-3 text-sm text-surface-600-300">
+		<div class="text-surface-600-300 space-y-3 text-sm">
 			<p>
-				If you're experiencing issues with your payment or subscription, our support team is here
-				to help.
+				If you're experiencing issues with your payment or subscription, our support team is here to
+				help.
 			</p>
 			<div class="flex gap-4">
 				<a href="mailto:support@qa-studio.com" class="text-primary-500 hover:underline">

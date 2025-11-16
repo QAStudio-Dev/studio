@@ -69,19 +69,23 @@ const handleClerkWithPublicRoutes: Handle = async ({ event, resolve }) => {
 };
 
 // Middleware to check for over-seat-limit teams and redirect to resolution page
+// Note: This only runs on main navigation routes, not API/static assets
 const handleSeatLimitCheck: Handle = async ({ event, resolve }) => {
 	const { pathname } = event.url;
 
-	// Skip for API routes, static files, and special pages
-	if (
-		pathname.startsWith('/api/') ||
-		pathname.includes('.') ||
-		pathname.includes('/over-limit') ||
-		pathname.includes('/payment-required') ||
+	// Skip for routes that don't need team status checks
+	const shouldSkip =
+		pathname.startsWith('/api/') || // API routes handle their own checks
+		pathname.includes('.') || // Static files
 		pathname.startsWith('/sign-in') ||
 		pathname.startsWith('/sign-up') ||
-		pathname.startsWith('/teams/new')
-	) {
+		pathname.startsWith('/teams/new') ||
+		pathname === '/' || // Landing page
+		pathname.startsWith('/docs') || // Public docs
+		/^\/teams\/[^/]+\/over-limit/.test(pathname) || // Already on resolution page
+		/^\/teams\/[^/]+\/payment-required/.test(pathname); // Already on payment page
+
+	if (shouldSkip) {
 		return resolve(event);
 	}
 
@@ -95,33 +99,46 @@ const handleSeatLimitCheck: Handle = async ({ event, resolve }) => {
 		return resolve(event);
 	}
 
-	// Check if user's team is over seat limit or has payment issues
+	// Only query team status for users who have a team
+	// This is a lightweight query with indexed fields
 	const user = await db.user.findUnique({
 		where: { id: userId },
-		include: {
+		select: {
+			teamId: true,
 			team: {
 				select: {
 					id: true,
 					overSeatLimit: true,
-					subscription: true
+					subscription: {
+						select: {
+							status: true
+						}
+					}
 				}
 			}
 		}
 	});
 
-	if (user?.team?.id) {
-		// Priority 1: Over seat limit (most urgent)
-		if (user.team.overSeatLimit) {
-			throw redirect(302, `/teams/${user.team.id}/over-limit`);
-		}
+	// If user has no team, skip checks
+	if (!user?.team?.id) {
+		return resolve(event);
+	}
 
-		// Priority 2: Payment required (subscription issues)
-		if (requiresPayment(user.team.subscription)) {
-			throw redirect(302, `/teams/${user.team.id}/payment-required`);
-		}
+	// Priority 1: Over seat limit (most urgent)
+	if (user.team.overSeatLimit) {
+		throw redirect(302, `/teams/${user.team.id}/over-limit`);
+	}
+
+	// Priority 2: Payment required (subscription issues)
+	if (user.team.subscription && requiresPayment(user.team.subscription)) {
+		throw redirect(302, `/teams/${user.team.id}/payment-required`);
 	}
 
 	return resolve(event);
 };
 
-export const handle: Handle = sequence(handleClerkWithPublicRoutes, handleSeatLimitCheck, handleParaglide);
+export const handle: Handle = sequence(
+	handleClerkWithPublicRoutes,
+	handleSeatLimitCheck,
+	handleParaglide
+);
