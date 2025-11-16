@@ -161,10 +161,40 @@ export const POST: RequestHandler = async ({ request }) => {
 			case 'customer.subscription.deleted': {
 				const subscription = event.data.object as Stripe.Subscription;
 
-				await db.subscription.update({
-					where: { stripeSubscriptionId: subscription.id },
-					data: {
-						status: 'CANCELED'
+				// Update subscription status and check if team is now over free tier limit
+				await db.$transaction(async (tx) => {
+					// Update subscription to CANCELED
+					const updatedSub = await tx.subscription.update({
+						where: { stripeSubscriptionId: subscription.id },
+						data: {
+							status: 'CANCELED'
+						},
+						include: {
+							team: {
+								include: {
+									members: true
+								}
+							}
+						}
+					});
+
+					// When subscription is canceled, team reverts to free tier (1 member limit)
+					if (updatedSub.team) {
+						const memberCount = updatedSub.team.members.length;
+						const isOverLimit = memberCount > 1; // Free tier allows 1 member
+
+						if (updatedSub.team.overSeatLimit !== isOverLimit) {
+							await tx.team.update({
+								where: { id: updatedSub.team.id },
+								data: { overSeatLimit: isOverLimit }
+							});
+
+							if (isOverLimit) {
+								console.warn(
+									`⚠️ Team ${updatedSub.team.id} is now over free tier limit: ${memberCount} members, 1 allowed`
+								);
+							}
+						}
 					}
 				});
 
