@@ -135,6 +135,12 @@ export const POST: RequestHandler = async ({ request }) => {
 				// Use interactive transaction with appropriate isolation level
 				await db.$transaction(
 					async (tx) => {
+						// Check if subscription already exists to determine if owner needs to be set
+						const existingSubscription = await tx.subscription.findUnique({
+							where: { stripeSubscriptionId: subscription.id },
+							select: { ownerId: true }
+						});
+
 						// Update subscription
 						await tx.subscription.upsert({
 							where: { stripeSubscriptionId: subscription.id },
@@ -148,14 +154,14 @@ export const POST: RequestHandler = async ({ request }) => {
 							}
 						});
 
-						// Set user as OWNER if this is a new subscription
-						if (userId && event.type === 'customer.subscription.created') {
+						// Set user as OWNER if ownerId is being set for the first time (idempotent)
+						// This handles both created and updated events, regardless of order
+						if (userId && !existingSubscription?.ownerId) {
 							await tx.user.update({
 								where: { id: userId },
 								data: { role: 'OWNER' }
 							});
 						}
-
 						// Lock the team row and count members in a single query to prevent race conditions
 						// This uses a raw query with SELECT FOR UPDATE to ensure exclusive lock
 						const result = await tx.$queryRaw<

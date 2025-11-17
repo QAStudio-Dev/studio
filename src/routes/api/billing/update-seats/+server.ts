@@ -33,8 +33,13 @@ export const POST: RequestHandler = async (event) => {
 		return json({ error: 'No active subscription found' }, { status: 404 });
 	}
 
-	// Only OWNER can update seats, and they must own this subscription
-	if (user.role !== 'OWNER' || user.team.subscription.ownerId !== user.id) {
+	// Verify user has OWNER role
+	if (user.role !== 'OWNER') {
+		return json({ error: 'Only users with OWNER role can update seat count' }, { status: 403 });
+	}
+
+	// Verify user owns this specific subscription
+	if (user.team.subscription.ownerId !== user.id) {
 		return json(
 			{ error: 'Only the subscription owner can update seat count' },
 			{ status: 403 }
