@@ -6,8 +6,8 @@ import { error } from '@sveltejs/kit';
 export const load: PageServerLoad = async (event) => {
 	const { teamId } = event.params;
 
-	// Require ADMIN or MANAGER role
-	const user = await requireRole(event, ['ADMIN', 'MANAGER']);
+	// Require OWNER, ADMIN, or MANAGER role
+	const user = await requireRole(event, ['OWNER', 'ADMIN', 'MANAGER']);
 
 	// Verify user is in this team
 	if (user.teamId !== teamId) {

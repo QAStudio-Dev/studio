@@ -548,14 +548,20 @@
 										<span class="font-semibold"
 											>{user.team.subscription.seats}</span
 										>
-										<button
-											onclick={openSeatUpdateDialog}
-											class="btn preset-outlined-primary-500 btn-sm"
-											title="Update seat count"
-										>
-											<Users class="h-3 w-3" />
-											Update
-										</button>
+										{#if user.role === 'OWNER'}
+											<button
+												onclick={openSeatUpdateDialog}
+												class="btn preset-outlined-primary-500 btn-sm"
+												title="Update seat count"
+											>
+												<Users class="h-3 w-3" />
+												Update
+											</button>
+										{:else}
+											<span class="text-surface-600-300 text-xs italic"
+												>(Contact subscription owner to update)</span
+											>
+										{/if}
 									</div>
 								</div>
 								{#if user.team.subscription.currentPeriodEnd}
@@ -612,8 +618,8 @@
 						</div>
 					</div>
 
-					<!-- Billing Card -->
-					{#if user.team.subscription}
+					<!-- Billing Card (OWNER only) -->
+					{#if user.team.subscription && user.role === 'OWNER'}
 						<div class="card p-6">
 							<h3 class="mb-4 text-xl font-bold">Billing</h3>
 							<p class="text-surface-600-300 mb-4">
@@ -632,6 +638,15 @@
 									Manage Billing
 								{/if}
 							</button>
+						</div>
+					{:else if user.team.subscription}
+						<div class="bg-surface-100-800 card p-6">
+							<h3 class="mb-2 text-xl font-bold">Billing</h3>
+							<p class="text-surface-600-300 text-sm">
+								Only the subscription owner can access billing settings. Contact
+								your team's subscription owner to manage billing, update payment
+								methods, or change seat count.
+							</p>
 						</div>
 					{/if}
 

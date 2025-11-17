@@ -16,8 +16,8 @@ export const POST: RequestHandler = async (event) => {
 	// Check subscription status first (blocks if CANCELED/UNPAID/etc)
 	await requireCurrentSubscription(event);
 
-	// Require ADMIN or MANAGER role
-	const user = await requireRole(event, ['ADMIN', 'MANAGER']);
+	// Require OWNER, ADMIN, or MANAGER role
+	const user = await requireRole(event, ['OWNER', 'ADMIN', 'MANAGER']);
 
 	// Verify user is in this team
 	if (user.teamId !== teamId) {
@@ -42,12 +42,13 @@ export const POST: RequestHandler = async (event) => {
 		});
 	}
 
-	// Validate role
+	// Validate role - OWNER role cannot be assigned via invitation
+	// Only one OWNER per team (the subscription purchaser)
 	const validRoles = ['ADMIN', 'MANAGER', 'TESTER', 'VIEWER'];
 	const inviteRole = role || 'TESTER';
 	if (!validRoles.includes(inviteRole)) {
 		throw error(400, {
-			message: 'Invalid role'
+			message: 'Invalid role. Valid roles: ADMIN, MANAGER, TESTER, VIEWER'
 		});
 	}
 
@@ -147,8 +148,8 @@ export const POST: RequestHandler = async (event) => {
 export const GET: RequestHandler = async (event) => {
 	const { teamId } = event.params;
 
-	// Require ADMIN or MANAGER role
-	const user = await requireRole(event, ['ADMIN', 'MANAGER']);
+	// Require OWNER, ADMIN, or MANAGER role
+	const user = await requireRole(event, ['OWNER', 'ADMIN', 'MANAGER']);
 
 	// Verify user is in this team
 	if (user.teamId !== teamId) {
@@ -185,8 +186,8 @@ export const GET: RequestHandler = async (event) => {
 export const DELETE: RequestHandler = async (event) => {
 	const { teamId } = event.params;
 
-	// Require ADMIN or MANAGER role
-	const user = await requireRole(event, ['ADMIN', 'MANAGER']);
+	// Require OWNER, ADMIN, or MANAGER role
+	const user = await requireRole(event, ['OWNER', 'ADMIN', 'MANAGER']);
 
 	// Verify user is in this team
 	if (user.teamId !== teamId) {

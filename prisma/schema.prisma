@@ -30,12 +30,13 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  team             Team?        @relation(fields: [teamId], references: [id], onDelete: SetNull)
-  createdProjects  Project[]    @relation("ProjectCreator")
-  createdTestCases TestCase[]   @relation("TestCaseCreator")
-  createdTestRuns  TestRun[]    @relation("TestRunCreator")
-  executedResults  TestResult[] @relation("TestResultExecutor")
-  apiKeys          ApiKey[]
+  team                Team?         @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  ownedSubscription   Subscription? @relation("SubscriptionOwner")
+  createdProjects     Project[]     @relation("ProjectCreator")
+  createdTestCases    TestCase[]    @relation("TestCaseCreator")
+  createdTestRuns     TestRun[]     @relation("TestRunCreator")
+  executedResults     TestResult[]  @relation("TestResultExecutor")
+  apiKeys             ApiKey[]
 
   @@index([email])
   @@index([teamId])
@@ -83,6 +84,7 @@ model Team {
 model Subscription {
   id                   String             @id @default(cuid())
   teamId               String             @unique
+  ownerId              String?            @unique // User who purchased the subscription (nullable during migration)
   stripeCustomerId     String             @unique
   stripeSubscriptionId String?            @unique
   stripePriceId        String?
@@ -95,7 +97,8 @@ model Subscription {
   updatedAt            DateTime           @updatedAt
 
   // Relations
-  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  team  Team  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  owner User? @relation("SubscriptionOwner", fields: [ownerId], references: [id], onDelete: Restrict)
 
   @@index([teamId])
   @@index([stripeCustomerId])
@@ -113,7 +116,8 @@ enum SubscriptionStatus {
 }
 
 enum UserRole {
-  ADMIN // Full system access
+  OWNER // Subscription owner - full access including billing
+  ADMIN // Full system access (but not billing)
   MANAGER // Can manage projects and teams
   TESTER // Can create and execute tests
   VIEWER // Read-only access
