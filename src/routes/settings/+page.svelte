@@ -548,14 +548,16 @@
 										<span class="font-semibold"
 											>{user.team.subscription.seats}</span
 										>
-										<button
-											onclick={openSeatUpdateDialog}
-											class="btn preset-outlined-primary-500 btn-sm"
-											title="Update seat count"
-										>
-											<Users class="h-3 w-3" />
-											Update
-										</button>
+										{#if user.role === 'OWNER'}
+											<button
+												onclick={openSeatUpdateDialog}
+												class="btn preset-outlined-primary-500 btn-sm"
+												title="Update seat count"
+											>
+												<Users class="h-3 w-3" />
+												Update
+											</button>
+										{/if}
 									</div>
 								</div>
 								{#if user.team.subscription.currentPeriodEnd}
@@ -612,8 +614,8 @@
 						</div>
 					</div>
 
-					<!-- Billing Card -->
-					{#if user.team.subscription}
+					<!-- Billing Card (OWNER only) -->
+					{#if user.team.subscription && user.role === 'OWNER'}
 						<div class="card p-6">
 							<h3 class="mb-4 text-xl font-bold">Billing</h3>
 							<p class="text-surface-600-300 mb-4">

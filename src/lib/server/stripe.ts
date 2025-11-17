@@ -13,6 +13,7 @@ export const stripe = new Stripe(STRIPE_SECRET_KEY, {
 export interface CheckoutSessionParams {
 	teamId: string;
 	teamName: string;
+	userId: string;
 	priceId: string;
 	customerEmail: string;
 	successUrl: string;
@@ -23,7 +24,7 @@ export interface CheckoutSessionParams {
  * Create a Stripe Checkout Session for team subscription
  */
 export async function createCheckoutSession(params: CheckoutSessionParams) {
-	const { teamId, teamName, priceId, customerEmail, successUrl, cancelUrl } = params;
+	const { teamId, teamName, userId, priceId, customerEmail, successUrl, cancelUrl } = params;
 
 	const session = await stripe.checkout.sessions.create({
 		mode: 'subscription',
@@ -37,12 +38,14 @@ export async function createCheckoutSession(params: CheckoutSessionParams) {
 		],
 		metadata: {
 			teamId,
-			teamName
+			teamName,
+			userId // Track who initiated the purchase
 		},
 		subscription_data: {
 			metadata: {
 				teamId,
-				teamName
+				teamName,
+				userId // Track owner in subscription metadata
 			}
 		},
 		success_url: successUrl,

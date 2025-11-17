@@ -71,6 +71,7 @@ export const POST: RequestHandler = async (event) => {
 		const session = await createCheckoutSession({
 			teamId: team.id,
 			teamName: team.name,
+			userId: user.id,
 			priceId,
 			customerEmail: user.email,
 			successUrl: `${baseUrl}/teams/${team.id}?checkout=success`,

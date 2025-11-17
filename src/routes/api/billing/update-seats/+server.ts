@@ -33,6 +33,14 @@ export const POST: RequestHandler = async (event) => {
 		return json({ error: 'No active subscription found' }, { status: 404 });
 	}
 
+	// Only OWNER can update seats
+	if (user.role !== 'OWNER') {
+		return json(
+			{ error: 'Only the subscription owner can update seat count' },
+			{ status: 403 }
+		);
+	}
+
 	// Check if user is trying to reduce seats below current member count
 	const currentMemberCount = user.team.members.length;
 	if (seats < currentMemberCount) {

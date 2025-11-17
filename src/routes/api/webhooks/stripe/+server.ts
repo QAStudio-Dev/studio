@@ -44,26 +44,37 @@ export const POST: RequestHandler = async ({ request }) => {
 			case 'checkout.session.completed': {
 				const session = event.data.object as Stripe.Checkout.Session;
 				const teamId = session.metadata?.teamId;
+				const userId = session.metadata?.userId;
 
 				if (!teamId) {
 					console.warn('⚠️ Checkout session missing teamId metadata');
 					break;
 				}
 
-				// Create subscription record
-				if (session.subscription && session.customer) {
-					await db.subscription.create({
-						data: {
-							teamId,
-							stripeCustomerId: session.customer as string,
-							stripeSubscriptionId: session.subscription as string,
-							stripePriceId: session.line_items?.data[0]?.price?.id || null,
-							status: 'INCOMPLETE',
-							seats: 1
-						}
+				// Create subscription record and set user as OWNER
+				if (session.subscription && session.customer && userId) {
+					await db.$transaction(async (tx) => {
+						// Create subscription with owner
+						await tx.subscription.create({
+							data: {
+								teamId,
+								ownerId: userId,
+								stripeCustomerId: session.customer as string,
+								stripeSubscriptionId: session.subscription as string,
+								stripePriceId: session.line_items?.data[0]?.price?.id || null,
+								status: 'INCOMPLETE',
+								seats: 1
+							}
+						});
+
+						// Set user as OWNER
+						await tx.user.update({
+							where: { id: userId },
+							data: { role: 'OWNER' }
+						});
 					});
 
-					console.log(`✅ Subscription created for team ${teamId}`);
+					console.log(`✅ Subscription created for team ${teamId} with owner ${userId}`);
 				}
 				break;
 			}
@@ -73,6 +84,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			case 'customer.subscription.updated': {
 				const subscription = event.data.object as Stripe.Subscription;
 				const teamId = subscription.metadata?.teamId;
+				const userId = subscription.metadata?.userId;
 
 				if (!teamId) {
 					console.warn('⚠️ Subscription missing teamId metadata');
@@ -118,11 +130,20 @@ export const POST: RequestHandler = async ({ request }) => {
 							update: subscriptionData,
 							create: {
 								teamId,
+								ownerId: userId, // Set owner on create
 								stripeCustomerId: subscription.customer as string,
 								stripeSubscriptionId: subscription.id,
 								...subscriptionData
 							}
 						});
+
+						// Set user as OWNER if this is a new subscription
+						if (userId && event.type === 'customer.subscription.created') {
+							await tx.user.update({
+								where: { id: userId },
+								data: { role: 'OWNER' }
+							});
+						}
 
 						// Lock the team row and count members in a single query to prevent race conditions
 						// This uses a raw query with SELECT FOR UPDATE to ensure exclusive lock
