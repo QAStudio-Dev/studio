@@ -54,9 +54,13 @@ export const POST: RequestHandler = async ({ request }) => {
 				// Create subscription record and set user as OWNER
 				if (session.subscription && session.customer && userId) {
 					await db.$transaction(async (tx) => {
-						// Create subscription with owner
-						await tx.subscription.create({
-							data: {
+						// Upsert subscription with owner (handles race condition with subscription.created)
+						await tx.subscription.upsert({
+							where: { stripeSubscriptionId: session.subscription as string },
+							update: {
+								ownerId: userId // Ensure owner is set if subscription.created fired first
+							},
+							create: {
 								teamId,
 								ownerId: userId,
 								stripeCustomerId: session.customer as string,
@@ -67,14 +71,21 @@ export const POST: RequestHandler = async ({ request }) => {
 							}
 						});
 
-						// Set user as OWNER
+						// Set user as OWNER (idempotent - safe to call multiple times)
 						await tx.user.update({
 							where: { id: userId },
 							data: { role: 'OWNER' }
 						});
 					});
 
-					console.log(`✅ Subscription created for team ${teamId} with owner ${userId}`);
+					console.log(
+						`✅ Subscription created/updated for team ${teamId} with owner ${userId}`
+					);
+				} else if (!userId) {
+					// Log error if userId is missing
+					console.error(
+						`❌ Checkout session ${session.id} missing userId - subscription will have no owner`
+					);
 				}
 				break;
 			}
