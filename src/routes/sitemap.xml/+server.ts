@@ -1,4 +1,7 @@
 import type { RequestHandler } from './$types';
+import { readdir, readFile } from 'fs/promises';
+import { join } from 'path';
+import matter from 'gray-matter';
 
 const site = 'https://qastudio.dev';
 
@@ -7,20 +10,13 @@ const staticPages = [
 	'', // homepage
 	'/docs',
 	'/blog',
+	'/about',
+	'/contact',
+	'/privacy',
+	'/terms',
+	'/projects',
 	'/sign-in',
 	'/sign-up'
-];
-
-// Blog posts - update this when new posts are added
-const blogPosts = [
-	{
-		slug: 'welcome-to-qa-studio',
-		lastmod: '2025-11-01'
-	},
-	{
-		slug: 'playwright-integration-guide',
-		lastmod: '2025-11-04'
-	}
 ];
 
 export const GET: RequestHandler = async () => {
@@ -31,12 +27,44 @@ export const GET: RequestHandler = async () => {
 		priority: page === '' ? '1.0' : '0.8'
 	}));
 
-	const posts = blogPosts.map((post) => ({
-		loc: `${site}/blog/${post.slug}`,
-		lastmod: post.lastmod,
-		changefreq: 'monthly',
-		priority: '0.7'
-	}));
+	// Dynamically load blog posts from markdown files
+	let posts: Array<{ loc: string; lastmod: string; changefreq: string; priority: string }> = [];
+
+	try {
+		const blogDir = join(process.cwd(), 'src/md/blog');
+		const files = await readdir(blogDir);
+		const mdFiles = files.filter((file) => file.endsWith('.md'));
+
+		const blogPosts = await Promise.all(
+			mdFiles.map(async (file) => {
+				const filePath = join(blogDir, file);
+				const content = await readFile(filePath, 'utf-8');
+				const { data } = matter(content);
+
+				// Only include published posts
+				if (data.published === false) {
+					return null;
+				}
+
+				return {
+					slug: data.slug || file.replace('.md', ''),
+					date: data.date
+				};
+			})
+		);
+
+		posts = blogPosts
+			.filter((post): post is NonNullable<typeof post> => post !== null)
+			.map((post) => ({
+				loc: `${site}/blog/${post.slug}`,
+				lastmod: post.date || new Date().toISOString().split('T')[0],
+				changefreq: 'monthly',
+				priority: '0.7'
+			}));
+	} catch (error) {
+		console.error('Error loading blog posts for sitemap:', error);
+		// Continue with empty posts array if blog loading fails
+	}
 
 	const allUrls = [...pages, ...posts];
 
