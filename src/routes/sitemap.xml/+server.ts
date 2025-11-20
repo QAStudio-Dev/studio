@@ -1,7 +1,11 @@
 import type { RequestHandler } from './$types';
-import { readdir, readFile } from 'fs/promises';
+import { readdir, readFile, access } from 'fs/promises';
 import { join } from 'path';
 import matter from 'gray-matter';
+import { constants } from 'fs';
+
+// Prerender this at build time so blog files are available
+export const prerender = true;
 
 const site = 'https://qastudio.dev';
 
@@ -32,35 +36,48 @@ export const GET: RequestHandler = async () => {
 
 	try {
 		const blogDir = join(process.cwd(), 'src/md/blog');
-		const files = await readdir(blogDir);
-		const mdFiles = files.filter((file) => file.endsWith('.md'));
 
-		const blogPosts = await Promise.all(
-			mdFiles.map(async (file) => {
-				const filePath = join(blogDir, file);
-				const content = await readFile(filePath, 'utf-8');
-				const { data } = matter(content);
+		// Check if directory exists before trying to read it
+		let dirExists = false;
+		try {
+			await access(blogDir, constants.R_OK);
+			dirExists = true;
+		} catch {
+			// Directory doesn't exist or isn't readable, skip blog posts
+			console.log('Blog directory not found, skipping blog posts in sitemap');
+		}
 
-				// Only include published posts
-				if (data.published === false) {
-					return null;
-				}
+		if (dirExists) {
+			const files = await readdir(blogDir);
+			const mdFiles = files.filter((file) => file.endsWith('.md'));
 
-				return {
-					slug: data.slug || file.replace('.md', ''),
-					date: data.date
-				};
-			})
-		);
+			const blogPosts = await Promise.all(
+				mdFiles.map(async (file) => {
+					const filePath = join(blogDir, file);
+					const content = await readFile(filePath, 'utf-8');
+					const { data } = matter(content);
 
-		posts = blogPosts
-			.filter((post): post is NonNullable<typeof post> => post !== null)
-			.map((post) => ({
-				loc: `${site}/blog/${post.slug}`,
-				lastmod: post.date || new Date().toISOString().split('T')[0],
-				changefreq: 'monthly',
-				priority: '0.7'
-			}));
+					// Only include published posts
+					if (data.published === false) {
+						return null;
+					}
+
+					return {
+						slug: data.slug || file.replace('.md', ''),
+						date: data.date
+					};
+				})
+			);
+
+			posts = blogPosts
+				.filter((post): post is NonNullable<typeof post> => post !== null)
+				.map((post) => ({
+					loc: `${site}/blog/${post.slug}`,
+					lastmod: post.date || new Date().toISOString().split('T')[0],
+					changefreq: 'monthly',
+					priority: '0.7'
+				}));
+		}
 	} catch (error) {
 		console.error('Error loading blog posts for sitemap:', error);
 		// Continue with empty posts array if blog loading fails
