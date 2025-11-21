@@ -297,7 +297,10 @@ describe('Cron: Attachment Cleanup', () => {
 			};
 
 			vi.mocked(db.attachment.findMany).mockResolvedValue([attachment1, attachment2] as any);
+			// Mock blob deletion to fail 3 times (all retries) for first attachment, succeed for second
 			vi.mocked(deleteFromBlob)
+				.mockRejectedValueOnce(new Error('Blob not found'))
+				.mockRejectedValueOnce(new Error('Blob not found'))
 				.mockRejectedValueOnce(new Error('Blob not found'))
 				.mockResolvedValueOnce(undefined);
 			vi.mocked(db.attachment.delete).mockResolvedValue({} as any);
@@ -308,7 +311,7 @@ describe('Cron: Attachment Cleanup', () => {
 			expect(response.status).toBe(200);
 			expect(body.deleted.total).toBe(2);
 			expect(body.errors).toHaveLength(1);
-			expect(body.errors[0]).toContain('Blob deletion failed');
+			expect(body.errors[0]).toContain('Blob deletion failed after 3 attempts');
 			expect(db.attachment.delete).toHaveBeenCalledTimes(2);
 		});
 
