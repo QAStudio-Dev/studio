@@ -6,7 +6,7 @@ import { JiraClient } from '$lib/server/integrations/jira';
 import { encrypt } from '$lib/server/encryption';
 import { z } from 'zod';
 import { handleValidationError, validateRequestBody } from '$lib/server/validation';
-import { IntegrationType, IntegrationStatus } from '@prisma/client';
+import { IntegrationType, IntegrationStatus } from '$lib/../generated/client/client';
 
 /**
  * TODO: Rate Limiting

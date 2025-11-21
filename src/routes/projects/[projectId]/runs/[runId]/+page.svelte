@@ -30,6 +30,7 @@
 	import AttachmentViewer from '$lib/components/AttachmentViewer.svelte';
 	import JiraIssueModal from '$lib/components/JiraIssueModal.svelte';
 	import TestStepsViewer from '$lib/components/TestStepsViewer.svelte';
+	import TestAnalysisDisplay from '$lib/components/TestAnalysisDisplay.svelte';
 
 	let { data } = $props();
 	let { testRun, stats } = $derived(data);
@@ -67,6 +68,11 @@
 		cached?: boolean;
 	} | null>(null);
 	let loadingSummary = $state(false);
+
+	// Trace analysis
+	let traceAnalyses = $state<Map<string, any>>(new Map());
+	let loadingTraceAnalysis = $state<Set<string>>(new Set());
+	let traceAnalysisError = $state<Map<string, string>>(new Map());
 
 	// Jira integration
 	let showJiraModal = $state(false);
@@ -330,6 +336,47 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 		} finally {
 			loadingDiagnosis.delete(resultId);
 			loadingDiagnosis = new Set(loadingDiagnosis);
+		}
+	}
+
+	// AI Trace Analysis for test failures with trace files
+	async function analyzeTrace(resultId: string) {
+		if (traceAnalyses.has(resultId)) return; // Already loaded
+
+		loadingTraceAnalysis.add(resultId);
+		loadingTraceAnalysis = new Set(loadingTraceAnalysis);
+		traceAnalysisError.delete(resultId);
+		traceAnalysisError = new Map(traceAnalysisError);
+
+		try {
+			const res = await fetch(`/api/test-results/${resultId}/analyze-trace`, {
+				method: 'POST'
+			});
+
+			if (!res.ok) {
+				const errorData = await res.json();
+				throw new Error(errorData.error || 'Failed to analyze trace');
+			}
+
+			const { analysis, cached, quotaRemaining } = await res.json();
+			traceAnalyses.set(resultId, { ...analysis, cached, quotaRemaining });
+			traceAnalyses = new Map(traceAnalyses);
+
+			// Show quota info if limited
+			if (quotaRemaining !== undefined && quotaRemaining >= 0 && quotaRemaining <= 3) {
+				alert(
+					`Analysis complete! You have ${quotaRemaining} AI analyses remaining this month.`
+				);
+			}
+		} catch (err: any) {
+			console.error(err);
+			const errorMsg = err.message || 'Failed to analyze trace';
+			traceAnalysisError.set(resultId, errorMsg);
+			traceAnalysisError = new Map(traceAnalysisError);
+			alert(errorMsg);
+		} finally {
+			loadingTraceAnalysis.delete(resultId);
+			loadingTraceAnalysis = new Set(loadingTraceAnalysis);
 		}
 	}
 
@@ -775,6 +822,18 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 																Get AI Diagnosis
 															</button>
 														{/if}
+														{#if result.attachments?.some((att: any) => att.mimeType === 'application/zip' && att.originalName.includes('trace'))}
+															{#if !traceAnalyses.has(result.id) && !loadingTraceAnalysis.has(result.id)}
+																<button
+																	onclick={() =>
+																		analyzeTrace(result.id)}
+																	class="preset-filled-primary btn flex-1"
+																>
+																	<Sparkles class="h-4 w-4" />
+																	Analyze Trace
+																</button>
+															{/if}
+														{/if}
 														<button
 															onclick={() => openJiraModal(result)}
 															class="btn flex-1 preset-tonal-warning"
@@ -864,6 +923,38 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 																{aiDiagnoses.get(result.id)
 																	?.diagnosis}
 															</div>
+														</div>
+													{/if}
+
+													<!-- Trace Analysis Display -->
+													{#if loadingTraceAnalysis.has(result.id)}
+														<div
+															class="rounded-container border border-primary-200-800 bg-primary-50-950 p-4"
+														>
+															<div
+																class="flex items-center gap-3 text-primary-500"
+															>
+																<Loader2
+																	class="h-5 w-5 animate-spin"
+																/>
+																<span class="font-medium"
+																	>Analyzing trace with AI...</span
+																>
+															</div>
+														</div>
+													{:else if traceAnalyses.has(result.id)}
+														<TestAnalysisDisplay
+															analysis={traceAnalyses.get(result.id)}
+															cached={traceAnalyses.get(result.id)
+																?.cached}
+														/>
+													{:else if traceAnalysisError.has(result.id)}
+														<div
+															class="rounded-container border border-error-500 bg-error-50-950 p-4"
+														>
+															<p class="text-sm text-error-500">
+																{traceAnalysisError.get(result.id)}
+															</p>
 														</div>
 													{/if}
 												{/if}

@@ -2,13 +2,12 @@
 // Inspired by Allure TestOps and TestRail
 
 generator client {
-  provider = "prisma-client-js"
-  // output   = "../node_modules/.prisma/client"
+  provider = "prisma-client"
+  output   = "../src/generated/client"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // ============================================
@@ -93,6 +92,11 @@ model Subscription {
   currentPeriodEnd     DateTime?
   cancelAtPeriodEnd    Boolean            @default(false)
   seats                Int                @default(1)
+
+  // AI Features Usage Tracking
+  aiAnalysisCount      Int                @default(0) // Current month usage
+  aiAnalysisResetAt    DateTime?          // When the counter was last reset
+
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
 
@@ -360,6 +364,7 @@ model TestResult {
   attachments Attachment[]
   steps       TestStepResult[]
   jiraIssues  JiraIssue[]
+  analysis    TestResultAnalysis?
 
   @@unique([testCaseId, testRunId, retry]) // Prevent duplicate results for same test case, run, and retry attempt
   @@index([testCaseId])
@@ -410,6 +415,52 @@ model TestStepResult {
   @@index([testResultId])
   @@index([parentStepId])
   @@index([testResultId, stepNumber])
+}
+
+model TestResultAnalysis {
+  id              String   @id @default(cuid())
+  testResultId    String   @unique
+
+  // Analysis metadata
+  analysisType    String   // "AI_TRACE_ANALYSIS", "MANUAL", "AUTO_HEALED"
+  rootCause       String   @db.Text
+  category        AnalysisCategory
+  suggestedFix    String   @db.Text
+  fixCode         String?  @db.Text // Actual code to fix the issue
+  confidence      Float    // 0.0 to 1.0
+
+  // Fix tracking
+  wasFixed        Boolean  @default(false)
+  fixAppliedAt    DateTime?
+  fixAppliedBy    String?  // User ID who applied the fix
+
+  // Additional context
+  additionalNotes String?  @db.Text
+
+  // Metadata
+  analyzedBy      String   // "ai", "user:{userId}"
+  analyzedAt      DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  testResult TestResult @relation(fields: [testResultId], references: [id], onDelete: Cascade)
+
+  @@index([category])
+  @@index([confidence])
+  @@index([analyzedAt])
+  @@index([wasFixed])
+  @@index([category, confidence]) // For filtering high-confidence issues by category
+}
+
+enum AnalysisCategory {
+  STALE_LOCATOR
+  TIMING_ISSUE
+  NETWORK_ERROR
+  ASSERTION_FAILURE
+  DATA_ISSUE
+  ENVIRONMENT_ISSUE
+  CONFIGURATION_ERROR
+  OTHER
 }
 
 // ============================================
