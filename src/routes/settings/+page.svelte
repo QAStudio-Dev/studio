@@ -564,6 +564,12 @@
 										{/if}
 									</div>
 								</div>
+								<div>
+									<div class="text-surface-600-300 text-sm">
+										Attachment Retention
+									</div>
+									<div class="font-semibold">30 days</div>
+								</div>
 								{#if user.team.subscription.currentPeriodEnd}
 									<div>
 										<div class="text-surface-600-300 text-sm">
@@ -576,6 +582,21 @@
 										</div>
 									</div>
 								{/if}
+							</div>
+						{:else}
+							<div
+								class="border-surface-200-700 grid gap-4 border-t pt-4 md:grid-cols-2"
+							>
+								<div>
+									<div class="text-surface-600-300 text-sm">Plan</div>
+									<div class="font-semibold">Free</div>
+								</div>
+								<div>
+									<div class="text-surface-600-300 text-sm">
+										Attachment Retention
+									</div>
+									<div class="font-semibold">7 days</div>
+								</div>
 							</div>
 						{/if}
 					</div>

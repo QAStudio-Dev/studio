@@ -440,7 +440,7 @@
 			</p>
 
 			<div class="grid gap-6 md:grid-cols-3">
-				{#each [{ title: 'Free Tier', desc: 'Start with one project, unlimited test cases. Perfect for trying us out.' }, { title: 'Self-Hosted', desc: 'Deploy on your infrastructure. Unlimited everything. Your data, your rules.' }, { title: 'Pro Plan', desc: 'Unlimited projects, team collaboration, AI diagnostics, and priority support.' }] as reason}
+				{#each [{ title: 'Free Tier', desc: 'Start with one project, unlimited test cases. Perfect for trying us out. Attachments retained for 7 days.' }, { title: 'Self-Hosted', desc: 'Deploy on your infrastructure. Unlimited everything. Your data, your rules.' }, { title: 'Pro Plan', desc: 'Unlimited projects, team collaboration, AI diagnostics, priority support, and 30-day attachment retention.' }] as reason}
 					<div class="card p-6 text-left">
 						<h3 class="mb-2 text-xl font-bold text-primary-600 dark:text-primary-400">
 							{reason.title}

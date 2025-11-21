@@ -1,9 +1,8 @@
 import { json, error as svelteError } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import type { RequestHandler } from './$types';
-import { unlink } from 'fs/promises';
-import { join } from 'path';
 import { requireAuth } from '$lib/server/auth';
+import { deleteFromBlob } from '$lib/server/blob-storage';
 
 // GET /api/attachments/[id] - Download/view attachment
 // GET /api/attachments/[id]?metadata=true - Get attachment metadata only
@@ -76,23 +75,12 @@ export const GET: RequestHandler = async (event) => {
 			return json(attachment);
 		}
 
-		// For file download/view:
-		// If it's a Vercel Blob URL (production), redirect to it
-		if (attachment.url.startsWith('https://')) {
-			return new Response(null, {
-				status: 302,
-				headers: {
-					Location: attachment.url,
-					'Cache-Control': 'public, max-age=31536000'
-				}
-			});
-		}
-
-		// For local development mock URLs, return a placeholder
-		return new Response('Attachment preview not available in local development mode', {
-			status: 200,
+		// Redirect to Vercel Blob URL
+		return new Response(null, {
+			status: 302,
 			headers: {
-				'Content-Type': 'text/plain'
+				Location: attachment.url,
+				'Cache-Control': 'public, max-age=31536000'
 			}
 		});
 	} catch (err: any) {
@@ -113,13 +101,12 @@ export const DELETE: RequestHandler = async ({ params }) => {
 			return json({ error: 'Attachment not found' }, { status: 404 });
 		}
 
-		// Delete file from disk
+		// Delete file from Vercel Blob storage
 		try {
-			const filepath = join(process.cwd(), 'uploads', 'attachments', attachment.filename);
-			await unlink(filepath);
-		} catch (fileError) {
-			console.error('Error deleting file:', fileError);
-			// Continue with database deletion even if file deletion fails
+			await deleteFromBlob(attachment.url);
+		} catch (blobError) {
+			console.error('Error deleting blob:', blobError);
+			// Continue with database deletion even if blob deletion fails
 		}
 
 		// Delete database record

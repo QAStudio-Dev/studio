@@ -68,10 +68,21 @@ QA Studio is a modern, open-source test management platform built by QA engineer
     PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
     CLERK_SECRET_KEY=sk_test_...
 
+    # Vercel Blob Storage (REQUIRED for attachments)
+    # Get from: Vercel Dashboard -> Storage -> Blob -> Connect -> Read/Write Token
+    # All attachments (screenshots, videos, traces) are stored in Vercel Blob
+    BLOB_READ_WRITE_TOKEN=vercel_blob_rw_...
+
+    # Cron Secret (for scheduled jobs like attachment cleanup)
+    # Generate with: openssl rand -hex 32
+    CRON_SECRET=your_64_character_hex_string_here
+
     # Decap CMS (optional, for blog)
     DECAP_GITHUB_CLIENT_ID=...
     DECAP_GITHUB_CLIENT_SECRET=...
     ```
+
+    > **Note**: `BLOB_READ_WRITE_TOKEN` is required even in development. QA Studio uses Vercel Blob storage for all attachments. See [Vercel Blob Setup](#vercel-blob-setup) below for details.
 
 4. **Set up the database**
 
@@ -87,6 +98,46 @@ QA Studio is a modern, open-source test management platform built by QA engineer
     ```
 
     Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+### Vercel Blob Setup
+
+QA Studio requires Vercel Blob storage for test attachments (screenshots, videos, traces). This is required in both development and production.
+
+**Setup Steps:**
+
+1. **Create a Vercel Blob Store**
+    - Go to [Vercel Dashboard](https://vercel.com/dashboard)
+    - Navigate to Storage → Blob
+    - Click "Create Database"
+    - Name it (e.g., "qa-studio-attachments")
+
+2. **Get Your Token**
+    - In the Blob store settings, go to "Connect"
+    - Copy the "Read/Write Token"
+    - Add it to `.env.local`:
+        ```env
+        BLOB_READ_WRITE_TOKEN=vercel_blob_rw_xxxxxxxxxxxxx
+        ```
+
+3. **Attachment Retention**
+    - Free users: 7-day retention (attachments deleted automatically)
+    - Pro users: 30-day retention
+    - Cleanup runs daily via cron job at 2 AM UTC
+
+**Why Vercel Blob?**
+
+- Fast global CDN delivery
+- No file size limits
+- Automatic optimization
+- Free tier: 500MB storage, 5GB bandwidth/month
+- Paid: $0.15/GB storage, $0.15/GB bandwidth
+
+**Alternative for Self-Hosting:**
+If you're self-hosting and don't want to use Vercel Blob, you can:
+
+- Implement your own blob storage adapter (S3, MinIO, local filesystem)
+- Modify `src/lib/server/blob-storage.ts` to use your storage solution
+- Keep the same interface for compatibility
 
 ## Tech Stack
 

@@ -434,6 +434,8 @@ model Attachment {
   @@index([testResultId])
   @@index([createdAt]) // For sorting attachments by upload time
   @@index([mimeType]) // For filtering by attachment type (images, videos, etc.)
+  @@index([createdAt, testCaseId]) // For cron cleanup query performance
+  @@index([createdAt, testResultId]) // For cron cleanup query performance
 }
 
 // ============================================
