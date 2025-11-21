@@ -1,10 +1,8 @@
 import { put, del } from '@vercel/blob';
 import { BLOB_READ_WRITE_TOKEN } from '$env/static/private';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
 
 /**
- * Upload a file to Vercel Blob storage (production) or local storage (development)
+ * Upload a file to Vercel Blob storage
  * @param filename The name to give the file (e.g., 'screenshots/test-123.png')
  * @param content The file content (Buffer, string, or ReadableStream)
  * @param options Additional options
@@ -18,34 +16,14 @@ export async function uploadToBlob(
 		access?: 'public';
 	}
 ): Promise<{ url: string; downloadUrl: string }> {
-	// Use local file storage only if no Vercel Blob token is available
+	// Require Vercel Blob token - no local storage fallback
 	if (!BLOB_READ_WRITE_TOKEN) {
-		try {
-			// Create uploads directory structure
-			const uploadsDir = join(process.cwd(), 'uploads', 'attachments');
-			const filePath = join(uploadsDir, filename);
-			const fileDir = join(uploadsDir, filename.split('/').slice(0, -1).join('/'));
-
-			// Create directories if they don't exist
-			await mkdir(fileDir, { recursive: true });
-
-			// Write file
-			const buffer = Buffer.isBuffer(content) ? content : Buffer.from(content);
-			await writeFile(filePath, buffer);
-
-			// Return local URL
-			const localUrl = `/api/attachments/local/${filename}`;
-			return {
-				url: localUrl,
-				downloadUrl: localUrl
-			};
-		} catch (err) {
-			console.error('Failed to save file locally:', err);
-			throw new Error(`Failed to save attachment: ${err}`);
-		}
+		throw new Error(
+			'BLOB_READ_WRITE_TOKEN is required. Please configure Vercel Blob storage in your environment variables.'
+		);
 	}
 
-	// Upload to Vercel Blob (works in both dev and production when token is available)
+	// Upload to Vercel Blob
 	const blob = await put(filename, content, {
 		access: options?.access || 'public',
 		contentType: options?.contentType,
@@ -63,11 +41,13 @@ export async function uploadToBlob(
  * @param url The URL of the blob to delete
  */
 export async function deleteFromBlob(url: string): Promise<void> {
-	// Skip deletion in development
-	if (!BLOB_READ_WRITE_TOKEN || process.env.NODE_ENV === 'development') {
-		return;
+	if (!BLOB_READ_WRITE_TOKEN) {
+		throw new Error(
+			'BLOB_READ_WRITE_TOKEN is required. Please configure Vercel Blob storage in your environment variables.'
+		);
 	}
 
+	// Delete from Vercel Blob
 	await del(url, {
 		token: BLOB_READ_WRITE_TOKEN
 	});

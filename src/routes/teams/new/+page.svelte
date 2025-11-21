@@ -30,6 +30,7 @@
 				'1 user (you)',
 				'Unlimited projects',
 				'Basic test management',
+				'7-day attachment retention',
 				'Community support'
 			]
 		},
@@ -44,6 +45,7 @@
 				'Up to 10 team members',
 				'Unlimited projects',
 				'Advanced test management',
+				'30-day attachment retention',
 				'AI-powered failure analysis',
 				'Priority support',
 				'Custom integrations'
