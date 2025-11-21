@@ -44,8 +44,9 @@ export const GET: RequestHandler = async ({ request }) => {
 		console.log(`[Cron] Retention policy: Free (7 days), Paid (30 days)`);
 
 		// Process in batches to avoid memory issues with large datasets
+		// Use cursor-based pagination to avoid missing records when deletions occur
 		const BATCH_SIZE = 100;
-		let skip = 0;
+		let lastProcessedId: string | undefined = undefined;
 		let hasMore = true;
 		let totalFound = 0;
 		let batchCount = 0;
@@ -53,12 +54,19 @@ export const GET: RequestHandler = async ({ request }) => {
 		while (hasMore) {
 			// Find attachments in batches with their team subscription status
 			// We need to check both testCase and testResult paths to get to the project and team
+			const whereClause: any = {
+				createdAt: {
+					lte: sevenDaysAgo // Start with 7 days to cover both free and paid
+				}
+			};
+
+			// Add cursor for pagination (skip first batch)
+			if (lastProcessedId) {
+				whereClause.id = { gt: lastProcessedId };
+			}
+
 			const attachments = await db.attachment.findMany({
-				where: {
-					createdAt: {
-						lte: sevenDaysAgo // Start with 7 days to cover both free and paid
-					}
-				},
+				where: whereClause,
 				include: {
 					testCase: {
 						include: {
@@ -92,13 +100,14 @@ export const GET: RequestHandler = async ({ request }) => {
 					}
 				},
 				take: BATCH_SIZE,
-				skip: skip,
-				orderBy: { createdAt: 'asc' }
+				orderBy: { id: 'asc' } // Use ID for stable cursor-based pagination
 			});
 
 			totalFound += attachments.length;
+			if (attachments.length > 0) {
+				lastProcessedId = attachments[attachments.length - 1].id;
+			}
 			hasMore = attachments.length === BATCH_SIZE;
-			skip += BATCH_SIZE;
 			batchCount++;
 
 			if (batchCount === 1) {
@@ -119,10 +128,51 @@ export const GET: RequestHandler = async ({ request }) => {
 					const project =
 						attachment.testCase?.project || attachment.testResult?.testRun.project;
 
+					// Handle orphaned attachments (no project) - use default 7-day policy
 					if (!project) {
 						console.warn(
-							`[Cron] Attachment ${attachment.id} has no associated project, skipping`
+							`[Cron] Orphaned attachment ${attachment.id} (no project), applying default 7-day policy`
 						);
+						const shouldDelete = attachment.createdAt <= sevenDaysAgo;
+
+						if (!shouldDelete) {
+							continue;
+						}
+
+						// Delete orphaned attachment with retry logic
+						const MAX_BLOB_RETRIES = 3;
+
+						for (let attempt = 1; attempt <= MAX_BLOB_RETRIES; attempt++) {
+							try {
+								await deleteFromBlob(attachment.url);
+								console.log(`[Cron] Deleted blob: ${attachment.url}`);
+								break;
+							} catch (blobError: any) {
+								console.error(
+									`[Cron] Blob deletion attempt ${attempt}/${MAX_BLOB_RETRIES} failed for ${attachment.url}:`,
+									blobError
+								);
+
+								if (attempt === MAX_BLOB_RETRIES) {
+									errors.push(
+										`Blob deletion failed after ${MAX_BLOB_RETRIES} attempts for ${attachment.id}: ${blobError.message}`
+									);
+								} else {
+									await new Promise((resolve) =>
+										setTimeout(resolve, Math.pow(2, attempt - 1) * 1000)
+									);
+								}
+							}
+						}
+
+						await db.attachment.delete({
+							where: { id: attachment.id }
+						});
+
+						deletedCount.free++; // Count as free tier
+						deletedCount.total++;
+
+						console.log(`[Cron] Deleted orphaned attachment ${attachment.id}`);
 						continue;
 					}
 

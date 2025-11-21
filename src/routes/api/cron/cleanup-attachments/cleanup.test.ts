@@ -315,7 +315,7 @@ describe('Cron: Attachment Cleanup', () => {
 			expect(db.attachment.delete).toHaveBeenCalledTimes(2);
 		});
 
-		it('should skip attachments without project association', async () => {
+		it('should clean up orphaned attachments using 7-day policy', async () => {
 			const request = createMockRequest('Bearer test-secret-key');
 			const eightDaysAgo = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000);
 			const orphanAttachment = {
@@ -327,14 +327,19 @@ describe('Cron: Attachment Cleanup', () => {
 			};
 
 			vi.mocked(db.attachment.findMany).mockResolvedValue([orphanAttachment] as any);
+			vi.mocked(deleteFromBlob).mockResolvedValue(undefined);
+			vi.mocked(db.attachment.delete).mockResolvedValue({} as any);
 
 			const response = await GET({ request, params: {}, url: new URL(request.url) } as any);
 			const body = await response.json();
 
 			expect(response.status).toBe(200);
-			expect(body.deleted.total).toBe(0);
-			expect(deleteFromBlob).not.toHaveBeenCalled();
-			expect(db.attachment.delete).not.toHaveBeenCalled();
+			expect(body.deleted.total).toBe(1);
+			expect(body.deleted.free).toBe(1);
+			expect(deleteFromBlob).toHaveBeenCalledWith(orphanAttachment.url);
+			expect(db.attachment.delete).toHaveBeenCalledWith({
+				where: { id: orphanAttachment.id }
+			});
 		});
 
 		it('should handle database errors gracefully', async () => {
