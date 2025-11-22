@@ -10,14 +10,20 @@ import AdmZip from 'adm-zip';
 import OpenAI from 'openai';
 import { OPENAI_SECRET_KEY } from '$env/static/private';
 
-// Validate API key is configured
-if (!OPENAI_SECRET_KEY) {
-	throw new Error(
-		'OPENAI_SECRET_KEY environment variable is not set. AI trace analysis requires a valid OpenAI API key.'
-	);
-}
+// Lazy-initialize OpenAI client to allow module import without API key (for build/test)
+let openai: OpenAI;
 
-const openai = new OpenAI({ apiKey: OPENAI_SECRET_KEY });
+function getOpenAIClient(): OpenAI {
+	if (!openai) {
+		if (!OPENAI_SECRET_KEY) {
+			throw new Error(
+				'OPENAI_SECRET_KEY environment variable is not set. AI trace analysis requires a valid OpenAI API key.'
+			);
+		}
+		openai = new OpenAI({ apiKey: OPENAI_SECRET_KEY });
+	}
+	return openai;
+}
 
 export interface TraceAnalysisContext {
 	testTitle: string;
@@ -224,7 +230,8 @@ export function buildAnalysisContext(
  */
 export async function analyzeWithAI(context: TraceAnalysisContext): Promise<TraceAnalysisResult> {
 	try {
-		const completion = await openai.chat.completions.create({
+		const client = getOpenAIClient();
+		const completion = await client.chat.completions.create({
 			model: 'gpt-4-turbo',
 			temperature: 0.3, // Lower temperature for more consistent analysis
 			response_format: { type: 'json_object' },
