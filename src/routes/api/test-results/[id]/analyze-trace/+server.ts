@@ -72,7 +72,8 @@ export const POST: RequestHandler = async (event) => {
 		const team = testResult.testCase.project.team;
 		if (
 			!team ||
-			(team.id !== user?.teamId && testResult.testCase.project.createdBy !== userId)
+			!user ||
+			(team.id !== user.teamId && testResult.testCase.project.createdBy !== userId)
 		) {
 			return json({ error: 'Access denied' }, { status: 403 });
 		}
@@ -165,7 +166,7 @@ export const POST: RequestHandler = async (event) => {
 				analyzedAt: savedAnalysis.analyzedAt
 			},
 			cached: false,
-			quotaRemaining: quotaCheck.limit - quotaCheck.used - 1
+			quotaRemaining: quotaCheck.limit === -1 ? -1 : quotaCheck.limit - quotaCheck.used - 1
 		});
 	} catch (error: any) {
 		console.error('Trace analysis error:', error);

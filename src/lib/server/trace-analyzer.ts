@@ -8,8 +8,9 @@
 import type { TestResult, TestStepResult, Attachment } from '$lib/../generated/client/client';
 import AdmZip from 'adm-zip';
 import OpenAI from 'openai';
+import { OPENAI_SECRET_KEY } from '$env/static/private';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_SECRET_KEY });
+const openai = new OpenAI({ apiKey: OPENAI_SECRET_KEY });
 
 export interface TraceAnalysisContext {
 	testTitle: string;

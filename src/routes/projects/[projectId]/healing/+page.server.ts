@@ -25,7 +25,7 @@ export const load: PageServerLoad = async (event) => {
 		select: { teamId: true }
 	});
 
-	if (project.createdBy !== userId && project.team?.id !== user?.teamId) {
+	if (!user || (project.createdBy !== userId && project.team?.id !== user.teamId)) {
 		return { status: 403, error: 'Access denied' };
 	}
 
