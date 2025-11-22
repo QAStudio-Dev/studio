@@ -30,3 +30,4 @@ src/lib/paraglide
 
 /../generated/prisma
 .env*.local
+/src/generated

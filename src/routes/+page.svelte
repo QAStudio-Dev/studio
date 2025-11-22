@@ -393,7 +393,40 @@
 			</div>
 		</div>
 
-		<!-- Feature 5 -->
+		<!-- Feature 5 - AI Analysis -->
+		<div
+			class="group relative overflow-hidden card p-6 transition-all hover:-translate-y-1 hover:shadow-xl md:col-span-2 lg:col-span-1"
+		>
+			<div
+				class="absolute top-0 right-0 h-24 w-24 rounded-full bg-primary-500/10 blur-2xl"
+			></div>
+			<div class="relative">
+				<div
+					class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary-500/10"
+				>
+					<svg
+						class="h-6 w-6 text-primary-500"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+						/>
+					</svg>
+				</div>
+				<h3 class="mb-2 text-lg font-bold">AI Trace Analysis</h3>
+				<p class="text-sm text-surface-600 dark:text-surface-400">
+					AI-powered analysis of test failures with actionable fix suggestions and code
+					snippets. 10 free analyses per month.
+				</p>
+			</div>
+		</div>
+
+		<!-- Feature 6 - Analytics -->
 		<div
 			class="group relative overflow-hidden card p-6 transition-all hover:-translate-y-1 hover:shadow-xl md:col-span-2"
 		>
@@ -440,7 +473,7 @@
 			</p>
 
 			<div class="grid gap-6 md:grid-cols-3">
-				{#each [{ title: 'Free Tier', desc: 'Start with one project, unlimited test cases. Perfect for trying us out. Attachments retained for 7 days.' }, { title: 'Self-Hosted', desc: 'Deploy on your infrastructure. Unlimited everything. Your data, your rules.' }, { title: 'Pro Plan', desc: 'Unlimited projects, team collaboration, AI diagnostics, priority support, and 30-day attachment retention.' }] as reason}
+				{#each [{ title: 'Free Tier', desc: 'Start with one project, unlimited test cases, and 10 AI analyses per month. Perfect for trying us out. Attachments retained for 7 days.' }, { title: 'Self-Hosted', desc: 'Deploy on your infrastructure. Unlimited everything including AI features. Your data, your rules.' }, { title: 'Pro Plan ($49/mo)', desc: 'Unlimited projects, team collaboration, unlimited AI trace analysis, priority support, and 30-day attachment retention.' }] as reason}
 					<div class="card p-6 text-left">
 						<h3 class="mb-2 text-xl font-bold text-primary-600 dark:text-primary-400">
 							{reason.title}

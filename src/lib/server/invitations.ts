@@ -1,7 +1,7 @@
 import { clerkClient } from 'svelte-clerk/server';
 import { db } from './db';
 import crypto from 'crypto';
-import { UserRole } from '@prisma/client';
+import { UserRole } from '$lib/../generated/client/client';
 
 /**
  * Send invitation via Clerk

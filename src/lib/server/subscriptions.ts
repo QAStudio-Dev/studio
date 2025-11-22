@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { db } from './db';
-import type { SubscriptionStatus, Subscription } from '@prisma/client';
+import type { SubscriptionStatus, Subscription } from '$lib/../generated/client/client';
 import { FREE_TIER_LIMITS } from '$lib/constants';
 
 /**
