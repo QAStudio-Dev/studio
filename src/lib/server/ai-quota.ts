@@ -49,14 +49,41 @@ export async function checkAIAnalysisQuota(
 
 	if (shouldReset) {
 		// Reset the counter for the new month
+		// Use updateMany with conditional where clause to prevent race condition
 		if (subscription) {
-			await db.subscription.update({
-				where: { id: subscription.id },
+			const updated = await db.subscription.updateMany({
+				where: {
+					id: subscription.id,
+					// Only reset if the resetAt hasn't been updated by another request
+					OR: [
+						{ aiAnalysisResetAt: null },
+						{
+							aiAnalysisResetAt: {
+								lt: new Date(now.getFullYear(), now.getMonth(), 1)
+							}
+						}
+					]
+				},
 				data: {
 					aiAnalysisCount: 0,
 					aiAnalysisResetAt: now
 				}
 			});
+
+			// If we didn't update (another request already did), re-fetch the subscription
+			if (updated.count === 0) {
+				const refreshedSubscription = await db.subscription.findUnique({
+					where: { id: subscription.id }
+				});
+				if (refreshedSubscription) {
+					// Return the current state after another request reset it
+					return {
+						allowed: refreshedSubscription.aiAnalysisCount < FREE_TIER_LIMIT,
+						limit: FREE_TIER_LIMIT,
+						used: refreshedSubscription.aiAnalysisCount
+					};
+				}
+			}
 		}
 
 		return {

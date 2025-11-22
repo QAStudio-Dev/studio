@@ -10,6 +10,13 @@ import AdmZip from 'adm-zip';
 import OpenAI from 'openai';
 import { OPENAI_SECRET_KEY } from '$env/static/private';
 
+// Validate API key is configured
+if (!OPENAI_SECRET_KEY) {
+	throw new Error(
+		'OPENAI_SECRET_KEY environment variable is not set. AI trace analysis requires a valid OpenAI API key.'
+	);
+}
+
 const openai = new OpenAI({ apiKey: OPENAI_SECRET_KEY });
 
 export interface TraceAnalysisContext {
@@ -57,13 +64,41 @@ export interface TraceAnalysisResult {
 	additionalNotes?: string;
 }
 
+// Security limits for trace file processing
+const MAX_TRACE_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const MAX_ZIP_ENTRIES = 1000; // Maximum files in zip
+const MAX_INDIVIDUAL_FILE_SIZE = 10 * 1024 * 1024; // 10MB per file
+
 /**
  * Extract trace.zip contents and parse trace data
  */
 export async function extractTraceData(traceBuffer: Buffer): Promise<any> {
 	try {
+		// Validate total file size
+		if (traceBuffer.length > MAX_TRACE_FILE_SIZE) {
+			throw new Error(
+				`Trace file too large (${(traceBuffer.length / 1024 / 1024).toFixed(1)}MB). Maximum size is ${MAX_TRACE_FILE_SIZE / 1024 / 1024}MB.`
+			);
+		}
+
 		const zip = new AdmZip(traceBuffer);
 		const zipEntries = zip.getEntries();
+
+		// Validate number of entries
+		if (zipEntries.length > MAX_ZIP_ENTRIES) {
+			throw new Error(
+				`Trace file contains too many entries (${zipEntries.length}). Maximum is ${MAX_ZIP_ENTRIES}.`
+			);
+		}
+
+		// Validate individual file sizes
+		for (const entry of zipEntries) {
+			if (entry.header.size > MAX_INDIVIDUAL_FILE_SIZE) {
+				throw new Error(
+					`File '${entry.entryName}' is too large (${(entry.header.size / 1024 / 1024).toFixed(1)}MB). Maximum is ${MAX_INDIVIDUAL_FILE_SIZE / 1024 / 1024}MB.`
+				);
+			}
+		}
 
 		// Find trace.json file
 		const traceJsonEntry = zipEntries.find((entry) => entry.entryName === 'trace.json');
@@ -80,51 +115,102 @@ export async function extractTraceData(traceBuffer: Buffer): Promise<any> {
 }
 
 /**
+ * Sanitize text to remove potential PII
+ * Redacts common patterns like emails, tokens, API keys, passwords
+ */
+function sanitizePII(text: string | null | undefined): string {
+	if (!text) return '';
+
+	let sanitized = text;
+
+	// Redact email addresses
+	sanitized = sanitized.replace(
+		/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
+		'[EMAIL]'
+	);
+
+	// Redact potential API keys/tokens (long alphanumeric strings)
+	sanitized = sanitized.replace(/\b[A-Za-z0-9]{32,}\b/g, '[TOKEN]');
+
+	// Redact JWT tokens
+	sanitized = sanitized.replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, '[JWT]');
+
+	// Redact Authorization headers
+	sanitized = sanitized.replace(
+		/(authorization|auth|token|api[_-]?key)[\s:=]+[^\s&"']+/gi,
+		'$1: [REDACTED]'
+	);
+
+	// Redact password fields (value="..." or password: "...")
+	sanitized = sanitized.replace(/(password|passwd|pwd)[\s:=]+"[^"]*"/gi, '$1: "[REDACTED]"');
+
+	// Redact credit card numbers
+	sanitized = sanitized.replace(/\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g, '[CARD]');
+
+	// Redact social security numbers
+	sanitized = sanitized.replace(/\b\d{3}-\d{2}-\d{4}\b/g, '[SSN]');
+
+	return sanitized;
+}
+
+/**
  * Build analysis context from trace data and test result
  */
 export function buildAnalysisContext(
 	traceData: any,
 	testResult: TestResult & { testStepResults?: TestStepResult[] }
 ): TraceAnalysisContext {
-	// Extract test steps
+	// Extract test steps (sanitize errors)
 	const steps =
 		testResult.testStepResults?.map((step) => ({
 			title: step.title,
 			status: step.status,
-			error: step.error,
+			error: sanitizePII(step.error),
 			duration: step.duration
 		})) || [];
 
-	// Extract last 10 actions before failure from trace
+	// Extract last 10 actions before failure from trace (sanitize values)
 	const actions = (traceData.actions || []).slice(-10).map((action: any) => ({
 		type: action.type || 'unknown',
 		selector: action.selector,
-		value: action.value,
-		error: action.error
+		value: sanitizePII(action.value),
+		error: sanitizePII(action.error)
 	}));
 
-	// Get DOM snapshot at failure point
+	// Get DOM snapshot at failure point (sanitize)
+	// Optimize memory usage by extracting substring before sanitization
 	const snapshots = traceData.snapshots || [];
 	const lastSnapshot = snapshots[snapshots.length - 1];
-	const domSnapshot = lastSnapshot?.html?.slice(0, 5000); // Limit to 5000 chars
+	let domSnapshot = '';
+	if (lastSnapshot?.html) {
+		// Extract only the first 5000 chars to avoid loading massive DOM into memory
+		const htmlSubstring =
+			typeof lastSnapshot.html === 'string' ? lastSnapshot.html.substring(0, 5000) : '';
+		domSnapshot = sanitizePII(htmlSubstring);
+	}
 
-	// Extract recent network requests
-	const networkRequests = (traceData.network || []).slice(-5).map((req: any) => ({
-		url: req.url || '',
-		status: req.status,
-		method: req.method || 'GET'
-	}));
+	// Extract recent network requests (sanitize URLs to remove query params with tokens)
+	const networkRequests = (traceData.network || []).slice(-5).map((req: any) => {
+		const url = req.url || '';
+		// Remove query parameters that might contain sensitive data
+		const sanitizedUrl = url.split('?')[0];
+		return {
+			url: sanitizedUrl,
+			status: req.status,
+			method: req.method || 'GET'
+		};
+	});
 
-	// Extract console logs
+	// Extract console logs (sanitize)
 	const consoleLogs = (traceData.console || []).slice(-10).map((log: any) => ({
 		type: log.type || 'log',
-		text: log.text || ''
+		text: sanitizePII(log.text || '')
 	}));
 
 	return {
 		testTitle: testResult.fullTitle || 'Unknown Test',
-		errorMessage: testResult.errorMessage,
-		stackTrace: testResult.stackTrace,
+		errorMessage: sanitizePII(testResult.errorMessage),
+		stackTrace: sanitizePII(testResult.stackTrace),
 		steps,
 		actions,
 		domSnapshot,
