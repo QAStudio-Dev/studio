@@ -15,18 +15,32 @@
 
 	const { project, stats } = data;
 
-	function getCategoryColor(category: AnalysisCategory): string {
-		const colors: Record<AnalysisCategory, string> = {
-			STALE_LOCATOR: 'warning',
-			TIMING_ISSUE: 'tertiary',
-			NETWORK_ERROR: 'error',
-			ASSERTION_FAILURE: 'secondary',
-			DATA_ISSUE: 'primary',
-			ENVIRONMENT_ISSUE: 'warning',
-			CONFIGURATION_ERROR: 'error',
-			OTHER: 'surface'
+	function getCategoryTonalClass(category: AnalysisCategory): string {
+		const classes: Record<AnalysisCategory, string> = {
+			STALE_LOCATOR: 'badge preset-tonal-warning-500',
+			TIMING_ISSUE: 'badge preset-tonal-tertiary-500',
+			NETWORK_ERROR: 'badge preset-tonal-error-500',
+			ASSERTION_FAILURE: 'badge preset-tonal-secondary-500',
+			DATA_ISSUE: 'badge preset-tonal-primary-500',
+			ENVIRONMENT_ISSUE: 'badge preset-tonal-warning-500',
+			CONFIGURATION_ERROR: 'badge preset-tonal-error-500',
+			OTHER: 'badge preset-tonal-surface-500'
 		};
-		return colors[category] || 'surface';
+		return classes[category] || 'badge preset-tonal-surface-500';
+	}
+
+	function getCategoryFilledClass(category: AnalysisCategory): string {
+		const classes: Record<AnalysisCategory, string> = {
+			STALE_LOCATOR: 'badge preset-filled-warning-500',
+			TIMING_ISSUE: 'badge preset-filled-tertiary-500',
+			NETWORK_ERROR: 'badge preset-filled-error-500',
+			ASSERTION_FAILURE: 'badge preset-filled-secondary-500',
+			DATA_ISSUE: 'badge preset-filled-primary-500',
+			ENVIRONMENT_ISSUE: 'badge preset-filled-warning-500',
+			CONFIGURATION_ERROR: 'badge preset-filled-error-500',
+			OTHER: 'badge preset-filled-surface-500'
+		};
+		return classes[category] || 'badge preset-filled-surface-500';
 	}
 
 	function getCategoryIcon(category: AnalysisCategory): string {
@@ -229,9 +243,9 @@
 											<div class="flex items-center gap-1">
 												{#each [...new Set(test.categories)].slice(0, 3) as category}
 													<span
-														class="badge preset-tonal-{getCategoryColor(
+														class="{getCategoryTonalClass(
 															category
-														)}-500 text-xs"
+														)} text-xs"
 													>
 														{getCategoryIcon(category)}
 													</span>
@@ -265,11 +279,7 @@
 								<div class="flex items-start justify-between gap-4">
 									<div class="min-w-0 flex-1">
 										<div class="mb-2 flex items-center gap-2">
-											<span
-												class="badge preset-filled-{getCategoryColor(
-													analysis.category
-												)}-500"
-											>
+											<span class={getCategoryFilledClass(analysis.category)}>
 												{getCategoryIcon(analysis.category)}
 												{formatCategory(analysis.category)}
 											</span>

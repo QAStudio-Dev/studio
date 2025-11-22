@@ -17,18 +17,18 @@
 
 	let { analysis, cached = false }: Props = $props();
 
-	function getCategoryColor(category: AnalysisCategory): string {
-		const colors: Record<AnalysisCategory, string> = {
-			STALE_LOCATOR: 'warning',
-			TIMING_ISSUE: 'tertiary',
-			NETWORK_ERROR: 'error',
-			ASSERTION_FAILURE: 'secondary',
-			DATA_ISSUE: 'primary',
-			ENVIRONMENT_ISSUE: 'warning',
-			CONFIGURATION_ERROR: 'error',
-			OTHER: 'surface'
+	function getCategoryBadgeClass(category: AnalysisCategory): string {
+		const classes: Record<AnalysisCategory, string> = {
+			STALE_LOCATOR: 'badge preset-filled-warning-500',
+			TIMING_ISSUE: 'badge preset-filled-tertiary-500',
+			NETWORK_ERROR: 'badge preset-filled-error-500',
+			ASSERTION_FAILURE: 'badge preset-filled-secondary-500',
+			DATA_ISSUE: 'badge preset-filled-primary-500',
+			ENVIRONMENT_ISSUE: 'badge preset-filled-warning-500',
+			CONFIGURATION_ERROR: 'badge preset-filled-error-500',
+			OTHER: 'badge preset-filled-surface-500'
 		};
-		return colors[category] || 'surface';
+		return classes[category] || 'badge preset-filled-surface-500';
 	}
 
 	function getCategoryIcon(category: AnalysisCategory): string {
@@ -69,7 +69,7 @@
 				<span class="badge preset-outlined-surface-500 text-xs">Cached</span>
 			{/if}
 		</div>
-		<span class="badge preset-filled-{getCategoryColor(analysis.category)}-500 text-sm">
+		<span class="{getCategoryBadgeClass(analysis.category)} text-sm">
 			{getCategoryIcon(analysis.category)}
 			{formatCategory(analysis.category)}
 		</span>
