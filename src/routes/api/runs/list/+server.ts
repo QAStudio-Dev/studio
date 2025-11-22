@@ -1,4 +1,4 @@
-import { json, error } from '@sveltejs/kit';
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { requireAuth } from '$lib/server/auth';
@@ -42,11 +42,6 @@ export const GET: RequestHandler = async (event) => {
 		];
 	}
 
-	// Filter by project
-	if (projectId) {
-		where.projectId = projectId;
-	}
-
 	// Filter by status
 	if (status) {
 		where.status = status;
@@ -79,7 +74,24 @@ export const GET: RequestHandler = async (event) => {
 	const accessibleProjectIds = accessibleProjects.map((p) => p.id);
 
 	// Add project access filter
-	where.projectId = projectId || { in: accessibleProjectIds };
+	if (projectId) {
+		// If filtering by specific project, verify user has access
+		if (!accessibleProjectIds.includes(projectId)) {
+			return json({
+				testRuns: [],
+				pagination: {
+					page,
+					limit,
+					total: 0,
+					totalPages: 0
+				}
+			});
+		}
+		where.projectId = projectId;
+	} else {
+		// Show all accessible projects
+		where.projectId = { in: accessibleProjectIds };
+	}
 
 	// Get total count
 	const total = await db.testRun.count({ where });
