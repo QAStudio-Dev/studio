@@ -226,7 +226,13 @@ export default new Endpoint({ Input, Output, Modifier }).handle(
 				};
 			} catch (err: any) {
 				// Handle potential ID collision (extremely rare with nanoid)
-				if (err.code === 'P2002' && err.meta?.target?.includes('id')) {
+				const target = Array.isArray(err.meta?.target)
+					? err.meta.target
+					: [err.meta?.target];
+				if (
+					err.code === 'P2002' &&
+					target.some((field: string) => field?.toLowerCase() === 'id')
+				) {
 					attempts++;
 					if (attempts >= MAX_RETRIES) {
 						console.error(

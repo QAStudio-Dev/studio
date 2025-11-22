@@ -96,11 +96,16 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 				// P2002: Unique constraint violation
 				if (err.code === 'P2002') {
 					// Check which field caused the violation
-					if (err.meta?.target?.includes('key')) {
+					// Prisma meta.target can be either a string or an array
+					const target = Array.isArray(err.meta?.target)
+						? err.meta.target
+						: [err.meta?.target];
+
+					if (target.some((field: string) => field?.toLowerCase() === 'key')) {
 						throw Error[409];
 					}
 					// ID collision (extremely rare with nanoid, but handle it)
-					if (err.meta?.target?.includes('id')) {
+					if (target.some((field: string) => field?.toLowerCase() === 'id')) {
 						attempts++;
 						if (attempts >= MAX_RETRIES) {
 							console.error(
