@@ -41,11 +41,11 @@ export async function checkAIAnalysisQuota(
 	const now = new Date();
 	const resetAt = subscription?.aiAnalysisResetAt;
 
-	// Reset counter if it's a new month
+	// Reset counter if it's a new month (use UTC to avoid timezone issues)
 	const shouldReset =
 		!resetAt ||
-		resetAt.getMonth() !== now.getMonth() ||
-		resetAt.getFullYear() !== now.getFullYear();
+		resetAt.getUTCMonth() !== now.getUTCMonth() ||
+		resetAt.getUTCFullYear() !== now.getUTCFullYear();
 
 	if (shouldReset) {
 		// Reset the counter for the new month
@@ -59,7 +59,7 @@ export async function checkAIAnalysisQuota(
 						{ aiAnalysisResetAt: null },
 						{
 							aiAnalysisResetAt: {
-								lt: new Date(now.getFullYear(), now.getMonth(), 1)
+								lt: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
 							}
 						}
 					]
@@ -145,5 +145,9 @@ export function shouldResetQuota(
 ): boolean {
 	if (!resetAt) return true;
 
-	return resetAt.getMonth() !== now.getMonth() || resetAt.getFullYear() !== now.getFullYear();
+	// Use UTC to avoid timezone issues
+	return (
+		resetAt.getUTCMonth() !== now.getUTCMonth() ||
+		resetAt.getUTCFullYear() !== now.getUTCFullYear()
+	);
 }

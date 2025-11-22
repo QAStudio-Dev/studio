@@ -6,7 +6,9 @@ import { db } from './db';
 vi.mock('./db', () => ({
 	db: {
 		subscription: {
-			update: vi.fn()
+			update: vi.fn(),
+			updateMany: vi.fn(),
+			findUnique: vi.fn()
 		}
 	}
 }));
@@ -114,7 +116,7 @@ describe('AI Analysis Quota Management', () => {
 				aiAnalysisResetAt: null
 			};
 
-			vi.mocked(db.subscription.update).mockResolvedValue(subscription as any);
+			vi.mocked(db.subscription.updateMany).mockResolvedValue({ count: 1 } as any);
 
 			const result = await checkAIAnalysisQuota('team_123', subscription);
 
@@ -124,8 +126,14 @@ describe('AI Analysis Quota Management', () => {
 				used: 0
 			});
 
-			expect(db.subscription.update).toHaveBeenCalledWith({
-				where: { id: 'sub_123' },
+			expect(db.subscription.updateMany).toHaveBeenCalledWith({
+				where: {
+					id: 'sub_123',
+					OR: [
+						{ aiAnalysisResetAt: null },
+						{ aiAnalysisResetAt: { lt: expect.any(Date) } }
+					]
+				},
 				data: {
 					aiAnalysisCount: 0,
 					aiAnalysisResetAt: expect.any(Date)
@@ -141,7 +149,7 @@ describe('AI Analysis Quota Management', () => {
 				aiAnalysisResetAt: new Date('2025-10-15') // Previous month
 			};
 
-			vi.mocked(db.subscription.update).mockResolvedValue(subscription as any);
+			vi.mocked(db.subscription.updateMany).mockResolvedValue({ count: 1 } as any);
 
 			const result = await checkAIAnalysisQuota('team_123', subscription);
 
@@ -151,8 +159,14 @@ describe('AI Analysis Quota Management', () => {
 				used: 0
 			});
 
-			expect(db.subscription.update).toHaveBeenCalledWith({
-				where: { id: 'sub_123' },
+			expect(db.subscription.updateMany).toHaveBeenCalledWith({
+				where: {
+					id: 'sub_123',
+					OR: [
+						{ aiAnalysisResetAt: null },
+						{ aiAnalysisResetAt: { lt: expect.any(Date) } }
+					]
+				},
 				data: {
 					aiAnalysisCount: 0,
 					aiAnalysisResetAt: expect.any(Date)
@@ -168,13 +182,13 @@ describe('AI Analysis Quota Management', () => {
 				aiAnalysisResetAt: new Date('2024-12-31')
 			};
 
-			vi.mocked(db.subscription.update).mockResolvedValue(subscription as any);
+			vi.mocked(db.subscription.updateMany).mockResolvedValue({ count: 1 } as any);
 
 			const result = await checkAIAnalysisQuota('team_123', subscription);
 
 			expect(result.allowed).toBe(true);
 			expect(result.used).toBe(0);
-			expect(db.subscription.update).toHaveBeenCalled();
+			expect(db.subscription.updateMany).toHaveBeenCalled();
 		});
 
 		it('should handle null subscription gracefully during reset', async () => {
