@@ -10,6 +10,23 @@ const SITE_TITLE = 'QA Studio Blog';
 const SITE_DESCRIPTION = 'Testing insights, best practices, and updates from QA Studio';
 const SITE_AUTHOR = 'QA Studio Team';
 
+// Recursively find all .md files in a directory
+async function findMarkdownFiles(dir: string): Promise<string[]> {
+	const entries = await readdir(dir, { withFileTypes: true });
+	const files = await Promise.all(
+		entries.map(async (entry) => {
+			const fullPath = join(dir, entry.name);
+			if (entry.isDirectory()) {
+				return findMarkdownFiles(fullPath);
+			} else if (entry.name.endsWith('.md')) {
+				return [fullPath];
+			}
+			return [];
+		})
+	);
+	return files.flat();
+}
+
 interface BlogPost {
 	slug: string;
 	title: string;
@@ -24,17 +41,15 @@ async function getBlogPosts(): Promise<BlogPost[]> {
 	const blogDir = join(process.cwd(), 'src/md/blog');
 
 	try {
-		const files = await readdir(blogDir);
-		const mdFiles = files.filter((file) => file.endsWith('.md'));
+		const mdFiles = await findMarkdownFiles(blogDir);
 
 		const posts = await Promise.all(
-			mdFiles.map(async (file) => {
-				const filePath = join(blogDir, file);
+			mdFiles.map(async (filePath) => {
 				const fileContent = await readFile(filePath, 'utf-8');
 				const { data, content } = matter(fileContent);
 
 				return {
-					slug: data.slug || file.replace('.md', ''),
+					slug: data.slug || filePath.split('/').pop()?.replace('.md', '') || '',
 					title: data.title,
 					description: data.description,
 					date: data.date,

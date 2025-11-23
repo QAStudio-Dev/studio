@@ -9,6 +9,23 @@ export const prerender = true;
 
 const site = 'https://qastudio.dev';
 
+// Recursively find all .md files in a directory
+async function findMarkdownFiles(dir: string): Promise<string[]> {
+	const entries = await readdir(dir, { withFileTypes: true });
+	const files = await Promise.all(
+		entries.map(async (entry) => {
+			const fullPath = join(dir, entry.name);
+			if (entry.isDirectory()) {
+				return findMarkdownFiles(fullPath);
+			} else if (entry.name.endsWith('.md')) {
+				return [fullPath];
+			}
+			return [];
+		})
+	);
+	return files.flat();
+}
+
 // Static pages that should be in the sitemap
 const staticPages = [
 	'', // homepage
@@ -48,12 +65,10 @@ export const GET: RequestHandler = async () => {
 		}
 
 		if (dirExists) {
-			const files = await readdir(blogDir);
-			const mdFiles = files.filter((file) => file.endsWith('.md'));
+			const mdFiles = await findMarkdownFiles(blogDir);
 
 			const blogPosts = await Promise.all(
-				mdFiles.map(async (file) => {
-					const filePath = join(blogDir, file);
+				mdFiles.map(async (filePath) => {
 					const content = await readFile(filePath, 'utf-8');
 					const { data } = matter(content);
 
@@ -63,7 +78,7 @@ export const GET: RequestHandler = async () => {
 					}
 
 					return {
-						slug: data.slug || file.replace('.md', ''),
+						slug: data.slug || filePath.split('/').pop()?.replace('.md', ''),
 						date: data.date
 					};
 				})

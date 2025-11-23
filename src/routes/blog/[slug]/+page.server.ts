@@ -9,6 +9,23 @@ import { codeToHtml } from 'shiki';
 
 export const prerender = true;
 
+// Recursively find all .md files in a directory
+async function findMarkdownFiles(dir: string): Promise<string[]> {
+	const entries = await readdir(dir, { withFileTypes: true });
+	const files = await Promise.all(
+		entries.map(async (entry) => {
+			const fullPath = join(dir, entry.name);
+			if (entry.isDirectory()) {
+				return findMarkdownFiles(fullPath);
+			} else if (entry.name.endsWith('.md')) {
+				return [fullPath];
+			}
+			return [];
+		})
+	);
+	return files.flat();
+}
+
 // Configure marked with Shiki syntax highlighting
 marked.use(
 	markedHighlight({
@@ -34,12 +51,10 @@ export const entries: EntryGenerator = async () => {
 	const blogDir = join(process.cwd(), 'src/md/blog');
 
 	try {
-		const files = await readdir(blogDir);
-		const mdFiles = files.filter((file) => file.endsWith('.md'));
+		const mdFiles = await findMarkdownFiles(blogDir);
 
 		const slugs = await Promise.all(
-			mdFiles.map(async (file) => {
-				const filePath = join(blogDir, file);
+			mdFiles.map(async (filePath) => {
 				const content = await readFile(filePath, 'utf-8');
 				const { data } = matter(content);
 
@@ -49,7 +64,7 @@ export const entries: EntryGenerator = async () => {
 				}
 
 				return {
-					slug: data.slug || file.replace('.md', '')
+					slug: data.slug || filePath.split('/').pop()?.replace('.md', '') || ''
 				};
 			})
 		);
@@ -65,16 +80,14 @@ export const load: PageServerLoad = async ({ params }) => {
 	const blogDir = join(process.cwd(), 'src/md/blog');
 
 	try {
-		const files = await readdir(blogDir);
-		const mdFiles = files.filter((file) => file.endsWith('.md'));
+		const mdFiles = await findMarkdownFiles(blogDir);
 
 		// Find the file that matches the slug
-		for (const file of mdFiles) {
-			const filePath = join(blogDir, file);
+		for (const filePath of mdFiles) {
 			const content = await readFile(filePath, 'utf-8');
 			const { data, content: markdown } = matter(content);
 
-			const fileSlug = data.slug || file.replace('.md', '');
+			const fileSlug = data.slug || filePath.split('/').pop()?.replace('.md', '');
 
 			if (fileSlug === params.slug) {
 				// Check if post is published
