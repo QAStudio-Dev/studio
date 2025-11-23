@@ -1,5 +1,5 @@
 import { db } from './db';
-import type { NotificationEvent, IntegrationType } from '$lib/../generated/client/client';
+import type { NotificationEvent, IntegrationType } from '$prisma/client';
 import { decrypt } from './encryption';
 
 /**

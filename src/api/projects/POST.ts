@@ -99,13 +99,23 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 					// Prisma meta.target can be either a string or an array
 					const target = Array.isArray(err.meta?.target)
 						? err.meta.target
-						: [err.meta?.target];
+						: err.meta?.target
+							? [err.meta.target]
+							: [];
 
-					if (target.some((field: string) => field?.toLowerCase() === 'key')) {
+					// Check for key constraint violation
+					if (
+						target.length > 0 &&
+						target.some((field: string) => field?.toLowerCase() === 'key')
+					) {
 						throw Error[409];
 					}
-					// ID collision (extremely rare with nanoid, but handle it)
-					if (target.some((field: string) => field?.toLowerCase() === 'id')) {
+
+					// Check for ID collision (extremely rare with nanoid)
+					if (
+						target.length > 0 &&
+						target.some((field: string) => field?.toLowerCase() === 'id')
+					) {
 						attempts++;
 						if (attempts >= MAX_RETRIES) {
 							console.error(
@@ -118,6 +128,14 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 						);
 						continue; // Retry with new ID
 					}
+
+					// If we got P2002 but couldn't determine the field, assume it's a key conflict
+					// since that's the most likely case for this model (key has @unique, ID has @id)
+					console.warn('P2002 error without target field - assuming key conflict:', {
+						meta: err.meta,
+						message: err.message
+					});
+					throw Error[409];
 				}
 				throw Error[500];
 			}

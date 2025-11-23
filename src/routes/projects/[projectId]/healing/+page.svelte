@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import type { AnalysisCategory } from '$lib/../generated/client/client';
+	import type { AnalysisCategory } from '$prisma/client';
 	import {
 		TrendingUp,
 		AlertCircle,

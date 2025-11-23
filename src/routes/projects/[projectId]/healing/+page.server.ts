@@ -1,7 +1,7 @@
 import type { PageServerLoad } from './$types';
 import { requireAuth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
-import type { AnalysisCategory } from '$lib/../generated/client/client';
+import type { AnalysisCategory } from '$prisma/client';
 
 export const load: PageServerLoad = async (event) => {
 	const userId = await requireAuth(event);

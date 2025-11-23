@@ -2,7 +2,7 @@ import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
 import { serializeDates } from '$lib/utils/date';
-import { Prisma } from '$lib/../generated/client/client';
+import { Prisma } from '$prisma/client';
 
 export const Param = z.object({
 	testCaseId: z.string()

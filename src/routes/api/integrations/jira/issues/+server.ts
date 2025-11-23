@@ -5,7 +5,7 @@ import { db } from '$lib/server/db';
 import { createJiraClientFromIntegration } from '$lib/server/integrations/jira';
 import { z } from 'zod';
 import { handleValidationError, validateRequestBody } from '$lib/server/validation';
-import { IntegrationType } from '$lib/../generated/client/client';
+import { IntegrationType } from '$prisma/client';
 
 // Validation schema for creating Jira issues
 const CreateJiraIssueSchema = z

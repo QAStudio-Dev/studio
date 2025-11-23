@@ -5,7 +5,7 @@
  * and generate actionable insights for fixing test failures.
  */
 
-import type { TestResult, TestStepResult, Attachment } from '$lib/../generated/client/client';
+import type { TestResult, TestStepResult, Attachment } from '$prisma/client';
 import AdmZip from 'adm-zip';
 import OpenAI from 'openai';
 import { OPENAI_SECRET_KEY } from '$env/static/private';
