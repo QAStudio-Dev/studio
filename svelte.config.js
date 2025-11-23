@@ -16,7 +16,8 @@ const config = {
 	kit: {
 		adapter: adapter(),
 		alias: {
-			$api: './src/api'
+			$api: './src/api',
+			$prisma: './src/generated/client'
 		},
 		prerender: {
 			handleHttpError: 'warn' // Don't fail on 404s during prerender

@@ -6,7 +6,7 @@ import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { requiresPayment } from '$lib/server/subscriptions';
 import { getCachedOrFetch, CacheKeys, CacheTTL } from '$lib/server/redis';
-import type { SubscriptionStatus } from '$lib/../generated/client/client';
+import type { SubscriptionStatus } from '$prisma/client';
 
 const handleParaglide: Handle = ({ event, resolve }) =>
 	paraglideMiddleware(event.request, ({ request, locale }) => {

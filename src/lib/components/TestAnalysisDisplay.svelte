@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { AnalysisCategory } from '$lib/../generated/client/client';
+	import type { AnalysisCategory } from '$prisma/client';
 
 	interface Props {
 		analysis: {
