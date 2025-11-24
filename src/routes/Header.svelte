@@ -5,9 +5,15 @@
 	import { goto } from '$app/navigation';
 	import { Popover, usePopover } from '@skeletonlabs/skeleton-svelte';
 	import { X, Menu } from 'lucide-svelte';
-	import { projectsRefreshTrigger } from '$lib/stores/projectStore';
+	import {
+		projectsRefreshTrigger,
+		selectedProject,
+		setSelectedProject,
+		clearSelectedProject,
+		type SelectedProject
+	} from '$lib/stores/projectStore';
 
-	let projects = $state<any[]>([]);
+	let projects = $state<SelectedProject[]>([]);
 	let selectedProjectId = $state<string | null>(null);
 	let isLoadingProjects = $state(false);
 	let mobileMenuOpen = $state(false);
@@ -15,14 +21,49 @@
 	// Create popover instance
 	const popover = usePopover({ id: 'project-selector' });
 
-	// Determine selected project from URL, or default to first project
+	// Validate and sync project selection
+	// Handles URL priority, localStorage fallback, and project validation
 	$effect(() => {
-		const match = page.url.pathname.match(/^\/projects\/([^/]+)/);
+		const projectList = projects; // Track dependency
+		const pathname = page.url.pathname;
+		const match = pathname.match(/^\/projects\/([^/]+)/);
+
+		// Wait until projects are loaded
+		if (projectList.length === 0) return;
+
 		if (match) {
-			selectedProjectId = match[1];
-		} else if (projects.length > 0 && !selectedProjectId) {
-			// Default to first project if none selected
-			selectedProjectId = projects[0].id;
+			// URL takes priority - sync to store if different
+			const urlProjectId = match[1];
+			const project = projectList.find((p) => p.id === urlProjectId);
+
+			if (project && urlProjectId !== selectedProjectId) {
+				selectedProjectId = urlProjectId;
+				setSelectedProject(project);
+			}
+		} else if (!selectedProjectId) {
+			// Not on a project page and no project selected - use stored or default
+			const stored = $selectedProject;
+
+			// Validate stored project exists in current projects list
+			const storedProjectExists = stored && projectList.some((p) => p.id === stored.id);
+
+			if (storedProjectExists && stored) {
+				// Only update if different to prevent infinite loop
+				if (selectedProjectId !== stored.id) {
+					selectedProjectId = stored.id;
+				}
+			} else {
+				// Stored project was deleted or doesn't exist, default to first project
+				if (stored) {
+					clearSelectedProject();
+				}
+				const firstProject = projectList[0];
+				// Only update if different to prevent infinite loop
+				if (selectedProjectId !== firstProject.id) {
+					selectedProjectId = firstProject.id;
+					setSelectedProject(firstProject);
+				}
+			}
 		}
 	});
 
@@ -38,6 +79,7 @@
 			if (response.ok) {
 				const data = await response.json();
 				projects = Array.isArray(data) ? data : [];
+				// Validation happens automatically in the $effect above when projects updates
 			}
 		} catch (error) {
 			console.error('Failed to fetch projects:', error);
@@ -64,6 +106,10 @@
 	});
 
 	function switchProject(projectId: string) {
+		const project = projects.find((p) => p.id === projectId);
+		if (project) {
+			setSelectedProject(project);
+		}
 		mobileMenuOpen = false;
 		goto(`/projects/${projectId}`);
 	}

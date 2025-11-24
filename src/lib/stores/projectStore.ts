@@ -1,30 +1,73 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
 
-interface SelectedProject {
+export interface SelectedProject {
 	id: string;
 	name: string;
 	key: string;
 }
 
-// Load from localStorage if in browser
-const storedProject = browser ? localStorage.getItem('selectedProject') : null;
-const initialProject: SelectedProject | null = storedProject ? JSON.parse(storedProject) : null;
+// Safely load from localStorage with error handling
+function loadInitialProject(): SelectedProject | null {
+	if (!browser) return null;
 
-export const selectedProject = writable<SelectedProject | null>(initialProject);
+	try {
+		const storedProject = localStorage.getItem('selectedProject');
+		if (!storedProject) return null;
+
+		const parsed = JSON.parse(storedProject);
+
+		// Validate structure
+		if (
+			parsed &&
+			typeof parsed === 'object' &&
+			typeof parsed.id === 'string' &&
+			typeof parsed.name === 'string' &&
+			typeof parsed.key === 'string'
+		) {
+			return parsed as SelectedProject;
+		}
+
+		// Invalid structure - clear it
+		localStorage.removeItem('selectedProject');
+		return null;
+	} catch (error) {
+		console.error('Failed to parse stored project, clearing localStorage:', error);
+		try {
+			localStorage.removeItem('selectedProject');
+		} catch {}
+		return null;
+	}
+}
+
+export const selectedProject = writable<SelectedProject | null>(loadInitialProject());
 
 // Trigger to signal that projects list should be refetched
 // Incremented whenever projects are created/deleted
 export const projectsRefreshTrigger = writable<number>(0);
 
-// Subscribe to save to localStorage
+// Subscribe to save to localStorage with debouncing
 if (browser) {
+	let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
 	selectedProject.subscribe((value) => {
-		if (value) {
-			localStorage.setItem('selectedProject', JSON.stringify(value));
-		} else {
-			localStorage.removeItem('selectedProject');
+		// Clear any pending timeout
+		if (timeoutId) {
+			clearTimeout(timeoutId);
 		}
+
+		// Debounce localStorage writes by 100ms to handle rapid updates
+		timeoutId = setTimeout(() => {
+			try {
+				if (value) {
+					localStorage.setItem('selectedProject', JSON.stringify(value));
+				} else {
+					localStorage.removeItem('selectedProject');
+				}
+			} catch (error) {
+				console.error('Failed to save selected project to localStorage:', error);
+			}
+		}, 100);
 	});
 }
 
