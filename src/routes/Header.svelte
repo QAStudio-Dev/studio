@@ -6,6 +6,9 @@
 	import { Popover, usePopover } from '@skeletonlabs/skeleton-svelte';
 	import { X, Menu } from 'lucide-svelte';
 	import { projectsRefreshTrigger } from '$lib/stores/projectStore';
+	import { browser } from '$app/environment';
+
+	const SELECTED_PROJECT_KEY = 'qa-studio-selected-project';
 
 	let projects = $state<any[]>([]);
 	let selectedProjectId = $state<string | null>(null);
@@ -15,14 +18,59 @@
 	// Create popover instance
 	const popover = usePopover({ id: 'project-selector' });
 
-	// Determine selected project from URL, or default to first project
+	// Load selected project from localStorage
+	function loadSelectedProjectFromStorage(): string | null {
+		if (!browser) return null;
+		try {
+			return localStorage.getItem(SELECTED_PROJECT_KEY);
+		} catch (error) {
+			console.error('Failed to load selected project from localStorage:', error);
+			return null;
+		}
+	}
+
+	// Save selected project to localStorage
+	function saveSelectedProjectToStorage(projectId: string) {
+		if (!browser) return;
+		try {
+			localStorage.setItem(SELECTED_PROJECT_KEY, projectId);
+		} catch (error) {
+			console.error('Failed to save selected project to localStorage:', error);
+		}
+	}
+
+	// Clear selected project from localStorage (when project is deleted)
+	function clearSelectedProjectFromStorage() {
+		if (!browser) return;
+		try {
+			localStorage.removeItem(SELECTED_PROJECT_KEY);
+		} catch (error) {
+			console.error('Failed to clear selected project from localStorage:', error);
+		}
+	}
+
+	// Determine selected project from URL, localStorage, or default to first project
 	$effect(() => {
 		const match = page.url.pathname.match(/^\/projects\/([^/]+)/);
 		if (match) {
 			selectedProjectId = match[1];
+			// Save to localStorage when navigating to a project page
+			saveSelectedProjectToStorage(match[1]);
 		} else if (projects.length > 0 && !selectedProjectId) {
-			// Default to first project if none selected
-			selectedProjectId = projects[0].id;
+			// Try to load from localStorage first
+			const savedProjectId = loadSelectedProjectFromStorage();
+
+			// Check if saved project exists in current projects list
+			if (savedProjectId && projects.some((p) => p.id === savedProjectId)) {
+				selectedProjectId = savedProjectId;
+			} else {
+				// If saved project doesn't exist (was deleted), clear localStorage and default to first project
+				if (savedProjectId) {
+					clearSelectedProjectFromStorage();
+				}
+				selectedProjectId = projects[0].id;
+				saveSelectedProjectToStorage(projects[0].id);
+			}
 		}
 	});
 
@@ -38,6 +86,13 @@
 			if (response.ok) {
 				const data = await response.json();
 				projects = Array.isArray(data) ? data : [];
+
+				// Validate saved project still exists after fetching
+				const savedProjectId = loadSelectedProjectFromStorage();
+				if (savedProjectId && !projects.some((p) => p.id === savedProjectId)) {
+					// Saved project was deleted, clear localStorage
+					clearSelectedProjectFromStorage();
+				}
 			}
 		} catch (error) {
 			console.error('Failed to fetch projects:', error);
@@ -65,6 +120,7 @@
 
 	function switchProject(projectId: string) {
 		mobileMenuOpen = false;
+		saveSelectedProjectToStorage(projectId);
 		goto(`/projects/${projectId}`);
 	}
 
