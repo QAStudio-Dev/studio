@@ -21,46 +21,40 @@
 	// Create popover instance
 	const popover = usePopover({ id: 'project-selector' });
 
-	// Sync URL with selectedProjectId and store
+	// Validate and sync project selection
+	// Handles URL priority, localStorage fallback, and project validation
 	$effect(() => {
-		const match = page.url.pathname.match(/^\/projects\/([^/]+)/);
+		const projectList = projects; // Track dependency
+		const pathname = page.url.pathname;
+		const match = pathname.match(/^\/projects\/([^/]+)/);
+
+		// Wait until projects are loaded
+		if (projectList.length === 0) return;
 
 		if (match) {
-			// URL takes priority - update if different
+			// URL takes priority - sync to store if different
 			const urlProjectId = match[1];
-			if (urlProjectId !== selectedProjectId) {
-				selectedProjectId = urlProjectId;
-				// Update store with full project data (only if projects are loaded)
-				if (projects.length > 0) {
-					const project = projects.find((p) => p.id === urlProjectId);
-					if (project) {
-						setSelectedProject(project);
-					}
-				}
-			}
-		}
-	});
+			const project = projectList.find((p) => p.id === urlProjectId);
 
-	// Determine default project selection when not on a project page
-	// This runs after projects are fetched and validated
-	$effect(() => {
-		// Only run if:
-		// 1. Projects have been loaded
-		// 2. Not on a project page
-		// 3. No project is currently selected
-		const isOnProjectPage = page.url.pathname.match(/^\/projects\/([^/]+)/);
-		if (projects.length > 0 && !isOnProjectPage && !selectedProjectId) {
+			if (project && urlProjectId !== selectedProjectId) {
+				selectedProjectId = urlProjectId;
+				setSelectedProject(project);
+			}
+		} else if (!selectedProjectId) {
+			// Not on a project page and no project selected - use stored or default
 			const stored = $selectedProject;
 
 			// Validate stored project exists in current projects list
-			if (stored && projects.some((p) => p.id === stored.id)) {
+			const storedProjectExists = stored && projectList.some((p) => p.id === stored.id);
+
+			if (storedProjectExists && stored) {
 				selectedProjectId = stored.id;
 			} else {
 				// Stored project was deleted or doesn't exist, default to first project
 				if (stored) {
 					clearSelectedProject();
 				}
-				const firstProject = projects[0];
+				const firstProject = projectList[0];
 				selectedProjectId = firstProject.id;
 				setSelectedProject(firstProject);
 			}
@@ -79,14 +73,7 @@
 			if (response.ok) {
 				const data = await response.json();
 				projects = Array.isArray(data) ? data : [];
-
-				// Validate stored project still exists after fetching
-				const stored = $selectedProject;
-				if (stored && projects.length > 0 && !projects.some((p) => p.id === stored.id)) {
-					// Stored project was deleted, clear it
-					clearSelectedProject();
-					selectedProjectId = null;
-				}
+				// Validation happens automatically in the $effect above when projects updates
 			}
 		} catch (error) {
 			console.error('Failed to fetch projects:', error);
