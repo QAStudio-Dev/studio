@@ -9,16 +9,11 @@
 		projectsRefreshTrigger,
 		selectedProject,
 		setSelectedProject,
-		clearSelectedProject
+		clearSelectedProject,
+		type SelectedProject
 	} from '$lib/stores/projectStore';
 
-	interface Project {
-		id: string;
-		name: string;
-		key: string;
-	}
-
-	let projects = $state<Project[]>([]);
+	let projects = $state<SelectedProject[]>([]);
 	let selectedProjectId = $state<string | null>(null);
 	let isLoadingProjects = $state(false);
 	let mobileMenuOpen = $state(false);
@@ -26,7 +21,7 @@
 	// Create popover instance
 	const popover = usePopover({ id: 'project-selector' });
 
-	// Determine selected project from URL or store, validate and sync with projects
+	// Sync URL with selectedProjectId and store
 	$effect(() => {
 		const match = page.url.pathname.match(/^\/projects\/([^/]+)/);
 
@@ -35,14 +30,26 @@
 			const urlProjectId = match[1];
 			if (urlProjectId !== selectedProjectId) {
 				selectedProjectId = urlProjectId;
-				// Update store with full project data
-				const project = projects.find((p) => p.id === urlProjectId);
-				if (project) {
-					setSelectedProject(project);
+				// Update store with full project data (only if projects are loaded)
+				if (projects.length > 0) {
+					const project = projects.find((p) => p.id === urlProjectId);
+					if (project) {
+						setSelectedProject(project);
+					}
 				}
 			}
-		} else if (projects.length > 0 && !selectedProjectId) {
-			// No URL project - try to use stored project
+		}
+	});
+
+	// Determine default project selection when not on a project page
+	// This runs after projects are fetched and validated
+	$effect(() => {
+		// Only run if:
+		// 1. Projects have been loaded
+		// 2. Not on a project page
+		// 3. No project is currently selected
+		const isOnProjectPage = page.url.pathname.match(/^\/projects\/([^/]+)/);
+		if (projects.length > 0 && !isOnProjectPage && !selectedProjectId) {
 			const stored = $selectedProject;
 
 			// Validate stored project exists in current projects list
@@ -75,7 +82,7 @@
 
 				// Validate stored project still exists after fetching
 				const stored = $selectedProject;
-				if (stored && !projects.some((p) => p.id === stored.id)) {
+				if (stored && projects.length > 0 && !projects.some((p) => p.id === stored.id)) {
 					// Stored project was deleted, clear it
 					clearSelectedProject();
 					selectedProjectId = null;
