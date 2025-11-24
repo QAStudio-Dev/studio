@@ -5,12 +5,20 @@
 	import { goto } from '$app/navigation';
 	import { Popover, usePopover } from '@skeletonlabs/skeleton-svelte';
 	import { X, Menu } from 'lucide-svelte';
-	import { projectsRefreshTrigger } from '$lib/stores/projectStore';
-	import { browser } from '$app/environment';
+	import {
+		projectsRefreshTrigger,
+		selectedProject,
+		setSelectedProject,
+		clearSelectedProject
+	} from '$lib/stores/projectStore';
 
-	const SELECTED_PROJECT_KEY = 'qa-studio-selected-project';
+	interface Project {
+		id: string;
+		name: string;
+		key: string;
+	}
 
-	let projects = $state<any[]>([]);
+	let projects = $state<Project[]>([]);
 	let selectedProjectId = $state<string | null>(null);
 	let isLoadingProjects = $state(false);
 	let mobileMenuOpen = $state(false);
@@ -18,58 +26,36 @@
 	// Create popover instance
 	const popover = usePopover({ id: 'project-selector' });
 
-	// Load selected project from localStorage
-	function loadSelectedProjectFromStorage(): string | null {
-		if (!browser) return null;
-		try {
-			return localStorage.getItem(SELECTED_PROJECT_KEY);
-		} catch (error) {
-			console.error('Failed to load selected project from localStorage:', error);
-			return null;
-		}
-	}
-
-	// Save selected project to localStorage
-	function saveSelectedProjectToStorage(projectId: string) {
-		if (!browser) return;
-		try {
-			localStorage.setItem(SELECTED_PROJECT_KEY, projectId);
-		} catch (error) {
-			console.error('Failed to save selected project to localStorage:', error);
-		}
-	}
-
-	// Clear selected project from localStorage (when project is deleted)
-	function clearSelectedProjectFromStorage() {
-		if (!browser) return;
-		try {
-			localStorage.removeItem(SELECTED_PROJECT_KEY);
-		} catch (error) {
-			console.error('Failed to clear selected project from localStorage:', error);
-		}
-	}
-
-	// Determine selected project from URL, localStorage, or default to first project
+	// Determine selected project from URL or store, validate and sync with projects
 	$effect(() => {
 		const match = page.url.pathname.match(/^\/projects\/([^/]+)/);
-		if (match) {
-			selectedProjectId = match[1];
-			// Save to localStorage when navigating to a project page
-			saveSelectedProjectToStorage(match[1]);
-		} else if (projects.length > 0 && !selectedProjectId) {
-			// Try to load from localStorage first
-			const savedProjectId = loadSelectedProjectFromStorage();
 
-			// Check if saved project exists in current projects list
-			if (savedProjectId && projects.some((p) => p.id === savedProjectId)) {
-				selectedProjectId = savedProjectId;
-			} else {
-				// If saved project doesn't exist (was deleted), clear localStorage and default to first project
-				if (savedProjectId) {
-					clearSelectedProjectFromStorage();
+		if (match) {
+			// URL takes priority - update if different
+			const urlProjectId = match[1];
+			if (urlProjectId !== selectedProjectId) {
+				selectedProjectId = urlProjectId;
+				// Update store with full project data
+				const project = projects.find((p) => p.id === urlProjectId);
+				if (project) {
+					setSelectedProject(project);
 				}
-				selectedProjectId = projects[0].id;
-				saveSelectedProjectToStorage(projects[0].id);
+			}
+		} else if (projects.length > 0 && !selectedProjectId) {
+			// No URL project - try to use stored project
+			const stored = $selectedProject;
+
+			// Validate stored project exists in current projects list
+			if (stored && projects.some((p) => p.id === stored.id)) {
+				selectedProjectId = stored.id;
+			} else {
+				// Stored project was deleted or doesn't exist, default to first project
+				if (stored) {
+					clearSelectedProject();
+				}
+				const firstProject = projects[0];
+				selectedProjectId = firstProject.id;
+				setSelectedProject(firstProject);
 			}
 		}
 	});
@@ -87,11 +73,12 @@
 				const data = await response.json();
 				projects = Array.isArray(data) ? data : [];
 
-				// Validate saved project still exists after fetching
-				const savedProjectId = loadSelectedProjectFromStorage();
-				if (savedProjectId && !projects.some((p) => p.id === savedProjectId)) {
-					// Saved project was deleted, clear localStorage
-					clearSelectedProjectFromStorage();
+				// Validate stored project still exists after fetching
+				const stored = $selectedProject;
+				if (stored && !projects.some((p) => p.id === stored.id)) {
+					// Stored project was deleted, clear it
+					clearSelectedProject();
+					selectedProjectId = null;
 				}
 			}
 		} catch (error) {
@@ -119,8 +106,11 @@
 	});
 
 	function switchProject(projectId: string) {
+		const project = projects.find((p) => p.id === projectId);
+		if (project) {
+			setSelectedProject(project);
+		}
 		mobileMenuOpen = false;
-		saveSelectedProjectToStorage(projectId);
 		goto(`/projects/${projectId}`);
 	}
 
