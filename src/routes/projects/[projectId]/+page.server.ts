@@ -61,7 +61,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	// Execute all data queries in parallel for maximum performance
 	const [statsResult, recentRunsData] = await Promise.all([
-		// Single aggregation query for all statistics
+		// Single aggregation query for all statistics using JOINs for better performance
 		db.$queryRaw<
 			Array<{
 				totalTestCases: bigint;
@@ -72,15 +72,17 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			}>
 		>`
 			SELECT
-				(SELECT COUNT(*) FROM "TestCase" WHERE "projectId" = ${project.id}) as "totalTestCases",
-				(SELECT COUNT(*) FROM "TestSuite" WHERE "projectId" = ${project.id}) as "totalSuites",
-				(SELECT COUNT(*) FROM "TestRun" WHERE "projectId" = ${project.id}) as "totalTestRuns",
-				(SELECT COUNT(*) FROM "TestResult" tr
-					INNER JOIN "TestRun" run ON run.id = tr."testRunId"
-					WHERE run."projectId" = ${project.id}) as "totalResults",
-				(SELECT COUNT(*) FROM "TestResult" tr
-					INNER JOIN "TestRun" run ON run.id = tr."testRunId"
-					WHERE run."projectId" = ${project.id} AND tr.status = 'PASSED') as "passedResults"
+				COUNT(DISTINCT tc.id) as "totalTestCases",
+				COUNT(DISTINCT ts.id) as "totalSuites",
+				COUNT(DISTINCT tr.id) as "totalTestRuns",
+				COUNT(result.id) as "totalResults",
+				COUNT(result.id) FILTER (WHERE result.status = 'PASSED') as "passedResults"
+			FROM "Project" p
+			LEFT JOIN "TestCase" tc ON tc."projectId" = p.id
+			LEFT JOIN "TestSuite" ts ON ts."projectId" = p.id
+			LEFT JOIN "TestRun" tr ON tr."projectId" = p.id
+			LEFT JOIN "TestResult" result ON result."testRunId" = tr.id
+			WHERE p.id = ${project.id}
 		`,
 		// Single query for recent runs with aggregated result counts
 		db.$queryRaw<
@@ -93,9 +95,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 				environmentId: string | null;
 				milestoneId: string | null;
 				environmentName: string | null;
-				environmentDescription: string | null;
 				milestoneName: string | null;
-				milestoneDescription: string | null;
 				totalResults: bigint;
 				passedResults: bigint;
 				failedResults: bigint;
@@ -110,19 +110,17 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 				tr."environmentId",
 				tr."milestoneId",
 				e.name as "environmentName",
-				e.description as "environmentDescription",
 				m.name as "milestoneName",
-				m.description as "milestoneDescription",
-				COUNT(result.id)::int as "totalResults",
-				COUNT(result.id) FILTER (WHERE result.status = 'PASSED')::int as "passedResults",
-				COUNT(result.id) FILTER (WHERE result.status = 'FAILED')::int as "failedResults"
+				COUNT(result.id) as "totalResults",
+				COUNT(result.id) FILTER (WHERE result.status = 'PASSED') as "passedResults",
+				COUNT(result.id) FILTER (WHERE result.status = 'FAILED') as "failedResults"
 			FROM "TestRun" tr
 			LEFT JOIN "Environment" e ON e.id = tr."environmentId"
 			LEFT JOIN "Milestone" m ON m.id = tr."milestoneId"
 			LEFT JOIN "TestResult" result ON result."testRunId" = tr.id
 			WHERE tr."projectId" = ${project.id}
 			GROUP BY tr.id, tr.name, tr.description, tr.status, tr."createdAt",
-				tr."environmentId", tr."milestoneId", e.name, e.description, m.name, m.description
+				tr."environmentId", tr."milestoneId", e.name, m.name
 			ORDER BY tr."createdAt" DESC
 			LIMIT 5
 		`
@@ -149,15 +147,13 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		environment: run.environmentId
 			? {
 					id: run.environmentId,
-					name: run.environmentName ?? 'Unknown Environment',
-					description: run.environmentDescription
+					name: run.environmentName ?? 'Unknown Environment'
 				}
 			: null,
 		milestone: run.milestoneId
 			? {
 					id: run.milestoneId,
-					name: run.milestoneName ?? 'Unknown Milestone',
-					description: run.milestoneDescription
+					name: run.milestoneName ?? 'Unknown Milestone'
 				}
 			: null,
 		_count: {
