@@ -48,15 +48,21 @@
 			const storedProjectExists = stored && projectList.some((p) => p.id === stored.id);
 
 			if (storedProjectExists && stored) {
-				selectedProjectId = stored.id;
+				// Only update if different to prevent infinite loop
+				if (selectedProjectId !== stored.id) {
+					selectedProjectId = stored.id;
+				}
 			} else {
 				// Stored project was deleted or doesn't exist, default to first project
 				if (stored) {
 					clearSelectedProject();
 				}
 				const firstProject = projectList[0];
-				selectedProjectId = firstProject.id;
-				setSelectedProject(firstProject);
+				// Only update if different to prevent infinite loop
+				if (selectedProjectId !== firstProject.id) {
+					selectedProjectId = firstProject.id;
+					setSelectedProject(firstProject);
+				}
 			}
 		}
 	});

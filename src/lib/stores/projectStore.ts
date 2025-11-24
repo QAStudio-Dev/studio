@@ -46,14 +46,28 @@ export const selectedProject = writable<SelectedProject | null>(loadInitialProje
 // Incremented whenever projects are created/deleted
 export const projectsRefreshTrigger = writable<number>(0);
 
-// Subscribe to save to localStorage
+// Subscribe to save to localStorage with debouncing
 if (browser) {
+	let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
 	selectedProject.subscribe((value) => {
-		if (value) {
-			localStorage.setItem('selectedProject', JSON.stringify(value));
-		} else {
-			localStorage.removeItem('selectedProject');
+		// Clear any pending timeout
+		if (timeoutId) {
+			clearTimeout(timeoutId);
 		}
+
+		// Debounce localStorage writes by 100ms to handle rapid updates
+		timeoutId = setTimeout(() => {
+			try {
+				if (value) {
+					localStorage.setItem('selectedProject', JSON.stringify(value));
+				} else {
+					localStorage.removeItem('selectedProject');
+				}
+			} catch (error) {
+				console.error('Failed to save selected project to localStorage:', error);
+			}
+		}, 100);
 	});
 }
 
