@@ -10,6 +10,11 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	}
 
 	// Execute auth checks in parallel
+	// Note: Parallel execution provides better performance but has a theoretical race condition
+	// if user permissions change between queries. This is acceptable for this use case as:
+	// 1. Permission changes are rare
+	// 2. The authorization check (lines 51-59) validates access based on fetched data
+	// 3. The risk window is milliseconds
 	const [project, user] = await Promise.all([
 		db.project.findUnique({
 			where: { id: params.projectId },
@@ -76,6 +81,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	]);
 
 	// Separate test cases by suite assignment in a single pass
+	// Note: Order is preserved - test cases are already sorted by 'order' ASC,
+	// and Map insertion maintains order, so each suite's cases remain sorted
 	const testCasesBySuite = new Map<string, typeof allTestCases>();
 	const testCasesWithoutSuite: typeof allTestCases = [];
 
@@ -85,7 +92,11 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			if (!testCasesBySuite.has(testCase.suiteId)) {
 				testCasesBySuite.set(testCase.suiteId, []);
 			}
-			testCasesBySuite.get(testCase.suiteId)!.push(testCase);
+			// Safe to use non-null assertion: we just ensured the array exists
+			const cases = testCasesBySuite.get(testCase.suiteId);
+			if (cases) {
+				cases.push(testCase);
+			}
 		} else {
 			// Collect cases without a suite
 			testCasesWithoutSuite.push(testCase);
