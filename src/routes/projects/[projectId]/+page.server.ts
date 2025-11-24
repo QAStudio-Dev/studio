@@ -129,15 +129,17 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	]);
 
 	// Convert BigInt to Number for JSON serialization
+	// Use optional chaining and nullish coalescing to handle empty result sets
 	const stats = {
-		totalTestCases: Number(statsResult[0].totalTestCases),
-		totalSuites: Number(statsResult[0].totalSuites),
-		totalTestRuns: Number(statsResult[0].totalTestRuns),
-		totalResults: Number(statsResult[0].totalResults),
-		passedResults: Number(statsResult[0].passedResults)
+		totalTestCases: Number(statsResult[0]?.totalTestCases ?? 0),
+		totalSuites: Number(statsResult[0]?.totalSuites ?? 0),
+		totalTestRuns: Number(statsResult[0]?.totalTestRuns ?? 0),
+		totalResults: Number(statsResult[0]?.totalResults ?? 0),
+		passedResults: Number(statsResult[0]?.passedResults ?? 0)
 	};
 
 	// Transform recent runs data into expected format
+	// Use null coalescing for safer handling of nullable fields
 	const recentRuns = recentRunsData.map((run) => ({
 		id: run.id,
 		name: run.name,
@@ -147,14 +149,14 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		environment: run.environmentId
 			? {
 					id: run.environmentId,
-					name: run.environmentName!,
+					name: run.environmentName ?? 'Unknown Environment',
 					description: run.environmentDescription
 				}
 			: null,
 		milestone: run.milestoneId
 			? {
 					id: run.milestoneId,
-					name: run.milestoneName!,
+					name: run.milestoneName ?? 'Unknown Milestone',
 					description: run.milestoneDescription
 				}
 			: null,
