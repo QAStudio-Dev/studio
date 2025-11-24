@@ -60,49 +60,38 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	}
 
 	// Fetch test data and stats in parallel with optimized queries
-	const [testSuites, testCasesWithoutSuite, statsResult] = await Promise.all([
-		// Fetch test suites without nested test cases to avoid N+1
-		db.testSuite.findMany({
-			where: { projectId: project.id },
-			orderBy: { order: 'asc' }
-		}),
-		// Fetch test cases without a suite
-		db.testCase.findMany({
-			where: {
-				projectId: project.id,
-				suiteId: null
-			},
-			orderBy: { order: 'asc' }
-		}),
-		// Single aggregation query for all stats using scalar subqueries
-		db.$queryRaw<
-			Array<{
-				totalTestCases: bigint;
-				totalTestRuns: bigint;
-				totalSuites: bigint;
-			}>
-		>`
-			SELECT
-				(SELECT COUNT(*) FROM "TestCase" WHERE "projectId" = ${project.id}) as "totalTestCases",
-				(SELECT COUNT(*) FROM "TestRun" WHERE "projectId" = ${project.id}) as "totalTestRuns",
-				(SELECT COUNT(*) FROM "TestSuite" WHERE "projectId" = ${project.id}) as "totalSuites"
-		`
-	]);
+	const [testSuites, allTestCases, totalTestCases, totalTestRuns, totalSuites] =
+		await Promise.all([
+			// Fetch test suites without nested test cases to avoid N+1
+			db.testSuite.findMany({
+				where: { projectId: project.id },
+				orderBy: { order: 'asc' }
+			}),
+			// Fetch ALL test cases in a single query (includes both suite and non-suite cases)
+			db.testCase.findMany({
+				where: { projectId: project.id },
+				orderBy: { order: 'asc' }
+			}),
+			// Use Prisma's count methods for type safety and simplicity
+			db.testCase.count({ where: { projectId: project.id } }),
+			db.testRun.count({ where: { projectId: project.id } }),
+			db.testSuite.count({ where: { projectId: project.id } })
+		]);
 
-	// Fetch all test cases for this project in a single query
-	const allTestCases = await db.testCase.findMany({
-		where: { projectId: project.id },
-		orderBy: { order: 'asc' }
-	});
-
-	// Group test cases by suiteId for efficient lookup
+	// Separate test cases by suite assignment in a single pass
 	const testCasesBySuite = new Map<string, typeof allTestCases>();
+	const testCasesWithoutSuite: typeof allTestCases = [];
+
 	for (const testCase of allTestCases) {
 		if (testCase.suiteId) {
+			// Group cases that belong to a suite
 			if (!testCasesBySuite.has(testCase.suiteId)) {
 				testCasesBySuite.set(testCase.suiteId, []);
 			}
 			testCasesBySuite.get(testCase.suiteId)!.push(testCase);
+		} else {
+			// Collect cases without a suite
+			testCasesWithoutSuite.push(testCase);
 		}
 	}
 
@@ -112,11 +101,11 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		testCases: testCasesBySuite.get(suite.id) || []
 	}));
 
-	// Convert BigInt to Number for JSON serialization
+	// Stats are already numbers from Prisma's count methods
 	const stats = {
-		totalTestCases: Number(statsResult[0]?.totalTestCases ?? 0),
-		totalTestRuns: Number(statsResult[0]?.totalTestRuns ?? 0),
-		totalSuites: Number(statsResult[0]?.totalSuites ?? 0)
+		totalTestCases,
+		totalTestRuns,
+		totalSuites
 	};
 
 	return {
