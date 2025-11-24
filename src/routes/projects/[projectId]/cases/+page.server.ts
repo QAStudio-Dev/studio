@@ -60,23 +60,20 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	}
 
 	// Fetch test data and stats in parallel with optimized queries
-	const [testSuites, allTestCases, totalTestCases, totalTestRuns, totalSuites] =
-		await Promise.all([
-			// Fetch test suites without nested test cases to avoid N+1
-			db.testSuite.findMany({
-				where: { projectId: project.id },
-				orderBy: { order: 'asc' }
-			}),
-			// Fetch ALL test cases in a single query (includes both suite and non-suite cases)
-			db.testCase.findMany({
-				where: { projectId: project.id },
-				orderBy: { order: 'asc' }
-			}),
-			// Use Prisma's count methods for type safety and simplicity
-			db.testCase.count({ where: { projectId: project.id } }),
-			db.testRun.count({ where: { projectId: project.id } }),
-			db.testSuite.count({ where: { projectId: project.id } })
-		]);
+	const [testSuites, allTestCases, totalTestRuns] = await Promise.all([
+		// Fetch test suites without nested test cases to avoid N+1
+		db.testSuite.findMany({
+			where: { projectId: project.id },
+			orderBy: { order: 'asc' }
+		}),
+		// Fetch ALL test cases in a single query (includes both suite and non-suite cases)
+		db.testCase.findMany({
+			where: { projectId: project.id },
+			orderBy: { order: 'asc' }
+		}),
+		// Only count test runs (we derive the other counts from fetched data)
+		db.testRun.count({ where: { projectId: project.id } })
+	]);
 
 	// Separate test cases by suite assignment in a single pass
 	const testCasesBySuite = new Map<string, typeof allTestCases>();
@@ -101,11 +98,11 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		testCases: testCasesBySuite.get(suite.id) || []
 	}));
 
-	// Stats are already numbers from Prisma's count methods
+	// Derive counts from fetched data to avoid redundant queries
 	const stats = {
-		totalTestCases,
+		totalTestCases: allTestCases.length,
 		totalTestRuns,
-		totalSuites
+		totalSuites: testSuites.length
 	};
 
 	return {
