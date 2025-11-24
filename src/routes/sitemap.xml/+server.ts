@@ -86,12 +86,28 @@ export const GET: RequestHandler = async () => {
 
 			posts = blogPosts
 				.filter((post): post is NonNullable<typeof post> => post !== null)
-				.map((post) => ({
-					loc: `${site}/blog/${post.slug}`,
-					lastmod: post.date || new Date().toISOString().split('T')[0],
-					changefreq: 'monthly',
-					priority: '0.7'
-				}));
+				.map((post) => {
+					// Convert date to YYYY-MM-DD format for sitemap
+					let lastmod: string;
+					if (post.date) {
+						const dateObj = new Date(post.date);
+						// Check if date is valid
+						if (!isNaN(dateObj.getTime())) {
+							lastmod = dateObj.toISOString().split('T')[0];
+						} else {
+							lastmod = new Date().toISOString().split('T')[0];
+						}
+					} else {
+						lastmod = new Date().toISOString().split('T')[0];
+					}
+
+					return {
+						loc: `${site}/blog/${post.slug}`,
+						lastmod,
+						changefreq: 'monthly',
+						priority: '0.7'
+					};
+				});
 		}
 	} catch (error) {
 		console.error('Error loading blog posts for sitemap:', error);
