@@ -61,7 +61,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	// Execute all data queries in parallel for maximum performance
 	const [statsResult, recentRunsData] = await Promise.all([
-		// Single aggregation query for all statistics using JOINs for better performance
+		// Single aggregation query using scalar subqueries to avoid Cartesian product
+		// Each COUNT is independent, ensuring accurate statistics
 		db.$queryRaw<
 			Array<{
 				totalTestCases: bigint;
@@ -72,17 +73,19 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			}>
 		>`
 			SELECT
-				COUNT(DISTINCT tc.id) as "totalTestCases",
-				COUNT(DISTINCT ts.id) as "totalSuites",
-				COUNT(DISTINCT tr.id) as "totalTestRuns",
-				COUNT(result.id) as "totalResults",
-				COUNT(result.id) FILTER (WHERE result.status = 'PASSED') as "passedResults"
-			FROM "Project" p
-			LEFT JOIN "TestCase" tc ON tc."projectId" = p.id
-			LEFT JOIN "TestSuite" ts ON ts."projectId" = p.id
-			LEFT JOIN "TestRun" tr ON tr."projectId" = p.id
-			LEFT JOIN "TestResult" result ON result."testRunId" = tr.id
-			WHERE p.id = ${project.id}
+				(SELECT COUNT(*) FROM "TestCase" WHERE "projectId" = ${project.id}) as "totalTestCases",
+				(SELECT COUNT(*) FROM "TestSuite" WHERE "projectId" = ${project.id}) as "totalSuites",
+				(SELECT COUNT(*) FROM "TestRun" WHERE "projectId" = ${project.id}) as "totalTestRuns",
+				(SELECT COUNT(*)
+					FROM "TestResult" tr
+					INNER JOIN "TestRun" run ON run.id = tr."testRunId"
+					WHERE run."projectId" = ${project.id}
+				) as "totalResults",
+				(SELECT COUNT(*)
+					FROM "TestResult" tr
+					INNER JOIN "TestRun" run ON run.id = tr."testRunId"
+					WHERE run."projectId" = ${project.id} AND tr.status = 'PASSED'
+				) as "passedResults"
 		`,
 		// Single query for recent runs with aggregated result counts
 		db.$queryRaw<
