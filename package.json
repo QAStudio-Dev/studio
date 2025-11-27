@@ -70,6 +70,7 @@
     "@neodrag/svelte": "^2.3.3",
     "@prisma/adapter-pg": "^7.0.0",
     "@stripe/stripe-js": "^8.1.0",
+    "@upstash/ratelimit": "^2.0.7",
     "@upstash/redis": "^1.35.6",
     "@vercel/blob": "^2.0.0",
     "adm-zip": "^0.5.16",

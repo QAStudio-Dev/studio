@@ -31,11 +31,26 @@ export const POST: RequestHandler = async (event) => {
 		if (user) {
 			const { tokenId, token } = await createPasswordResetToken(user.id);
 
-			// TODO: Send email with reset link
-			// For now, log to console (REMOVE IN PRODUCTION!)
-			const resetUrl = `http://localhost:5173/reset-password?token=${tokenId}:${token}`;
-			console.log(`Password reset link for ${email}:`);
-			console.log(resetUrl);
+			// TODO: Implement email sending using Resend API
+			// Email template should include:
+			// - Reset link with tokenId and token
+			// - Expiry notice (1 hour)
+			// - Security warning to ignore if not requested
+
+			// Development-only: Log reset link to console
+			if (process.env.NODE_ENV !== 'production') {
+				const baseUrl = process.env.PUBLIC_BASE_URL || 'http://localhost:5173';
+				const resetUrl = `${baseUrl}/reset-password?token=${tokenId}:${token}`;
+				console.log(`\n📧 Password reset link for ${email}:`);
+				console.log(`   ${resetUrl}`);
+				console.log(`   ⏰ Expires in 1 hour\n`);
+			} else {
+				// Production: Email integration required
+				console.warn(
+					`[SECURITY] Password reset requested for ${email} but email is not configured. ` +
+						`User will not receive reset link. Configure Resend API to enable password reset emails.`
+				);
+			}
 		}
 
 		return json({

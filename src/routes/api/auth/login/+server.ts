@@ -4,20 +4,40 @@ import { db } from '$lib/server/db';
 import { verifyPassword } from '$lib/server/crypto';
 import { createSession, setSessionCookie, verifyCsrfToken } from '$lib/server/sessions';
 import { TEMP_PASSWORD_HASH } from '$lib/server/auth-constants';
+import { Ratelimit } from '@upstash/ratelimit';
+import { redis, isCacheEnabled } from '$lib/server/redis';
 
 /**
- * Rate limiting for login attempts (simple in-memory store)
- * In production, use Redis or a proper rate limiting solution
+ * Rate limiting for login attempts
+ * Uses Redis in production, falls back to in-memory for development
  */
-const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+let ratelimit: Ratelimit | null = null;
+const loginAttemptsMemory = new Map<string, { count: number; resetAt: number }>();
 
-function checkRateLimit(email: string): boolean {
+// Initialize rate limiter if Redis is available
+if (isCacheEnabled) {
+	ratelimit = new Ratelimit({
+		redis,
+		limiter: Ratelimit.slidingWindow(5, '15 m'),
+		analytics: true,
+		prefix: 'ratelimit:login'
+	});
+}
+
+async function checkRateLimit(email: string): Promise<boolean> {
+	// Use Redis rate limiting if available
+	if (ratelimit) {
+		const { success } = await ratelimit.limit(email.toLowerCase());
+		return success;
+	}
+
+	// Fallback to in-memory rate limiting for development
 	const now = Date.now();
-	const attempt = loginAttempts.get(email);
+	const attempt = loginAttemptsMemory.get(email);
 
 	if (!attempt || now > attempt.resetAt) {
 		// Reset or create new entry
-		loginAttempts.set(email, { count: 1, resetAt: now + 15 * 60 * 1000 }); // 15 minutes
+		loginAttemptsMemory.set(email, { count: 1, resetAt: now + 15 * 60 * 1000 }); // 15 minutes
 		return true;
 	}
 
@@ -50,7 +70,8 @@ export const POST: RequestHandler = async (event) => {
 		}
 
 		// Check rate limit
-		if (!checkRateLimit(email.toLowerCase())) {
+		const rateLimitOk = await checkRateLimit(email.toLowerCase());
+		if (!rateLimitOk) {
 			throw error(429, {
 				message: 'Too many login attempts. Please try again in 15 minutes.'
 			});
@@ -86,7 +107,13 @@ export const POST: RequestHandler = async (event) => {
 		}
 
 		// Reset rate limit on successful login
-		loginAttempts.delete(email.toLowerCase());
+		if (ratelimit) {
+			// Redis rate limiter resets automatically with sliding window
+			await ratelimit.resetUsedTokens(email.toLowerCase());
+		} else {
+			// In-memory fallback
+			loginAttemptsMemory.delete(email.toLowerCase());
+		}
 
 		// Create session
 		const { sessionId, token, csrfToken } = await createSession(user.id);

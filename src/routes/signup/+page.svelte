@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
 	import { handleCsrfError } from '$lib/utils/csrf';
+	import PasswordRequirements, {
+		validatePassword
+	} from '$lib/components/PasswordRequirements.svelte';
 
 	let { data } = $props();
 
@@ -14,6 +17,13 @@
 
 	async function handleSignup() {
 		error = '';
+
+		// Validate password requirements
+		const passwordValidation = validatePassword(password);
+		if (!passwordValidation.valid) {
+			error = passwordValidation.errors.join('. ');
+			return;
+		}
 
 		// Validate passwords match
 		if (password !== confirmPassword) {
@@ -169,9 +179,7 @@
 						class="w-full rounded-base border border-surface-300 bg-white px-4 py-2 text-surface-900 placeholder-surface-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none disabled:opacity-50 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-50"
 						placeholder="••••••••"
 					/>
-					<p class="mt-1 text-xs text-surface-500 dark:text-surface-400">
-						Must be at least 8 characters with uppercase, lowercase, and number
-					</p>
+					<PasswordRequirements {password} />
 				</div>
 
 				<div class="mb-6">
