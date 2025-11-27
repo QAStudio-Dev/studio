@@ -2,10 +2,18 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { createPasswordResetToken } from '$lib/server/password-reset';
+import { verifyCsrfToken } from '$lib/server/sessions';
 
 export const POST: RequestHandler = async (event) => {
 	try {
-		const { email } = await event.request.json();
+		const { email, csrfToken: submittedCsrfToken } = await event.request.json();
+
+		// Validate CSRF token
+		if (!submittedCsrfToken || !verifyCsrfToken(event, submittedCsrfToken)) {
+			throw error(403, {
+				message: 'Invalid CSRF token'
+			});
+		}
 
 		if (!email) {
 			throw error(400, {

@@ -1,5 +1,6 @@
 import { db } from './db';
 import { generateToken } from './crypto';
+import { getSessionSecret } from './env';
 import type { RequestEvent } from '@sveltejs/kit';
 import crypto from 'crypto';
 
@@ -12,15 +13,10 @@ const SESSION_EXPIRY_DAYS = 30; // Sessions expire after 30 days
 const CSRF_TOKEN_COOKIE_NAME = 'qa_studio_csrf';
 
 /**
- * HMAC secret for session tokens (use environment variable in production)
- */
-const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-secret-change-in-production';
-
-/**
  * Create HMAC hash for session token
  */
 function hashSessionToken(token: string): string {
-	return crypto.createHmac('sha256', SESSION_SECRET).update(token).digest('hex');
+	return crypto.createHmac('sha256', getSessionSecret()).update(token).digest('hex');
 }
 
 /**

@@ -6,11 +6,18 @@ import {
 	validatePasswordResetToken,
 	markPasswordResetTokenAsUsed
 } from '$lib/server/password-reset';
-import { deleteAllUserSessions } from '$lib/server/sessions';
+import { deleteAllUserSessions, verifyCsrfToken } from '$lib/server/sessions';
 
 export const POST: RequestHandler = async (event) => {
 	try {
-		const { token, password } = await event.request.json();
+		const { token, password, csrfToken: submittedCsrfToken } = await event.request.json();
+
+		// Validate CSRF token
+		if (!submittedCsrfToken || !verifyCsrfToken(event, submittedCsrfToken)) {
+			throw error(403, {
+				message: 'Invalid CSRF token'
+			});
+		}
 
 		if (!token || !password) {
 			throw error(400, {

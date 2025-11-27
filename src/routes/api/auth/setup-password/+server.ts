@@ -2,7 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { hashPassword } from '$lib/server/crypto';
-import { createSession, setSessionCookie } from '$lib/server/sessions';
+import { createSession, setSessionCookie, verifyCsrfToken } from '$lib/server/sessions';
 import { TEMP_PASSWORD_HASH } from '$lib/server/auth-constants';
 
 /**
@@ -11,7 +11,14 @@ import { TEMP_PASSWORD_HASH } from '$lib/server/auth-constants';
  */
 export const POST: RequestHandler = async (event) => {
 	try {
-		const { email, newPassword } = await event.request.json();
+		const { email, newPassword, csrfToken: submittedCsrfToken } = await event.request.json();
+
+		// Validate CSRF token
+		if (!submittedCsrfToken || !verifyCsrfToken(event, submittedCsrfToken)) {
+			throw error(403, {
+				message: 'Invalid CSRF token'
+			});
+		}
 
 		if (!email || !newPassword) {
 			throw error(400, {

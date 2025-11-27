@@ -6,7 +6,12 @@ import { db } from '$lib/server/db';
 import { requiresPayment } from '$lib/server/subscriptions';
 import { getCachedOrFetch, CacheKeys, CacheTTL } from '$lib/server/redis';
 import { getCurrentUser } from '$lib/server/sessions';
+import { validateEnvironment } from '$lib/server/env';
 import type { SubscriptionStatus } from '$prisma/client';
+
+// Validate environment variables at startup
+// This will throw an error if required variables are missing or using insecure defaults in production
+validateEnvironment();
 
 const handleParaglide: Handle = ({ event, resolve }) =>
 	paraglideMiddleware(event.request, ({ request, locale }) => {

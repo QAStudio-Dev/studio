@@ -1,5 +1,6 @@
 import { db } from './db';
 import { generateToken } from './crypto';
+import { getResetSecret } from './env';
 import crypto from 'crypto';
 
 /**
@@ -8,18 +9,10 @@ import crypto from 'crypto';
 const RESET_TOKEN_EXPIRY_HOURS = 1;
 
 /**
- * HMAC secret for password reset tokens (use environment variable in production)
- */
-const RESET_SECRET =
-	process.env.RESET_SECRET ||
-	process.env.SESSION_SECRET ||
-	'dev-reset-secret-change-in-production';
-
-/**
  * Create HMAC hash for reset token
  */
 function hashResetToken(token: string): string {
-	return crypto.createHmac('sha256', RESET_SECRET).update(token).digest('hex');
+	return crypto.createHmac('sha256', getResetSecret()).update(token).digest('hex');
 }
 
 /**
