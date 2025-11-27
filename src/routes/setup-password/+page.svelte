@@ -1,7 +1,9 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
-	import { getCsrfToken, handleCsrfError } from '$lib/utils/csrf';
+	import { handleCsrfError } from '$lib/utils/csrf';
+
+	let { data } = $props();
 
 	// Pre-fill email from URL parameter if available
 	let email = $state(page.url.searchParams.get('email') || '');
@@ -21,8 +23,8 @@
 		loading = true;
 
 		try {
-			// Get CSRF token from cookie
-			const csrfToken = getCsrfToken();
+			// Get CSRF token from page data
+			const csrfToken = data.csrfToken;
 			if (!csrfToken) {
 				error = 'Security token missing. Please refresh the page.';
 				loading = false;
@@ -47,6 +49,9 @@
 				error = data.message || 'Setup failed';
 				return;
 			}
+
+			// Invalidate all data to refresh user state
+			await invalidateAll();
 
 			// Redirect to home page after successful setup
 			goto('/');

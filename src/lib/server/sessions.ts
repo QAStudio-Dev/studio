@@ -208,6 +208,20 @@ export function getCsrfToken(event: RequestEvent): string | null {
 }
 
 /**
+ * Ensure CSRF token exists, create if missing
+ * This should be called on auth pages to ensure forms have a CSRF token
+ *
+ * @param event - SvelteKit request event
+ */
+export function ensureCsrfToken(event: RequestEvent): void {
+	const existingToken = getCsrfToken(event);
+	if (!existingToken) {
+		const csrfToken = generateToken(32);
+		event.cookies.set(CSRF_TOKEN_COOKIE_NAME, csrfToken, CSRF_COOKIE_OPTIONS);
+	}
+}
+
+/**
  * Clear session cookies (logout)
  *
  * @param event - SvelteKit request event

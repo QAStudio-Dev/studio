@@ -5,7 +5,7 @@ import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { requiresPayment } from '$lib/server/subscriptions';
 import { getCachedOrFetch, CacheKeys, CacheTTL } from '$lib/server/redis';
-import { getCurrentUser } from '$lib/server/sessions';
+import { getCurrentUser, ensureCsrfToken } from '$lib/server/sessions';
 import { validateEnvironment } from '$lib/server/env';
 import type { SubscriptionStatus } from '$prisma/client';
 
@@ -58,6 +58,26 @@ function isPublicApiRoute(pathname: string): boolean {
 	// console.log('[Hooks] ❌ Not a public route:', pathname);
 	return false;
 }
+
+// CSRF token handler - ensures CSRF tokens exist on auth pages
+const handleCsrf: Handle = async ({ event, resolve }) => {
+	const { pathname } = event.url;
+
+	// Auth pages that need CSRF tokens
+	const authPages = [
+		'/login',
+		'/signup',
+		'/forgot-password',
+		'/reset-password',
+		'/setup-password'
+	];
+
+	if (authPages.some((page) => pathname.startsWith(page))) {
+		ensureCsrfToken(event);
+	}
+
+	return resolve(event);
+};
 
 // Session authentication handler
 const handleAuth: Handle = async ({ event, resolve }) => {
@@ -210,4 +230,9 @@ const handleSeatLimitCheck: Handle = async ({ event, resolve }) => {
 	return resolve(event);
 };
 
-export const handle: Handle = sequence(handleAuth, handleSeatLimitCheck, handleParaglide);
+export const handle: Handle = sequence(
+	handleCsrf,
+	handleAuth,
+	handleSeatLimitCheck,
+	handleParaglide
+);

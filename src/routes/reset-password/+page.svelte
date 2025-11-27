@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { getCsrfToken, handleCsrfError } from '$lib/utils/csrf';
+	import { handleCsrfError } from '$lib/utils/csrf';
+
+	let { data } = $props();
 
 	let password = $state('');
 	let confirmPassword = $state('');
@@ -27,8 +29,8 @@
 		loading = true;
 
 		try {
-			// Get CSRF token from cookie
-			const csrfToken = getCsrfToken();
+			// Get CSRF token from page data
+			const csrfToken = data.csrfToken;
 			if (!csrfToken) {
 				error = 'Security token missing. Please refresh the page.';
 				loading = false;

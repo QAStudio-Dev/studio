@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { Popover, usePopover, Avatar } from '@skeletonlabs/skeleton-svelte';
 	import { X, Menu, User, LogOut } from 'lucide-svelte';
 	import {
@@ -12,14 +12,13 @@
 		type SelectedProject
 	} from '$lib/stores/projectStore';
 
-	let projects = $state<SelectedProject[]>([]);
 	let selectedProjectId = $state<string | null>(null);
-	let isLoadingProjects = $state(false);
 	let mobileMenuOpen = $state(false);
 
-	// Get user from page data
+	// Get user and projects from page data
 	const user = $derived(page.data.user);
 	const isAuthenticated = $derived(!!page.data.userId);
+	const projects = $derived<SelectedProject[]>(page.data.projects || []);
 
 	// Create popover instance
 	const popover = usePopover({ id: 'project-selector' });
@@ -28,6 +27,8 @@
 	// Handle logout
 	async function handleLogout() {
 		await fetch('/api/auth/logout', { method: 'POST' });
+		// Invalidate all data to clear user state
+		await invalidateAll();
 		goto('/login');
 	}
 
@@ -77,41 +78,13 @@
 		}
 	});
 
-	let hasFetchedOnMount = $state(false);
-
-	// Fetch projects - cached in component state, only refetches on mount or manual trigger
-	async function fetchProjects() {
-		if (isLoadingProjects) return;
-
-		isLoadingProjects = true;
-		try {
-			const response = await fetch('/api/projects');
-			if (response.ok) {
-				const data = await response.json();
-				projects = Array.isArray(data) ? data : [];
-				// Validation happens automatically in the $effect above when projects updates
-			}
-		} catch (error) {
-			console.error('Failed to fetch projects:', error);
-		} finally {
-			isLoadingProjects = false;
-		}
-	}
-
-	// Fetch once on mount
-	$effect(() => {
-		if (!hasFetchedOnMount) {
-			fetchProjects();
-			hasFetchedOnMount = true;
-		}
-	});
-
 	// Watch for project refresh trigger (when projects are created/deleted)
+	// This will invalidate all data and cause the layout to re-run
 	$effect(() => {
 		const trigger = $projectsRefreshTrigger;
 		// Only refetch if trigger increments (skip initial value of 0)
 		if (trigger > 0) {
-			fetchProjects();
+			invalidateAll();
 		}
 	});
 
@@ -163,16 +136,7 @@
 				<!-- Project Selector (next to logo) -->
 				{#if isAuthenticated}
 					<div class="hidden md:block">
-						{#if isLoadingProjects && projects.length === 0}
-							<!-- Loading state (only show if no projects cached) -->
-							<div
-								class="flex items-center gap-2 rounded-base border border-surface-300-700 px-3 py-1.5"
-							>
-								<span class="text-surface-600-300 text-sm font-medium"
-									>Loading...</span
-								>
-							</div>
-						{:else if projects.length === 0}
+						{#if projects.length === 0}
 							<!-- No projects - show New Project button -->
 							<a
 								href="/projects/new"
@@ -408,16 +372,7 @@
 					<!-- Project Selector in Mobile Menu -->
 					{#if isAuthenticated}
 						<div class="mb-2 px-2">
-							{#if isLoadingProjects && projects.length === 0}
-								<!-- Loading state (only show if no projects cached) -->
-								<div
-									class="flex items-center gap-2 rounded-base border border-surface-300-700 px-3 py-2"
-								>
-									<span class="text-surface-600-300 text-sm font-medium"
-										>Loading projects...</span
-									>
-								</div>
-							{:else if projects.length === 0}
+							{#if projects.length === 0}
 								<!-- No projects -->
 								<a
 									href="/projects/new"
