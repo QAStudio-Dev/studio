@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import { getCsrfToken, handleCsrfError } from '$lib/utils/csrf';
 
 	let password = $state('');
 	let confirmPassword = $state('');
@@ -26,15 +27,28 @@
 		loading = true;
 
 		try {
+			// Get CSRF token from cookie
+			const csrfToken = getCsrfToken();
+			if (!csrfToken) {
+				error = 'Security token missing. Please refresh the page.';
+				loading = false;
+				return;
+			}
+
 			const response = await fetch('/api/auth/reset-password', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
 				},
-				body: JSON.stringify({ token, password })
+				body: JSON.stringify({ token, password, csrfToken })
 			});
 
 			if (!response.ok) {
+				// Handle CSRF errors (will reload page)
+				if (handleCsrfError(response)) {
+					return;
+				}
+
 				const data = await response.json();
 				error = data.message || 'Reset failed';
 				return;

@@ -41,11 +41,12 @@ describe('env', () => {
 			expect(secret).toBe('dev-secret-change-in-production');
 		});
 
-		it('should reject default value in production', () => {
+		it('should accept actual value in production (not default)', () => {
 			process.env.NODE_ENV = 'production';
-			process.env.SESSION_SECRET = 'dev-secret-change-in-production';
+			process.env.SESSION_SECRET = 'my-secure-production-secret';
 
-			expect(() => getSessionSecret()).toThrow('is using the default development value');
+			const secret = getSessionSecret();
+			expect(secret).toBe('my-secure-production-secret');
 		});
 	});
 

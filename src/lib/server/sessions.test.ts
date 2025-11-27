@@ -126,9 +126,17 @@ describe('sessions', () => {
 			const sessionId = 'session-id';
 			const token = 'test-token';
 
+			// Create a valid hash with wrong token so lengths match
+			const wrongToken = 'wrong-token-1234567890123456789';
 			const mockSession = {
 				userId: mockUserId,
-				token: 'wrong-hash'
+				token: require('crypto')
+					.createHmac(
+						'sha256',
+						process.env.SESSION_SECRET || 'dev-secret-change-in-production'
+					)
+					.update(wrongToken)
+					.digest('hex')
 			};
 
 			(db.session.findUnique as any).mockResolvedValue(mockSession);

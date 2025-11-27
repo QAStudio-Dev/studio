@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { getCsrfToken, handleCsrfError } from '$lib/utils/csrf';
+
 	let email = $state('');
 	let error = $state('');
 	let success = $state(false);
@@ -9,15 +11,28 @@
 		loading = true;
 
 		try {
+			// Get CSRF token from cookie
+			const csrfToken = getCsrfToken();
+			if (!csrfToken) {
+				error = 'Security token missing. Please refresh the page.';
+				loading = false;
+				return;
+			}
+
 			const response = await fetch('/api/auth/request-reset', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
 				},
-				body: JSON.stringify({ email })
+				body: JSON.stringify({ email, csrfToken })
 			});
 
 			if (!response.ok) {
+				// Handle CSRF errors (will reload page)
+				if (handleCsrfError(response)) {
+					return;
+				}
+
 				const data = await response.json();
 				error = data.message || 'Request failed';
 				return;

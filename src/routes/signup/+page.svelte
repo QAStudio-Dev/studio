@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { getCsrfToken, handleCsrfError } from '$lib/utils/csrf';
 
 	let email = $state('');
 	let password = $state('');
@@ -21,15 +22,28 @@
 		loading = true;
 
 		try {
+			// Get CSRF token from cookie
+			const csrfToken = getCsrfToken();
+			if (!csrfToken) {
+				error = 'Security token missing. Please refresh the page.';
+				loading = false;
+				return;
+			}
+
 			const response = await fetch('/api/auth/signup', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
 				},
-				body: JSON.stringify({ email, password, firstName, lastName })
+				body: JSON.stringify({ email, password, firstName, lastName, csrfToken })
 			});
 
 			if (!response.ok) {
+				// Handle CSRF errors (will reload page)
+				if (handleCsrfError(response)) {
+					return;
+				}
+
 				const data = await response.json();
 				error = data.message || 'Signup failed';
 				return;
