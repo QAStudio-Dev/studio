@@ -102,7 +102,7 @@ const handleSeatLimitCheck: Handle = async ({ event, resolve }) => {
 	const shouldSkip =
 		pathname.startsWith('/api/') || // API routes handle their own checks
 		pathname.includes('.') || // Static files
-		pathname.startsWith('/sign-in') ||
+		pathname.startsWith('/login') ||
 		pathname.startsWith('/sign-up') ||
 		pathname.startsWith('/teams/new') ||
 		pathname === '/' || // Landing page

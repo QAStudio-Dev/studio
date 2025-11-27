@@ -6,7 +6,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const { userId } = locals.auth() || {};
 
 	if (!userId) {
-		throw redirect(302, '/sign-in');
+		throw redirect(302, '/login');
 	}
 
 	const testCase = await db.testCase.findUnique({

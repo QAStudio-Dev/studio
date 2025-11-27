@@ -7,7 +7,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const { userId } = locals.auth() || {};
 
 	if (!userId) {
-		throw redirect(302, '/sign-in');
+		throw redirect(302, '/login');
 	}
 
 	// Get user with team and subscription info
@@ -23,7 +23,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	});
 
 	if (!user) {
-		throw redirect(302, '/sign-in');
+		throw redirect(302, '/login');
 	}
 
 	// Check if user has active subscription (ACTIVE or PAST_DUE for grace period)

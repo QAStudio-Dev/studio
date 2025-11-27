@@ -36,7 +36,7 @@ const staticPages = [
 	'/privacy',
 	'/terms',
 	'/projects',
-	'/sign-in',
+	'/login',
 	'/sign-up'
 ];
 
