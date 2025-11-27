@@ -1,10 +1,9 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { SignedIn, SignedOut, SignInButton, UserButton } from 'svelte-clerk/client';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import { goto } from '$app/navigation';
-	import { Popover, usePopover } from '@skeletonlabs/skeleton-svelte';
-	import { X, Menu } from 'lucide-svelte';
+	import { Popover, usePopover, Avatar } from '@skeletonlabs/skeleton-svelte';
+	import { X, Menu, User, LogOut } from 'lucide-svelte';
 	import {
 		projectsRefreshTrigger,
 		selectedProject,
@@ -18,8 +17,19 @@
 	let isLoadingProjects = $state(false);
 	let mobileMenuOpen = $state(false);
 
+	// Get user from page data
+	const user = $derived(page.data.user);
+	const isAuthenticated = $derived(!!page.data.userId);
+
 	// Create popover instance
 	const popover = usePopover({ id: 'project-selector' });
+	const userMenuPopover = usePopover({ id: 'user-menu' });
+
+	// Handle logout
+	async function handleLogout() {
+		await fetch('/api/auth/logout', { method: 'POST' });
+		goto('/login');
+	}
 
 	// Validate and sync project selection
 	// Handles URL priority, localStorage fallback, and project validation
@@ -151,7 +161,7 @@
 				</a>
 
 				<!-- Project Selector (next to logo) -->
-				<SignedIn>
+				{#if isAuthenticated}
 					<div class="hidden md:block">
 						{#if isLoadingProjects && projects.length === 0}
 							<!-- Loading state (only show if no projects cached) -->
@@ -237,12 +247,12 @@
 							</Popover.Provider>
 						{/if}
 					</div>
-				</SignedIn>
+				{/if}
 
 				<!-- Main Navigation -->
 				<nav class="hidden items-center gap-2 md:flex">
 					<!-- Only show these navigation items when signed in -->
-					<SignedIn>
+					{#if isAuthenticated}
 						{#if selectedProjectId}
 							<!-- Divider -->
 							<div class="mx-1 h-6 w-px bg-surface-300-700"></div>
@@ -297,7 +307,7 @@
 						>
 							Settings
 						</a>
-					</SignedIn>
+					{/if}
 				</nav>
 			</div>
 
@@ -319,12 +329,62 @@
 				<ThemeToggle />
 
 				<!-- Auth Section -->
-				<SignedOut>
-					<SignInButton />
-				</SignedOut>
-				<SignedIn>
-					<UserButton />
-				</SignedIn>
+				{#if !isAuthenticated}
+					<a
+						href="/login"
+						class="rounded-base bg-primary-500 px-4 py-2 text-white transition-colors hover:bg-primary-600"
+					>
+						Sign In
+					</a>
+				{:else if user}
+					<!-- User Menu -->
+					<Popover.Provider value={userMenuPopover}>
+						<Popover.Trigger
+							class="flex items-center gap-2 rounded-full transition-opacity hover:opacity-80"
+						>
+							<Avatar class="h-8 w-8">
+								{#if user.imageUrl}
+									<Avatar.Image src={user.imageUrl} alt={user.email} />
+								{:else}
+									<Avatar.Fallback class="bg-primary-500 text-white">
+										{user.firstName?.[0] || user.email[0].toUpperCase()}
+									</Avatar.Fallback>
+								{/if}
+							</Avatar>
+						</Popover.Trigger>
+						<Popover.Positioner>
+							<Popover.Content
+								class="mt-2 w-48 rounded-container border border-surface-300-700 bg-surface-100-900 p-2 shadow-xl"
+							>
+								<div class="mb-2 border-b border-surface-300-700 px-3 py-2">
+									<p class="text-sm font-medium">
+										{user.firstName}
+										{user.lastName}
+									</p>
+									<p class="text-surface-500-400 text-xs">{user.email}</p>
+								</div>
+								<a
+									href="/profile"
+									onclick={() => userMenuPopover().setOpen(false)}
+									class="flex items-center gap-2 rounded-base px-3 py-2 transition-colors hover:bg-surface-200-800"
+								>
+									<User class="h-4 w-4" />
+									<span>Profile</span>
+								</a>
+								<button
+									onclick={() => {
+										userMenuPopover().setOpen(false);
+										handleLogout();
+									}}
+									class="flex w-full items-center gap-2 rounded-base px-3 py-2 text-left transition-colors hover:bg-surface-200-800"
+								>
+									<LogOut class="h-4 w-4" />
+									<span>Sign Out</span>
+								</button>
+							</Popover.Content>
+						</Popover.Positioner>
+					</Popover.Provider>
+				{/if}
 
 				<!-- Mobile Menu Button -->
 				<button
@@ -346,7 +406,7 @@
 			<div class="border-t border-surface-300-700 py-4 md:hidden">
 				<nav class="flex flex-col gap-1">
 					<!-- Project Selector in Mobile Menu -->
-					<SignedIn>
+					{#if isAuthenticated}
 						<div class="mb-2 px-2">
 							{#if isLoadingProjects && projects.length === 0}
 								<!-- Loading state (only show if no projects cached) -->
@@ -456,7 +516,7 @@
 						>
 							Settings
 						</a>
-					</SignedIn>
+					{/if}
 
 					<!-- Divider -->
 					<div class="my-2 h-px bg-surface-300-700"></div>

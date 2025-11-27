@@ -18,7 +18,7 @@ QA Studio is a comprehensive test management and reporting platform inspired by 
 - **Frontend**: SvelteKit 2, Svelte 5, Skeleton UI, Tailwind 4
 - **Backend**: SvelteKit API routes
 - **Database**: PostgreSQL with Prisma ORM
-- **Authentication**: Clerk (with SSO support for enterprise)
+- **Authentication**: Self-hosted with bcrypt password hashing and secure sessions
 - **Storage**: File attachments (screenshots, logs, videos)
 - **Syntax Highlighting**: Shiki (for API documentation)
 
@@ -232,38 +232,66 @@ Skeleton includes optional **preset classes** for buttons, badges, cards, and ot
 
 ## Authentication
 
-QA Studio uses **Clerk** for authentication, providing enterprise-ready features including SSO/SAML support.
+QA Studio uses a **self-hosted authentication system** with industry-standard security practices. All authentication data stays within your infrastructure, providing complete privacy and control.
 
-### Setup
+### Security Features
 
-1. **Environment Variables**: Create `.env.local` with your Clerk keys:
+- **Password Hashing**: Bcrypt with 12 rounds (OWASP 2025 recommended)
+- **Session Management**: HTTP-only secure cookies with 30-day expiry
+- **CSRF Protection**: Separate CSRF tokens for state-changing operations
+- **Rate Limiting**: Login endpoints limited to prevent brute force attacks
+- **Password Requirements**: Minimum 8 characters with uppercase, lowercase, and number
+- **Token Security**: Cryptographically secure tokens using nanoid with bcrypt hashing
 
-```bash
-PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-CLERK_SECRET_KEY=sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-DATABASE_URL="postgresql://user:password@localhost:5432/qa_studio?schema=public"
-```
+### Database Schema
 
-2. **Get Clerk Keys**:
-    - Sign up at https://clerk.com
-    - Create a new application
-    - Choose "SvelteKit" as framework
-    - Copy keys from dashboard
+The authentication system uses three main models:
+
+- **User**: Stores user accounts with bcrypt-hashed passwords
+    - `id`: Internal CUID (not external provider ID)
+    - `email`: Unique user email
+    - `passwordHash`: Bcrypt-hashed password
+    - `emailVerified`: Email verification status
+    - `role`: User role (OWNER, ADMIN, MANAGER, TESTER, VIEWER)
+
+- **Session**: Manages user sessions
+    - `token`: Bcrypt-hashed session token
+    - `expiresAt`: Session expiration timestamp
+    - `userId`: Foreign key to User
+
+- **PasswordResetToken**: Handles password recovery
+    - `token`: Bcrypt-hashed reset token
+    - `expiresAt`: 1-hour expiration
+    - `used`: Tracks if token was used
 
 ### Architecture
 
-**Server-Side Integration**:
+**Server-Side Components**:
 
-- `src/hooks.server.ts`: Clerk middleware integrated with SvelteKit hooks
-- `src/lib/server/auth.ts`: Helper functions for protecting API routes
-- Session data available via `event.locals.clerk.session`
+- [src/lib/server/crypto.ts](src/lib/server/crypto.ts): Password hashing and token generation
+- [src/lib/server/sessions.ts](src/lib/server/sessions.ts): Session management and cookies
+- [src/lib/server/password-reset.ts](src/lib/server/password-reset.ts): Password reset flow
+- [src/hooks.server.ts](src/hooks.server.ts): Session middleware integrated with SvelteKit
+- [src/lib/server/auth.ts](src/lib/server/auth.ts): Helper functions for protecting API routes
 
-**Client-Side Components**:
+**Authentication API Endpoints**:
 
-- `<ClerkProvider>`: Wraps entire app in layout
-- `<SignIn>`, `<SignUp>`, `<UserProfile>`: Pre-built auth UI
-- `<SignedIn>`, `<SignedOut>`: Conditional rendering components
-- `<UserButton>`: User menu with profile and sign-out
+- `POST /api/auth/signup`: Create new user account
+- `POST /api/auth/login`: Authenticate user (with rate limiting, auto-detects Clerk migration)
+- `POST /api/auth/logout`: End user session
+- `POST /api/auth/setup-password`: One-time password setup for migrated Clerk users
+- `POST /api/auth/request-reset`: Request password reset token
+- `POST /api/auth/reset-password`: Reset password with token
+
+**Client-Side Pages**:
+
+- [/login](src/routes/login/+page.svelte): Login form (with Clerk migration detection)
+- [/signup](src/routes/signup/+page.svelte): Registration form
+- [/setup-password](src/routes/setup-password/+page.svelte): One-time password setup for existing users
+- [/forgot-password](src/routes/forgot-password/+page.svelte): Password reset request
+- [/reset-password](src/routes/reset-password/+page.svelte): Password reset form
+- [/profile](src/routes/profile/+page.svelte): User profile page
+- [/change-password](src/routes/change-password/+page.svelte): Change password form
 
 ### Protecting API Routes
 
@@ -275,7 +303,7 @@ import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async (event) => {
 	// Throws 401 if not authenticated
-	const userId = requireAuth(event);
+	const userId = await requireAuth(event);
 
 	// Create resource with userId
 	const project = await db.project.create({
@@ -298,24 +326,37 @@ The Prisma schema tracks user actions:
 - `TestRun.createdBy`: User who created the test run
 - `TestResult.executedBy`: User who executed the test
 
-All user fields store Clerk user IDs and are indexed for performance.
+All user fields store internal user IDs (CUIDs) and are indexed for performance.
 
-### Enterprise Features
+### Migrating from Clerk
 
-Clerk supports:
+Existing Clerk users have a seamless one-time password setup flow:
 
-- **SSO/SAML**: Okta, Azure AD, Google Workspace (Business plan)
-- **Organizations**: Multi-tenant workspace support
-- **RBAC**: Role-based access control
-- **Directory Sync (SCIM)**: Automatic user provisioning
-- **Audit Logs**: Security and compliance tracking
+**Automatic Flow:**
 
-### Routes
+1. User visits `/login` and enters their email (any password)
+2. System detects they have the temporary password from migration
+3. User is automatically redirected to `/setup-password` with email pre-filled
+4. User sets their new password and is logged in immediately
+5. Done! They can use their new password going forward
 
-- `/sign-in`: Sign in page
-- `/sign-up`: Sign up page
-- `/user-profile`: User profile management
-- API routes automatically protected via `requireAuth()`
+**Manual Setup:**
+
+- Users can also directly visit `/setup-password` to set their password
+- The setup page verifies they have the temporary password before allowing setup
+- Once password is set, they must use the normal login flow
+
+**Note:** The temporary password from migration (`CHANGE_ME_123!`) cannot be used to login - it only serves as a database placeholder.
+
+### Future Enhancements
+
+The self-hosted system can be extended with:
+
+- **Email Verification**: Implement email verification on signup
+- **SSO Integration**: Add support for Authentik, Authelia, or other SAML/OAuth providers
+- **2FA**: Add two-factor authentication support
+- **Session Management**: Add ability to view and revoke active sessions
+- **Audit Logs**: Track authentication events for security compliance
 
 ## API Documentation System
 

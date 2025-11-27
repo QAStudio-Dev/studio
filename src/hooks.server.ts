@@ -1,11 +1,11 @@
 import type { Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
-import { withClerkHandler } from 'svelte-clerk/server';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { requiresPayment } from '$lib/server/subscriptions';
 import { getCachedOrFetch, CacheKeys, CacheTTL } from '$lib/server/redis';
+import { getCurrentUser } from '$lib/server/sessions';
 import type { SubscriptionStatus } from '$prisma/client';
 
 const handleParaglide: Handle = ({ event, resolve }) =>
@@ -54,20 +54,26 @@ function isPublicApiRoute(pathname: string): boolean {
 	return false;
 }
 
-// Create Clerk handler once
-const clerkHandler = withClerkHandler();
-
-const handleClerkWithPublicRoutes: Handle = async ({ event, resolve }) => {
+// Session authentication handler
+const handleAuth: Handle = async ({ event, resolve }) => {
 	const { pathname } = event.url;
 
 	// Check if this is a public route
 	if (isPublicApiRoute(pathname)) {
-		// Skip Clerk authentication for public routes
+		// Skip authentication for public routes
 		return resolve(event);
 	}
 
-	// Apply Clerk authentication for all other routes
-	return clerkHandler({ event, resolve });
+	// Get current user from session
+	const userId = await getCurrentUser(event);
+
+	// Store user ID in locals for easy access
+	event.locals.userId = userId || null;
+
+	// Create auth() function to match Clerk's API
+	event.locals.auth = () => ({ userId: userId || null });
+
+	return resolve(event);
 };
 
 // Define the team status type for caching
@@ -199,8 +205,4 @@ const handleSeatLimitCheck: Handle = async ({ event, resolve }) => {
 	return resolve(event);
 };
 
-export const handle: Handle = sequence(
-	handleClerkWithPublicRoutes,
-	handleSeatLimitCheck,
-	handleParaglide
-);
+export const handle: Handle = sequence(handleAuth, handleSeatLimitCheck, handleParaglide);
