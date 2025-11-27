@@ -13,6 +13,7 @@
 	let error = $state('');
 	let success = $state('');
 	let copiedId = $state<string | null>(null);
+	let lastInviteUrl = $state<string | null>(null);
 
 	const roles = [
 		{ value: 'VIEWER', label: 'Viewer', description: 'Read-only access' },
@@ -45,12 +46,13 @@
 
 			const result = await res.json();
 			success = `Invitation sent to ${email}`;
+			lastInviteUrl = result.invitation.inviteUrl;
 			email = '';
 
 			// Refresh the page to show the new invitation
 			setTimeout(() => {
 				window.location.reload();
-			}, 1000);
+			}, 2000);
 		} catch (err: any) {
 			error = err.message;
 		} finally {
@@ -164,6 +166,44 @@
 		</div>
 	{/if}
 
+	{#if lastInviteUrl}
+		<div class="mb-6 card border-2 border-primary-500 p-6">
+			<h3 class="mb-3 font-bold text-primary-500">Invitation Created!</h3>
+			<p class="text-surface-600-300 mb-4 text-sm">
+				Share this link with the invitee to join your team:
+			</p>
+			<div class="flex items-center gap-2">
+				<input
+					type="text"
+					readonly
+					value={lastInviteUrl}
+					class="input flex-1 font-mono text-sm"
+					onclick={(e) => e.currentTarget.select()}
+				/>
+				<button
+					onclick={() => {
+						if (lastInviteUrl) {
+							navigator.clipboard.writeText(lastInviteUrl);
+							copiedId = 'new';
+							setTimeout(() => {
+								copiedId = null;
+							}, 2000);
+						}
+					}}
+					class="btn preset-filled-primary-500"
+				>
+					{#if copiedId === 'new'}
+						<CheckCircle class="mr-2 h-4 w-4" />
+						Copied!
+					{:else}
+						<Copy class="mr-2 h-4 w-4" />
+						Copy Link
+					{/if}
+				</button>
+			</div>
+		</div>
+	{/if}
+
 	<!-- Invitation Form -->
 	{#if availableSeats > 0}
 		<div class="mb-8 card p-6">
@@ -239,6 +279,39 @@
 										Sent {formatDate(invitation.createdAt)}
 									</span>
 									<span>Expires {formatDate(invitation.expiresAt)}</span>
+								</div>
+
+								<!-- Invitation Link -->
+								<div class="mt-3 rounded-base bg-surface-100-900 p-3">
+									<div class="text-surface-600-300 mb-2 text-xs font-medium">
+										Invitation Link
+									</div>
+									<div class="flex items-center gap-2">
+										<input
+											type="text"
+											readonly
+											value="{window.location
+												.origin}/invitations/{invitation.token}"
+											class="input flex-1 font-mono text-xs"
+											onclick={(e) => e.currentTarget.select()}
+										/>
+										<button
+											onclick={() => copyInviteLink(invitation.token)}
+											class="btn preset-filled-primary-500 btn-sm whitespace-nowrap"
+											title="Copy invitation link"
+										>
+											{#if copiedId === invitation.token}
+												<CheckCircle class="mr-1 h-4 w-4" />
+												Copied!
+											{:else}
+												<Copy class="mr-1 h-4 w-4" />
+												Copy
+											{/if}
+										</button>
+									</div>
+									<p class="text-surface-500-400 mt-1 text-xs">
+										Share this link with the invitee to join your team
+									</p>
 								</div>
 							</div>
 

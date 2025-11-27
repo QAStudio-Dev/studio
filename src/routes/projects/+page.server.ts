@@ -6,7 +6,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const { userId } = locals.auth() || {};
 
 	if (!userId) {
-		throw redirect(302, '/sign-in');
+		throw redirect(302, '/login');
 	}
 
 	// Get current user with team info
@@ -22,7 +22,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	});
 
 	if (!user) {
-		throw redirect(302, '/sign-in');
+		throw redirect(302, '/login');
 	}
 
 	// Get projects the user has access to

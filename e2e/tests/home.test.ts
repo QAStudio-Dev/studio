@@ -37,8 +37,8 @@ test.describe('Home Page', () => {
 
 	test('should navigate to sign in page when clicking Sign In', async ({ page }) => {
 		await homePage.clickSignIn();
-		await page.waitForURL('**/sign-in**');
-		expect(page.url()).toContain('sign-in');
+		await page.waitForURL('**/login**');
+		expect(page.url()).toContain('login');
 	});
 
 	test('should display footer with company information', async () => {

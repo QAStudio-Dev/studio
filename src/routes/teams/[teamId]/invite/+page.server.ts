@@ -41,6 +41,7 @@ export const load: PageServerLoad = async (event) => {
 					id: true,
 					email: true,
 					role: true,
+					token: true,
 					createdAt: true,
 					expiresAt: true
 				}

@@ -3,7 +3,6 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { requireAuth, requireRole, requireCurrentSubscription } from '$lib/server/auth';
 import { requireAvailableSeats } from '$lib/server/subscriptions';
-import { clerkClient } from 'svelte-clerk/server';
 import crypto from 'crypto';
 
 /**
@@ -111,23 +110,21 @@ export const POST: RequestHandler = async (event) => {
 
 	const inviteUrl = `${event.url.origin}/invitations/${token}`;
 
-	// Send invitation email via Clerk
-	try {
-		await clerkClient.invitations.createInvitation({
-			emailAddress: invitation.email,
-			redirectUrl: inviteUrl,
-			publicMetadata: {
-				teamId,
-				teamName: invitation.team.name,
-				role: invitation.role,
-				invitationId: invitation.id
-			}
-		});
-	} catch (emailError) {
-		console.error('Failed to send Clerk invitation:', emailError);
-		// Continue anyway - invitation is created in DB
-		// User can still use the invite link manually
-	}
+	// TODO: Send invitation email
+	// For now, log the invitation URL to console
+	console.log(`
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Team Invitation Created
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Team: ${invitation.team.name}
+Email: ${invitation.email}
+Role: ${invitation.role}
+Expires: ${invitation.expiresAt.toLocaleDateString()}
+
+Invitation Link:
+${inviteUrl}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+	`);
 
 	return json({
 		success: true,

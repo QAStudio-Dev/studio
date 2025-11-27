@@ -1,21 +1,14 @@
-import { clerkClient } from 'svelte-clerk/server';
 import { db } from './db';
 
 /**
- * Get user from database, sync from Clerk if not found
+ * Get user from database
  */
 export async function getUser(userId: string) {
 	try {
-		// Try to get from database first
-		let user = await db.user.findUnique({
+		const user = await db.user.findUnique({
 			where: { id: userId },
 			include: { team: true }
 		});
-
-		// If not in database, sync from Clerk
-		if (!user) {
-			user = await syncUserFromClerk(userId);
-		}
 
 		return user;
 	} catch (error) {
@@ -25,49 +18,11 @@ export async function getUser(userId: string) {
 }
 
 /**
- * Sync user from Clerk to database
- */
-export async function syncUserFromClerk(userId: string) {
-	try {
-		const clerkUser = await clerkClient.users.getUser(userId);
-
-		const user = await db.user.upsert({
-			where: { id: userId },
-			create: {
-				id: clerkUser.id,
-				email: clerkUser.emailAddresses[0]?.emailAddress || '',
-				firstName: clerkUser.firstName,
-				lastName: clerkUser.lastName,
-				imageUrl: clerkUser.imageUrl,
-				role: 'TESTER' // Default role
-			},
-			update: {
-				email: clerkUser.emailAddresses[0]?.emailAddress || '',
-				firstName: clerkUser.firstName,
-				lastName: clerkUser.lastName,
-				imageUrl: clerkUser.imageUrl
-			},
-			include: {
-				team: true
-			}
-		});
-
-		return user;
-	} catch (error) {
-		console.error('Error syncing user from Clerk:', error);
-		return null;
-	}
-}
-
-/**
  * Get or create user (ensures user exists in database)
+ * Note: With self-hosted auth, users are created during signup, so this just fetches them
  */
 export async function ensureUser(userId: string) {
-	const user = await getUser(userId);
-	if (!user) {
-		return await syncUserFromClerk(userId);
-	}
-	return user;
+	return await getUser(userId);
 }
 
 /**
