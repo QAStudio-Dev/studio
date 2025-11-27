@@ -21,12 +21,13 @@ export const POST: RequestHandler = async (event) => {
 		// Always return success to prevent user enumeration
 		// In production, you would send an email with the reset link
 		if (user) {
-			const resetToken = await createPasswordResetToken(user.id);
+			const { tokenId, token } = await createPasswordResetToken(user.id);
 
 			// TODO: Send email with reset link
 			// For now, log to console (REMOVE IN PRODUCTION!)
-			console.log(`Password reset token for ${email}: ${resetToken}`);
-			console.log(`Reset URL: http://localhost:5173/reset-password?token=${resetToken}`);
+			const resetUrl = `http://localhost:5173/reset-password?token=${tokenId}:${token}`;
+			console.log(`Password reset link for ${email}:`);
+			console.log(resetUrl);
 		}
 
 		return json({

@@ -1,13 +1,35 @@
 import { db } from './db';
-import { generateToken, hashToken, verifyToken } from './crypto';
+import { generateToken } from './crypto';
 import type { RequestEvent } from '@sveltejs/kit';
+import crypto from 'crypto';
 
 /**
  * Session configuration
  */
 const SESSION_COOKIE_NAME = 'qa_studio_session';
+const SESSION_ID_COOKIE_NAME = 'qa_studio_sid';
 const SESSION_EXPIRY_DAYS = 30; // Sessions expire after 30 days
 const CSRF_TOKEN_COOKIE_NAME = 'qa_studio_csrf';
+
+/**
+ * HMAC secret for session tokens (use environment variable in production)
+ */
+const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-secret-change-in-production';
+
+/**
+ * Create HMAC hash for session token
+ */
+function hashSessionToken(token: string): string {
+	return crypto.createHmac('sha256', SESSION_SECRET).update(token).digest('hex');
+}
+
+/**
+ * Verify session token against hash
+ */
+function verifySessionToken(token: string, hash: string): boolean {
+	const computedHash = hashSessionToken(token);
+	return crypto.timingSafeEqual(Buffer.from(computedHash), Buffer.from(hash));
+}
 
 /**
  * Cookie options for secure session management
@@ -35,12 +57,14 @@ const CSRF_COOKIE_OPTIONS = {
  * Create a new session for a user
  *
  * @param userId - ID of the user to create session for
- * @returns Object containing the session token and CSRF token
+ * @returns Object containing the session ID, token, and CSRF token
  */
-export async function createSession(userId: string): Promise<{ token: string; csrfToken: string }> {
+export async function createSession(
+	userId: string
+): Promise<{ sessionId: string; token: string; csrfToken: string }> {
 	// Generate session token
 	const token = generateToken(32);
-	const hashedToken = await hashToken(token);
+	const hashedToken = hashSessionToken(token);
 
 	// Generate CSRF token
 	const csrfToken = generateToken(32);
@@ -50,7 +74,7 @@ export async function createSession(userId: string): Promise<{ token: string; cs
 	expiresAt.setDate(expiresAt.getDate() + SESSION_EXPIRY_DAYS);
 
 	// Store session in database (with hashed token for security)
-	await db.session.create({
+	const session = await db.session.create({
 		data: {
 			userId,
 			token: hashedToken,
@@ -58,68 +82,54 @@ export async function createSession(userId: string): Promise<{ token: string; cs
 		}
 	});
 
-	return { token, csrfToken };
+	return { sessionId: session.id, token, csrfToken };
 }
 
 /**
  * Validate a session token and return the user ID
  *
+ * @param sessionId - Session ID from cookie
  * @param token - Session token to validate
  * @returns User ID if session is valid, null otherwise
  */
-export async function validateSession(token: string): Promise<string | null> {
-	// Find all sessions (we need to check token hash)
-	// Note: This is a limitation of bcrypt - we can't query by hash
-	// In a high-traffic system, consider using a faster hash like SHA-256
-	const sessions = await db.session.findMany({
+export async function validateSession(sessionId: string, token: string): Promise<string | null> {
+	// O(1) database lookup by session ID
+	const session = await db.session.findUnique({
 		where: {
+			id: sessionId,
 			expiresAt: {
 				gt: new Date() // Only get non-expired sessions
 			}
 		},
 		select: {
-			id: true,
 			userId: true,
 			token: true
 		}
 	});
 
-	// Find matching session by verifying token hash
-	for (const session of sessions) {
-		const isValid = await verifyToken(token, session.token);
-		if (isValid) {
-			return session.userId;
-		}
+	if (!session) {
+		return null;
 	}
 
-	return null;
+	// Verify token hash using constant-time comparison
+	const isValid = verifySessionToken(token, session.token);
+	return isValid ? session.userId : null;
 }
 
 /**
  * Delete a session (logout)
  *
- * @param token - Session token to delete
+ * @param sessionId - Session ID to delete
  */
-export async function deleteSession(token: string): Promise<void> {
-	// Find and delete the session
-	const sessions = await db.session.findMany({
-		where: {
-			expiresAt: {
-				gt: new Date()
-			}
-		}
-	});
-
-	// Find matching session and delete it
-	for (const session of sessions) {
-		const isValid = await verifyToken(token, session.token);
-		if (isValid) {
-			await db.session.delete({
-				where: { id: session.id }
-			});
-			break;
-		}
-	}
+export async function deleteSession(sessionId: string): Promise<void> {
+	// O(1) deletion by session ID
+	await db.session
+		.delete({
+			where: { id: sessionId }
+		})
+		.catch(() => {
+			// Ignore if session doesn't exist
+		});
 }
 
 /**
@@ -150,12 +160,29 @@ export async function cleanupExpiredSessions(): Promise<void> {
  * Set session cookie in response
  *
  * @param event - SvelteKit request event
+ * @param sessionId - Session ID to set
  * @param token - Session token to set
  * @param csrfToken - CSRF token to set
  */
-export function setSessionCookie(event: RequestEvent, token: string, csrfToken: string): void {
+export function setSessionCookie(
+	event: RequestEvent,
+	sessionId: string,
+	token: string,
+	csrfToken: string
+): void {
+	event.cookies.set(SESSION_ID_COOKIE_NAME, sessionId, SECURE_COOKIE_OPTIONS);
 	event.cookies.set(SESSION_COOKIE_NAME, token, SECURE_COOKIE_OPTIONS);
 	event.cookies.set(CSRF_TOKEN_COOKIE_NAME, csrfToken, CSRF_COOKIE_OPTIONS);
+}
+
+/**
+ * Get session ID from request cookies
+ *
+ * @param event - SvelteKit request event
+ * @returns Session ID if present, null otherwise
+ */
+export function getSessionId(event: RequestEvent): string | null {
+	return event.cookies.get(SESSION_ID_COOKIE_NAME) || null;
 }
 
 /**
@@ -184,6 +211,7 @@ export function getCsrfToken(event: RequestEvent): string | null {
  * @param event - SvelteKit request event
  */
 export function clearSessionCookies(event: RequestEvent): void {
+	event.cookies.delete(SESSION_ID_COOKIE_NAME, { path: '/' });
 	event.cookies.delete(SESSION_COOKIE_NAME, { path: '/' });
 	event.cookies.delete(CSRF_TOKEN_COOKIE_NAME, { path: '/' });
 }
@@ -207,10 +235,12 @@ export function verifyCsrfToken(event: RequestEvent, submittedToken: string): bo
  * @returns User ID if authenticated, null otherwise
  */
 export async function getCurrentUser(event: RequestEvent): Promise<string | null> {
+	const sessionId = getSessionId(event);
 	const sessionToken = getSessionToken(event);
-	if (!sessionToken) {
+
+	if (!sessionId || !sessionToken) {
 		return null;
 	}
 
-	return validateSession(sessionToken);
+	return validateSession(sessionId, sessionToken);
 }

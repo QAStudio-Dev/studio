@@ -1,14 +1,14 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getSessionToken, clearSessionCookies, deleteSession } from '$lib/server/sessions';
+import { getSessionId, clearSessionCookies, deleteSession } from '$lib/server/sessions';
 
 export const POST: RequestHandler = async (event) => {
-	// Get session token
-	const sessionToken = getSessionToken(event);
+	// Get session ID
+	const sessionId = getSessionId(event);
 
-	if (sessionToken) {
+	if (sessionId) {
 		// Delete session from database
-		await deleteSession(sessionToken);
+		await deleteSession(sessionId);
 	}
 
 	// Clear cookies

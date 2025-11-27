@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { verifyPassword } from '$lib/server/crypto';
 import { createSession, setSessionCookie } from '$lib/server/sessions';
+import { TEMP_PASSWORD_HASH } from '$lib/server/auth-constants';
 
 /**
  * Rate limiting for login attempts (simple in-memory store)
@@ -61,8 +62,6 @@ export const POST: RequestHandler = async (event) => {
 		}
 
 		// Check if user has temporary password from Clerk migration
-		const TEMP_PASSWORD_HASH = '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/WYUbv1zY9pQYvD1BO';
-
 		if (!user.passwordHash || user.passwordHash === TEMP_PASSWORD_HASH) {
 			// User needs to set up their password
 			throw error(403, {
@@ -83,10 +82,10 @@ export const POST: RequestHandler = async (event) => {
 		loginAttempts.delete(email.toLowerCase());
 
 		// Create session
-		const { token, csrfToken } = await createSession(user.id);
+		const { sessionId, token, csrfToken } = await createSession(user.id);
 
 		// Set session cookie
-		setSessionCookie(event, token, csrfToken);
+		setSessionCookie(event, sessionId, token, csrfToken);
 
 		// Return user data (excluding password hash)
 		return json({

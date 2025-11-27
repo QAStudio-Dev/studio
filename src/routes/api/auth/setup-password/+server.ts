@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { hashPassword } from '$lib/server/crypto';
 import { createSession, setSessionCookie } from '$lib/server/sessions';
+import { TEMP_PASSWORD_HASH } from '$lib/server/auth-constants';
 
 /**
  * One-time password setup for users migrated from Clerk
@@ -45,8 +46,6 @@ export const POST: RequestHandler = async (event) => {
 		}
 
 		// Check if user still has the temporary password (from migration)
-		const TEMP_PASSWORD_HASH = '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/WYUbv1zY9pQYvD1BO';
-
 		if (user.passwordHash && user.passwordHash !== TEMP_PASSWORD_HASH) {
 			throw error(400, {
 				message: 'Password has already been set. Please use the login page.'
@@ -66,8 +65,8 @@ export const POST: RequestHandler = async (event) => {
 		});
 
 		// Create session and log them in
-		const { token, csrfToken } = await createSession(user.id);
-		setSessionCookie(event, token, csrfToken);
+		const { sessionId, token, csrfToken } = await createSession(user.id);
+		setSessionCookie(event, sessionId, token, csrfToken);
 
 		return json({
 			message: 'Password set successfully',

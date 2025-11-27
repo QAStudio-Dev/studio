@@ -65,10 +65,10 @@ export const POST: RequestHandler = async (event) => {
 		});
 
 		// Create session
-		const { token, csrfToken } = await createSession(user.id);
+		const { sessionId, token, csrfToken } = await createSession(user.id);
 
 		// Set session cookie
-		setSessionCookie(event, token, csrfToken);
+		setSessionCookie(event, sessionId, token, csrfToken);
 
 		// Return user data (excluding password hash)
 		return json({

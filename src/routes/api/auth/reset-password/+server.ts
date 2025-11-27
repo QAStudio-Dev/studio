@@ -18,6 +18,14 @@ export const POST: RequestHandler = async (event) => {
 			});
 		}
 
+		// Parse token (format: "tokenId:token")
+		const [tokenId, tokenValue] = token.split(':');
+		if (!tokenId || !tokenValue) {
+			throw error(400, {
+				message: 'Invalid token format'
+			});
+		}
+
 		// Validate password strength
 		if (password.length < 8) {
 			throw error(400, {
@@ -34,7 +42,7 @@ export const POST: RequestHandler = async (event) => {
 		}
 
 		// Validate token
-		const userId = await validatePasswordResetToken(token);
+		const userId = await validatePasswordResetToken(tokenId, tokenValue);
 
 		if (!userId) {
 			throw error(400, {
@@ -52,7 +60,7 @@ export const POST: RequestHandler = async (event) => {
 		});
 
 		// Mark token as used
-		await markPasswordResetTokenAsUsed(token);
+		await markPasswordResetTokenAsUsed(tokenId);
 
 		// Invalidate all existing sessions (force re-login)
 		await deleteAllUserSessions(userId);
