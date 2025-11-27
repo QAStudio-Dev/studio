@@ -24,6 +24,12 @@ function hashSessionToken(token: string): string {
  */
 function verifySessionToken(token: string, hash: string): boolean {
 	const computedHash = hashSessionToken(token);
+
+	// Validate buffer lengths match before comparison to prevent errors
+	if (computedHash.length !== hash.length) {
+		return false;
+	}
+
 	return crypto.timingSafeEqual(Buffer.from(computedHash), Buffer.from(hash));
 }
 

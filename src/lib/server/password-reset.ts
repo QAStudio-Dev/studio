@@ -20,6 +20,12 @@ function hashResetToken(token: string): string {
  */
 function verifyResetToken(token: string, hash: string): boolean {
 	const computedHash = hashResetToken(token);
+
+	// Validate buffer lengths match before comparison to prevent errors
+	if (computedHash.length !== hash.length) {
+		return false;
+	}
+
 	return crypto.timingSafeEqual(Buffer.from(computedHash), Buffer.from(hash));
 }
 
