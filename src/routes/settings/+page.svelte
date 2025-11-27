@@ -18,7 +18,6 @@
 	} from 'lucide-svelte';
 	import { Tabs } from '@skeletonlabs/skeleton-svelte';
 	import { invalidateAll } from '$app/navigation';
-	import { UserProfile } from 'svelte-clerk/client';
 	import { env } from '$env/dynamic/public';
 
 	let { data } = $props();
@@ -399,11 +398,6 @@
 		<Tabs.Content value="profile">
 			<div class="card p-6">
 				<h2 class="mb-6 text-2xl font-bold">Profile Settings</h2>
-
-				<!-- Clerk UserProfile Component -->
-				<div class="max-w-2xl">
-					<UserProfile />
-				</div>
 			</div>
 		</Tabs.Content>
 

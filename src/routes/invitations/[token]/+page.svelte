@@ -3,10 +3,10 @@
 	import { page } from '$app/stores';
 	import { UserCheck, Users, Shield, AlertCircle, CheckCircle, LogIn } from 'lucide-svelte';
 	import { Avatar } from '@skeletonlabs/skeleton-svelte';
-	import { SignedIn, SignedOut, SignInButton } from 'svelte-clerk/client';
 
 	let { data } = $props();
 	let { invitation } = $derived(data);
+	const isAuthenticated = $derived(!!data.userId);
 
 	let loading = $state(false);
 	let error = $state('');
@@ -195,11 +195,11 @@
 			</div>
 
 			<!-- Actions -->
-			<SignedIn>
+			{#if isAuthenticated}
 				<div class="flex gap-3">
 					<button
 						onclick={acceptInvitation}
-						class="btn flex-1 preset-filled"
+						class="btn flex-1 preset-filled-primary-500"
 						disabled={loading}
 					>
 						<CheckCircle class="mr-2 h-4 w-4" />
@@ -208,15 +208,13 @@
 
 					<button
 						onclick={declineInvitation}
-						class="btn preset-outlined"
+						class="btn preset-outlined-primary-500"
 						disabled={loading}
 					>
 						Decline
 					</button>
 				</div>
-			</SignedIn>
-
-			<SignedOut>
+			{:else}
 				<div class="mb-4 rounded-container border border-warning-500 bg-warning-500/10 p-4">
 					<div class="flex items-start gap-3">
 						<AlertCircle class="mt-0.5 h-5 w-5 flex-shrink-0 text-warning-500" />
@@ -235,17 +233,15 @@
 				</div>
 
 				<div class="flex gap-3">
-					<SignInButton
-						forceRedirectUrl={`/invitations/${$page.params.token}`}
-						signUpForceRedirectUrl={`/invitations/${$page.params.token}`}
+					<a
+						href="/login?redirect=/invitations/{$page.params.token}"
+						class="btn flex-1 preset-filled-primary-500"
 					>
-						<button class="btn flex-1 preset-filled">
-							<LogIn class="mr-2 h-4 w-4" />
-							Sign In to Accept
-						</button>
-					</SignInButton>
+						<LogIn class="mr-2 h-4 w-4" />
+						Sign In to Accept
+					</a>
 				</div>
-			</SignedOut>
+			{/if}
 		</div>
 
 		<!-- Footer Note -->

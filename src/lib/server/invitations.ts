@@ -1,23 +1,21 @@
-import { clerkClient } from 'svelte-clerk/server';
 import { db } from './db';
 import crypto from 'crypto';
 import { UserRole } from '$prisma/client';
 
 /**
- * Send invitation via Clerk
+ * Send invitation via email (to be implemented)
+ * For now, returns the invitation with URL to be shared manually
  */
-export async function sendInvitationWithClerk(
+export async function sendInvitationEmail(
 	teamId: string,
 	email: string,
 	role: UserRole,
 	invitedBy: string
 ) {
-	// Create invitation token for our system
 	const token = crypto.randomBytes(32).toString('hex');
 	const expiresAt = new Date();
 	expiresAt.setDate(expiresAt.getDate() + 7);
 
-	// Create invitation in our database
 	const invitation = await db.teamInvitation.create({
 		data: {
 			teamId,
@@ -36,30 +34,24 @@ export async function sendInvitationWithClerk(
 		}
 	});
 
-	// Generate invitation URL
 	const inviteUrl = `${process.env.PUBLIC_BASE_URL}/invitations/${token}`;
 
-	try {
-		// Send invitation via Clerk
-		// Note: This requires Clerk's invitation feature to be enabled
-		await clerkClient.invitations.createInvitation({
-			emailAddress: email,
-			redirectUrl: inviteUrl,
-			publicMetadata: {
-				teamId,
-				role,
-				invitationId: invitation.id
-			}
-		});
+	// TODO: Send email with invitation link
+	// For now, log to console
+	console.log(`
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Team Invitation Created
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Team: ${invitation.team.name}
+Email: ${email}
+Role: ${role}
 
-		return invitation;
-	} catch (error) {
-		// If Clerk invitation fails, delete our invitation
-		await db.teamInvitation.delete({
-			where: { id: invitation.id }
-		});
-		throw error;
-	}
+Invitation Link:
+${inviteUrl}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+	`);
+
+	return invitation;
 }
 
 /**

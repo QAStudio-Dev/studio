@@ -207,7 +207,7 @@
 				<div>
 					<div class="font-semibold">Try QA Studio</div>
 					<div class="text-sm text-surface-600 dark:text-surface-400">
-						<a href="/sign-up" class="text-primary-500 hover:underline"
+						<a href="/signup" class="text-primary-500 hover:underline"
 							>Sign up for free</a
 						> and start managing your tests today. No credit card required.
 					</div>
