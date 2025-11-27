@@ -3,6 +3,52 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { hashPassword } from '$lib/server/crypto';
 import { createSession, setSessionCookie, verifyCsrfToken } from '$lib/server/sessions';
+import { Ratelimit } from '@upstash/ratelimit';
+import { redis, isCacheEnabled } from '$lib/server/redis';
+
+/**
+ * Rate limiting for signup attempts
+ * Uses Redis in production, falls back to in-memory for development
+ */
+let ratelimit: Ratelimit | null = null;
+const signupAttemptsMemory = new Map<string, { count: number; resetAt: number }>();
+
+// Initialize rate limiter if Redis is available
+if (isCacheEnabled) {
+	ratelimit = new Ratelimit({
+		redis,
+		limiter: Ratelimit.slidingWindow(3, '60 m'), // 3 attempts per hour
+		analytics: true,
+		prefix: 'ratelimit:signup'
+	});
+}
+
+async function checkRateLimit(email: string): Promise<boolean> {
+	// Use Redis rate limiting if available
+	if (ratelimit) {
+		const { success } = await ratelimit.limit(email.toLowerCase());
+		return success;
+	}
+
+	// Fallback to in-memory rate limiting for development
+	const now = Date.now();
+	const attempt = signupAttemptsMemory.get(email);
+
+	if (!attempt || now > attempt.resetAt) {
+		// Reset or create new entry
+		signupAttemptsMemory.set(email, { count: 1, resetAt: now + 60 * 60 * 1000 }); // 1 hour
+		return true;
+	}
+
+	if (attempt.count >= 3) {
+		// Too many attempts
+		return false;
+	}
+
+	// Increment count
+	attempt.count++;
+	return true;
+}
 
 export const POST: RequestHandler = async (event) => {
 	try {
@@ -51,9 +97,17 @@ export const POST: RequestHandler = async (event) => {
 			});
 		}
 
+		// Check rate limit
+		const rateLimitOk = await checkRateLimit(email.trim().toLowerCase());
+		if (!rateLimitOk) {
+			throw error(429, {
+				message: 'Too many signup attempts. Please try again in 1 hour.'
+			});
+		}
+
 		// Check if user already exists
 		const existingUser = await db.user.findUnique({
-			where: { email: email.toLowerCase() }
+			where: { email: email.trim().toLowerCase() }
 		});
 
 		if (existingUser) {
@@ -68,7 +122,7 @@ export const POST: RequestHandler = async (event) => {
 		// Create user
 		const user = await db.user.create({
 			data: {
-				email: email.toLowerCase(),
+				email: email.trim().toLowerCase(),
 				passwordHash,
 				firstName: firstName || null,
 				lastName: lastName || null,

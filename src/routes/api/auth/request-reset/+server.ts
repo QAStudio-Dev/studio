@@ -23,7 +23,7 @@ export const POST: RequestHandler = async (event) => {
 
 		// Find user
 		const user = await db.user.findUnique({
-			where: { email: email.toLowerCase() }
+			where: { email: email.trim().toLowerCase() }
 		});
 
 		// Always return success to prevent user enumeration

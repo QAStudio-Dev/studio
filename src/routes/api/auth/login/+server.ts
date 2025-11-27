@@ -70,7 +70,7 @@ export const POST: RequestHandler = async (event) => {
 		}
 
 		// Check rate limit
-		const rateLimitOk = await checkRateLimit(email.toLowerCase());
+		const rateLimitOk = await checkRateLimit(email.trim().toLowerCase());
 		if (!rateLimitOk) {
 			throw error(429, {
 				message: 'Too many login attempts. Please try again in 15 minutes.'
@@ -79,7 +79,7 @@ export const POST: RequestHandler = async (event) => {
 
 		// Find user by email
 		const user = await db.user.findUnique({
-			where: { email: email.toLowerCase() }
+			where: { email: email.trim().toLowerCase() }
 		});
 
 		// Use constant-time response to prevent user enumeration
@@ -109,10 +109,10 @@ export const POST: RequestHandler = async (event) => {
 		// Reset rate limit on successful login
 		if (ratelimit) {
 			// Redis rate limiter resets automatically with sliding window
-			await ratelimit.resetUsedTokens(email.toLowerCase());
+			await ratelimit.resetUsedTokens(email.trim().toLowerCase());
 		} else {
 			// In-memory fallback
-			loginAttemptsMemory.delete(email.toLowerCase());
+			loginAttemptsMemory.delete(email.trim().toLowerCase());
 		}
 
 		// Create session

@@ -92,6 +92,7 @@
 
 			{#if !token}
 				<div
+					role="alert"
 					class="mb-4 rounded-base bg-error-500/10 px-4 py-3 text-error-700 dark:text-error-400"
 				>
 					Invalid or missing reset token
@@ -113,6 +114,7 @@
 				>
 					{#if error}
 						<div
+							role="alert"
 							class="mb-4 rounded-base bg-error-500/10 px-4 py-3 text-error-700 dark:text-error-400"
 						>
 							{error}

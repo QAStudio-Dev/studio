@@ -235,13 +235,22 @@ export function clearSessionCookies(event: RequestEvent): void {
 /**
  * Verify CSRF token from request
  *
+ * Uses timing-safe comparison to prevent timing attacks
+ *
  * @param event - SvelteKit request event
  * @param submittedToken - CSRF token from form/request
  * @returns True if CSRF token is valid, false otherwise
  */
 export function verifyCsrfToken(event: RequestEvent, submittedToken: string): boolean {
 	const cookieToken = getCsrfToken(event);
-	return cookieToken === submittedToken;
+
+	// Validate both tokens exist and have matching lengths
+	if (!cookieToken || !submittedToken || cookieToken.length !== submittedToken.length) {
+		return false;
+	}
+
+	// Use timing-safe comparison to prevent timing attacks
+	return crypto.timingSafeEqual(Buffer.from(cookieToken), Buffer.from(submittedToken));
 }
 
 /**
