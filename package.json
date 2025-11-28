@@ -26,7 +26,7 @@
     "@neoconfetti/svelte": "^2.2.2",
     "@playwright/test": "^1.55.1",
     "@prisma/client": "^7.0.0",
-    "@qastudio-dev/playwright": "^1.2.6",
+    "@qastudio-dev/playwright": "^1.2.8",
     "@skeletonlabs/skeleton": "^4.1.4",
     "@skeletonlabs/skeleton-svelte": "^4.1.4",
     "@sveltejs/adapter-vercel": "^5.10.2",

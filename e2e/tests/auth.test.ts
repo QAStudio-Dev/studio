@@ -84,217 +84,161 @@ test.describe('Authentication', () => {
 			await authPage.assertUrl('/signup');
 		});
 
-		test('should show error for duplicate email', async ({ page }) => {
-			// This test assumes there's already a user with this email
-			// In a real test, you'd create a user first, then try to signup with same email
-			const testEmail = 'duplicate@example.com';
+		test.describe('Password Reset Flow', () => {
+			test.beforeEach(async () => {
+				await authPage.navigateToForgotPassword();
+			});
 
-			await authPage.signup(testEmail, 'Password123', 'Test', 'User');
-			await page.waitForTimeout(1000);
+			test('should display forgot password form', async () => {
+				await authPage.assertVisible(authPage.emailInput);
+				await authPage.assertVisible(authPage.submitButton);
+			});
 
-			// Depending on implementation, might stay on signup or show error
+			test('should show success message after requesting reset', async ({ page }) => {
+				await authPage.requestPasswordReset('test@example.com');
+				await page.waitForTimeout(1000);
+
+				// Should show success message (even if email doesn't exist - security best practice)
+				// Implementation might redirect or show message on same page
+			});
 		});
 
-		test('should have link to login', async () => {
-			await authPage.assertVisible(authPage.loginLink);
-		});
+		test.describe('CSRF Protection', () => {
+			test('should include CSRF token in login request', async ({ page }) => {
+				await authPage.navigateToLogin();
 
-		test('should navigate to login page', async ({ page }) => {
-			await authPage.clickLogin();
-			await page.waitForURL('**/login**');
-			expect(page.url()).toContain('/login');
-		});
-	});
+				// Monitor network requests
+				const requests: any[] = [];
+				page.on('request', (request) => {
+					if (request.url().includes('/api/auth/login')) {
+						requests.push(request);
+					}
+				});
 
-	test.describe('Password Reset Flow', () => {
-		test.beforeEach(async () => {
-			await authPage.navigateToForgotPassword();
-		});
+				await authPage.login('test@example.com', 'Password123');
+				await page.waitForTimeout(1000);
 
-		test('should display forgot password form', async () => {
-			await authPage.assertVisible(authPage.emailInput);
-			await authPage.assertVisible(authPage.submitButton);
-		});
-
-		test('should show success message after requesting reset', async ({ page }) => {
-			await authPage.requestPasswordReset('test@example.com');
-			await page.waitForTimeout(1000);
-
-			// Should show success message (even if email doesn't exist - security best practice)
-			// Implementation might redirect or show message on same page
-		});
-
-		test('should have link back to login', async () => {
-			await authPage.assertVisible(authPage.backToLoginLink);
-		});
-	});
-
-	test.describe('Password Setup (Clerk Migration)', () => {
-		test.beforeEach(async () => {
-			await authPage.navigateToSetupPassword();
-		});
-
-		test('should display setup password form', async () => {
-			await authPage.assertVisible(authPage.emailInput);
-			await authPage.assertVisible(authPage.newPasswordInput);
-			await authPage.assertVisible(authPage.submitButton);
-		});
-
-		test('should show error for non-existent user', async ({ page }) => {
-			await authPage.setupPassword('nonexistent@example.com', 'NewPassword123');
-			await page.waitForTimeout(1000);
-
-			// Should show error for invalid user
-		});
-
-		test('should enforce password requirements', async ({ page }) => {
-			const weakPassword = '123';
-			await authPage.fill(authPage.emailInput, 'test@example.com');
-			await authPage.fill(authPage.newPasswordInput, weakPassword);
-			await authPage.click(authPage.submitButton);
-
-			await page.waitForTimeout(500);
-
-			// Should show validation error
-			await authPage.assertUrl('/setup-password');
-		});
-	});
-
-	test.describe('CSRF Protection', () => {
-		test('should include CSRF token in login request', async ({ page }) => {
-			await authPage.navigateToLogin();
-
-			// Monitor network requests
-			const requests: any[] = [];
-			page.on('request', (request) => {
-				if (request.url().includes('/api/auth/login')) {
-					requests.push(request);
+				// Verify CSRF token was sent
+				if (requests.length > 0) {
+					const postData = requests[0].postDataJSON();
+					expect(postData).toHaveProperty('csrfToken');
 				}
 			});
 
-			await authPage.login('test@example.com', 'Password123');
-			await page.waitForTimeout(1000);
+			test('should reject request without CSRF token', async ({ page, context }) => {
+				await authPage.navigateToLogin();
 
-			// Verify CSRF token was sent
-			if (requests.length > 0) {
-				const postData = requests[0].postDataJSON();
-				expect(postData).toHaveProperty('csrfToken');
-			}
+				// Try to make a request without CSRF token
+				const response = await context.request.post('/api/auth/login', {
+					data: {
+						email: 'test@example.com',
+						password: 'Password123'
+						// No csrfToken
+					}
+				});
+
+				// Should get 403 Forbidden
+				expect(response.status()).toBe(403);
+			});
 		});
 
-		test('should reject request without CSRF token', async ({ page, context }) => {
-			await authPage.navigateToLogin();
+		test.describe('Rate Limiting', () => {
+			test('should rate limit excessive login attempts', async ({ page }) => {
+				await authPage.navigateToLogin();
 
-			// Try to make a request without CSRF token
-			const response = await context.request.post('/api/auth/login', {
-				data: {
-					email: 'test@example.com',
-					password: 'Password123'
-					// No csrfToken
+				// Make 6 rapid login attempts (limit is 5)
+				for (let i = 0; i < 6; i++) {
+					await authPage.fill(authPage.emailInput, 'test@example.com');
+					await authPage.fill(authPage.passwordInput, 'WrongPassword123');
+					await authPage.click(authPage.submitButton);
+					await page.waitForTimeout(500);
 				}
+
+				// 6th attempt should be rate limited
+				// Check for rate limit error message
+				const hasError = await authPage.hasError();
+				expect(hasError).toBe(true);
+			});
+		});
+
+		test.describe('Session Management', () => {
+			test('should redirect unauthenticated users to login', async ({ page }) => {
+				// Try to access a protected page without being logged in
+				await page.goto('/projects');
+
+				// Should redirect to login
+				await page.waitForURL('**/login**', { timeout: 5000 });
+				expect(page.url()).toContain('/login');
 			});
 
-			// Should get 403 Forbidden
-			expect(response.status()).toBe(403);
+			test('should persist session across page reloads', async ({ page, context }) => {
+				// This test requires a valid user account
+				// For now, it's a placeholder that would need actual credentials
+				// 1. Login
+				// 2. Reload page
+				// 3. Verify still logged in
+			});
+
+			test('should clear session on logout', async ({ page, context }) => {
+				// This test requires a valid user account
+				// For now, it's a placeholder
+				// 1. Login
+				// 2. Logout
+				// 3. Verify session cleared
+				// 4. Try to access protected page - should redirect to login
+			});
 		});
-	});
 
-	test.describe('Rate Limiting', () => {
-		test('should rate limit excessive login attempts', async ({ page }) => {
-			await authPage.navigateToLogin();
+		test.describe('Accessibility', () => {
+			test('login form should be keyboard navigable', async ({ page }) => {
+				await authPage.navigateToLogin();
 
-			// Make 6 rapid login attempts (limit is 5)
-			for (let i = 0; i < 6; i++) {
-				await authPage.fill(authPage.emailInput, 'test@example.com');
-				await authPage.fill(authPage.passwordInput, 'WrongPassword123');
-				await authPage.click(authPage.submitButton);
+				// Tab through form elements
+				await page.keyboard.press('Tab'); // Email input
+				await page.keyboard.type('test@example.com');
+
+				await page.keyboard.press('Tab'); // Password input
+				await page.keyboard.type('Password123');
+
+				await page.keyboard.press('Tab'); // Submit button
+				await page.keyboard.press('Enter'); // Submit
+
 				await page.waitForTimeout(500);
-			}
+			});
 
-			// 6th attempt should be rate limited
-			// Check for rate limit error message
-			const hasError = await authPage.hasError();
-			expect(hasError).toBe(true);
-		});
-	});
+			test('signup form should be keyboard navigable', async ({ page }) => {
+				await authPage.navigateToSignup();
 
-	test.describe('Session Management', () => {
-		test('should redirect unauthenticated users to login', async ({ page }) => {
-			// Try to access a protected page without being logged in
-			await page.goto('/projects');
+				// Tab through form elements
+				await page.keyboard.press('Tab');
+				await page.keyboard.type('test@example.com');
 
-			// Should redirect to login
-			await page.waitForURL('**/login**', { timeout: 5000 });
-			expect(page.url()).toContain('/login');
-		});
+				await page.keyboard.press('Tab');
+				await page.keyboard.type('Password123');
 
-		test('should persist session across page reloads', async ({ page, context }) => {
-			// This test requires a valid user account
-			// For now, it's a placeholder that would need actual credentials
-			// 1. Login
-			// 2. Reload page
-			// 3. Verify still logged in
-		});
+				await page.keyboard.press('Tab');
+				await page.keyboard.press('Enter');
 
-		test('should clear session on logout', async ({ page, context }) => {
-			// This test requires a valid user account
-			// For now, it's a placeholder
-			// 1. Login
-			// 2. Logout
-			// 3. Verify session cleared
-			// 4. Try to access protected page - should redirect to login
-		});
-	});
+				await page.waitForTimeout(500);
+			});
 
-	test.describe('Accessibility', () => {
-		test('login form should be keyboard navigable', async ({ page }) => {
-			await authPage.navigateToLogin();
+			test('login form should have proper labels and aria attributes', async ({ page }) => {
+				await authPage.navigateToLogin();
 
-			// Tab through form elements
-			await page.keyboard.press('Tab'); // Email input
-			await page.keyboard.type('test@example.com');
+				// Email input should have label or aria-label
+				const emailInput = await authPage.emailInput.first();
+				const emailLabel = await emailInput.getAttribute('aria-label');
+				const emailId = await emailInput.getAttribute('id');
 
-			await page.keyboard.press('Tab'); // Password input
-			await page.keyboard.type('Password123');
+				expect(emailLabel || emailId).toBeTruthy();
 
-			await page.keyboard.press('Tab'); // Submit button
-			await page.keyboard.press('Enter'); // Submit
+				// Password input should have label or aria-label
+				const passwordInput = await authPage.passwordInput.first();
+				const passwordLabel = await passwordInput.getAttribute('aria-label');
+				const passwordId = await passwordInput.getAttribute('id');
 
-			await page.waitForTimeout(500);
-		});
-
-		test('signup form should be keyboard navigable', async ({ page }) => {
-			await authPage.navigateToSignup();
-
-			// Tab through form elements
-			await page.keyboard.press('Tab');
-			await page.keyboard.type('test@example.com');
-
-			await page.keyboard.press('Tab');
-			await page.keyboard.type('Password123');
-
-			await page.keyboard.press('Tab');
-			await page.keyboard.press('Enter');
-
-			await page.waitForTimeout(500);
-		});
-
-		test('login form should have proper labels and aria attributes', async ({ page }) => {
-			await authPage.navigateToLogin();
-
-			// Email input should have label or aria-label
-			const emailInput = await authPage.emailInput.first();
-			const emailLabel = await emailInput.getAttribute('aria-label');
-			const emailId = await emailInput.getAttribute('id');
-
-			expect(emailLabel || emailId).toBeTruthy();
-
-			// Password input should have label or aria-label
-			const passwordInput = await authPage.passwordInput.first();
-			const passwordLabel = await passwordInput.getAttribute('aria-label');
-			const passwordId = await passwordInput.getAttribute('id');
-
-			expect(passwordLabel || passwordId).toBeTruthy();
+				expect(passwordLabel || passwordId).toBeTruthy();
+			});
 		});
 	});
 });

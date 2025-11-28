@@ -25,7 +25,7 @@ export class HomePage extends BasePage {
 
 		// Initialize locators
 		this.logo = page.locator('img[alt="QA Studio"]').first();
-		this.signInButton = page.getByRole('button', { name: 'Sign In' });
+		this.signInButton = page.locator('a[href="/login"]');
 		this.heroTitle = page.locator('h1').first();
 		this.heroDescription = page.locator('p.text-xl').first();
 		this.getStartedButton = page.getByRole('link', { name: /get started/i });

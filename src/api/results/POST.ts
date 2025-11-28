@@ -116,6 +116,7 @@ export const Input = z.object({
 
 export const Output = z.object({
 	processedCount: z.number().describe('Number of results successfully processed'),
+	duplicatesSkipped: z.number().optional().describe('Number of duplicate results skipped'),
 	results: z.array(
 		z.object({
 			testCaseId: z.string(),
@@ -385,16 +386,10 @@ async function createTestResultWithSteps(
 			}
 		});
 	} catch (error: any) {
-		// Handle unique constraint violation (concurrent creation)
+		// Handle unique constraint violation (reporter retry/concurrent creation)
 		if (error.code === 'P2002') {
-			// Duplicate detected - fetch existing result
-			console.warn('Duplicate test result detected (concurrent creation):', {
-				testCaseId,
-				testRunId,
-				retry,
-				title: result.title
-			});
-
+			// Duplicate detected - fetch and return existing result
+			// This is expected when the reporter retries after a timeout
 			const existingResult = await db.testResult.findFirst({
 				where: {
 					testCaseId,
@@ -421,7 +416,7 @@ async function createTestResultWithSteps(
 
 	// Process attachments if any
 	let attachmentCount = 0;
-	if (result.attachments && Array.isArray(result.attachments)) {
+	if (result.attachments && Array.isArray(result.attachments) && result.attachments.length > 0) {
 		attachmentCount = await processAttachments(
 			result.attachments,
 			testRunId,
@@ -449,6 +444,7 @@ async function createTestResultWithSteps(
 
 /**
  * Helper function to process and upload attachments for a test result
+ * Uploads attachments in parallel for better performance
  */
 async function processAttachments(
 	attachments: Array<{
@@ -466,9 +462,8 @@ async function processAttachments(
 		return 0;
 	}
 
-	let uploadedCount = 0;
-
-	for (const attachment of attachments) {
+	// Process all attachments in parallel for better performance
+	const uploadPromises = attachments.map(async (attachment) => {
 		try {
 			// Validate MIME type
 			if (!isValidMimeType(attachment.contentType)) {
@@ -477,7 +472,7 @@ async function processAttachments(
 					attachmentName: attachment.name,
 					error: `Unsupported MIME type: ${attachment.contentType}. Allowed types: images (png, jpg, gif, webp, svg), videos (webm, mp4), archives (zip, gzip), traces (application/zip), text, logs, JSON`
 				});
-				continue;
+				return false;
 			}
 
 			// Convert body to Buffer
@@ -489,7 +484,7 @@ async function processAttachments(
 					attachmentName: attachment.name,
 					error: 'No body provided'
 				});
-				continue;
+				return false;
 			}
 
 			if (typeof attachment.body === 'string') {
@@ -503,7 +498,7 @@ async function processAttachments(
 						attachmentName: attachment.name,
 						error: `Failed to decode base64: ${err.message}`
 					});
-					continue;
+					return false;
 				}
 			} else if (Buffer.isBuffer(attachment.body)) {
 				// Already a Buffer
@@ -524,7 +519,7 @@ async function processAttachments(
 						attachmentName: attachment.name,
 						error: `Invalid serialized buffer format`
 					});
-					continue;
+					return false;
 				}
 			} else {
 				attachmentErrors.push({
@@ -532,7 +527,7 @@ async function processAttachments(
 					attachmentName: attachment.name,
 					error: `Invalid body type: ${typeof attachment.body}`
 				});
-				continue;
+				return false;
 			}
 
 			// Add proper extension to the filename if missing
@@ -544,7 +539,7 @@ async function processAttachments(
 			// Generate unique filename
 			const filename = generateAttachmentPath(nameWithExt, testRunId, testResultId);
 
-			// Upload to blob storage
+			// Upload to blob storage (parallel)
 			const { downloadUrl } = await uploadToBlob(filename, buffer, {
 				contentType: attachment.contentType
 			});
@@ -562,7 +557,7 @@ async function processAttachments(
 				}
 			});
 
-			uploadedCount++;
+			return true; // Success
 		} catch (err: any) {
 			console.error(`Failed to upload attachment ${attachment.name}:`, err);
 			attachmentErrors.push({
@@ -570,10 +565,15 @@ async function processAttachments(
 				attachmentName: attachment.name,
 				error: err.message || 'Upload failed'
 			});
+			return false; // Failure
 		}
-	}
+	});
 
-	return uploadedCount;
+	// Wait for all uploads to complete
+	const results = await Promise.all(uploadPromises);
+
+	// Count successful uploads
+	return results.filter((success) => success).length;
 }
 
 /**
@@ -645,7 +645,11 @@ async function findOrCreateSuiteHierarchy(
 
 export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 	async (input, evt): Promise<any> => {
+		const startTime = Date.now();
 		const userId = await requireApiAuth(evt);
+		console.log(
+			`[Results API] Processing ${input.results.length} results for run ${input.testRunId}`
+		);
 
 		// Verify test run access
 		const testRun = await db.testRun.findUnique({
@@ -811,94 +815,110 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 			}
 		}
 
-		// Send notifications after processing all results
-		if (testRun.project.teamId) {
-			try {
-				// Calculate stats for the test run
-				const allResults = await db.testResult.findMany({
-					where: { testRunId: input.testRunId },
-					select: { status: true }
-				});
+		// Send notifications asynchronously (don't block response)
+		// Use setTimeout to defer execution completely outside the request cycle
+		const teamId = testRun.project.teamId;
+		if (teamId) {
+			// Capture necessary context for the background task
+			const notificationContext = {
+				teamId,
+				testRunId: input.testRunId,
+				testRunName: testRun.name,
+				testRunStatus: testRun.status,
+				projectId: testRun.projectId,
+				projectName: testRun.project.name,
+				failedTests: processedResults.filter((r) => r.status === 'FAILED')
+			};
 
-				const passed = allResults.filter((r) => r.status === 'PASSED').length;
-				const failed = allResults.filter((r) => r.status === 'FAILED').length;
-				const skipped = allResults.filter((r) => r.status === 'SKIPPED').length;
-				const total = allResults.length;
-				// Pass rate excludes skipped tests (industry standard)
-				const executedTests = passed + failed;
-				const passRate = executedTests > 0 ? Math.round((passed / executedTests) * 100) : 0;
-
-				// Check if we should send completion notification
-				const isComplete = testRun.status === 'COMPLETED';
-
-				if (isComplete) {
-					// Send test run completed notification
-					const result = await notifyTestRunCompleted(testRun.project.teamId, {
-						id: testRun.id,
-						name: testRun.name,
-						projectId: testRun.projectId,
-						projectName: testRun.project.name,
-						passRate,
-						total,
-						passed,
-						failed,
-						skipped
+			// Defer notifications to next tick - completely detached from request lifecycle
+			setTimeout(async () => {
+				try {
+					// Calculate stats for the test run
+					const allResults = await db.testResult.findMany({
+						where: { testRunId: notificationContext.testRunId },
+						select: { status: true }
 					});
 
-					if (!result.success && result.errors && result.errors.length > 0) {
-						console.error('Test run completion notification failed:', {
-							testRunId: testRun.id,
-							testRunName: testRun.name,
-							integrationsSent: result.integrationsSent,
-							integrationsFailed: result.integrationsFailed,
-							errors: result.errors
-						});
-					}
-				}
+					const passed = allResults.filter((r) => r.status === 'PASSED').length;
+					const failed = allResults.filter((r) => r.status === 'FAILED').length;
+					const skipped = allResults.filter((r) => r.status === 'SKIPPED').length;
+					const total = allResults.length;
+					// Pass rate excludes skipped tests (industry standard)
+					const executedTests = passed + failed;
+					const passRate =
+						executedTests > 0 ? Math.round((passed / executedTests) * 100) : 0;
 
-				// Send individual test case failure notifications
-				const baseUrl = process.env.PUBLIC_BASE_URL || 'https://qastudio.dev';
-				const failedTests = processedResults.filter((r) => r.status === 'FAILED');
-				for (const failedTest of failedTests) {
-					const result = await sendNotification(testRun.project.teamId, {
-						event: 'TEST_CASE_FAILED',
-						title: `❌ Test Failed: ${failedTest.title}`,
-						message: `*Test Run:* ${testRun.name}\n*Project:* ${testRun.project.name}`,
-						url: `${baseUrl}/projects/${testRun.projectId}/runs/${testRun.id}`,
-						color: '#ff0000',
-						fields: [
-							{
-								name: '⏱️ Duration',
-								value: failedTest.duration ? `${failedTest.duration}ms` : 'N/A',
-								inline: true
-							},
-							{
-								name: '🔄 Status',
-								value: 'Failed',
-								inline: true
-							}
-						]
+					// Check if we should send completion notification
+					const isComplete = notificationContext.testRunStatus === 'COMPLETED';
+
+					if (isComplete) {
+						// Send test run completed notification
+						const result = await notifyTestRunCompleted(notificationContext.teamId, {
+							id: notificationContext.testRunId,
+							name: notificationContext.testRunName,
+							projectId: notificationContext.projectId,
+							projectName: notificationContext.projectName,
+							passRate,
+							total,
+							passed,
+							failed,
+							skipped
+						});
+
+						if (!result.success && result.errors && result.errors.length > 0) {
+							console.error('Test run completion notification failed:', {
+								testRunId: notificationContext.testRunId,
+								testRunName: notificationContext.testRunName,
+								integrationsSent: result.integrationsSent,
+								integrationsFailed: result.integrationsFailed,
+								errors: result.errors
+							});
+						}
+					}
+
+					// Send individual test case failure notifications
+					const baseUrl = process.env.PUBLIC_BASE_URL || 'https://qastudio.dev';
+					for (const failedTest of notificationContext.failedTests) {
+						const result = await sendNotification(notificationContext.teamId, {
+							event: 'TEST_CASE_FAILED',
+							title: `❌ Test Failed: ${failedTest.title}`,
+							message: `*Test Run:* ${notificationContext.testRunName}\n*Project:* ${notificationContext.projectName}`,
+							url: `${baseUrl}/projects/${notificationContext.projectId}/runs/${notificationContext.testRunId}`,
+							color: '#ff0000',
+							fields: [
+								{
+									name: '⏱️ Duration',
+									value: failedTest.duration ? `${failedTest.duration}ms` : 'N/A',
+									inline: true
+								},
+								{
+									name: '🔄 Status',
+									value: 'Failed',
+									inline: true
+								}
+							]
+						});
+
+						if (!result.success && result.errors && result.errors.length > 0) {
+							console.error('Test case failure notification failed:', {
+								testCaseTitle: failedTest.title,
+								testRunId: notificationContext.testRunId,
+								integrationsSent: result.integrationsSent,
+								integrationsFailed: result.integrationsFailed,
+								errors: result.errors
+							});
+						}
+					}
+				} catch (notificationError: any) {
+					// Don't fail the request if notifications fail
+					console.error('Failed to send notifications:', {
+						error: notificationError.message || 'Unknown error',
+						testRunId: notificationContext.testRunId,
+						testRunName: notificationContext.testRunName,
+						stack: notificationError.stack
 					});
-
-					if (!result.success && result.errors && result.errors.length > 0) {
-						console.error('Test case failure notification failed:', {
-							testCaseTitle: failedTest.title,
-							testRunId: testRun.id,
-							integrationsSent: result.integrationsSent,
-							integrationsFailed: result.integrationsFailed,
-							errors: result.errors
-						});
-					}
 				}
-			} catch (notificationError: any) {
-				// Don't fail the request if notifications fail
-				console.error('Failed to send notifications:', {
-					error: notificationError.message || 'Unknown error',
-					testRunId: testRun.id,
-					testRunName: testRun.name,
-					stack: notificationError.stack
-				});
-			}
+			}, 0); // Execute on next tick
 		}
 
 		// Invalidate caches for test run, results, and project (counts may have changed)
@@ -908,12 +928,34 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 			CacheKeys.project(testRun.projectId)
 		]);
 
-		return {
+		const response = {
 			processedCount: processedResults.length,
 			duplicatesSkipped: duplicateCount,
 			results: processedResults,
 			errors: errors.length > 0 ? errors : undefined,
 			attachmentErrors: attachmentErrors.length > 0 ? attachmentErrors : undefined
 		};
+
+		const duration = Date.now() - startTime;
+		const responseSize = JSON.stringify(response).length;
+
+		// Calculate total attachments uploaded
+		const totalAttachments = processedResults.reduce((sum, r) => sum + r.attachmentCount, 0);
+
+		// Log summary with duplicate and attachment info
+		const stats = [];
+		if (duplicateCount > 0) {
+			stats.push(`${duplicateCount} duplicates skipped`);
+		}
+		if (totalAttachments > 0) {
+			stats.push(`${totalAttachments} attachments uploaded`);
+		}
+
+		const statsStr = stats.length > 0 ? ` (${stats.join(', ')})` : '';
+		console.log(
+			`[Results API] Processed ${response.processedCount} results${statsStr} in ${duration}ms, response size: ${(responseSize / 1024).toFixed(1)}KB`
+		);
+
+		return response;
 	}
 );
