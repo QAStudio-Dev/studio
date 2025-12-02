@@ -326,7 +326,7 @@
 						</div>
 					{:else}
 						{@const maxRuns = Math.max(
-							...analytics.runsOverTime.map((d: any) => d.total)
+							...analytics.runsOverTime.map((d: DayStats) => d.total)
 						)}
 						<div class="max-h-[900px] overflow-y-auto pr-2">
 							<div class="space-y-3">
@@ -485,7 +485,7 @@
 						</div>
 					{:else}
 						{@const maxDuration = Math.max(
-							...analytics.slowestTests.map((t: any) => t.avgDuration)
+							...analytics.slowestTests.map((t: SlowTest) => t.avgDuration)
 						)}
 						<div class="space-y-3">
 							{#each analytics.slowestTests as test}

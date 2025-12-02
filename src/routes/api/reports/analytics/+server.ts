@@ -128,10 +128,12 @@ export const GET: RequestHandler = async (event) => {
 	const runsOverTime = Array.from(runsByDay.values());
 
 	// 2. Most Problematic Tests (high failure rate + retries)
+	// Use testRunIds from already-fetched testRuns to avoid N+1 query
+	const testRunIds = testRuns.map((run) => run.id);
 	const testResults = await db.testResult.findMany({
 		where: {
-			testRun: {
-				projectId
+			testRunId: {
+				in: testRunIds
 			},
 			executedAt: {
 				gte: startDate
@@ -197,7 +199,8 @@ export const GET: RequestHandler = async (event) => {
 
 	// Calculate failure rates and problem scores
 	testCaseStats.forEach((stats) => {
-		stats.failureRate = (stats.failures / stats.totalRuns) * 100;
+		// Defensive check for division by zero (should never happen, but be safe)
+		stats.failureRate = stats.totalRuns > 0 ? (stats.failures / stats.totalRuns) * 100 : 0;
 		// Problem score: weight failures more heavily than retries
 		// Rationale: Actual failures indicate real issues, retries indicate instability
 		stats.problemScore = stats.failures * PROBLEM_SCORE_FAILURE_WEIGHT + stats.retries;
@@ -208,37 +211,7 @@ export const GET: RequestHandler = async (event) => {
 		.sort((a, b) => b.problemScore - a.problemScore)
 		.slice(0, TOP_ITEMS_LIMIT);
 
-	// 3. Longest Running Tests
-	const longestTests = await db.testResult.findMany({
-		where: {
-			testRun: {
-				projectId
-			},
-			executedAt: {
-				gte: startDate
-			},
-			duration: {
-				not: null
-			}
-		},
-		select: {
-			id: true,
-			testCaseId: true,
-			duration: true,
-			testCase: {
-				select: {
-					id: true,
-					title: true
-				}
-			}
-		},
-		orderBy: {
-			duration: 'desc'
-		},
-		take: 10
-	});
-
-	// Calculate average durations per test case
+	// 3. Calculate average durations per test case
 	const durationsByTest = new Map<
 		string,
 		{
