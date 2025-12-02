@@ -135,7 +135,7 @@
 
 				<!-- Project Selector (next to logo) -->
 				{#if isAuthenticated}
-					<div class="hidden md:block">
+					<div class="hidden lg:block">
 						{#if projects.length === 0}
 							<!-- No projects - show New Project button -->
 							<a
@@ -214,7 +214,7 @@
 				{/if}
 
 				<!-- Main Navigation -->
-				<nav class="hidden items-center gap-2 md:flex">
+				<nav class="hidden items-center gap-2 lg:flex">
 					<!-- Only show these navigation items when signed in -->
 					{#if isAuthenticated}
 						{#if selectedProjectId}
@@ -373,7 +373,7 @@
 				<!-- Mobile Menu Button -->
 				<button
 					onclick={() => (mobileMenuOpen = !mobileMenuOpen)}
-					class="rounded-base px-3 py-2 transition-colors hover:bg-surface-200-800 md:hidden"
+					class="rounded-base px-3 py-2 transition-colors hover:bg-surface-200-800 lg:hidden"
 					aria-label="Toggle menu"
 				>
 					{#if mobileMenuOpen}
@@ -387,7 +387,7 @@
 
 		<!-- Mobile Menu -->
 		{#if mobileMenuOpen}
-			<div class="border-t border-surface-300-700 py-4 md:hidden">
+			<div class="border-t border-surface-300-700 py-4 lg:hidden">
 				<nav class="flex flex-col gap-1">
 					<!-- Project Selector in Mobile Menu -->
 					{#if isAuthenticated}
