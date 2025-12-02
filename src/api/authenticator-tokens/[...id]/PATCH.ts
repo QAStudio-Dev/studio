@@ -3,6 +3,8 @@ import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
 import { encryptTOTPSecret } from '$lib/server/totp-crypto';
 import { serializeDates } from '$lib/utils/date';
+import * as OTPAuth from 'otpauth';
+import { createAuditLog, sanitizeMetadata } from '$lib/server/audit';
 
 export const Param = z.object({
 	id: z.string().describe('Token ID')
@@ -63,6 +65,11 @@ export default new Endpoint({ Param, Input, Output, Modifier }).handle(async (in
 		throw error(403, 'User must be part of a team to update authenticator tokens');
 	}
 
+	// RBAC: Only OWNER and ADMIN can manage authenticator tokens
+	if (user.role !== 'OWNER' && user.role !== 'ADMIN') {
+		throw error(403, 'Only team owners and admins can update authenticator tokens');
+	}
+
 	// Check token exists and belongs to user's team
 	const existingToken = await db.authenticatorToken.findFirst({
 		where: {
@@ -76,11 +83,29 @@ export default new Endpoint({ Param, Input, Output, Modifier }).handle(async (in
 	}
 
 	// Validate secret format if provided
-	if (input.secret && !/^[A-Z2-7]+=*$/.test(input.secret)) {
-		throw error(
-			400,
-			'Invalid secret format. Must be Base32-encoded (A-Z, 2-7, with optional padding)'
-		);
+	if (input.secret) {
+		if (!/^[A-Z2-7]+=*$/.test(input.secret)) {
+			throw error(
+				400,
+				'Invalid secret format. Must be Base32-encoded (A-Z, 2-7, with optional padding)'
+			);
+		}
+
+		// Validate secret length
+		const cleanSecret = input.secret.replace(/=/g, ''); // Remove padding
+		if (cleanSecret.length < 16) {
+			throw error(400, 'Secret must be at least 16 characters (before padding)');
+		}
+		if (cleanSecret.length > 128) {
+			throw error(400, 'Secret is too long (max 128 characters)');
+		}
+
+		// Test if secret can be decoded by OTPAuth
+		try {
+			OTPAuth.Secret.fromBase32(input.secret);
+		} catch (e) {
+			throw error(400, 'Invalid Base32 secret - unable to decode');
+		}
 	}
 
 	// Prepare update data
@@ -108,6 +133,20 @@ export default new Endpoint({ Param, Input, Output, Modifier }).handle(async (in
 				}
 			}
 		}
+	});
+
+	// Create audit log
+	await createAuditLog({
+		userId,
+		teamId: user.teamId,
+		action: 'AUTHENTICATOR_TOKEN_UPDATED',
+		resourceType: 'AuthenticatorToken',
+		resourceId: token.id,
+		metadata: sanitizeMetadata({
+			tokenName: token.name,
+			updatedFields: Object.keys(updateData)
+		}),
+		event
 	});
 
 	return serializeDates({

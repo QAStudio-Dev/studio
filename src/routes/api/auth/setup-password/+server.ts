@@ -4,6 +4,7 @@ import { db } from '$lib/server/db';
 import { hashPassword } from '$lib/server/crypto';
 import { createSession, setSessionCookie, verifyCsrfToken } from '$lib/server/sessions';
 import { TEMP_PASSWORD_HASH } from '$lib/server/auth-constants';
+import { createAuditLog } from '$lib/server/audit';
 
 /**
  * One-time password setup for users migrated from Clerk
@@ -63,11 +64,19 @@ export const POST: RequestHandler = async (event) => {
 		const passwordHash = await hashPassword(newPassword);
 
 		// Update user password
-		await db.user.update({
+		const updatedUser = await db.user.update({
 			where: { id: user.id },
 			data: {
 				passwordHash,
 				emailVerified: true // Mark email as verified since they came from Clerk
+			},
+			select: {
+				id: true,
+				email: true,
+				firstName: true,
+				lastName: true,
+				role: true,
+				teamId: true
 			}
 		});
 
@@ -75,14 +84,28 @@ export const POST: RequestHandler = async (event) => {
 		const { sessionId, token, csrfToken } = await createSession(user.id);
 		setSessionCookie(event, sessionId, token, csrfToken);
 
+		// Audit password setup
+		await createAuditLog({
+			userId: updatedUser.id,
+			teamId: updatedUser.teamId ?? undefined,
+			action: 'USER_PASSWORD_CHANGED',
+			resourceType: 'User',
+			resourceId: updatedUser.id,
+			metadata: {
+				email: updatedUser.email,
+				method: 'setup'
+			},
+			event
+		});
+
 		return json({
 			message: 'Password set successfully',
 			user: {
-				id: user.id,
-				email: user.email,
-				firstName: user.firstName,
-				lastName: user.lastName,
-				role: user.role
+				id: updatedUser.id,
+				email: updatedUser.email,
+				firstName: updatedUser.firstName,
+				lastName: updatedUser.lastName,
+				role: updatedUser.role
 			}
 		});
 	} catch (err) {

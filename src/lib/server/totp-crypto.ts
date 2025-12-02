@@ -12,6 +12,14 @@ function getEncryptionKey(): string {
 			'TOTP_ENCRYPTION_KEY environment variable is not set. Generate with: openssl rand -hex 32'
 		);
 	}
+
+	// Validate key is exactly 64 hex characters (32 bytes for AES-256)
+	if (!/^[0-9a-f]{64}$/i.test(key)) {
+		throw new Error(
+			'TOTP_ENCRYPTION_KEY must be exactly 64 hexadecimal characters (32 bytes). Generate with: openssl rand -hex 32'
+		);
+	}
+
 	return key;
 }
 
@@ -35,18 +43,23 @@ export function encryptTOTPSecret(secret: string): string {
  * Decrypt a stored TOTP secret
  */
 export function decryptTOTPSecret(encryptedData: string): string {
-	const key = getEncryptionKey();
-	const [ivHex, encrypted] = encryptedData.split(':');
+	try {
+		const key = getEncryptionKey();
+		const [ivHex, encrypted] = encryptedData.split(':');
 
-	if (!ivHex || !encrypted) {
-		throw new Error('Invalid encrypted data format');
+		if (!ivHex || !encrypted) {
+			throw new Error('Invalid encrypted data format');
+		}
+
+		const iv = Buffer.from(ivHex, 'hex');
+		const decipher = createDecipheriv('aes-256-cbc', Buffer.from(key, 'hex'), iv);
+
+		let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+		decrypted += decipher.final('utf8');
+
+		return decrypted;
+	} catch (error) {
+		// Don't leak encrypted data details in error messages
+		throw new Error('Failed to decrypt TOTP secret');
 	}
-
-	const iv = Buffer.from(ivHex, 'hex');
-	const decipher = createDecipheriv('aes-256-cbc', Buffer.from(key, 'hex'), iv);
-
-	let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-	decrypted += decipher.final('utf8');
-
-	return decrypted;
 }

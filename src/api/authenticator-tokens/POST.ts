@@ -3,6 +3,8 @@ import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
 import { encryptTOTPSecret } from '$lib/server/totp-crypto';
 import { serializeDates } from '$lib/utils/date';
+import * as OTPAuth from 'otpauth';
+import { createAuditLog, sanitizeMetadata } from '$lib/server/audit';
 
 export const Input = z.object({
 	name: z.string().describe('Token name'),
@@ -60,12 +62,33 @@ export default new Endpoint({ Input, Output, Modifier }).handle(async (input, ev
 		throw error(403, 'User must be part of a team to create authenticator tokens');
 	}
 
+	// RBAC: Only OWNER and ADMIN can manage authenticator tokens
+	if (user.role !== 'OWNER' && user.role !== 'ADMIN') {
+		throw error(403, 'Only team owners and admins can create authenticator tokens');
+	}
+
 	// Validate secret format (Base32)
 	if (!/^[A-Z2-7]+=*$/.test(input.secret)) {
 		throw error(
 			400,
 			'Invalid secret format. Must be Base32-encoded (A-Z, 2-7, with optional padding)'
 		);
+	}
+
+	// Validate secret length
+	const cleanSecret = input.secret.replace(/=/g, ''); // Remove padding
+	if (cleanSecret.length < 16) {
+		throw error(400, 'Secret must be at least 16 characters (before padding)');
+	}
+	if (cleanSecret.length > 128) {
+		throw error(400, 'Secret is too long (max 128 characters)');
+	}
+
+	// Test if secret can be decoded by OTPAuth
+	try {
+		OTPAuth.Secret.fromBase32(input.secret);
+	} catch (e) {
+		throw error(400, 'Invalid Base32 secret - unable to decode');
 	}
 
 	// Encrypt the secret
@@ -95,6 +118,21 @@ export default new Endpoint({ Input, Output, Modifier }).handle(async (input, ev
 				}
 			}
 		}
+	});
+
+	// Create audit log
+	await createAuditLog({
+		userId,
+		teamId: user.teamId,
+		action: 'AUTHENTICATOR_TOKEN_CREATED',
+		resourceType: 'AuthenticatorToken',
+		resourceId: token.id,
+		metadata: sanitizeMetadata({
+			tokenName: token.name,
+			issuer: token.issuer,
+			accountName: token.accountName
+		}),
+		event
 	});
 
 	return serializeDates({

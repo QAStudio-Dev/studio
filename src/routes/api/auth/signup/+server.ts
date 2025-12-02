@@ -5,6 +5,7 @@ import { hashPassword } from '$lib/server/crypto';
 import { createSession, setSessionCookie, verifyCsrfToken } from '$lib/server/sessions';
 import { Ratelimit } from '@upstash/ratelimit';
 import { redis, isCacheEnabled } from '$lib/server/redis';
+import { createAuditLog } from '$lib/server/audit';
 
 /**
  * Rate limiting for signup attempts
@@ -100,6 +101,17 @@ export const POST: RequestHandler = async (event) => {
 		// Check rate limit
 		const rateLimitOk = await checkRateLimit(email.trim().toLowerCase());
 		if (!rateLimitOk) {
+			// Audit rate limit exceeded
+			await createAuditLog({
+				userId: 'anonymous',
+				action: 'RATE_LIMIT_EXCEEDED',
+				resourceType: 'Authentication',
+				metadata: {
+					email: email.trim().toLowerCase(),
+					endpoint: '/api/auth/signup'
+				},
+				event
+			});
 			throw error(429, {
 				message: 'Too many signup attempts. Please try again in 1 hour.'
 			});
@@ -136,6 +148,19 @@ export const POST: RequestHandler = async (event) => {
 
 		// Set session cookie
 		setSessionCookie(event, sessionId, token, csrfToken);
+
+		// Audit successful signup
+		await createAuditLog({
+			userId: user.id,
+			action: 'USER_CREATED',
+			resourceType: 'User',
+			resourceId: user.id,
+			metadata: {
+				email: user.email,
+				role: user.role
+			},
+			event
+		});
 
 		// Return user data (excluding password hash)
 		return json({

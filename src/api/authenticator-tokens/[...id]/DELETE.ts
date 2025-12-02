@@ -1,6 +1,7 @@
 import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
+import { createAuditLog, sanitizeMetadata } from '$lib/server/audit';
 
 export const Param = z.object({
 	id: z.string().describe('Token ID')
@@ -33,6 +34,11 @@ export default new Endpoint({ Param, Output, Modifier }).handle(async (input, ev
 		throw error(403, 'User must be part of a team to delete authenticator tokens');
 	}
 
+	// RBAC: Only OWNER and ADMIN can manage authenticator tokens
+	if (user.role !== 'OWNER' && user.role !== 'ADMIN') {
+		throw error(403, 'Only team owners and admins can delete authenticator tokens');
+	}
+
 	// Check token exists and belongs to user's team
 	const existingToken = await db.authenticatorToken.findFirst({
 		where: {
@@ -48,6 +54,19 @@ export default new Endpoint({ Param, Output, Modifier }).handle(async (input, ev
 	// Delete token
 	await db.authenticatorToken.delete({
 		where: { id: input.id }
+	});
+
+	// Create audit log
+	await createAuditLog({
+		userId,
+		teamId: user.teamId,
+		action: 'AUTHENTICATOR_TOKEN_DELETED',
+		resourceType: 'AuthenticatorToken',
+		resourceId: input.id,
+		metadata: sanitizeMetadata({
+			tokenName: existingToken.name
+		}),
+		event
 	});
 
 	return { success: true };

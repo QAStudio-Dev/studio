@@ -2,6 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { requireAuth } from '$lib/server/auth';
+import { createAuditLog } from '$lib/server/audit';
 
 /**
  * Delete an API key
@@ -13,7 +14,8 @@ export const DELETE: RequestHandler = async (event) => {
 
 	// Check if key exists and belongs to user
 	const apiKey = await db.apiKey.findUnique({
-		where: { id: keyId }
+		where: { id: keyId },
+		include: { user: { select: { teamId: true } } }
 	});
 
 	if (!apiKey) {
@@ -27,6 +29,20 @@ export const DELETE: RequestHandler = async (event) => {
 	// Delete the key
 	await db.apiKey.delete({
 		where: { id: keyId }
+	});
+
+	// Audit API key deletion
+	await createAuditLog({
+		userId,
+		teamId: apiKey.user.teamId ?? undefined,
+		action: 'API_KEY_DELETED',
+		resourceType: 'ApiKey',
+		resourceId: keyId,
+		metadata: {
+			keyName: apiKey.name,
+			keyPrefix: apiKey.prefix
+		},
+		event
 	});
 
 	return json({ success: true });

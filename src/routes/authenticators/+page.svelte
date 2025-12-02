@@ -4,6 +4,7 @@
 	import type { PageData } from './$types';
 	import { Html5Qrcode } from 'html5-qrcode';
 	import { parseOTPAuthURL, isValidBase32Secret } from '$lib/utils/otpauth-parser';
+	import { invalidateAll } from '$app/navigation';
 
 	let { data }: { data: PageData } = $props();
 
@@ -70,8 +71,8 @@
 			});
 
 			if (response.ok) {
-				// Reload page to show updated list
-				window.location.reload();
+				// Invalidate all data to refresh the list
+				await invalidateAll();
 			} else {
 				const error = await response.json();
 				alert(`Failed to delete token: ${error.message}`);
@@ -401,7 +402,9 @@
 							});
 
 							if (response.ok) {
-								window.location.reload();
+								// Invalidate all data to refresh the list
+								await invalidateAll();
+								closeModal();
 							} else {
 								const error = await response.json();
 								alert(`Failed to create token: ${error.message}`);

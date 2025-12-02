@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { createPasswordResetToken } from '$lib/server/password-reset';
 import { verifyCsrfToken } from '$lib/server/sessions';
+import { createAuditLog } from '$lib/server/audit';
 
 export const POST: RequestHandler = async (event) => {
 	try {
@@ -23,13 +24,27 @@ export const POST: RequestHandler = async (event) => {
 
 		// Find user
 		const user = await db.user.findUnique({
-			where: { email: email.trim().toLowerCase() }
+			where: { email: email.trim().toLowerCase() },
+			select: { id: true, teamId: true, email: true }
 		});
 
 		// Always return success to prevent user enumeration
 		// In production, you would send an email with the reset link
 		if (user) {
 			const { tokenId, token } = await createPasswordResetToken(user.id);
+
+			// Audit password reset request
+			await createAuditLog({
+				userId: user.id,
+				teamId: user.teamId ?? undefined,
+				action: 'USER_PASSWORD_RESET_REQUESTED',
+				resourceType: 'User',
+				resourceId: user.id,
+				metadata: {
+					email: user.email
+				},
+				event
+			});
 
 			// TODO: Implement email sending using Resend API
 			// Email template should include:

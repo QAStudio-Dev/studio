@@ -1,0 +1,124 @@
+import { db } from '$lib/server/db';
+import type { RequestEvent } from '@sveltejs/kit';
+
+export type AuditAction =
+	// Authentication Events
+	| 'USER_LOGIN_SUCCESS'
+	| 'USER_LOGIN_FAILED'
+	| 'USER_LOGOUT'
+	| 'USER_PASSWORD_CHANGED'
+	| 'USER_PASSWORD_RESET_REQUESTED'
+	| 'USER_PASSWORD_RESET_COMPLETED'
+	| 'USER_EMAIL_VERIFIED'
+	| 'SESSION_CREATED'
+	| 'SESSION_EXPIRED'
+	// User Management
+	| 'USER_CREATED'
+	| 'USER_UPDATED'
+	| 'USER_DELETED'
+	| 'USER_ROLE_CHANGED'
+	| 'USER_PROFILE_UPDATED'
+	// Team Management
+	| 'TEAM_CREATED'
+	| 'TEAM_UPDATED'
+	| 'TEAM_DELETED'
+	| 'TEAM_MEMBER_ADDED'
+	| 'TEAM_MEMBER_REMOVED'
+	| 'TEAM_INVITATION_SENT'
+	| 'TEAM_INVITATION_ACCEPTED'
+	| 'TEAM_INVITATION_REVOKED'
+	// API Keys
+	| 'API_KEY_CREATED'
+	| 'API_KEY_DELETED'
+	| 'API_KEY_USED'
+	// Authenticator Tokens
+	| 'AUTHENTICATOR_TOKEN_CREATED'
+	| 'AUTHENTICATOR_TOKEN_UPDATED'
+	| 'AUTHENTICATOR_TOKEN_DELETED'
+	| 'AUTHENTICATOR_TOKEN_VIEWED'
+	| 'AUTHENTICATOR_TOKEN_CODE_GENERATED'
+	// Data Access (GDPR)
+	| 'USER_DATA_EXPORTED'
+	| 'USER_DATA_DELETED'
+	| 'SENSITIVE_DATA_ACCESSED'
+	// Project & Test Data
+	| 'PROJECT_CREATED'
+	| 'PROJECT_UPDATED'
+	| 'PROJECT_DELETED'
+	| 'PROJECT_ACCESSED'
+	// Subscription & Billing
+	| 'SUBSCRIPTION_CREATED'
+	| 'SUBSCRIPTION_UPDATED'
+	| 'SUBSCRIPTION_CANCELLED'
+	| 'PAYMENT_METHOD_ADDED'
+	| 'PAYMENT_METHOD_REMOVED'
+	// Security Events
+	| 'UNAUTHORIZED_ACCESS_ATTEMPT'
+	| 'RATE_LIMIT_EXCEEDED'
+	| 'SUSPICIOUS_ACTIVITY_DETECTED'
+	| 'SETTINGS_CHANGED';
+
+interface AuditLogParams {
+	userId: string;
+	teamId?: string;
+	action: AuditAction;
+	resourceType: string;
+	resourceId?: string;
+	metadata?: Record<string, any>;
+	event?: RequestEvent;
+}
+
+/**
+ * Create an audit log entry
+ * @param params - Audit log parameters
+ */
+export async function createAuditLog(params: AuditLogParams): Promise<void> {
+	const { userId, teamId, action, resourceType, resourceId, metadata, event } = params;
+
+	// Extract IP address and user agent from event if available
+	const ipAddress = event?.request.headers.get('x-forwarded-for') || event?.getClientAddress();
+	const userAgent = event?.request.headers.get('user-agent');
+
+	try {
+		await db.auditLog.create({
+			data: {
+				userId,
+				teamId: teamId ?? undefined,
+				action,
+				resourceType,
+				resourceId: resourceId ?? undefined,
+				metadata: metadata ?? undefined,
+				ipAddress: ipAddress ?? undefined,
+				userAgent: userAgent ?? undefined
+			}
+		});
+	} catch (error) {
+		// Log but don't throw - audit failures shouldn't break the main operation
+		console.error('Failed to create audit log:', error);
+	}
+}
+
+/**
+ * Sanitize metadata to ensure no sensitive data is logged
+ * Removes fields like 'secret', 'password', 'token', etc.
+ */
+export function sanitizeMetadata(data: Record<string, any>): Record<string, any> {
+	const sensitiveKeys = ['secret', 'password', 'token', 'key', 'hash'];
+	const sanitized: Record<string, any> = {};
+
+	for (const [key, value] of Object.entries(data)) {
+		// Skip sensitive keys
+		if (sensitiveKeys.some((sensitive) => key.toLowerCase().includes(sensitive))) {
+			continue;
+		}
+
+		// Recursively sanitize nested objects
+		if (value && typeof value === 'object' && !Array.isArray(value)) {
+			sanitized[key] = sanitizeMetadata(value);
+		} else {
+			sanitized[key] = value;
+		}
+	}
+
+	return sanitized;
+}

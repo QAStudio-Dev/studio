@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { requireAuth } from '$lib/server/auth';
 import { generateApiKey, hashApiKey, getApiKeyPrefix } from '$lib/server/api-keys';
+import { createAuditLog } from '$lib/server/audit';
 
 /**
  * Create a new API key
@@ -32,6 +33,12 @@ export const POST: RequestHandler = async (event) => {
 		expiresAt.setDate(expiresAt.getDate() + expiresInDays);
 	}
 
+	// Get user info for audit log
+	const user = await db.user.findUnique({
+		where: { id: userId },
+		select: { teamId: true, email: true }
+	});
+
 	// Save to database
 	const savedKey = await db.apiKey.create({
 		data: {
@@ -48,6 +55,21 @@ export const POST: RequestHandler = async (event) => {
 			expiresAt: true,
 			createdAt: true
 		}
+	});
+
+	// Audit API key creation
+	await createAuditLog({
+		userId,
+		teamId: user?.teamId ?? undefined,
+		action: 'API_KEY_CREATED',
+		resourceType: 'ApiKey',
+		resourceId: savedKey.id,
+		metadata: {
+			keyName: savedKey.name,
+			keyPrefix: savedKey.prefix,
+			expiresAt: savedKey.expiresAt?.toISOString()
+		},
+		event
 	});
 
 	// Return the plain API key only once (never stored in DB)

@@ -41,6 +41,7 @@ model User {
   sessions            Session[]
   passwordResetTokens PasswordResetToken[]
   createdAuthTokens   AuthenticatorToken[] @relation("AuthenticatorTokenCreator")
+  auditLogs           AuditLog[]           @relation("AuditLogUser")
 
   @@index([email])
   @@index([teamId])
@@ -110,6 +111,7 @@ model Team {
   integrations        Integration[]
   invitations         TeamInvitation[]
   authenticatorTokens AuthenticatorToken[]
+  auditLogs           AuditLog[]           @relation("AuditLogTeam")
 
   @@index([name])
   @@index([overSeatLimit])
@@ -186,9 +188,35 @@ model AuthenticatorToken {
   team    Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
   creator User @relation("AuthenticatorTokenCreator", fields: [createdBy], references: [id])
 
-  @@index([teamId])
+  @@index([teamId, name]) // Composite index for common query pattern (team + search)
   @@index([createdBy])
-  @@index([name])
+}
+
+// ============================================
+// AUDIT LOGS
+// ============================================
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  userId       String // User who performed the action
+  teamId       String? // Team context (if applicable)
+  action       String // Action performed (e.g., "AUTHENTICATOR_TOKEN_CREATED")
+  resourceType String // Type of resource (e.g., "AuthenticatorToken", "Project")
+  resourceId   String? // ID of the affected resource
+  metadata     Json? // Additional context (non-sensitive data only)
+  ipAddress    String? // IP address of the user
+  userAgent    String? // User agent string
+  createdAt    DateTime @default(now())
+
+  // Relations
+  user User  @relation("AuditLogUser", fields: [userId], references: [id], onDelete: Cascade)
+  team Team? @relation("AuditLogTeam", fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([teamId])
+  @@index([resourceType, resourceId])
+  @@index([action])
+  @@index([createdAt])
 }
 
 // ============================================
