@@ -106,15 +106,41 @@ export async function extractTraceData(traceBuffer: Buffer): Promise<any> {
 			}
 		}
 
-		// Find trace.json file
-		const traceJsonEntry = zipEntries.find((entry) => entry.entryName === 'trace.json');
+		// Playwright trace files contain .trace files (not trace.json)
+		// These are JSON lines format with one action per line
+		const traceFiles = zipEntries.filter((entry) => entry.entryName.endsWith('.trace'));
 
-		if (!traceJsonEntry) {
-			throw new Error('Invalid trace file - missing trace.json');
+		if (traceFiles.length === 0) {
+			// Log available files for debugging
+			const availableFiles = zipEntries.map((e) => e.entryName).join(', ');
+			console.error('Available files in trace archive:', availableFiles);
+			throw new Error(
+				`Invalid trace file - no .trace files found. Available files: ${availableFiles}`
+			);
 		}
 
-		const traceData = JSON.parse(traceJsonEntry.getData().toString('utf8'));
-		return traceData;
+		// Parse the first trace file (usually there's only one for single-page tests)
+		const traceContent = traceFiles[0].getData().toString('utf8');
+
+		// Playwright traces are JSON lines format - parse each line
+		const traceEvents = traceContent
+			.split('\n')
+			.filter((line) => line.trim())
+			.map((line) => {
+				try {
+					return JSON.parse(line);
+				} catch {
+					return null;
+				}
+			})
+			.filter(Boolean);
+
+		// Return trace events for analysis
+		return {
+			events: traceEvents,
+			fileName: traceFiles[0].entryName,
+			eventCount: traceEvents.length
+		};
 	} catch (error: any) {
 		throw new Error(`Failed to extract trace data: ${error.message}`);
 	}
@@ -175,42 +201,49 @@ export function buildAnalysisContext(
 			duration: step.duration
 		})) || [];
 
-	// Extract last 10 actions before failure from trace (sanitize values)
-	const actions = (traceData.actions || []).slice(-10).map((action: any) => ({
-		type: action.type || 'unknown',
-		selector: action.selector,
-		value: sanitizePII(action.value),
-		error: sanitizePII(action.error)
+	// Parse Playwright trace events
+	const events = traceData.events || [];
+
+	// Extract actions from trace events
+	const actionEvents = events.filter((e: any) => e.type === 'action').slice(-10);
+	const actions = actionEvents.map((event: any) => ({
+		type: event.apiName || 'unknown',
+		selector: event.params?.selector,
+		value: sanitizePII(event.params?.value),
+		error: sanitizePII(event.error?.message)
 	}));
 
-	// Get DOM snapshot at failure point (sanitize)
-	// Optimize memory usage by extracting substring before sanitization
-	const snapshots = traceData.snapshots || [];
-	const lastSnapshot = snapshots[snapshots.length - 1];
+	// Extract DOM snapshots (if available)
+	const snapshotEvents = events.filter((e: any) => e.type === 'snapshot');
+	const lastSnapshot = snapshotEvents[snapshotEvents.length - 1];
 	let domSnapshot = '';
-	if (lastSnapshot?.html) {
-		// Extract only the first 5000 chars to avoid loading massive DOM into memory
+	if (lastSnapshot?.snapshot) {
 		const htmlSubstring =
-			typeof lastSnapshot.html === 'string' ? lastSnapshot.html.substring(0, 5000) : '';
+			typeof lastSnapshot.snapshot === 'string'
+				? lastSnapshot.snapshot.substring(0, 5000)
+				: '';
 		domSnapshot = sanitizePII(htmlSubstring);
 	}
 
-	// Extract recent network requests (sanitize URLs to remove query params with tokens)
-	const networkRequests = (traceData.network || []).slice(-5).map((req: any) => {
-		const url = req.url || '';
-		// Remove query parameters that might contain sensitive data
+	// Extract network requests from events
+	const networkEvents = events
+		.filter((e: any) => e.type === 'resource' || e.type === 'route')
+		.slice(-5);
+	const networkRequests = networkEvents.map((event: any) => {
+		const url = event.params?.url || event.url || '';
 		const sanitizedUrl = url.split('?')[0];
 		return {
 			url: sanitizedUrl,
-			status: req.status,
-			method: req.method || 'GET'
+			status: event.params?.status || event.status,
+			method: event.params?.method || event.method || 'GET'
 		};
 	});
 
-	// Extract console logs (sanitize)
-	const consoleLogs = (traceData.console || []).slice(-10).map((log: any) => ({
-		type: log.type || 'log',
-		text: sanitizePII(log.text || '')
+	// Extract console logs from events
+	const consoleEvents = events.filter((e: any) => e.type === 'console').slice(-10);
+	const consoleLogs = consoleEvents.map((event: any) => ({
+		type: event.params?.type || 'log',
+		text: sanitizePII(event.params?.text || event.text || '')
 	}));
 
 	return {

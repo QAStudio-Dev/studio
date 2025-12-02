@@ -513,7 +513,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 														</button>
 													</div>
 													<div
-														class="prose prose-sm max-w-none text-xs whitespace-pre-wrap"
+														class="prose prose-sm max-w-none text-xs whitespace-pre-wrap text-surface-900 dark:text-surface-50"
 													>
 														{aiDiagnoses.get(result.id)?.diagnosis}
 													</div>
