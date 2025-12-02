@@ -26,7 +26,7 @@ QA Studio is a modern, open-source test management platform built by QA engineer
 - 🧪 **Test Organization** - Hierarchical test suites and cases with full traceability
 - 🎯 **Test Execution** - Plan and execute test runs across multiple environments
 - 📸 **Rich Media** - Attach screenshots, videos, logs, and stack traces
-- 🔐 **Enterprise Auth** - Clerk authentication with SSO/SAML support
+- 🔐 **Self-Hosted Auth** - Secure authentication with bcrypt and session management
 - 🌐 **Self-Hostable** - Deploy on your own infrastructure with full control
 
 ## Quick Start
@@ -35,7 +35,6 @@ QA Studio is a modern, open-source test management platform built by QA engineer
 
 - Node.js 18+ and npm
 - PostgreSQL database
-- Clerk account (for authentication)
 
 ### Installation
 
@@ -63,10 +62,6 @@ QA Studio is a modern, open-source test management platform built by QA engineer
     ```env
     # Database
     DATABASE_URL="postgresql://user:password@localhost:5432/qa_studio"
-
-    # Clerk Authentication
-    PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
-    CLERK_SECRET_KEY=sk_test_...
 
     # Vercel Blob Storage (REQUIRED for attachments)
     # Get from: Vercel Dashboard -> Storage -> Blob -> Connect -> Read/Write Token
@@ -144,7 +139,7 @@ If you're self-hosting and don't want to use Vercel Blob, you can:
 - **Frontend**: SvelteKit 2, Svelte 5, Skeleton UI, Tailwind 4
 - **Backend**: SvelteKit API routes
 - **Database**: PostgreSQL with Prisma ORM
-- **Authentication**: Clerk (with SSO support)
+- **Authentication**: Self-hosted with bcrypt and secure sessions
 - **Deployment**: Vercel (or any Node.js host)
 - **CMS**: Decap CMS for blog management
 
@@ -152,9 +147,7 @@ If you're self-hosting and don't want to use Vercel Blob, you can:
 
 - 📚 **[API Documentation](https://qastudio.dev/docs)** - Complete REST API reference
 - 🔧 **[Setup Guides](docs/)** - Detailed setup instructions
-    - [Authentication Setup](docs/SETUP_AUTH.md)
     - [Team Invitations](docs/TEAM_INVITATIONS.md) - Invite members with role-based access
-    - [Clerk Invitations Setup](docs/CLERK_INVITATIONS_SETUP.md) - Configure email invitations
     - [Stripe Integration](docs/STRIPE_SETUP.md) - Team billing and subscriptions
     - [Decap CMS Setup](docs/DECAP_CMS_SETUP.md) - Blog management
     - [Slack Notifications](docs/INTEGRATIONS.md) - Team notifications

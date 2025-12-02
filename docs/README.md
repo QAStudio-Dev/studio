@@ -4,18 +4,12 @@ Welcome to the QA Studio documentation! This directory contains comprehensive gu
 
 ## 📚 Table of Contents
 
-### Getting Started
-
-- [SETUP_AUTH.md](SETUP_AUTH.md) - Initial authentication setup with Clerk
-- [CLERK_PUBLIC_ROUTES.md](CLERK_PUBLIC_ROUTES.md) - Configuring public routes
-
 ### Features & Setup
 
 - [STRIPE_SETUP.md](STRIPE_SETUP.md) - Payment and subscription configuration
 - [DECAP_CMS_SETUP.md](DECAP_CMS_SETUP.md) - Content management system setup
 - [TEAMS_AND_ROLES.md](TEAMS_AND_ROLES.md) - Team structure and permissions
 - [TEAM_INVITATIONS.md](TEAM_INVITATIONS.md) - Inviting users to teams
-- [CLERK_INVITATIONS_SETUP.md](CLERK_INVITATIONS_SETUP.md) - Clerk invitation flows
 
 ### Integrations
 
@@ -90,10 +84,9 @@ QA Studio uses cryptographically signed, time-limited URLs to serve Playwright t
 
 ### Setting Up a New Development Environment
 
-1. Follow [SETUP_AUTH.md](SETUP_AUTH.md) for Clerk authentication
-2. Configure Stripe using [STRIPE_SETUP.md](STRIPE_SETUP.md)
-3. Set up API keys via [API_KEYS_SETUP.md](API_KEYS_SETUP.md)
-4. Generate security secrets per [SECURITY.md](SECURITY.md)
+1. Configure Stripe using [STRIPE_SETUP.md](STRIPE_SETUP.md)
+2. Set up API keys via [API_KEYS_SETUP.md](API_KEYS_SETUP.md)
+3. Generate security secrets per [SECURITY.md](SECURITY.md)
 
 ### Integrating Playwright Tests
 
@@ -105,7 +98,6 @@ QA Studio uses cryptographically signed, time-limited URLs to serve Playwright t
 
 1. Understand structure in [TEAMS_AND_ROLES.md](TEAMS_AND_ROLES.md)
 2. Set up invitations via [TEAM_INVITATIONS.md](TEAM_INVITATIONS.md)
-3. Configure Clerk flows in [CLERK_INVITATIONS_SETUP.md](CLERK_INVITATIONS_SETUP.md)
 
 ### Adding Integrations
 

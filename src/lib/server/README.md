@@ -108,27 +108,31 @@ export const POST: RequestHandler = async (event) => {
 };
 ```
 
-## Organization Support (Multi-Tenancy)
+## Team Support (Multi-Tenancy)
 
-When you enable Organizations in Clerk:
+Access team information from the authenticated user:
 
 ```typescript
-import { requireAuth, getCurrentSession } from '$lib/server/auth';
+import { requireAuth } from '$lib/server/auth';
+import { db } from '$lib/server/db';
 
 export const GET: RequestHandler = async (event) => {
-	requireAuth(event);
-	const session = getCurrentSession(event);
+	const userId = await requireAuth(event);
 
-	// Get organization ID
-	const orgId = session?.orgId;
+	// Get user with team memberships
+	const user = await db.user.findUnique({
+		where: { id: userId },
+		include: {
+			teamMembers: {
+				include: { team: true }
+			}
+		}
+	});
 
-	if (!orgId) {
-		throw error(400, 'No organization selected');
-	}
-
-	// Filter by organization
+	// Filter projects by user's teams
+	const teamIds = user.teamMembers.map((tm) => tm.teamId);
 	const projects = await db.project.findMany({
-		where: { organizationId: orgId }
+		where: { teamId: { in: teamIds } }
 	});
 
 	return json(projects);
@@ -138,14 +142,21 @@ export const GET: RequestHandler = async (event) => {
 ## Role-Based Access Control (RBAC)
 
 ```typescript
-import { requireAuth, getCurrentSession } from '$lib/server/auth';
+import { requireAuth } from '$lib/server/auth';
+import { db } from '$lib/server/db';
 
 export const DELETE: RequestHandler = async (event) => {
-	requireAuth(event);
-	const session = getCurrentSession(event);
+	const userId = await requireAuth(event);
 
-	// Check organization role
-	if (session?.orgRole !== 'admin') {
+	// Get user's role in the team
+	const membership = await db.teamMember.findFirst({
+		where: {
+			userId,
+			teamId: params.teamId
+		}
+	});
+
+	if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
 		throw error(403, 'Forbidden - Admin access required');
 	}
 
@@ -180,14 +191,13 @@ try {
 
 ## Testing with Auth
 
-For testing, you can mock the auth:
+For testing, you can mock the session:
 
 ```typescript
 // In your test file
-event.locals.clerk = {
-	session: {
-		userId: 'test_user_123',
-		orgId: 'test_org_456'
-	}
+event.locals.user = {
+	id: 'test_user_123',
+	email: 'test@example.com',
+	role: 'ADMIN'
 };
 ```

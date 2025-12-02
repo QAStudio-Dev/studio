@@ -66,7 +66,7 @@ The platform includes a comprehensive, public-facing API documentation page at `
 
 ### Maintaining API Docs
 
-To update API documentation, edit [src/lib/api-docs.ts](src/lib/api-docs.ts) by adding or modifying entries in the `apiDocumentation` array. The page will automatically reflect changes.
+The API documentation uses a TypeScript-based schema system for type safety and automatic sync with endpoints. See the [API Documentation System](#api-documentation-system) section below for details on adding new endpoints.
 
 ## Skeleton + Svelte Styling Guide
 

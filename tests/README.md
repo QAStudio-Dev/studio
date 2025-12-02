@@ -59,7 +59,7 @@ Located in `e2e/tests/auth.test.ts`:
 - Success message (no user enumeration)
 - Link back to login
 
-#### Password Setup Flow (Clerk Migration)
+#### Password Setup Flow
 
 - Setup password form
 - Non-existent user handling
