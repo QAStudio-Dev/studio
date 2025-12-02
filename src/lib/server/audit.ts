@@ -101,14 +101,46 @@ export async function createAuditLog(params: AuditLogParams): Promise<void> {
 /**
  * Sanitize metadata to ensure no sensitive data is logged
  * Removes fields like 'secret', 'password', 'token', etc.
+ * Uses exact field name matching and common patterns to avoid false positives
  */
 export function sanitizeMetadata(data: Record<string, any>): Record<string, any> {
-	const sensitiveKeys = ['secret', 'password', 'token', 'key', 'hash'];
+	// Exact field names to filter
+	const exactSensitiveKeys = [
+		'secret',
+		'password',
+		'token',
+		'key',
+		'hash',
+		'apikey',
+		'accesstoken',
+		'refreshtoken',
+		'csrftoken',
+		'sessiontoken'
+	];
+
+	// Patterns for common sensitive field naming conventions
+	const sensitivePatterns = [
+		/^.*secret$/i, // ends with "secret"
+		/^.*password$/i, // ends with "password"
+		/^.*token$/i, // ends with "token"
+		/^.*_key$/i, // ends with "_key"
+		/^.*hash$/i, // ends with "hash"
+		/^api.*key$/i, // API key variations
+		/^encrypted.*/i // starts with "encrypted"
+	];
+
 	const sanitized: Record<string, any> = {};
 
 	for (const [key, value] of Object.entries(data)) {
-		// Skip sensitive keys
-		if (sensitiveKeys.some((sensitive) => key.toLowerCase().includes(sensitive))) {
+		const lowerKey = key.toLowerCase();
+
+		// Check exact matches first
+		if (exactSensitiveKeys.includes(lowerKey)) {
+			continue;
+		}
+
+		// Check regex patterns
+		if (sensitivePatterns.some((pattern) => pattern.test(key))) {
 			continue;
 		}
 

@@ -2,7 +2,7 @@ import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
 import { createAuditLog, sanitizeMetadata } from '$lib/server/audit';
-import { verifyCsrfToken } from '$lib/server/sessions';
+import { requireCsrfForSession } from '$lib/server/sessions';
 
 export const Param = z.object({
 	id: z.string().describe('Token ID')
@@ -28,12 +28,10 @@ export const Modifier = (r: any) => {
  * Delete an authenticator token
  */
 export default new Endpoint({ Param, Input, Output, Modifier }).handle(async (input, event) => {
-	// Check if using session auth (not API key)
-	const isSessionAuth =
-		!event.request.headers.get('Authorization') && !event.request.headers.get('x-api-key');
-
 	// Validate CSRF token for session-based auth
-	if (isSessionAuth && (!input.csrfToken || !verifyCsrfToken(event, input.csrfToken))) {
+	try {
+		requireCsrfForSession(event, input.csrfToken);
+	} catch (e) {
 		throw error(403, 'Invalid CSRF token');
 	}
 

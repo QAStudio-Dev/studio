@@ -5,7 +5,7 @@ import { encryptTOTPSecret } from '$lib/server/totp-crypto';
 import { serializeDates } from '$lib/utils/date';
 import * as OTPAuth from 'otpauth';
 import { createAuditLog, sanitizeMetadata } from '$lib/server/audit';
-import { verifyCsrfToken } from '$lib/server/sessions';
+import { requireCsrfForSession } from '$lib/server/sessions';
 
 export const Param = z.object({
 	id: z.string().describe('Token ID')
@@ -56,12 +56,10 @@ export const Modifier = (r: any) => {
  * Update an authenticator token
  */
 export default new Endpoint({ Param, Input, Output, Modifier }).handle(async (input, event) => {
-	// Check if using session auth (not API key)
-	const isSessionAuth =
-		!event.request.headers.get('Authorization') && !event.request.headers.get('x-api-key');
-
 	// Validate CSRF token for session-based auth
-	if (isSessionAuth && (!input.csrfToken || !verifyCsrfToken(event, input.csrfToken))) {
+	try {
+		requireCsrfForSession(event, input.csrfToken);
+	} catch (e) {
 		throw error(403, 'Invalid CSRF token');
 	}
 
@@ -119,8 +117,18 @@ export default new Endpoint({ Param, Input, Output, Modifier }).handle(async (in
 		}
 	}
 
-	// Prepare update data
-	const updateData: any = {};
+	// Prepare update data with type safety
+	const updateData: {
+		name?: string;
+		description?: string;
+		secret?: string;
+		issuer?: string;
+		accountName?: string;
+		algorithm?: string;
+		digits?: number;
+		period?: number;
+	} = {};
+
 	if (input.name !== undefined) updateData.name = input.name;
 	if (input.description !== undefined) updateData.description = input.description;
 	if (input.secret !== undefined) updateData.secret = encryptTOTPSecret(input.secret);

@@ -5,6 +5,7 @@
 	import { Html5Qrcode } from 'html5-qrcode';
 	import { parseOTPAuthURL, isValidBase32Secret } from '$lib/utils/otpauth-parser';
 	import { invalidateAll } from '$app/navigation';
+	import { getCsrfToken } from '$lib/utils/csrf';
 
 	let { data }: { data: PageData } = $props();
 
@@ -99,10 +100,7 @@
 
 		try {
 			// Get CSRF token from cookie
-			const csrfToken = document.cookie
-				.split('; ')
-				.find((row) => row.startsWith('qa_studio_csrf='))
-				?.split('=')[1];
+			const csrfToken = getCsrfToken();
 
 			const response = await fetch(`/api/authenticator-tokens/${tokenId}`, {
 				method: 'DELETE',
@@ -452,10 +450,7 @@
 
 						try {
 							// Get CSRF token from cookie
-							const csrfToken = document.cookie
-								.split('; ')
-								.find((row) => row.startsWith('qa_studio_csrf='))
-								?.split('=')[1];
+							const csrfToken = getCsrfToken();
 
 							const response = await fetch('/api/authenticator-tokens', {
 								method: 'POST',

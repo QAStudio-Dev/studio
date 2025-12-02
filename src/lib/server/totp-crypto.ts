@@ -145,6 +145,18 @@ export function decryptTOTPSecret(encryptedData: string): string {
 
 		return decrypted;
 	} catch (error) {
+		// Log decryption failure for security monitoring
+		// Don't include the actual encrypted data in the log
+		console.error('[SECURITY] TOTP decryption failed', {
+			timestamp: new Date().toISOString(),
+			errorType: error instanceof Error ? error.message : 'Unknown error',
+			dataFormat: encryptedData.startsWith('v')
+				? `versioned (${encryptedData.split(':')[0]})`
+				: 'legacy',
+			// Include first 10 chars for debugging without exposing full secret
+			dataPrefix: encryptedData.substring(0, 10)
+		});
+
 		// Don't leak encrypted data details in error messages
 		throw new Error('Failed to decrypt TOTP secret');
 	}
