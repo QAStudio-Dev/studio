@@ -2,27 +2,54 @@
 
 ## Overview
 
-QA Studio uses AES-256-CBC encryption to protect TOTP secrets in the database. This guide explains how to safely rotate the encryption key.
+QA Studio uses AES-256-GCM authenticated encryption to protect TOTP secrets in the database. This guide explains how to safely rotate the encryption key.
+
+## Encryption Algorithm
+
+**Current**: AES-256-GCM (Galois/Counter Mode) - Authenticated encryption with integrity verification
+
+**Legacy**: AES-256-CBC (Cipher Block Chaining) - Maintained for backward compatibility only
+
+GCM mode provides both confidentiality and authenticity, protecting against tampering attacks that CBC mode is vulnerable to.
 
 ## Why Rotate Keys?
 
 - **Security Best Practice**: Periodic key rotation limits exposure if a key is compromised
 - **Compliance Requirements**: Many security frameworks require regular key rotation
 - **Incident Response**: Quickly invalidate compromised keys while maintaining service
+- **Algorithm Upgrades**: Migrate from legacy CBC to modern GCM encryption
 
 ## Key Versioning System
 
-The encryption system supports multiple key versions simultaneously:
+The encryption system supports multiple versions simultaneously:
 
-- **Current Version**: Used for encrypting new secrets
-- **Old Versions**: Maintained temporarily for decrypting existing secrets during rotation
-- **Format**: `v{version}:{iv}:{encrypted_data}`
+- **Version 2** (Current): AES-256-GCM - `v2:{iv}:{encrypted}:{authTag}`
+- **Version 1** (Legacy): AES-256-CBC - `v1:{iv}:{encrypted}`
+- **Unversioned** (Legacy): AES-256-CBC - `{iv}:{encrypted}` (treated as v1)
 
-### Backward Compatibility
+### Automatic Migration
 
-The system automatically handles legacy data encrypted without version prefixes (format: `{iv}:{encrypted_data}`), treating it as version 1.
+When you rotate keys using the migration script, all tokens are automatically upgraded from CBC (v1) to GCM (v2) format, improving security without manual intervention.
 
-## Rotation Process
+## Upgrading Encryption Algorithm (No Key Change)
+
+If you want to upgrade existing tokens from CBC to GCM without changing the encryption key:
+
+```bash
+# Simply run the rotation script without changing the key
+tsx scripts/rotate-totp-key.ts
+```
+
+This will:
+
+- Keep the same TOTP_ENCRYPTION_KEY
+- Decrypt all v1/CBC tokens
+- Re-encrypt as v2/GCM tokens with authentication tags
+- Significantly improve security against tampering attacks
+
+**Recommended**: Run this upgrade even if you don't need to rotate keys.
+
+## Key Rotation Process
 
 ### Step 1: Generate New Key
 
@@ -95,10 +122,12 @@ NODE_ENV=production tsx scripts/rotate-totp-key.ts
 The script will:
 
 1. Find all authenticator tokens
-2. Decrypt each with the old key
-3. Re-encrypt with the new key
+2. Decrypt each with their current version (v1/CBC or v2/GCM)
+3. Re-encrypt with the current version (v2/GCM with authentication)
 4. Update the database
 5. Report success/failure for each token
+
+**Note**: This script automatically upgrades all tokens to the latest encryption algorithm (GCM) regardless of whether you're rotating keys. This improves security by adding authentication tags to all stored secrets.
 
 ### Step 6: Verify Rotation
 
@@ -135,12 +164,26 @@ Simply revert code changes:
 
 You'll need to run a reverse migration:
 
-1. Revert `CURRENT_KEY_VERSION` to 1
-2. Create a reverse script that re-encrypts v2 data back to v1
+1. Revert `CURRENT_KEY_VERSION` to 2 (keep GCM) or 1 (downgrade to CBC)
+2. If downgrading to v1: Create a reverse script that re-encrypts v2/GCM data back to v1/CBC
 3. Run the reverse migration
-4. Remove new key from environment
+4. Remove new key from environment (if rotating keys)
+
+**Note**: Downgrading from GCM (v2) to CBC (v1) reduces security and is not recommended except for emergencies.
 
 ## Security Considerations
+
+### Authenticated Encryption (GCM)
+
+The current system uses AES-256-GCM which provides:
+
+- **Confidentiality**: Data cannot be read without the key (like CBC)
+- **Authenticity**: Data tampering is detected via authentication tags
+- **Integrity**: Modified ciphertexts are rejected during decryption
+
+This protects against attacks where an attacker modifies encrypted data in the database. With CBC mode, such tampering might go undetected.
+
+**Recommendation**: Upgrade all existing tokens to GCM format by running the migration script, even if not rotating keys.
 
 ### Key Storage
 
@@ -148,6 +191,7 @@ You'll need to run a reverse migration:
 - Store keys in secure secret management systems (AWS Secrets Manager, HashiCorp Vault, etc.)
 - Use different keys for each environment
 - Restrict access to production keys
+- Keys are validated at server startup (via `validateEnvironment()` in hooks.server.ts)
 
 ### Rotation Frequency
 

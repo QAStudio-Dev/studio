@@ -33,9 +33,17 @@
 	// Loading states
 	let isSubmitting = $state(false);
 	let isDeleting = $state<string | null>(null); // Track which token is being deleted
+	let isFetchingCodes = $state(false); // Prevent concurrent fetches
 
 	// Fetch TOTP codes for all tokens (batch endpoint)
 	async function fetchTOTPCodes() {
+		// Prevent concurrent fetches
+		if (isFetchingCodes) {
+			return;
+		}
+
+		isFetchingCodes = true;
+
 		try {
 			const response = await fetch('/api/authenticator-tokens/codes');
 			if (response.ok) {
@@ -60,6 +68,8 @@
 			}
 		} catch (error) {
 			console.error('Failed to fetch TOTP codes:', error);
+		} finally {
+			isFetchingCodes = false;
 		}
 	}
 
@@ -207,6 +217,11 @@
 		} else {
 			stopQRScanner();
 		}
+
+		// Cleanup function to ensure scanner stops on unmount
+		return () => {
+			stopQRScanner();
+		};
 	});
 
 	onMount(() => {
@@ -434,6 +449,12 @@
 						isSubmitting = true;
 
 						try {
+							// Get CSRF token from cookie
+							const csrfToken = document.cookie
+								.split('; ')
+								.find((row) => row.startsWith('qa_studio_csrf='))
+								?.split('=')[1];
+
 							const response = await fetch('/api/authenticator-tokens', {
 								method: 'POST',
 								headers: { 'Content-Type': 'application/json' },
@@ -444,7 +465,8 @@
 									accountName: formData.accountName || undefined,
 									algorithm: formData.algorithm || 'SHA1',
 									digits: formData.digits || 6,
-									period: formData.period || 30
+									period: formData.period || 30,
+									csrfToken
 								})
 							});
 

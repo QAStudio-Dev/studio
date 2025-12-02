@@ -58,6 +58,7 @@ export function validateEnvironment(): void {
 	// Validate all security-critical environment variables
 	getSessionSecret();
 	getResetSecret();
+	getTOTPEncryptionKey();
 
 	console.log('✓ Environment variables validated successfully');
 }
@@ -95,6 +96,32 @@ export function getResetSecret(): string {
 	}
 
 	return sessionSecret;
+}
+
+/**
+ * TOTP encryption key for encrypting authenticator secrets
+ * MUST be exactly 64 hexadecimal characters (32 bytes for AES-256)
+ * Generate with: openssl rand -hex 32
+ */
+export function getTOTPEncryptionKey(): string {
+	const key = process.env.TOTP_ENCRYPTION_KEY;
+
+	if (!key) {
+		throw new Error(
+			'TOTP_ENCRYPTION_KEY environment variable is not set. ' +
+				'Generate with: openssl rand -hex 32'
+		);
+	}
+
+	// Validate key is exactly 64 hex characters (32 bytes for AES-256)
+	if (!/^[0-9a-f]{64}$/i.test(key)) {
+		throw new Error(
+			'TOTP_ENCRYPTION_KEY must be exactly 64 hexadecimal characters (32 bytes). ' +
+				'Generate with: openssl rand -hex 32'
+		);
+	}
+
+	return key;
 }
 
 /**

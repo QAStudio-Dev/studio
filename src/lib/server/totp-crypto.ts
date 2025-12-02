@@ -1,41 +1,35 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
-import { env } from '$env/dynamic/private';
+import { getTOTPEncryptionKey } from './env';
 
 /**
  * Current encryption key version
- * Increment this when rotating keys
+ * Increment this when rotating keys or changing encryption algorithm
+ *
+ * Version 1: AES-256-CBC (legacy, no authentication)
+ * Version 2: AES-256-GCM (current, authenticated encryption)
  */
-const CURRENT_KEY_VERSION = 1;
+const CURRENT_KEY_VERSION = 2;
 
 /**
  * Get encryption key for a specific version
  * Supports multiple keys for rotation scenarios
  */
 function getEncryptionKey(version: number = CURRENT_KEY_VERSION): string {
-	// Primary key (current version)
-	if (version === 1) {
-		const key = env.TOTP_ENCRYPTION_KEY;
-		if (!key) {
-			throw new Error(
-				'TOTP_ENCRYPTION_KEY environment variable is not set. Generate with: openssl rand -hex 32'
-			);
-		}
-
-		// Validate key is exactly 64 hex characters (32 bytes for AES-256)
-		if (!/^[0-9a-f]{64}$/i.test(key)) {
-			throw new Error(
-				'TOTP_ENCRYPTION_KEY must be exactly 64 hexadecimal characters (32 bytes). Generate with: openssl rand -hex 32'
-			);
-		}
-
-		return key;
+	// Version 1: Legacy CBC encryption (backward compatibility)
+	// Version 2: Current GCM encryption (same key, different algorithm)
+	// Validation happens at startup via validateEnvironment() in env.ts
+	if (version === 1 || version === 2) {
+		return getTOTPEncryptionKey();
 	}
 
 	// During key rotation, you can add old keys here for backward compatibility
-	// Example for version 2 (new key):
-	// if (version === 2) {
-	//   const key = env.TOTP_ENCRYPTION_KEY_V2;
-	//   if (!key) throw new Error('TOTP_ENCRYPTION_KEY_V2 not set');
+	// Example for version 3 (new key):
+	// if (version === 3) {
+	//   const key = process.env.TOTP_ENCRYPTION_KEY_V3;
+	//   if (!key) throw new Error('TOTP_ENCRYPTION_KEY_V3 not set');
+	//   if (!/^[0-9a-f]{64}$/i.test(key)) {
+	//     throw new Error('Invalid TOTP_ENCRYPTION_KEY_V3 format');
+	//   }
 	//   return key;
 	// }
 
@@ -44,37 +38,44 @@ function getEncryptionKey(version: number = CURRENT_KEY_VERSION): string {
 
 /**
  * Encrypt a TOTP secret for storage
- * Uses AES-256-CBC encryption with key versioning
- * Format: v{version}:{iv}:{encrypted}
+ * Uses AES-256-GCM authenticated encryption with key versioning
+ *
+ * Version 1 format (legacy): v1:{iv}:{encrypted}
+ * Version 2 format (current): v2:{iv}:{encrypted}:{authTag}
  */
 export function encryptTOTPSecret(secret: string): string {
 	const key = getEncryptionKey(CURRENT_KEY_VERSION);
-	const iv = randomBytes(16);
+	const iv = randomBytes(12); // GCM standard recommends 12 bytes for IV
 
-	const cipher = createCipheriv('aes-256-cbc', Buffer.from(key, 'hex'), iv);
+	// Use GCM mode for authenticated encryption
+	const cipher = createCipheriv('aes-256-gcm', Buffer.from(key, 'hex'), iv);
 	let encrypted = cipher.update(secret, 'utf8', 'hex');
 	encrypted += cipher.final('hex');
 
-	// Store version, IV, and encrypted data (v{version}:{iv}:{encrypted})
-	return `v${CURRENT_KEY_VERSION}:${iv.toString('hex')}:${encrypted}`;
+	// Get authentication tag for integrity verification
+	const authTag = cipher.getAuthTag().toString('hex');
+
+	// Store version, IV, encrypted data, and auth tag (v2:{iv}:{encrypted}:{authTag})
+	return `v${CURRENT_KEY_VERSION}:${iv.toString('hex')}:${encrypted}:${authTag}`;
 }
 
 /**
  * Decrypt a stored TOTP secret
- * Supports both legacy format (iv:encrypted) and versioned format (v{version}:iv:encrypted)
+ * Supports multiple format versions:
+ * - Legacy (no version): {iv}:{encrypted} - assumes v1/CBC
+ * - Version 1: v1:{iv}:{encrypted} - AES-256-CBC (no auth)
+ * - Version 2: v2:{iv}:{encrypted}:{authTag} - AES-256-GCM (authenticated)
  */
 export function decryptTOTPSecret(encryptedData: string): string {
 	try {
 		let version = 1; // Default to version 1 for legacy data
 		let ivHex: string;
 		let encrypted: string;
+		let authTagHex: string | undefined;
 
 		// Check if data has version prefix
 		if (encryptedData.startsWith('v')) {
 			const parts = encryptedData.split(':');
-			if (parts.length !== 3) {
-				throw new Error('Invalid encrypted data format');
-			}
 
 			// Parse version from "v1" -> 1
 			version = parseInt(parts[0].substring(1), 10);
@@ -82,13 +83,28 @@ export function decryptTOTPSecret(encryptedData: string): string {
 				throw new Error('Invalid version in encrypted data');
 			}
 
-			ivHex = parts[1];
-			encrypted = parts[2];
+			// Version 2 has auth tag (4 parts), version 1 doesn't (3 parts)
+			if (version === 2) {
+				if (parts.length !== 4) {
+					throw new Error('Invalid v2 encrypted data format (expected 4 parts)');
+				}
+				ivHex = parts[1];
+				encrypted = parts[2];
+				authTagHex = parts[3];
+			} else if (version === 1) {
+				if (parts.length !== 3) {
+					throw new Error('Invalid v1 encrypted data format (expected 3 parts)');
+				}
+				ivHex = parts[1];
+				encrypted = parts[2];
+			} else {
+				throw new Error(`Unsupported encryption version: ${version}`);
+			}
 		} else {
-			// Legacy format: iv:encrypted (assume version 1)
+			// Legacy format: iv:encrypted (assume version 1/CBC)
 			const parts = encryptedData.split(':');
 			if (parts.length !== 2) {
-				throw new Error('Invalid encrypted data format');
+				throw new Error('Invalid legacy encrypted data format');
 			}
 			ivHex = parts[0];
 			encrypted = parts[1];
@@ -101,10 +117,23 @@ export function decryptTOTPSecret(encryptedData: string): string {
 		// Get the appropriate key for this version
 		const key = getEncryptionKey(version);
 		const iv = Buffer.from(ivHex, 'hex');
-		const decipher = createDecipheriv('aes-256-cbc', Buffer.from(key, 'hex'), iv);
 
-		let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-		decrypted += decipher.final('utf8');
+		let decrypted: string;
+
+		// Version 2 uses GCM (authenticated encryption)
+		if (version === 2 && authTagHex) {
+			const authTag = Buffer.from(authTagHex, 'hex');
+			const decipher = createDecipheriv('aes-256-gcm', Buffer.from(key, 'hex'), iv);
+			decipher.setAuthTag(authTag);
+
+			decrypted = decipher.update(encrypted, 'hex', 'utf8');
+			decrypted += decipher.final('utf8');
+		} else {
+			// Version 1 uses CBC (no authentication)
+			const decipher = createDecipheriv('aes-256-cbc', Buffer.from(key, 'hex'), iv);
+			decrypted = decipher.update(encrypted, 'hex', 'utf8');
+			decrypted += decipher.final('utf8');
+		}
 
 		return decrypted;
 	} catch (error) {
