@@ -52,8 +52,8 @@
 			// Invalidate all data to refresh user state
 			await invalidateAll();
 
-			// Redirect to home page after successful login
-			goto('/');
+			// Redirect to projects page after successful login
+			goto('/projects');
 		} catch (err) {
 			error = 'An error occurred. Please try again.';
 		} finally {
