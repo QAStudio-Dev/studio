@@ -246,6 +246,8 @@
 		if (intervalId) {
 			clearInterval(intervalId);
 		}
+		// Ensure QR scanner is stopped to prevent camera stream leak
+		stopQRScanner();
 	});
 </script>
 

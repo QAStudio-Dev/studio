@@ -5,6 +5,7 @@ import { encryptTOTPSecret } from '$lib/server/totp-crypto';
 import { serializeDates } from '$lib/utils/date';
 import * as OTPAuth from 'otpauth';
 import { createAuditLog, sanitizeMetadata } from '$lib/server/audit';
+import { verifyCsrfToken } from '$lib/server/sessions';
 
 export const Param = z.object({
 	id: z.string().describe('Token ID')
@@ -18,7 +19,8 @@ export const Input = z.object({
 	accountName: z.string().optional().describe('Account name'),
 	algorithm: z.enum(['SHA1', 'SHA256', 'SHA512']).optional().describe('TOTP algorithm'),
 	digits: z.number().int().min(6).max(8).optional().describe('Number of digits in TOTP code'),
-	period: z.number().int().positive().optional().describe('TOTP period in seconds')
+	period: z.number().int().positive().optional().describe('TOTP period in seconds'),
+	csrfToken: z.string().optional().describe('CSRF token for session-based auth')
 });
 
 export const Output = z.object({
@@ -54,6 +56,15 @@ export const Modifier = (r: any) => {
  * Update an authenticator token
  */
 export default new Endpoint({ Param, Input, Output, Modifier }).handle(async (input, event) => {
+	// Check if using session auth (not API key)
+	const isSessionAuth =
+		!event.request.headers.get('Authorization') && !event.request.headers.get('x-api-key');
+
+	// Validate CSRF token for session-based auth
+	if (isSessionAuth && (!input.csrfToken || !verifyCsrfToken(event, input.csrfToken))) {
+		throw error(403, 'Invalid CSRF token');
+	}
+
 	const userId = await requireApiAuth(event);
 
 	const user = await db.user.findUnique({

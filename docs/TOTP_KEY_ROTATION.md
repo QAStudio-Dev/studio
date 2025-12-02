@@ -51,6 +51,8 @@ This will:
 
 ## Key Rotation Process
 
+**Note**: The current implementation (v1→v2) is an **algorithm upgrade** (CBC→GCM) using the same key. For actual **key rotation** to a new encryption key, follow the steps below.
+
 ### Step 1: Generate New Key
 
 ```bash
@@ -66,7 +68,7 @@ Add the new key as a versioned environment variable:
 ```bash
 # .env or environment configuration
 TOTP_ENCRYPTION_KEY=<original_key>      # Keep this during rotation
-TOTP_ENCRYPTION_KEY_V2=<new_key>        # Add new key
+TOTP_ENCRYPTION_KEY_V3=<new_key>        # Add new key (v3 for next version)
 ```
 
 ### Step 3: Update Code
@@ -75,23 +77,21 @@ Edit `src/lib/server/totp-crypto.ts`:
 
 ```typescript
 // Update version number
-const CURRENT_KEY_VERSION = 2;
+const CURRENT_KEY_VERSION = 3;
 
-// Add new key handler
+// Add new key handler to getEncryptionKey()
 function getEncryptionKey(version: number = CURRENT_KEY_VERSION): string {
-	if (version === 1) {
-		// Original key (keep for old data)
-		const key = env.TOTP_ENCRYPTION_KEY;
-		// ... validation
-		return key;
+	// Version 1 & 2: Original key (keep for backward compatibility)
+	if (version === 1 || version === 2) {
+		return getTOTPEncryptionKey(); // Uses TOTP_ENCRYPTION_KEY
 	}
 
-	if (version === 2) {
-		// New key (for new encryptions)
-		const key = env.TOTP_ENCRYPTION_KEY_V2;
-		if (!key) throw new Error('TOTP_ENCRYPTION_KEY_V2 not set');
+	// Version 3: New key (for new encryptions)
+	if (version === 3) {
+		const key = process.env.TOTP_ENCRYPTION_KEY_V3;
+		if (!key) throw new Error('TOTP_ENCRYPTION_KEY_V3 not set');
 		if (!/^[0-9a-f]{64}$/i.test(key)) {
-			throw new Error('Invalid TOTP_ENCRYPTION_KEY_V2 format');
+			throw new Error('Invalid TOTP_ENCRYPTION_KEY_V3 format');
 		}
 		return key;
 	}
@@ -100,12 +100,14 @@ function getEncryptionKey(version: number = CURRENT_KEY_VERSION): string {
 }
 ```
 
+**Current Implementation**: Versions 1 and 2 both use `TOTP_ENCRYPTION_KEY` with different algorithms (v1=CBC, v2=GCM). This allows algorithm migration without key change.
+
 ### Step 4: Deploy Code Changes
 
 Deploy the updated code to all environments. At this point:
 
-- New secrets will be encrypted with the new key (v2)
-- Old secrets can still be decrypted with the old key (v1)
+- New secrets will be encrypted with the new key (v3 in the example above)
+- Old secrets can still be decrypted with the original key (v1 and v2)
 
 ### Step 5: Re-encrypt Existing Secrets
 
@@ -122,12 +124,12 @@ NODE_ENV=production tsx scripts/rotate-totp-key.ts
 The script will:
 
 1. Find all authenticator tokens
-2. Decrypt each with their current version (v1/CBC or v2/GCM)
-3. Re-encrypt with the current version (v2/GCM with authentication)
+2. Decrypt each with their current version (v1/CBC, v2/GCM, etc.)
+3. Re-encrypt with the CURRENT_KEY_VERSION (v3/GCM in the example above)
 4. Update the database
 5. Report success/failure for each token
 
-**Note**: This script automatically upgrades all tokens to the latest encryption algorithm (GCM) regardless of whether you're rotating keys. This improves security by adding authentication tags to all stored secrets.
+**Note**: This script automatically re-encrypts all tokens to the current version. When upgrading from v1→v2, it also upgrades the algorithm from CBC to GCM, adding authentication tags to all stored secrets.
 
 ### Step 6: Verify Rotation
 
@@ -142,11 +144,14 @@ Test that all tokens work correctly:
 
 After verification (recommended: wait 30 days), you can remove the old key:
 
-1. Remove `TOTP_ENCRYPTION_KEY` from environment
-2. Remove version 1 handler from `getEncryptionKey()`
-3. Deploy the cleanup
+1. Remove `TOTP_ENCRYPTION_KEY` from environment (if rotating to a new key)
+2. Update `getEncryptionKey()` to remove old version handlers
+3. Update `getTOTPEncryptionKey()` in `env.ts` to use the new key variable
+4. Deploy the cleanup
 
 **Important**: Keep old keys accessible until you're certain all data has been migrated.
+
+**For v1→v2 Algorithm Upgrade**: No key removal needed since both versions use the same `TOTP_ENCRYPTION_KEY`.
 
 ## Rollback Procedure
 
@@ -242,7 +247,9 @@ Consider adding audit logs to the rotation script.
 - Verify `CURRENT_KEY_VERSION` matches intended version
 - Check that new key handler is implemented
 
-## Example: Complete Rotation
+## Example: Complete Key Rotation
+
+**Note**: This example shows rotating to a NEW encryption key (v3). For algorithm upgrade only (v1→v2), just run the migration script.
 
 ```bash
 # 1. Generate new key
@@ -250,9 +257,11 @@ NEW_KEY=$(openssl rand -hex 32)
 echo "New key: $NEW_KEY"
 
 # 2. Add to .env
-echo "TOTP_ENCRYPTION_KEY_V2=$NEW_KEY" >> .env.local
+echo "TOTP_ENCRYPTION_KEY_V3=$NEW_KEY" >> .env.local
 
-# 3. Update code (as shown above)
+# 3. Update code in totp-crypto.ts
+# - Set CURRENT_KEY_VERSION = 3
+# - Add version 3 handler to getEncryptionKey() (as shown in Step 3 above)
 
 # 4. Restart app to load new environment variable
 npm run dev
@@ -263,9 +272,22 @@ tsx scripts/rotate-totp-key.ts
 # 6. Verify in UI
 # Navigate to /authenticators and test code generation
 
-# 7. After 30 days, remove old key
+# 7. After 30 days, remove old key (optional)
 # Remove TOTP_ENCRYPTION_KEY from .env
-# Remove version 1 handler from code
+# Update getEncryptionKey() to remove v1/v2 handlers
+# Update getTOTPEncryptionKey() in env.ts to use V3 variable
+```
+
+## Example: Algorithm Upgrade Only (v1→v2)
+
+```bash
+# Simply run the migration script - no code changes needed
+tsx scripts/rotate-totp-key.ts
+
+# This will:
+# - Keep using TOTP_ENCRYPTION_KEY
+# - Upgrade all v1/CBC tokens to v2/GCM
+# - Add authentication tags for security
 ```
 
 ## Integration with Compliance

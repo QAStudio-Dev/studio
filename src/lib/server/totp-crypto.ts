@@ -40,19 +40,24 @@ function getEncryptionKey(version: number = CURRENT_KEY_VERSION): string {
  * Encrypt a TOTP secret for storage
  * Uses AES-256-GCM authenticated encryption with key versioning
  *
- * Version 1 format (legacy): v1:{iv}:{encrypted}
- * Version 2 format (current): v2:{iv}:{encrypted}:{authTag}
+ * IV Size Requirements:
+ * - Version 1 (CBC): 16 bytes (128 bits) - standard for AES-CBC
+ * - Version 2 (GCM): 12 bytes (96 bits) - NIST recommended for AES-GCM
+ *
+ * Format Versions:
+ * - Version 1 format (legacy): v1:{iv(32 hex)}:{encrypted}
+ * - Version 2 format (current): v2:{iv(24 hex)}:{encrypted}:{authTag(32 hex)}
  */
 export function encryptTOTPSecret(secret: string): string {
 	const key = getEncryptionKey(CURRENT_KEY_VERSION);
-	const iv = randomBytes(12); // GCM standard recommends 12 bytes for IV
+	const iv = randomBytes(12); // GCM: 12 bytes (24 hex chars) per NIST SP 800-38D
 
 	// Use GCM mode for authenticated encryption
 	const cipher = createCipheriv('aes-256-gcm', Buffer.from(key, 'hex'), iv);
 	let encrypted = cipher.update(secret, 'utf8', 'hex');
 	encrypted += cipher.final('hex');
 
-	// Get authentication tag for integrity verification
+	// Get authentication tag for integrity verification (16 bytes / 32 hex chars)
 	const authTag = cipher.getAuthTag().toString('hex');
 
 	// Store version, IV, encrypted data, and auth tag (v2:{iv}:{encrypted}:{authTag})
@@ -61,10 +66,13 @@ export function encryptTOTPSecret(secret: string): string {
 
 /**
  * Decrypt a stored TOTP secret
- * Supports multiple format versions:
- * - Legacy (no version): {iv}:{encrypted} - assumes v1/CBC
- * - Version 1: v1:{iv}:{encrypted} - AES-256-CBC (no auth)
- * - Version 2: v2:{iv}:{encrypted}:{authTag} - AES-256-GCM (authenticated)
+ * Supports multiple format versions for backward compatibility:
+ *
+ * - Legacy (no version): {iv(32 hex)}:{encrypted} - assumes v1/CBC with 16-byte IV
+ * - Version 1: v1:{iv(32 hex)}:{encrypted} - AES-256-CBC (no auth) with 16-byte IV
+ * - Version 2: v2:{iv(24 hex)}:{encrypted}:{authTag(32 hex)} - AES-256-GCM with 12-byte IV
+ *
+ * IV sizes are automatically handled based on the version detected.
  */
 export function decryptTOTPSecret(encryptedData: string): string {
 	try {
