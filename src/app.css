@@ -42,7 +42,10 @@
 
 /* Syntax highlighting for blog code blocks */
 .prose pre {
-	@apply my-6 overflow-x-auto rounded-lg p-4;
+	overflow-x: auto !important;
+	border-radius: 0.5rem !important;
+	margin: 0 !important;
+	padding: 1rem !important;
 }
 
 .prose code {
@@ -54,9 +57,12 @@
 	@apply rounded bg-surface-200-800 px-1.5 py-0.5 font-mono text-sm;
 }
 
-/* Code block styling - Shiki provides inline styles */
+/* Code block styling - Shiki provides inline styles, reset all padding/margin */
 .prose pre code {
-	@apply bg-transparent p-0;
+	background: transparent !important;
+	padding: 0 !important;
+	margin: 0 !important;
+	display: block !important;
 }
 
 /* Shiki theme switching - override inline styles in dark mode */
