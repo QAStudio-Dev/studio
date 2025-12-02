@@ -271,24 +271,34 @@
 						>
 							Settings
 						</a>
+
+						<!-- Authenticators -->
+						<a
+							href="/authenticators"
+							class="rounded-base px-4 py-2 transition-colors {isActive(
+								'/authenticators'
+							)
+								? 'bg-primary-500 text-white'
+								: 'hover:bg-surface-200-800'}"
+						>
+							Authenticators
+						</a>
 					{/if}
+
+					<!-- API Docs -->
+					<a
+						href="/docs"
+						class="rounded-base px-4 py-2 transition-colors {isActive('/docs')
+							? 'bg-primary-500 text-white'
+							: 'hover:bg-surface-200-800'}"
+					>
+						API Docs
+					</a>
 				</nav>
 			</div>
 
 			<!-- Right Side Actions -->
 			<div class="flex items-center gap-4">
-				<!-- API Docs - Hidden on mobile -->
-				<a
-					href="/docs"
-					class="hidden rounded-base px-4 py-2 transition-colors md:block {isActive(
-						'/docs'
-					)
-						? 'bg-primary-500 text-white'
-						: 'hover:bg-surface-200-800'}"
-				>
-					API Docs
-				</a>
-
 				<!-- Theme Toggle -->
 				<ThemeToggle />
 
@@ -470,6 +480,19 @@
 								: 'hover:bg-surface-200-800'}"
 						>
 							Settings
+						</a>
+
+						<!-- Authenticators -->
+						<a
+							href="/authenticators"
+							onclick={closeMobileMenu}
+							class="rounded-base px-4 py-2 transition-colors {isActive(
+								'/authenticators'
+							)
+								? 'bg-primary-500 text-white'
+								: 'hover:bg-surface-200-800'}"
+						>
+							Authenticators
 						</a>
 					{/if}
 

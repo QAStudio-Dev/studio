@@ -40,6 +40,7 @@ model User {
   apiKeys             ApiKey[]
   sessions            Session[]
   passwordResetTokens PasswordResetToken[]
+  createdAuthTokens   AuthenticatorToken[] @relation("AuthenticatorTokenCreator")
 
   @@index([email])
   @@index([teamId])
@@ -95,19 +96,20 @@ model PasswordResetToken {
 }
 
 model Team {
-  id             String   @id @default(cuid())
-  name           String
-  description    String?
-  overSeatLimit  Boolean  @default(false) // True when team has more members than paid seats
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  overSeatLimit Boolean  @default(false) // True when team has more members than paid seats
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   // Relations
-  members      User[]
-  projects     Project[]
-  subscription Subscription?
-  integrations Integration[]
-  invitations  TeamInvitation[]
+  members             User[]
+  projects            Project[]
+  subscription        Subscription?
+  integrations        Integration[]
+  invitations         TeamInvitation[]
+  authenticatorTokens AuthenticatorToken[]
 
   @@index([name])
   @@index([overSeatLimit])
@@ -128,11 +130,11 @@ model Subscription {
   seats                Int                @default(1)
 
   // AI Features Usage Tracking
-  aiAnalysisCount      Int                @default(0) // Current month usage
-  aiAnalysisResetAt    DateTime?          // When the counter was last reset
+  aiAnalysisCount   Int       @default(0) // Current month usage
+  aiAnalysisResetAt DateTime? // When the counter was last reset
 
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
   team  Team  @relation(fields: [teamId], references: [id], onDelete: Cascade)
@@ -159,6 +161,34 @@ enum UserRole {
   MANAGER // Can manage projects and teams
   TESTER // Can create and execute tests
   VIEWER // Read-only access
+}
+
+// ============================================
+// SHARED AUTHENTICATOR TOKENS
+// ============================================
+
+model AuthenticatorToken {
+  id          String   @id @default(cuid())
+  teamId      String
+  name        String // User-friendly name (e.g., "Production Login", "Staging Admin")
+  description String? // Optional notes about the token
+  secret      String // TOTP secret (encrypted)
+  issuer      String? // Service name (e.g., "GitHub", "AWS")
+  accountName String? // Account identifier (e.g., "admin@company.com")
+  algorithm   String   @default("SHA1") // TOTP algorithm (SHA1, SHA256, SHA512)
+  digits      Int      @default(6) // Number of digits in code (usually 6 or 8)
+  period      Int      @default(30) // Time period in seconds (usually 30)
+  createdBy   String // User who created this token
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  team    Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  creator User @relation("AuthenticatorTokenCreator", fields: [createdBy], references: [id])
+
+  @@index([teamId])
+  @@index([createdBy])
+  @@index([name])
 }
 
 // ============================================
@@ -387,14 +417,14 @@ model TestResult {
   errorLocation Json? // {file, line, column} where error occurred
   startTime     DateTime? // When test started
   endTime       DateTime? // When test ended
-  retry         Int @default(0) // Retry attempt number (0 for first attempt)
-  projectName   String? @default("default") // Project/browser name (e.g., "chromium")
+  retry         Int       @default(0) // Retry attempt number (0 for first attempt)
+  projectName   String?   @default("default") // Project/browser name (e.g., "chromium")
   metadata      Json? // Additional metadata {tags, location, etc.}
   consoleOutput Json? // {stdout, stderr} console output
 
-  executor    User             @relation("TestResultExecutor", fields: [executedBy], references: [id], onDelete: Cascade)
-  testCase    TestCase         @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
-  testRun     TestRun          @relation(fields: [testRunId], references: [id], onDelete: Cascade)
+  executor    User                @relation("TestResultExecutor", fields: [executedBy], references: [id], onDelete: Cascade)
+  testCase    TestCase            @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+  testRun     TestRun             @relation(fields: [testRunId], references: [id], onDelete: Cascade)
   attachments Attachment[]
   steps       TestStepResult[]
   jiraIssues  JiraIssue[]
@@ -436,9 +466,9 @@ model TestStepResult {
   location     Json? // {file, line, column} source code location
   createdAt    DateTime   @default(now())
 
-  testResult  TestResult       @relation(fields: [testResultId], references: [id], onDelete: Cascade)
-  parentStep  TestStepResult?  @relation("StepHierarchy", fields: [parentStepId], references: [id], onDelete: Cascade)
-  childSteps  TestStepResult[] @relation("StepHierarchy")
+  testResult TestResult       @relation(fields: [testResultId], references: [id], onDelete: Cascade)
+  parentStep TestStepResult?  @relation("StepHierarchy", fields: [parentStepId], references: [id], onDelete: Cascade)
+  childSteps TestStepResult[] @relation("StepHierarchy")
 
   // Index strategy:
   // - [testResultId]: Fast lookup of all steps for a test result
@@ -452,30 +482,30 @@ model TestStepResult {
 }
 
 model TestResultAnalysis {
-  id              String   @id @default(cuid())
-  testResultId    String   @unique
+  id           String @id @default(cuid())
+  testResultId String @unique
 
   // Analysis metadata
-  analysisType    String   // "AI_TRACE_ANALYSIS", "MANUAL", "AUTO_HEALED"
-  rootCause       String   @db.Text
-  category        AnalysisCategory
-  suggestedFix    String   @db.Text
-  fixCode         String?  @db.Text // Actual code to fix the issue
-  confidence      Float    // 0.0 to 1.0
+  analysisType String // "AI_TRACE_ANALYSIS", "MANUAL", "AUTO_HEALED"
+  rootCause    String           @db.Text
+  category     AnalysisCategory
+  suggestedFix String           @db.Text
+  fixCode      String?          @db.Text // Actual code to fix the issue
+  confidence   Float // 0.0 to 1.0
 
   // Fix tracking
-  wasFixed        Boolean  @default(false)
-  fixAppliedAt    DateTime?
-  fixAppliedBy    String?  // User ID who applied the fix
+  wasFixed     Boolean   @default(false)
+  fixAppliedAt DateTime?
+  fixAppliedBy String? // User ID who applied the fix
 
   // Additional context
-  additionalNotes String?  @db.Text
+  additionalNotes String? @db.Text
 
   // Metadata
-  analyzedBy      String   // "ai", "user:{userId}"
-  analyzedAt      DateTime @default(now())
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  analyzedBy String // "ai", "user:{userId}"
+  analyzedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   testResult TestResult @relation(fields: [testResultId], references: [id], onDelete: Cascade)
 
