@@ -30,21 +30,36 @@
 		period: 30
 	});
 
-	// Fetch TOTP codes for all tokens
+	// Loading states
+	let isSubmitting = $state(false);
+	let isDeleting = $state<string | null>(null); // Track which token is being deleted
+
+	// Fetch TOTP codes for all tokens (batch endpoint)
 	async function fetchTOTPCodes() {
-		for (const token of data.tokens) {
-			try {
-				const response = await fetch(`/api/authenticator-tokens/${token.id}/code`);
-				if (response.ok) {
-					const data = await response.json();
-					totpCodes[token.id] = {
-						code: data.code,
-						timeRemaining: data.timeRemaining
+		try {
+			const response = await fetch('/api/authenticator-tokens/codes');
+			if (response.ok) {
+				const codesData: Record<
+					string,
+					{
+						code: string;
+						timeRemaining: number;
+						period: number;
+						digits: number;
+						tokenId: string;
+						tokenName: string;
+					}
+				> = await response.json();
+				// Update all codes at once
+				for (const [tokenId, codeInfo] of Object.entries(codesData)) {
+					totpCodes[tokenId] = {
+						code: codeInfo.code,
+						timeRemaining: codeInfo.timeRemaining
 					};
 				}
-			} catch (error) {
-				console.error(`Failed to fetch code for token ${token.id}:`, error);
 			}
+		} catch (error) {
+			console.error('Failed to fetch TOTP codes:', error);
 		}
 	}
 
@@ -65,9 +80,24 @@
 			return;
 		}
 
+		// Prevent double-deletion
+		if (isDeleting === tokenId) {
+			return;
+		}
+
+		isDeleting = tokenId;
+
 		try {
+			// Get CSRF token from cookie
+			const csrfToken = document.cookie
+				.split('; ')
+				.find((row) => row.startsWith('qa_studio_csrf='))
+				?.split('=')[1];
+
 			const response = await fetch(`/api/authenticator-tokens/${tokenId}`, {
-				method: 'DELETE'
+				method: 'DELETE',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ csrfToken })
 			});
 
 			if (response.ok) {
@@ -80,6 +110,8 @@
 		} catch (error) {
 			console.error('Failed to delete token:', error);
 			alert('Failed to delete token');
+		} finally {
+			isDeleting = null;
 		}
 	}
 
@@ -154,6 +186,7 @@
 		showAddModal = false;
 		activeTab = 'manual';
 		scanError = null;
+		isSubmitting = false; // Reset loading state
 		// Reset form
 		formData = {
 			name: '',
@@ -261,10 +294,17 @@
 						</div>
 						<button
 							onclick={() => deleteToken(token.id, token.name)}
-							class="p-2 text-error-500 hover:text-error-600"
+							class="p-2 text-error-500 hover:text-error-600 disabled:cursor-not-allowed disabled:opacity-50"
 							title="Delete token"
+							disabled={isDeleting === token.id}
 						>
-							<Trash2 class="h-4 w-4" />
+							{#if isDeleting === token.id}
+								<div
+									class="h-4 w-4 animate-spin rounded-full border-2 border-error-500 border-t-transparent"
+								></div>
+							{:else}
+								<Trash2 class="h-4 w-4" />
+							{/if}
 						</button>
 					</div>
 
@@ -386,6 +426,13 @@
 					onsubmit={async (e) => {
 						e.preventDefault();
 
+						// Prevent double-submission
+						if (isSubmitting) {
+							return;
+						}
+
+						isSubmitting = true;
+
 						try {
 							const response = await fetch('/api/authenticator-tokens', {
 								method: 'POST',
@@ -412,6 +459,8 @@
 						} catch (error) {
 							console.error('Failed to create token:', error);
 							alert('Failed to create token');
+						} finally {
+							isSubmitting = false;
 						}
 					}}
 					class="space-y-4"
@@ -443,12 +492,17 @@
 							type="button"
 							onclick={closeModal}
 							class="preset-tonal-surface-500 btn"
+							disabled={isSubmitting}
 						>
 							Cancel
 						</button>
-						<button type="submit" class="btn preset-filled-primary-500"
-							>Add Token</button
+						<button
+							type="submit"
+							class="btn preset-filled-primary-500"
+							disabled={isSubmitting}
 						>
+							{isSubmitting ? 'Adding...' : 'Add Token'}
+						</button>
 					</div>
 				</form>
 			{/if}

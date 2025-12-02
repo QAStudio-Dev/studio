@@ -188,6 +188,7 @@ model AuthenticatorToken {
   team    Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
   creator User @relation("AuthenticatorTokenCreator", fields: [createdBy], references: [id])
 
+  @@index([teamId]) // Explicit index for teamId queries
   @@index([teamId, name]) // Composite index for common query pattern (team + search)
   @@index([createdBy])
 }
