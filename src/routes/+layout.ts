@@ -1,7 +1,26 @@
 import { defineBaseMetaTags } from 'svelte-meta-tags';
 import type { LayoutLoad } from './$types';
+import { browser } from '$app/environment';
 
-export const load: LayoutLoad = async ({ url, data }) => {
+export const load: LayoutLoad = async ({ url, data, fetch }) => {
+	// On client, fetch user data if we don't have it (for prerendered pages)
+	if (browser && !data.user) {
+		try {
+			const response = await fetch('/api/user/me');
+			if (response.ok) {
+				const userData = await response.json();
+				data = {
+					...data,
+					userId: userData.userId,
+					user: userData.user,
+					projects: userData.projects
+				};
+			}
+		} catch (e) {
+			// Silently fail - user not authenticated
+		}
+	}
+
 	const baseTags = defineBaseMetaTags({
 		title: 'QA Studio',
 		titleTemplate: '%s | QA Studio',
