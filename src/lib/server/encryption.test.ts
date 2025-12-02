@@ -71,8 +71,13 @@ describe('encryption', () => {
 			const encrypted = encrypt('test');
 			const parts = encrypted.split(':');
 
-			// Tamper with auth tag
-			parts[1] = parts[1].substring(0, parts[1].length - 2) + 'ff';
+			// Tamper with auth tag - flip all bits by XORing with ff
+			const authTagBuf = Buffer.from(parts[1], 'hex');
+			const tamperedAuthTag = Buffer.alloc(authTagBuf.length);
+			for (let i = 0; i < authTagBuf.length; i++) {
+				tamperedAuthTag[i] = authTagBuf[i] ^ 0xff;
+			}
+			parts[1] = tamperedAuthTag.toString('hex');
 			const tampered = parts.join(':');
 
 			expect(() => decrypt(tampered)).toThrow('Failed to decrypt data');

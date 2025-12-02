@@ -14,12 +14,62 @@
 	import { onMount } from 'svelte';
 	import type { PageData } from './$types';
 
+	// Type definitions for analytics data
+	interface TestStats {
+		totalTestRuns: number;
+		completedTestRuns: number;
+		totalTests: number;
+		passedTests: number;
+		failedTests: number;
+		passRate: number;
+		avgTestDuration: number;
+	}
+
+	interface DayStats {
+		date: string;
+		total: number;
+		passed: number;
+		failed: number;
+	}
+
+	interface TestMetrics {
+		id: string;
+		title: string;
+		totalRuns: number;
+		failures: number;
+		retries: number;
+		failureRate: number;
+		problemScore: number;
+	}
+
+	interface SlowTest {
+		id: string;
+		title: string;
+		avgDuration: number;
+		maxDuration: number;
+		count: number;
+	}
+
+	interface AnalyticsData {
+		stats: TestStats;
+		runsOverTime: DayStats[];
+		problematicTests: TestMetrics[];
+		slowestTests: SlowTest[];
+		flakyTests: TestMetrics[];
+		dateRange: {
+			start: string;
+			end: string;
+			days: number;
+		};
+	}
+
 	let { data }: { data: PageData } = $props();
 
 	let loading = $state(true);
+	let error = $state<string | null>(null);
 	let selectedProjectId = $state<string | null>(null);
 	let selectedDays = $state(7);
-	let analytics = $state<any>(null);
+	let analytics = $state<AnalyticsData | null>(null);
 
 	// Project list from page data
 	let projects = $derived(data.projects || []);
@@ -28,14 +78,20 @@
 		if (!selectedProjectId) return;
 
 		loading = true;
+		error = null;
 		try {
 			const res = await fetch(
 				`/api/reports/analytics?projectId=${selectedProjectId}&days=${selectedDays}`
 			);
-			if (!res.ok) throw new Error('Failed to fetch analytics');
+			if (!res.ok) {
+				const data = await res.json();
+				throw new Error(data.error || 'Failed to fetch analytics');
+			}
 			analytics = await res.json();
 		} catch (err) {
 			console.error('Failed to fetch analytics:', err);
+			error = err instanceof Error ? err.message : 'Failed to load analytics data';
+			analytics = null;
 		} finally {
 			loading = false;
 		}
@@ -159,6 +215,25 @@
 			<div class="flex items-center justify-center py-20">
 				<Loader2 class="h-8 w-8 animate-spin text-primary-500" />
 			</div>
+		{:else if error}
+			<!-- Error State -->
+			<div class="mx-auto max-w-2xl card p-12 text-center">
+				<div class="mb-6">
+					<div
+						class="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-error-500/10"
+					>
+						<AlertTriangle class="h-12 w-12 text-error-500" />
+					</div>
+					<h2 class="mb-2 text-3xl font-bold">Error Loading Analytics</h2>
+					<p class="text-surface-600-300 mb-8 text-lg">{error}</p>
+				</div>
+				<button
+					onclick={() => fetchAnalytics()}
+					class="btn preset-filled-primary-500 px-8 py-4"
+				>
+					Try Again
+				</button>
+			</div>
 		{:else if analytics}
 			<!-- Stats Grid -->
 			<div class="mb-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -170,7 +245,7 @@
 						</div>
 						<span
 							class="truncate text-3xl font-bold"
-							title={analytics.stats.totalTestRuns}
+							title={analytics.stats.totalTestRuns.toString()}
 						>
 							{formatNumber(analytics.stats.totalTestRuns)}
 						</span>
@@ -189,7 +264,7 @@
 						</div>
 						<span
 							class="truncate text-3xl font-bold"
-							title={analytics.stats.totalTests}
+							title={analytics.stats.totalTests.toString()}
 						>
 							{formatNumber(analytics.stats.totalTests)}
 						</span>

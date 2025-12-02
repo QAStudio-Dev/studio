@@ -3,6 +3,16 @@ import type { RequestHandler } from './$types';
 import { requireAuth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
 
+// Constants for analytics configuration
+const DEFAULT_DAYS = 7;
+const MIN_DAYS = 1;
+const MAX_DAYS = 365;
+const TOP_ITEMS_LIMIT = 10;
+const MAX_TEST_RUNS = 1000; // Limit to prevent excessive data fetching
+const FLAKY_TEST_MIN_FAILURE_RATE = 10;
+const FLAKY_TEST_MAX_FAILURE_RATE = 90;
+const PROBLEM_SCORE_FAILURE_WEIGHT = 2;
+
 /**
  * Get analytics data for reports dashboard
  * GET /api/reports/analytics?projectId=xxx&days=7
@@ -18,7 +28,11 @@ export const GET: RequestHandler = async (event) => {
 	const userId = await requireAuth(event);
 
 	const projectId = event.url.searchParams.get('projectId');
-	const days = parseInt(event.url.searchParams.get('days') || '7', 10);
+
+	// Validate and constrain days parameter
+	const daysParam = event.url.searchParams.get('days');
+	const parsedDays = daysParam ? parseInt(daysParam, 10) : DEFAULT_DAYS;
+	const days = Math.min(Math.max(parsedDays, MIN_DAYS), MAX_DAYS);
 
 	if (!projectId) {
 		return json({ error: 'projectId is required' }, { status: 400 });
@@ -76,7 +90,8 @@ export const GET: RequestHandler = async (event) => {
 		},
 		orderBy: {
 			createdAt: 'asc'
-		}
+		},
+		take: MAX_TEST_RUNS
 	});
 
 	// Group test runs by day
@@ -183,14 +198,15 @@ export const GET: RequestHandler = async (event) => {
 	// Calculate failure rates and problem scores
 	testCaseStats.forEach((stats) => {
 		stats.failureRate = (stats.failures / stats.totalRuns) * 100;
-		// Problem score: weight failures and retries
-		stats.problemScore = stats.failures * 2 + stats.retries;
+		// Problem score: weight failures more heavily than retries
+		// Rationale: Actual failures indicate real issues, retries indicate instability
+		stats.problemScore = stats.failures * PROBLEM_SCORE_FAILURE_WEIGHT + stats.retries;
 	});
 
 	const problematicTests = Array.from(testCaseStats.values())
 		.filter((t) => t.problemScore > 0)
 		.sort((a, b) => b.problemScore - a.problemScore)
-		.slice(0, 10);
+		.slice(0, TOP_ITEMS_LIMIT);
 
 	// 3. Longest Running Tests
 	const longestTests = await db.testResult.findMany({
@@ -257,14 +273,21 @@ export const GET: RequestHandler = async (event) => {
 
 	const slowestTests = Array.from(durationsByTest.values())
 		.sort((a, b) => b.avgDuration - a.avgDuration)
-		.slice(0, 10);
+		.slice(0, TOP_ITEMS_LIMIT);
 
 	// 4. Flaky Tests (inconsistent results)
+	// Rationale: Tests with 10-90% failure rate are considered flaky
+	// Tests closer to 50% are most problematic (most unpredictable)
 	const flakyTests = Array.from(testCaseStats.values())
 		.filter((t) => {
-			// A test is flaky if it has both passes and failures
+			// A test is flaky if it has both passes and failures within threshold
 			const passes = t.totalRuns - t.failures;
-			return passes > 0 && t.failures > 0 && t.failureRate < 90 && t.failureRate > 10;
+			return (
+				passes > 0 &&
+				t.failures > 0 &&
+				t.failureRate < FLAKY_TEST_MAX_FAILURE_RATE &&
+				t.failureRate > FLAKY_TEST_MIN_FAILURE_RATE
+			);
 		})
 		.sort((a, b) => {
 			// Sort by "flakiness score" - tests closest to 50% failure rate are most flaky
@@ -272,7 +295,7 @@ export const GET: RequestHandler = async (event) => {
 			const bScore = Math.abs(50 - b.failureRate);
 			return aScore - bScore;
 		})
-		.slice(0, 10);
+		.slice(0, TOP_ITEMS_LIMIT);
 
 	// 5. Overall Stats
 	const totalTestRuns = testRuns.length;
