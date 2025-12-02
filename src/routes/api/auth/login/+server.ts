@@ -6,6 +6,7 @@ import { createSession, setSessionCookie, verifyCsrfToken } from '$lib/server/se
 import { TEMP_PASSWORD_HASH } from '$lib/server/auth-constants';
 import { Ratelimit } from '@upstash/ratelimit';
 import { redis, isCacheEnabled } from '$lib/server/redis';
+import { createAuditLog } from '$lib/server/audit';
 
 /**
  * Rate limiting for login attempts
@@ -72,6 +73,18 @@ export const POST: RequestHandler = async (event) => {
 		// Check rate limit
 		const rateLimitOk = await checkRateLimit(email.trim().toLowerCase());
 		if (!rateLimitOk) {
+			// Audit rate limit exceeded
+			await createAuditLog({
+				userId: 'anonymous',
+				action: 'RATE_LIMIT_EXCEEDED',
+				resourceType: 'Authentication',
+				metadata: {
+					email: email.trim().toLowerCase(),
+					endpoint: '/api/auth/login'
+				},
+				event
+			});
+
 			throw error(429, {
 				message: 'Too many login attempts. Please try again in 15 minutes.'
 			});
@@ -84,6 +97,18 @@ export const POST: RequestHandler = async (event) => {
 
 		// Use constant-time response to prevent user enumeration
 		if (!user) {
+			// Audit failed login attempt (no userId since user doesn't exist)
+			await createAuditLog({
+				userId: 'anonymous',
+				action: 'USER_LOGIN_FAILED',
+				resourceType: 'User',
+				metadata: {
+					email: email.trim().toLowerCase(),
+					reason: 'User not found'
+				},
+				event
+			});
+
 			throw error(401, {
 				message: 'Invalid email or password'
 			});
@@ -101,6 +126,20 @@ export const POST: RequestHandler = async (event) => {
 		const isPasswordValid = await verifyPassword(password, user.passwordHash);
 
 		if (!isPasswordValid) {
+			// Audit failed login attempt
+			await createAuditLog({
+				userId: user.id,
+				teamId: user.teamId ?? undefined,
+				action: 'USER_LOGIN_FAILED',
+				resourceType: 'User',
+				resourceId: user.id,
+				metadata: {
+					email: user.email,
+					reason: 'Invalid password'
+				},
+				event
+			});
+
 			throw error(401, {
 				message: 'Invalid email or password'
 			});
@@ -120,6 +159,19 @@ export const POST: RequestHandler = async (event) => {
 
 		// Set session cookie
 		setSessionCookie(event, sessionId, token, csrfToken);
+
+		// Audit successful login
+		await createAuditLog({
+			userId: user.id,
+			teamId: user.teamId ?? undefined,
+			action: 'USER_LOGIN_SUCCESS',
+			resourceType: 'Session',
+			resourceId: sessionId,
+			metadata: {
+				email: user.email
+			},
+			event
+		});
 
 		// Return user data (excluding password hash)
 		return json({

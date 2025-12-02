@@ -10,6 +10,9 @@ const CSRF_COOKIE_NAME = 'qa_studio_csrf';
 /**
  * Get CSRF token from cookie
  *
+ * Handles URL-encoded cookie values properly by using decodeURIComponent.
+ * This prevents issues with special characters in the token.
+ *
  * @returns CSRF token string or null if not found
  *
  * @example
@@ -27,11 +30,29 @@ export function getCsrfToken(): string | null {
 		return null;
 	}
 
-	const cookie = document.cookie
-		.split('; ')
-		.find((row) => row.startsWith(`${CSRF_COOKIE_NAME}=`));
+	try {
+		// Parse cookies more robustly
+		const cookies = document.cookie.split(';').reduce(
+			(acc, cookie) => {
+				const [key, value] = cookie.trim().split('=');
+				if (key && value) {
+					acc[key] = decodeURIComponent(value);
+				}
+				return acc;
+			},
+			{} as Record<string, string>
+		);
 
-	return cookie ? cookie.split('=')[1] : null;
+		return cookies[CSRF_COOKIE_NAME] || null;
+	} catch (error) {
+		// Fallback to simple parsing if decoding fails
+		console.warn('Failed to parse CSRF cookie, using fallback method', error);
+		const cookie = document.cookie
+			.split('; ')
+			.find((row) => row.startsWith(`${CSRF_COOKIE_NAME}=`));
+
+		return cookie ? cookie.split('=')[1] : null;
+	}
 }
 
 /**

@@ -7,6 +7,7 @@ import {
 	markPasswordResetTokenAsUsed
 } from '$lib/server/password-reset';
 import { deleteAllUserSessions, verifyCsrfToken } from '$lib/server/sessions';
+import { createAuditLog } from '$lib/server/audit';
 
 export const POST: RequestHandler = async (event) => {
 	try {
@@ -61,9 +62,10 @@ export const POST: RequestHandler = async (event) => {
 		const passwordHash = await hashPassword(password);
 
 		// Update user password
-		await db.user.update({
+		const user = await db.user.update({
 			where: { id: userId },
-			data: { passwordHash }
+			data: { passwordHash },
+			select: { id: true, email: true, teamId: true }
 		});
 
 		// Mark token as used
@@ -71,6 +73,20 @@ export const POST: RequestHandler = async (event) => {
 
 		// Invalidate all existing sessions (force re-login)
 		await deleteAllUserSessions(userId);
+
+		// Audit password reset completion
+		await createAuditLog({
+			userId: user.id,
+			teamId: user.teamId ?? undefined,
+			action: 'USER_PASSWORD_CHANGED',
+			resourceType: 'User',
+			resourceId: user.id,
+			metadata: {
+				email: user.email,
+				method: 'reset_token'
+			},
+			event
+		});
 
 		return json({
 			message: 'Password has been reset successfully'

@@ -254,6 +254,37 @@ export function verifyCsrfToken(event: RequestEvent, submittedToken: string): bo
 }
 
 /**
+ * Check if the request is using session-based authentication
+ * (as opposed to API key authentication)
+ *
+ * @param event - SvelteKit request event
+ * @returns True if using session auth, false if using API key
+ */
+export function isSessionAuth(event: RequestEvent): boolean {
+	return !event.request.headers.get('Authorization') && !event.request.headers.get('x-api-key');
+}
+
+/**
+ * Verify CSRF token for session-based requests
+ * Throws error if CSRF validation fails
+ *
+ * @param event - SvelteKit request event
+ * @param csrfToken - CSRF token from request body/query (optional)
+ * @throws Error with 403 status if CSRF validation fails
+ */
+export function requireCsrfForSession(event: RequestEvent, csrfToken?: string): void {
+	// Only require CSRF for session-based auth
+	if (!isSessionAuth(event)) {
+		return;
+	}
+
+	// Validate CSRF token
+	if (!csrfToken || !verifyCsrfToken(event, csrfToken)) {
+		throw new Error('Invalid CSRF token');
+	}
+}
+
+/**
  * Get current user from session
  *
  * @param event - SvelteKit request event
