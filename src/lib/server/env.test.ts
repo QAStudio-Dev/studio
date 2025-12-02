@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { validateEnvironment, getSessionSecret, getResetSecret, generateSecret } from './env';
+import {
+	validateEnvironment,
+	getSessionSecret,
+	getResetSecret,
+	getTOTPEncryptionKey,
+	generateSecret
+} from './env';
 
 describe('env', () => {
 	const originalEnv = process.env;
@@ -76,10 +82,61 @@ describe('env', () => {
 		});
 	});
 
+	describe('getTOTPEncryptionKey', () => {
+		it('should return key if valid', () => {
+			process.env.TOTP_ENCRYPTION_KEY =
+				'0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+
+			const key = getTOTPEncryptionKey();
+			expect(key).toBe('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef');
+		});
+
+		it('should throw if key is missing', () => {
+			delete process.env.TOTP_ENCRYPTION_KEY;
+
+			expect(() => getTOTPEncryptionKey()).toThrow(
+				'TOTP_ENCRYPTION_KEY environment variable'
+			);
+		});
+
+		it('should throw if key is not 64 hex characters', () => {
+			process.env.TOTP_ENCRYPTION_KEY = 'short';
+
+			expect(() => getTOTPEncryptionKey()).toThrow(
+				'must be exactly 64 hexadecimal characters'
+			);
+		});
+
+		it('should throw if key contains invalid characters', () => {
+			process.env.TOTP_ENCRYPTION_KEY =
+				'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+
+			expect(() => getTOTPEncryptionKey()).toThrow(
+				'must be exactly 64 hexadecimal characters'
+			);
+		});
+
+		it('should accept lowercase hex', () => {
+			process.env.TOTP_ENCRYPTION_KEY =
+				'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789';
+
+			expect(() => getTOTPEncryptionKey()).not.toThrow();
+		});
+
+		it('should accept uppercase hex', () => {
+			process.env.TOTP_ENCRYPTION_KEY =
+				'ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789';
+
+			expect(() => getTOTPEncryptionKey()).not.toThrow();
+		});
+	});
+
 	describe('validateEnvironment', () => {
 		it('should not throw if all required variables are set in production', () => {
 			process.env.NODE_ENV = 'production';
 			process.env.SESSION_SECRET = 'my-production-secret';
+			process.env.TOTP_ENCRYPTION_KEY =
+				'0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 
 			expect(() => validateEnvironment()).not.toThrow();
 		});
@@ -87,14 +144,26 @@ describe('env', () => {
 		it('should throw if SESSION_SECRET missing in production', () => {
 			process.env.NODE_ENV = 'production';
 			delete process.env.SESSION_SECRET;
+			process.env.TOTP_ENCRYPTION_KEY =
+				'0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 
 			expect(() => validateEnvironment()).toThrow();
+		});
+
+		it('should throw if TOTP_ENCRYPTION_KEY missing in production', () => {
+			process.env.NODE_ENV = 'production';
+			process.env.SESSION_SECRET = 'my-production-secret';
+			delete process.env.TOTP_ENCRYPTION_KEY;
+
+			expect(() => validateEnvironment()).toThrow('TOTP_ENCRYPTION_KEY environment variable');
 		});
 
 		it('should not throw in development with defaults', () => {
 			process.env.NODE_ENV = 'development';
 			delete process.env.SESSION_SECRET;
 			delete process.env.RESET_SECRET;
+			process.env.TOTP_ENCRYPTION_KEY =
+				'0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 
 			expect(() => validateEnvironment()).not.toThrow();
 		});
