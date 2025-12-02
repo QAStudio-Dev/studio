@@ -1,10 +1,10 @@
-import { json } from '@sveltejs/kit';
+import { json, redirect } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getSessionId, clearSessionCookies, deleteSession } from '$lib/server/sessions';
 import { createAuditLog } from '$lib/server/audit';
 import { db } from '$lib/server/db';
 
-export const POST: RequestHandler = async (event) => {
+async function handleLogout(event: Parameters<RequestHandler>[0]) {
 	// Get session ID
 	const sessionId = getSessionId(event);
 
@@ -36,6 +36,14 @@ export const POST: RequestHandler = async (event) => {
 
 	// Clear cookies
 	clearSessionCookies(event);
+}
 
+export const POST: RequestHandler = async (event) => {
+	await handleLogout(event);
 	return json({ success: true });
+};
+
+export const GET: RequestHandler = async (event) => {
+	await handleLogout(event);
+	throw redirect(303, '/login');
 };
