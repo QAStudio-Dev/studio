@@ -283,6 +283,16 @@
 						>
 							Authenticators
 						</a>
+
+						<!-- Reports -->
+						<a
+							href="/reports"
+							class="rounded-base px-4 py-2 transition-colors {isActive('/reports')
+								? 'bg-primary-500 text-white'
+								: 'hover:bg-surface-200-800'}"
+						>
+							Reports
+						</a>
 					{/if}
 
 					<!-- API Docs -->
@@ -493,6 +503,17 @@
 								: 'hover:bg-surface-200-800'}"
 						>
 							Authenticators
+						</a>
+
+						<!-- Reports -->
+						<a
+							href="/reports"
+							onclick={closeMobileMenu}
+							class="rounded-base px-4 py-2 transition-colors {isActive('/reports')
+								? 'bg-primary-500 text-white'
+								: 'hover:bg-surface-200-800'}"
+						>
+							Reports
 						</a>
 					{/if}
 
