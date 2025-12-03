@@ -25,9 +25,6 @@ export default defineConfig({
 	ssr: {
 		noExternal: ['svelte-clerk']
 	},
-	optimizeDeps: {
-		include: ['@clerk/backend']
-	},
 	test: {
 		expect: { requireAssertions: true },
 		projects: [
