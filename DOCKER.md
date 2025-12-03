@@ -60,8 +60,8 @@ npm run docker:db:studio     # Open Prisma Studio (GUI)
 npm run docker:db:migrate    # Create new migration
 npm run docker:db:reset      # Reset database (destructive!)
 npm run docker:db:seed       # Seed database
-npm run docker:db:backup     # Backup database to file
-npm run docker:db:restore    # Restore from backup file
+npm run docker:db:backup     # Backup database (Unix/Mac only)
+npm run docker:db:restore    # Show restore usage instructions
 
 # Manual commands
 docker-compose ps            # List running services
@@ -183,6 +183,36 @@ npx prisma db seed          # Seed database
 npx prisma db push          # Push schema changes
 ```
 
+### Database Backup & Restore
+
+**Backup (Unix/Mac/Linux):**
+
+```bash
+# Quick backup with timestamp
+npm run docker:db:backup
+
+# Creates: backup-YYYYMMDD-HHMMSS.sql
+```
+
+**Backup (Windows PowerShell):**
+
+```powershell
+# Manual backup
+docker-compose exec postgres pg_dump -U qastudio qastudio > backup.sql
+```
+
+**Restore (All platforms):**
+
+```bash
+# Run the command shown by:
+npm run docker:db:restore
+
+# Or directly:
+docker-compose exec -T postgres psql -U qastudio qastudio < backup.sql
+```
+
+**Note:** The backup script uses Unix date command. Windows users should use the manual command above.
+
 ### Viewing Logs
 
 ```bash
@@ -273,7 +303,7 @@ npm run docker:prod:build
 # - Compiled assets only
 ```
 
-**🔒 CRITICAL - Production Security Checklist:**
+**🔒 Production Deployment Checklist:**
 
 **Required before deploying to production:**
 
@@ -304,6 +334,19 @@ npm run docker:prod:build
 6. **Consider managed services:**
     - For critical workloads, use managed PostgreSQL/Redis
     - Self-hosting is great for control, but requires proper maintenance
+
+7. **Optional: Add resource limits** (recommended for shared/production environments):
+    ```yaml
+    # Add to docker-compose.prod.yml
+    postgres:
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 1G
+                reservations:
+                    memory: 512M
+    ```
 
 ## Architecture
 

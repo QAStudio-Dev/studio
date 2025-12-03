@@ -32,7 +32,7 @@
     "docker:db:reset": "docker-compose exec web npx prisma migrate reset",
     "docker:db:seed": "docker-compose exec web npx prisma db seed",
     "docker:db:backup": "docker-compose exec postgres pg_dump -U qastudio qastudio > backup-$(date +%Y%m%d-%H%M%S).sql",
-    "docker:db:restore": "docker-compose exec -T postgres psql -U qastudio qastudio <"
+    "docker:db:restore": "echo 'Usage: docker-compose exec -T postgres psql -U qastudio qastudio < backup-file.sql'"
   },
   "devDependencies": {
     "@eslint/compat": "^1.4.0",

@@ -122,8 +122,8 @@ services:
       # Session Secret (change in production!)
       SESSION_SECRET: ${SESSION_SECRET:-dev_secret_change_me_in_production}
     volumes:
-      # Mount source code for hot reload
-      - .:/app
+      # Mount source code for hot reload (cached for better performance on Mac/Windows)
+      - .:/app:cached
       - /app/node_modules
       - /app/.svelte-kit
     ports:

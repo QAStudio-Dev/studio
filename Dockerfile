@@ -77,6 +77,10 @@ EXPOSE 3000
 
 ENV NODE_ENV=production
 
+# Health check for container orchestration
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3000/', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
+
 # Use dumb-init to handle signals
 ENTRYPOINT ["dumb-init", "--"]
 
