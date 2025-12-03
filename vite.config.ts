@@ -14,6 +14,14 @@ export default defineConfig({
 			outdir: './src/lib/paraglide'
 		})
 	],
+	server: {
+		port: 3000,
+		host: true
+	},
+	preview: {
+		port: 3000,
+		host: true
+	},
 	ssr: {
 		noExternal: ['svelte-clerk']
 	},

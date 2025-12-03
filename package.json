@@ -16,7 +16,15 @@
     "test:unit": "vitest",
     "test": "npm run test:unit -- --run && npm run test:e2e",
     "test:e2e": "playwright test",
-    "test:e2e:headless": "playwright test --headed=false"
+    "test:e2e:headless": "playwright test --headed=false",
+    "docker:dev": "docker-compose up",
+    "docker:dev:build": "docker-compose up --build",
+    "docker:dev:down": "docker-compose down",
+    "docker:dev:clean": "docker-compose down -v",
+    "docker:prod": "docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d",
+    "docker:prod:build": "docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build",
+    "docker:logs": "docker-compose logs -f web",
+    "docker:shell": "docker-compose exec web sh"
   },
   "devDependencies": {
     "@eslint/compat": "^1.4.0",

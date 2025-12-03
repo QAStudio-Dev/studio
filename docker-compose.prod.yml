@@ -1,0 +1,18 @@
+# Production overrides for docker-compose
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  web:
+    build:
+      target: production
+    environment:
+      NODE_ENV: production
+    command: sh -c "npx prisma migrate deploy && node build"
+    # Remove volume mounts for production
+    volumes: []
+
+  # In production, you might want to disable MailHog
+  # and use a real SMTP service instead
+  mailhog:
+    profiles:
+      - debug

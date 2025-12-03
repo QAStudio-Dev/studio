@@ -1,0 +1,152 @@
+# QA Studio - Self-Contained Development Environment
+# This docker-compose file provides all services needed to run QA Studio locally
+# No external cloud services required!
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: qastudio-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: qastudio
+      POSTGRES_USER: qastudio
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-qastudio_dev_password}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U qastudio']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching and session storage
+  redis:
+    image: redis:7-alpine
+    container_name: qastudio-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-qastudio_redis_pass}
+    volumes:
+      - redis-data:/data
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', '--raw', 'incr', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MinIO for object storage (S3-compatible)
+  # Use this for storing test attachments (screenshots, videos, logs)
+  minio:
+    image: minio/minio:latest
+    container_name: qastudio-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER:-qastudio}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD:-qastudio_minio_pass}
+    volumes:
+      - minio-data:/data
+    ports:
+      - '9000:9000' # API
+      - '9001:9001' # Console UI
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # Create MinIO bucket on startup
+  minio-init:
+    image: minio/mc:latest
+    container_name: qastudio-minio-init
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      /usr/bin/mc alias set myminio http://minio:9000 ${MINIO_USER:-qastudio} ${MINIO_PASSWORD:-qastudio_minio_pass};
+      /usr/bin/mc mb myminio/qastudio --ignore-existing;
+      /usr/bin/mc anonymous set download myminio/qastudio;
+      exit 0;
+      "
+
+  # MailHog for email testing
+  # Captures all outbound emails and provides a web UI
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: qastudio-mailhog
+    restart: unless-stopped
+    ports:
+      - '1025:1025' # SMTP server
+      - '8025:8025' # Web UI
+    logging:
+      driver: 'none' # Disable logs to reduce noise
+
+  # QA Studio Web Application
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: qastudio-web
+    restart: unless-stopped
+    environment:
+      # Database
+      DATABASE_URL: postgresql://qastudio:${DB_PASSWORD:-qastudio_dev_password}@postgres:5432/qastudio
+
+      # Redis
+      REDIS_URL: redis://:${REDIS_PASSWORD:-qastudio_redis_pass}@redis:6379
+
+      # MinIO (S3-compatible storage)
+      STORAGE_TYPE: minio
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: ${MINIO_USER:-qastudio}
+      S3_SECRET_KEY: ${MINIO_PASSWORD:-qastudio_minio_pass}
+      S3_BUCKET: qastudio
+      S3_REGION: us-east-1
+
+      # Email (MailHog)
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      SMTP_SECURE: 'false'
+      SMTP_FROM: noreply@qastudio.local
+
+      # App Config
+      ORIGIN: http://localhost:3000
+      NODE_ENV: development
+
+      # Session Secret (change in production!)
+      SESSION_SECRET: ${SESSION_SECRET:-dev_secret_change_me_in_production}
+    volumes:
+      # Mount source code for hot reload
+      - .:/app
+      - /app/node_modules
+      - /app/.svelte-kit
+    ports:
+      - '3000:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+    command: sh -c "npx prisma migrate deploy && npm run dev -- --host"
+
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  minio-data:
+    driver: local
+
+networks:
+  default:
+    name: qastudio-network
