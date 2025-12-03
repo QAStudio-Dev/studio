@@ -20,6 +20,11 @@ Thumbs.db
 .env.*
 !.env.example
 !.env.test
+!.env.docker
+
+# Docker
+docker-compose.override.yml
+backup-*.sql
 
 # Vite
 vite.config.js.timestamp-*

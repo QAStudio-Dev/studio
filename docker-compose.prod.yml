@@ -1,0 +1,48 @@
+# Production overrides for docker-compose
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  postgres:
+    # Use stronger password in production
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Database password required in production}
+    # Don't expose port externally in production
+    ports: []
+
+  redis:
+    # Use stronger password in production
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:?Redis password required in production}
+    # Don't expose port externally in production
+    ports: []
+    healthcheck:
+      test: ['CMD', 'redis-cli', '--pass', '${REDIS_PASSWORD}', 'ping']
+
+  minio:
+    # Use stronger credentials in production
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER:?MinIO user required in production}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD:?MinIO password required in production}
+    # Optionally don't expose console in production
+    # ports:
+    #   - '9000:9000'
+
+  web:
+    build:
+      target: production
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://qastudio:${DB_PASSWORD}@postgres:5432/qastudio
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: ${MINIO_USER}
+      S3_SECRET_KEY: ${MINIO_PASSWORD}
+      SESSION_SECRET: ${SESSION_SECRET:?Session secret required in production}
+    command: sh -c "npx prisma migrate deploy && node build"
+    # Remove volume mounts for production
+    volumes: []
+
+  # In production, you might want to disable MailHog
+  # and use a real SMTP service instead
+  mailhog:
+    profiles:
+      - debug
