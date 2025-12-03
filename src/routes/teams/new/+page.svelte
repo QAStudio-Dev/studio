@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { Check, Sparkles, Users, Zap } from 'lucide-svelte';
 	import { env } from '$env/dynamic/public';
+	import { PRICING, getMonthlyEquivalent } from '$lib/constants/pricing';
 
 	let teamName = $state('');
 	let teamDescription = $state('');
@@ -18,39 +19,6 @@
 		pro_yearly:
 			env.PUBLIC_STRIPE_PRICE_ID_PRO_YEARLY ||
 			import.meta.env.PUBLIC_STRIPE_PRICE_ID_PRO_YEARLY
-	};
-
-	const plans = {
-		free: {
-			name: 'Free',
-			price: 0,
-			description: 'Perfect for individuals',
-			tagline: 'Get started for free',
-			features: [
-				'1 user (you)',
-				'Unlimited projects',
-				'Basic test management',
-				'7-day attachment retention',
-				'Community support'
-			]
-		},
-		pro: {
-			name: 'Pro',
-			priceMonthly: 10,
-			priceYearly: 8.33, // $100/year = $8.33/month
-			yearlyTotal: 100,
-			description: 'For teams that ship fast',
-			tagline: 'Most popular',
-			features: [
-				'Up to 10 team members',
-				'Unlimited projects',
-				'Advanced test management',
-				'30-day attachment retention',
-				'AI-powered failure analysis',
-				'Priority support',
-				'Custom integrations'
-			]
-		}
 	};
 
 	async function handleCreateTeam() {
@@ -161,7 +129,6 @@
 			disabled={loading}
 		>
 			Yearly
-			<span class="ml-2 badge preset-filled-success-500 text-xs">Save 17%</span>
 		</button>
 	</div>
 
@@ -180,9 +147,9 @@
 				<div>
 					<div class="mb-2 inline-flex items-center gap-2">
 						<Users class="text-surface-600-300 h-5 w-5" />
-						<h3 class="text-2xl font-bold">{plans.free.name}</h3>
+						<h3 class="text-2xl font-bold">{PRICING.FREE.name}</h3>
 					</div>
-					<p class="text-surface-600-300 text-sm">{plans.free.description}</p>
+					<p class="text-surface-600-300 text-sm">{PRICING.FREE.description}</p>
 				</div>
 				{#if selectedPlan === 'free'}
 					<div class="badge preset-filled-primary-500">Selected</div>
@@ -191,14 +158,14 @@
 
 			<div class="mb-8">
 				<div class="flex items-baseline gap-2">
-					<span class="text-5xl font-bold">${plans.free.price}</span>
+					<span class="text-5xl font-bold">${PRICING.FREE.price}</span>
 					<span class="text-surface-600-300">/month</span>
 				</div>
-				<p class="text-surface-600-300 mt-2 text-sm">{plans.free.tagline}</p>
+				<p class="text-surface-600-300 mt-2 text-sm">{PRICING.FREE.tagline}</p>
 			</div>
 
 			<ul class="space-y-4">
-				{#each plans.free.features as feature}
+				{#each PRICING.FREE.features as feature}
 					<li class="flex items-start gap-3">
 						<Check class="mt-0.5 h-5 w-5 flex-shrink-0 text-success-500" />
 						<span>{feature}</span>
@@ -221,7 +188,7 @@
 					class="badge preset-filled-primary-500 px-4 py-2 text-sm font-semibold shadow-lg"
 				>
 					<Sparkles class="mr-1 inline h-4 w-4" />
-					{plans.pro.tagline}
+					{PRICING.PRO.tagline}
 				</span>
 			</div>
 
@@ -229,9 +196,9 @@
 				<div>
 					<div class="mb-2 inline-flex items-center gap-2">
 						<Zap class="h-5 w-5 text-primary-500" />
-						<h3 class="text-2xl font-bold">{plans.pro.name}</h3>
+						<h3 class="text-2xl font-bold">{PRICING.PRO.name}</h3>
 					</div>
-					<p class="text-surface-600-300 text-sm">{plans.pro.description}</p>
+					<p class="text-surface-600-300 text-sm">{PRICING.PRO.description}</p>
 				</div>
 				{#if selectedPlan === 'pro'}
 					<div class="badge preset-filled-primary-500">Selected</div>
@@ -242,14 +209,14 @@
 				<div class="flex items-baseline gap-2">
 					<span class="text-5xl font-bold">
 						${billingPeriod === 'monthly'
-							? plans.pro.priceMonthly
-							: plans.pro.priceYearly}
+							? PRICING.PRO.pricePerSeatMonthly
+							: getMonthlyEquivalent('pro').toFixed(2)}
 					</span>
-					<span class="text-surface-600-300">/user/month</span>
+					<span class="text-surface-600-300">/seat/month</span>
 				</div>
 				{#if billingPeriod === 'yearly'}
 					<p class="mt-2 text-sm font-medium text-success-500">
-						Billed ${plans.pro.yearlyTotal}/user/year · Save $20/year
+						Billed ${PRICING.PRO.pricePerSeatYearly}/seat/year
 					</p>
 				{:else}
 					<p class="text-surface-600-300 mt-2 text-sm">Billed monthly</p>
@@ -257,7 +224,7 @@
 			</div>
 
 			<ul class="space-y-4">
-				{#each plans.pro.features as feature}
+				{#each PRICING.PRO.features as feature}
 					<li class="flex items-start gap-3">
 						<Check class="mt-0.5 h-5 w-5 flex-shrink-0 text-primary-500" />
 						<span>{feature}</span>

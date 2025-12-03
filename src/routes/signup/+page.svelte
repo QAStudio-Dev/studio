@@ -64,8 +64,8 @@
 			// Invalidate all data to refresh user state
 			await invalidateAll();
 
-			// Redirect to home page after successful signup
-			goto('/');
+			// Redirect to onboarding flow after successful signup
+			goto('/onboarding');
 		} catch (err) {
 			error = 'An error occurred. Please try again.';
 		} finally {

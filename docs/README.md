@@ -6,125 +6,51 @@ Welcome to the QA Studio documentation! This directory contains comprehensive gu
 
 ### Features & Setup
 
-- [STRIPE_SETUP.md](STRIPE_SETUP.md) - Payment and subscription configuration
-- [DECAP_CMS_SETUP.md](DECAP_CMS_SETUP.md) - Content management system setup
+- [PRICING.md](PRICING.md) - Pricing plans and billing configuration
+- [STRIPE_SETUP.md](STRIPE_SETUP.md) - Payment and subscription setup
 - [TEAMS_AND_ROLES.md](TEAMS_AND_ROLES.md) - Team structure and permissions
 - [TEAM_INVITATIONS.md](TEAM_INVITATIONS.md) - Inviting users to teams
+- [API_KEYS_SETUP.md](API_KEYS_SETUP.md) - Setting up API keys for programmatic access
 
 ### Integrations
 
-- [INTEGRATIONS.md](INTEGRATIONS.md) - Overview of third-party integrations
-- [INTEGRATION_USAGE.md](INTEGRATION_USAGE.md) - How to use integrations
-- [SLACK_NOTIFICATIONS_STATUS.md](SLACK_NOTIFICATIONS_STATUS.md) - Slack integration status
-- [SLACK_NOTIFICATION_IMPROVEMENTS.md](SLACK_NOTIFICATION_IMPROVEMENTS.md) - Slack feature improvements
-- [SLACK_BUTTON_FIX.md](SLACK_BUTTON_FIX.md) - Troubleshooting Slack buttons
+- [INTEGRATIONS.md](INTEGRATIONS.md) - Third-party integrations setup and usage
+- [INTEGRATION_USAGE.md](INTEGRATION_USAGE.md) - Integration code examples
 
 ### API & Development
 
-- [API_KEYS_SETUP.md](API_KEYS_SETUP.md) - Setting up API keys for programmatic access
 - [REPORTER_API.md](REPORTER_API.md) - Using the test reporter API
-- [REPORTER_API_CHANGES.md](REPORTER_API_CHANGES.md) - Recent API changes
 - [PLAYWRIGHT_API_GUIDE.md](PLAYWRIGHT_API_GUIDE.md) - Playwright integration guide
-- [API_QUICK_REFERENCE.md](API_QUICK_REFERENCE.md) - Quick API reference
-- [API_ENDPOINT_MIGRATION.md](API_ENDPOINT_MIGRATION.md) - API migration guide
-- [API_MIGRATION_STATUS.md](API_MIGRATION_STATUS.md) - Migration progress tracking
 
 ### Security
 
-- [SECURITY.md](SECURITY.md) - **Security implementation and best practices**
-- [SECURITY_FIXES.md](SECURITY_FIXES.md) - **Recent security improvements**
-- [SIGNED_URLS.md](SIGNED_URLS.md) - **Secure trace file serving**
-
-### Performance
-
-- [PERFORMANCE_OPTIMIZATIONS.md](PERFORMANCE_OPTIMIZATIONS.md) - Performance tuning and optimizations
+- [SECURITY.md](SECURITY.md) - Security implementation and best practices
 
 ---
 
-## 🔒 Security Documentation
-
-### Overview
-
-QA Studio uses cryptographically signed, time-limited URLs to serve Playwright trace files securely to external services like `trace.playwright.dev`.
-
-### Quick Start
-
-1. Generate signing secret:
-
-    ```bash
-    openssl rand -hex 32
-    ```
-
-2. Add to `.env`:
-
-    ```bash
-    URL_SIGNING_SECRET=your_generated_secret_here
-    ```
-
-3. For production (Vercel):
-    ```bash
-    vercel env add URL_SIGNING_SECRET production
-    ```
-
-### Security Features
-
-- ✅ HMAC-SHA256 signatures (tamper-proof)
-- ✅ Time-based expiration (1-24 hours)
-- ✅ Authentication & authorization checks
-- ✅ Path traversal protection
-- ✅ Strict MIME type validation
-- ✅ Timing-safe comparisons
-- ✅ No hardcoded secrets
-
-**Read more:** [SECURITY.md](SECURITY.md)
-
----
-
-## 🚀 Common Tasks
+## 🚀 Quick Start
 
 ### Setting Up a New Development Environment
 
-1. Configure Stripe using [STRIPE_SETUP.md](STRIPE_SETUP.md)
-2. Set up API keys via [API_KEYS_SETUP.md](API_KEYS_SETUP.md)
-3. Generate security secrets per [SECURITY.md](SECURITY.md)
+1. Configure pricing and billing: [PRICING.md](PRICING.md)
+2. Set up Stripe: [STRIPE_SETUP.md](STRIPE_SETUP.md)
+3. Configure API keys: [API_KEYS_SETUP.md](API_KEYS_SETUP.md)
+4. Review security setup: [SECURITY.md](SECURITY.md)
 
 ### Integrating Playwright Tests
 
 1. Read [PLAYWRIGHT_API_GUIDE.md](PLAYWRIGHT_API_GUIDE.md)
 2. Check [REPORTER_API.md](REPORTER_API.md) for reporter setup
-3. Review [REPORTER_API_CHANGES.md](REPORTER_API_CHANGES.md) for latest updates
 
 ### Working with Teams
 
-1. Understand structure in [TEAMS_AND_ROLES.md](TEAMS_AND_ROLES.md)
-2. Set up invitations via [TEAM_INVITATIONS.md](TEAM_INVITATIONS.md)
+1. Understand structure: [TEAMS_AND_ROLES.md](TEAMS_AND_ROLES.md)
+2. Set up invitations: [TEAM_INVITATIONS.md](TEAM_INVITATIONS.md)
 
 ### Adding Integrations
 
-1. Overview: [INTEGRATIONS.md](INTEGRATIONS.md)
-2. Usage guide: [INTEGRATION_USAGE.md](INTEGRATION_USAGE.md)
-3. Slack-specific: [SLACK_NOTIFICATIONS_STATUS.md](SLACK_NOTIFICATIONS_STATUS.md)
-
----
-
-## 🐛 Troubleshooting
-
-### Security Issues
-
-- **Missing signing secret error**: See [SECURITY.md](SECURITY.md#configuration-checklist)
-- **Unauthorized access**: Check [SECURITY_FIXES.md](SECURITY_FIXES.md#2--missing-authentication-check)
-- **Trace viewer not loading**: Review [SIGNED_URLS.md](SIGNED_URLS.md#troubleshooting)
-
-### Integration Issues
-
-- **Slack buttons not working**: [SLACK_BUTTON_FIX.md](SLACK_BUTTON_FIX.md)
-- **Notifications not sending**: [SLACK_NOTIFICATIONS_STATUS.md](SLACK_NOTIFICATIONS_STATUS.md)
-
-### API Issues
-
-- **API key problems**: [API_KEYS_SETUP.md](API_KEYS_SETUP.md)
-- **Reporter errors**: [REPORTER_API_CHANGES.md](REPORTER_API_CHANGES.md)
-- **Endpoint migration**: [API_ENDPOINT_MIGRATION.md](API_ENDPOINT_MIGRATION.md)
+1. Setup guide: [INTEGRATIONS.md](INTEGRATIONS.md)
+2. Code examples: [INTEGRATION_USAGE.md](INTEGRATION_USAGE.md)
 
 ---
 
@@ -150,7 +76,7 @@ When adding new documentation:
 ## 🔗 External Resources
 
 - [Main Project README](../README.md)
-- [Environment Variables](.env.example)
+- [Environment Variables](../.env.example)
 - [Prisma Schema](../prisma/schema.prisma)
 - [API Routes](../src/routes/api/)
 

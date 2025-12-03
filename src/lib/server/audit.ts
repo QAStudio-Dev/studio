@@ -59,7 +59,7 @@ export type AuditAction =
 	| 'SETTINGS_CHANGED';
 
 interface AuditLogParams {
-	userId: string;
+	userId?: string | null; // Optional for anonymous events
 	teamId?: string;
 	action: AuditAction;
 	resourceType: string;
@@ -74,6 +74,16 @@ interface AuditLogParams {
  */
 export async function createAuditLog(params: AuditLogParams): Promise<void> {
 	const { userId, teamId, action, resourceType, resourceId, metadata, event } = params;
+
+	// Skip creating audit log if userId is 'anonymous' or null (not a valid user)
+	// These events should be logged elsewhere (e.g., application logs)
+	if (!userId || userId === 'anonymous') {
+		console.warn(`Skipping audit log for anonymous ${action} on ${resourceType}`, {
+			ipAddress: event?.request.headers.get('x-forwarded-for') || event?.getClientAddress(),
+			metadata
+		});
+		return;
+	}
 
 	// Extract IP address and user agent from event if available
 	const ipAddress = event?.request.headers.get('x-forwarded-for') || event?.getClientAddress();

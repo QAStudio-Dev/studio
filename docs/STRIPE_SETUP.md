@@ -59,13 +59,13 @@ model Subscription {
 3. Add pricing options:
 
     **Monthly Price:**
-    - **Price**: $15/month
+    - **Price**: $10/month per seat
     - **Billing period**: Monthly
     - **Usage type**: Licensed (per seat)
     - Copy the **Price ID** (starts with `price_`)
 
     **Yearly Price:**
-    - **Price**: $144/year ($12/month)
+    - **Price**: $100/year per seat
     - **Billing period**: Yearly
     - **Usage type**: Licensed (per seat)
     - Copy the **Price ID** (starts with `price_`)

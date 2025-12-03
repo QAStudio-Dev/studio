@@ -1,5 +1,5 @@
 <!-- Export validation function for parent component -->
-<script context="module" lang="ts">
+<script module lang="ts">
 	export function validatePassword(password: string): {
 		valid: boolean;
 		errors: string[];

@@ -66,116 +66,187 @@
 	<title>Login - QA Studio</title>
 </svelte:head>
 
-<div class="flex min-h-screen items-center justify-center bg-surface-50 px-4 dark:bg-surface-900">
-	<div class="w-full max-w-md">
-		<div class="card rounded-container p-8">
+<div
+	class="min-h-screen bg-gradient-to-br from-primary-50 via-surface-50 to-secondary-50 dark:from-surface-950 dark:via-surface-900 dark:to-surface-950"
+>
+	<!-- Background pattern overlay -->
+	<div
+		class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiMwMDAiIGZpbGwtb3BhY2l0eT0iMC4wMiI+PHBhdGggZD0iTTM2IDE0YzAtOC44MzcgNy4xNjMtMTYgMTYtMTZzMTYgNy4xNjMgMTYgMTYtNy4xNjMgMTYtMTYgMTYtMTYtNy4xNjMtMTYtMTZ6TTIgMzBjMC04LjgzNyA3LjE2My0xNiAxNi0xNnMxNiA3LjE2MyAxNiAxNi03LjE2MyAxNi0xNiAxNi0xNi03LjE2My0xNi0xNnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-40"
+	></div>
+
+	<div class="relative flex min-h-screen items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
+		<div class="w-full max-w-md">
+			<!-- Logo and branding -->
 			<div class="mb-8 text-center">
-				<h1 class="text-3xl font-bold text-surface-900 dark:text-surface-50">
+				<div class="mb-4 flex justify-center">
+					<div
+						class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-secondary-500 shadow-lg shadow-primary-500/30"
+					>
+						<svg
+							class="h-8 w-8 text-white"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+							/>
+						</svg>
+					</div>
+				</div>
+				<h1 class="text-3xl font-bold tracking-tight text-surface-900 dark:text-white">
 					Welcome Back
 				</h1>
-				<p class="mt-2 text-surface-600 dark:text-surface-400">
-					Sign in to your QA Studio account
+				<p class="mt-2 text-sm text-surface-600 dark:text-surface-400">
+					Sign in to continue to QA Studio
 				</p>
 			</div>
 
-			<!-- Info banner for existing users -->
-			<div class="mb-6 rounded-base border border-primary-500/30 bg-primary-500/10 px-4 py-3">
-				<p class="text-sm text-primary-700 dark:text-primary-300">
-					<strong>Existing users:</strong> If you had an account before, enter your email to
-					set up a new password.
-				</p>
-			</div>
-
-			<form
-				onsubmit={(e) => {
-					e.preventDefault();
-					handleLogin();
-				}}
+			<!-- Main card -->
+			<div
+				class="card rounded-2xl border border-surface-200/60 bg-white/80 p-8 shadow-xl backdrop-blur-sm dark:border-surface-800/60 dark:bg-surface-900/80"
 			>
-				{#if error}
-					<div
-						role="alert"
-						class="mb-4 rounded-base bg-error-500/10 px-4 py-3 text-error-700 dark:text-error-400"
-					>
-						{error}
-					</div>
-				{/if}
+				<form
+					onsubmit={(e) => {
+						e.preventDefault();
+						handleLogin();
+					}}
+					class="space-y-5"
+				>
+					{#if error}
+						<div
+							role="alert"
+							class="flex gap-3 rounded-xl border border-error-200 bg-gradient-to-r from-error-50 to-error-100/50 px-4 py-3.5 dark:border-error-900/50 dark:from-error-950/50 dark:to-error-900/30"
+						>
+							<svg
+								class="h-5 w-5 flex-shrink-0 text-error-600 dark:text-error-400"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+								/>
+							</svg>
+							<p class="text-sm text-error-900 dark:text-error-100">{error}</p>
+						</div>
+					{/if}
 
-				<div class="mb-4">
-					<label
-						for="email"
-						class="mb-2 block text-sm font-medium text-surface-700 dark:text-surface-300"
-					>
-						Email
-					</label>
-					<input
-						id="email"
-						type="email"
-						bind:value={email}
-						required
-						autocomplete="email"
-						disabled={loading}
-						class="w-full rounded-base border border-surface-300 bg-white px-4 py-2 text-surface-900 placeholder-surface-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none disabled:opacity-50 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-50"
-						placeholder="you@example.com"
-					/>
-				</div>
-
-				<div class="mb-6">
-					<label
-						for="password"
-						class="mb-2 block text-sm font-medium text-surface-700 dark:text-surface-300"
-					>
-						Password
-					</label>
-					<input
-						id="password"
-						type="password"
-						bind:value={password}
-						required
-						autocomplete="current-password"
-						disabled={loading}
-						class="w-full rounded-base border border-surface-300 bg-white px-4 py-2 text-surface-900 placeholder-surface-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none disabled:opacity-50 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-50"
-						placeholder="••••••••"
-					/>
-				</div>
-
-				<div class="mb-6 flex items-center justify-between text-sm">
-					<div class="flex items-center">
-						<input
-							id="remember"
-							type="checkbox"
-							class="h-4 w-4 rounded border-surface-300 text-primary-600 focus:ring-primary-500 dark:border-surface-700"
-						/>
-						<label for="remember" class="ml-2 text-surface-600 dark:text-surface-400">
-							Remember me
+					<div>
+						<label
+							for="email"
+							class="mb-2 block text-sm font-medium text-surface-900 dark:text-surface-100"
+						>
+							Email address
 						</label>
+						<input
+							id="email"
+							type="email"
+							bind:value={email}
+							required
+							autocomplete="email"
+							disabled={loading}
+							class="w-full rounded-xl border border-surface-300 bg-white px-4 py-3 text-surface-900 placeholder-surface-400 transition-all duration-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-50 dark:focus:border-primary-400 dark:focus:ring-primary-400/20"
+							placeholder="you@example.com"
+						/>
 					</div>
-					<a
-						href="/forgot-password"
-						class="text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
+
+					<div>
+						<label
+							for="password"
+							class="mb-2 block text-sm font-medium text-surface-900 dark:text-surface-100"
+						>
+							Password
+						</label>
+						<input
+							id="password"
+							type="password"
+							bind:value={password}
+							required
+							autocomplete="current-password"
+							disabled={loading}
+							class="w-full rounded-xl border border-surface-300 bg-white px-4 py-3 text-surface-900 placeholder-surface-400 transition-all duration-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-50 dark:focus:border-primary-400 dark:focus:ring-primary-400/20"
+							placeholder="Enter your password"
+						/>
+					</div>
+
+					<div class="flex items-center justify-between">
+						<div class="flex items-center">
+							<input
+								id="remember"
+								type="checkbox"
+								class="h-4 w-4 rounded-md border-surface-300 text-primary-600 transition-all focus:ring-2 focus:ring-primary-500/20 focus:ring-offset-0 dark:border-surface-700 dark:bg-surface-800"
+							/>
+							<label
+								for="remember"
+								class="ml-2.5 text-sm text-surface-700 dark:text-surface-300"
+							>
+								Remember me
+							</label>
+						</div>
+						<a
+							href="/forgot-password"
+							class="text-sm font-medium text-primary-600 transition-colors hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+						>
+							Forgot password?
+						</a>
+					</div>
+
+					<button
+						type="submit"
+						class="btn w-full rounded-xl preset-filled-primary-500 py-3 text-base font-semibold shadow-lg shadow-primary-500/30 transition-all duration-200 hover:shadow-xl hover:shadow-primary-500/40 disabled:cursor-not-allowed disabled:opacity-60"
+						disabled={loading}
 					>
-						Forgot password?
-					</a>
+						{#if loading}
+							<svg
+								class="mr-2 inline h-5 w-5 animate-spin"
+								fill="none"
+								viewBox="0 0 24 24"
+							>
+								<circle
+									class="opacity-25"
+									cx="12"
+									cy="12"
+									r="10"
+									stroke="currentColor"
+									stroke-width="4"
+								></circle>
+								<path
+									class="opacity-75"
+									fill="currentColor"
+									d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+								></path>
+							</svg>
+							Signing in...
+						{:else}
+							Sign in to your account
+						{/if}
+					</button>
+				</form>
+
+				<div class="mt-6 text-center">
+					<p class="text-sm text-surface-600 dark:text-surface-400">
+						Don't have an account?
+						<a
+							href="/signup"
+							class="font-medium text-primary-600 transition-colors hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+						>
+							Sign up for free
+						</a>
+					</p>
 				</div>
-
-				<button
-					type="submit"
-					class="btn w-full preset-filled-primary-500"
-					disabled={loading}
-				>
-					{loading ? 'Signing in...' : 'Sign in'}
-				</button>
-			</form>
-
-			<div class="mt-6 text-center text-sm text-surface-600 dark:text-surface-400">
-				Don't have an account?
-				<a
-					href="/signup"
-					class="text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
-				>
-					Sign up
-				</a>
 			</div>
+
+			<!-- Footer -->
+			<p class="mt-8 text-center text-xs text-surface-500 dark:text-surface-500">
+				By signing in, you agree to our Terms of Service and Privacy Policy
+			</p>
 		</div>
 	</div>
 </div>

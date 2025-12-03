@@ -289,9 +289,9 @@ When you subscribe to QA Studio Pro:
 
 1. Select number of seats (members) you need
 2. Price = `base_price × number_of_seats`
-3. Example: $15/month per seat
-    - 5 seats = $75/month
-    - 10 seats = $150/month
+3. Example: $10/month per seat
+    - 5 seats = $50/month
+    - 10 seats = $100/month
 
 ### Adding More Seats
 
