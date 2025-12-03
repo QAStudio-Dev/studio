@@ -1,270 +1,367 @@
-# Security Implementation - Signed URLs for Trace Viewing
+# Security Guide
 
-This document outlines the security measures implemented for serving Playwright trace files to external services.
+This document outlines the security measures implemented in QA Studio and provides guidance for maintaining a secure deployment.
 
-## Overview
+## Table of Contents
 
-QA Studio uses **HMAC-signed, time-limited URLs** to securely serve trace files to external services like `trace.playwright.dev` without exposing authentication credentials.
+- [Authentication Security](#authentication-security)
+- [CSRF Protection](#csrf-protection)
+- [Rate Limiting](#rate-limiting)
+- [Environment Variables](#environment-variables)
+- [Session Management](#session-management)
+- [Password Reset Security](#password-reset-security)
+- [Production Deployment Checklist](#production-deployment-checklist)
+- [Future Improvements](#future-improvements)
 
-## Security Controls
+## Authentication Security
 
-### 1. **Required Environment Variable**
+### Password Hashing
 
-**File:** `src/lib/server/signed-urls.ts`
+- **Algorithm**: bcrypt with 12 rounds (OWASP 2025 recommended)
+- **Implementation**: [src/lib/server/crypto.ts](src/lib/server/crypto.ts)
+- **Note**: Bcrypt automatically handles salting and is resistant to timing attacks
+
+### Password Requirements
+
+Enforced on signup, password reset, and password setup:
+
+- Minimum 8 characters
+- At least one uppercase letter
+- At least one lowercase letter
+- At least one number
+
+### Session Tokens
+
+- **Generation**: Cryptographically secure random tokens (32 bytes)
+- **Storage**: HMAC-SHA256 hashed in database
+- **Transmission**: HTTP-only cookies (prevents XSS theft)
+- **Validation**: Constant-time comparison (prevents timing attacks)
+- **Expiry**: 30 days, automatically cleaned up every 6 hours
+
+## CSRF Protection
+
+### Implementation
+
+All state-changing authentication endpoints validate CSRF tokens:
+
+- Login: [src/routes/api/auth/login/+server.ts](src/routes/api/auth/login/+server.ts)
+- Signup: [src/routes/api/auth/signup/+server.ts](src/routes/api/auth/signup/+server.ts)
+- Setup Password: [src/routes/api/auth/setup-password/+server.ts](src/routes/api/auth/setup-password/+server.ts)
+- Request Reset: [src/routes/api/auth/request-reset/+server.ts](src/routes/api/auth/request-reset/+server.ts)
+- Reset Password: [src/routes/api/auth/reset-password/+server.ts](src/routes/api/auth/reset-password/+server.ts)
+
+### How It Works
+
+1. Server generates CSRF token on session creation
+2. Token stored in non-httpOnly cookie (client can read)
+3. Client includes token in request body for state-changing operations
+4. Server validates cookie token matches submitted token
+5. Request rejected if tokens don't match (403 Forbidden)
+
+### Frontend Integration
+
+When making authentication API calls, include the CSRF token:
 
 ```typescript
-const SECRET_KEY = env.URL_SIGNING_SECRET;
+// Read CSRF token from cookie
+const csrfToken = document.cookie
+	.split('; ')
+	.find((row) => row.startsWith('qa_studio_csrf='))
+	?.split('=')[1];
 
-if (!SECRET_KEY) {
-	throw new Error(
-		'URL_SIGNING_SECRET must be configured in environment variables. ' +
-			'Generate one with: openssl rand -hex 32'
-	);
-}
+// Include in request
+await fetch('/api/auth/login', {
+	method: 'POST',
+	headers: { 'Content-Type': 'application/json' },
+	body: JSON.stringify({
+		email: 'user@example.com',
+		password: 'password123',
+		csrfToken // <-- Include this
+	})
+});
 ```
 
-**Why:** Prevents the application from starting with a weak or missing signing secret. No fallback secrets are used.
+## Rate Limiting
 
-**Setup:**
+### Current Implementation
 
-```bash
-# Generate a secure 256-bit secret
-openssl rand -hex 32
+**Location**: [src/routes/api/auth/login/+server.ts](src/routes/api/auth/login/+server.ts)
 
-# Add to .env
-URL_SIGNING_SECRET="your-generated-secret-here"
-```
+**Limitations**:
 
-### 2. **Authentication & Authorization**
+- In-memory storage (resets on server restart)
+- Not suitable for multi-instance deployments
+- No automatic cleanup (Map grows indefinitely)
 
-**File:** `src/routes/api/attachments/[attachmentId]/signed-url/+server.ts`
+**Rules**:
+
+- 5 login attempts per email address
+- 15-minute cooldown period
+- Counter reset on successful login
+
+### Production Recommendations
+
+For production deployments, especially with multiple server instances, migrate to **Redis-based rate limiting**:
+
+#### Option 1: Upstash Redis (Recommended for Vercel)
 
 ```typescript
-// 1. Require authentication
-const session = await locals.clerk?.session();
-if (!session?.userId) {
-	throw error(401, 'Authentication required');
-}
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 
-// 2. Verify user has access to the attachment's project
-const attachment = await db.attachment.findUnique({
-	include: {
-		testResult: {
-			include: {
-				testRun: { include: { project: true } }
-			}
-		}
-	}
+const ratelimit = new Ratelimit({
+	redis: Redis.fromEnv(),
+	limiter: Ratelimit.slidingWindow(5, '15 m'), // 5 requests per 15 minutes
+	analytics: true
 });
 
-// 3. Check user is project creator OR in same team
-const hasAccess =
-	project.createdBy === userId || (project.teamId && user?.teamId === project.teamId);
-
-if (!hasAccess) {
-	throw error(403, 'You do not have access to this attachment');
+// In login endpoint
+const { success } = await ratelimit.limit(email);
+if (!success) {
+	throw error(429, {
+		message: 'Too many login attempts. Please try again in 15 minutes.'
+	});
 }
 ```
 
-**Why:** Prevents authenticated users from generating signed URLs for attachments they don't have permission to access.
+**Setup**:
 
-### 3. **Input Validation**
+1. Add dependency: `npm install @upstash/ratelimit @upstash/redis`
+2. Create Redis instance in Vercel Dashboard → Storage → Redis
+3. Environment variables automatically configured
 
-**File:** `src/routes/api/attachments/[attachmentId]/signed-url/+server.ts`
+#### Option 2: Generic Redis
 
 ```typescript
-const expiresInMinutes = parseInt(url.searchParams.get('expiresIn') || '60', 10);
+import { RateLimiterRedis } from 'rate-limiter-flexible';
+import Redis from 'ioredis';
 
-// Validate: 1 minute to 24 hours
-if (isNaN(expiresInMinutes) || expiresInMinutes < 1 || expiresInMinutes > 1440) {
-	throw error(400, 'Expiration must be between 1 and 1440 minutes');
+const redisClient = new Redis({
+	host: process.env.REDIS_HOST,
+	port: parseInt(process.env.REDIS_PORT || '6379'),
+	password: process.env.REDIS_PASSWORD
+});
+
+const rateLimiter = new RateLimiterRedis({
+	storeClient: redisClient,
+	keyPrefix: 'login',
+	points: 5, // 5 attempts
+	duration: 900 // 15 minutes in seconds
+});
+
+// In login endpoint
+try {
+	await rateLimiter.consume(email);
+} catch (err) {
+	throw error(429, {
+		message: 'Too many login attempts. Please try again in 15 minutes.'
+	});
 }
 ```
 
-**Why:** Prevents:
+**Setup**:
 
-- Negative expiration times
-- Extremely short expirations (DoS via rapid regeneration)
-- Extremely long expirations (reduces security window)
+1. Add dependencies: `npm install rate-limiter-flexible ioredis`
+2. Configure Redis connection in environment variables
+3. Update login endpoint to use rate limiter
 
-### 4. **Strict MIME Type Validation**
+### Rate Limiting Best Practices
 
-**File:** `src/routes/api/traces/[attachmentId]/+server.ts`
+- **Different limits for different endpoints**: Login (5/15m), Signup (3/hour), Password Reset (3/hour)
+- **IP-based limiting**: Add IP-based rate limiting for additional protection
+- **Gradual backoff**: Increase cooldown period for repeated violations
+- **Monitoring**: Log rate limit hits for security monitoring
+- **User feedback**: Provide clear error messages with retry timing
+
+## Environment Variables
+
+### Required Secrets
+
+All security-critical environment variables are validated at server startup (see [src/lib/server/env.ts](src/lib/server/env.ts)).
+
+#### SESSION_SECRET
+
+- **Purpose**: HMAC signing of session tokens
+- **Required**: Yes (production will not start without it)
+- **Generate**: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`
+- **Security**: Must be cryptographically random, never commit to version control
+
+#### RESET_SECRET
+
+- **Purpose**: HMAC signing of password reset tokens
+- **Required**: No (falls back to SESSION_SECRET)
+- **Recommended**: Use separate value in production
+- **Generate**: Same as SESSION_SECRET
+
+#### CRON_SECRET
+
+- **Purpose**: Protect cron job endpoints from unauthorized access
+- **Required**: Yes (for cleanup jobs to run)
+- **Generate**: Same as SESSION_SECRET
+- **Used by**: [src/routes/api/cron/cleanup-sessions/+server.ts](src/routes/api/cron/cleanup-sessions/+server.ts)
+
+### Environment Validation
+
+The server validates environment variables at startup:
 
 ```typescript
-const ALLOWED_TRACE_MIME_TYPES = new Set(['application/zip', 'application/x-zip-compressed']);
+// src/hooks.server.ts
+import { validateEnvironment } from '$lib/server/env';
 
-if (!ALLOWED_TRACE_MIME_TYPES.has(attachment.mimeType)) {
-	throw error(403, 'This endpoint only serves trace files');
-}
+// Validates all security-critical environment variables
+validateEnvironment();
 ```
 
-**Why:** Prevents serving non-trace files through the public endpoint. Uses exact matching to avoid bypass attempts like `application/zip-evil`.
+**Behavior**:
 
-### 5. **Path Traversal Protection**
+- **Development**: Allows defaults with warnings
+- **Production**: Requires actual values, rejects defaults, fails fast
 
-**File:** `src/routes/api/traces/[attachmentId]/+server.ts`
+## Session Management
+
+### Session Lifecycle
+
+1. **Creation**: User logs in → session token generated → stored in database + cookie
+2. **Validation**: Each request → validate session ID + token → retrieve user ID
+3. **Expiration**: Sessions expire after 30 days
+4. **Cleanup**: Automated cron job removes expired sessions every 6 hours
+
+### Session Storage
+
+- **Database**: PostgreSQL via Prisma ORM
+- **Table**: `Session` model
+- **Indexes**: `id` (primary key), `userId` (foreign key), `expiresAt` (for cleanup)
+- **Token Security**: Only HMAC hash stored, not the actual token
+
+### Session Cookies
 
 ```typescript
-const filename = attachment.url.replace('/api/attachments/local/', '');
-const uploadDir = resolve(process.cwd(), 'uploads', 'attachments');
-const filePath = resolve(uploadDir, filename);
-
-// Prevent path traversal attacks
-if (!filePath.startsWith(uploadDir)) {
-	throw error(403, 'Invalid file path');
+{
+  path: '/',
+  httpOnly: true,           // Prevents JavaScript access (XSS protection)
+  sameSite: 'lax',         // CSRF protection
+  secure: true,            // HTTPS only (production)
+  maxAge: 2592000          // 30 days in seconds
 }
 ```
 
-**Why:** Prevents directory traversal attacks using sequences like `../../../etc/passwd`. The resolved path must be within the uploads directory.
+### Session Operations
 
-### 6. **Cryptographic Signatures**
+- **Create**: [src/lib/server/sessions.ts](src/lib/server/sessions.ts) → `createSession()`
+- **Validate**: [src/lib/server/sessions.ts](src/lib/server/sessions.ts) → `validateSession()`
+- **Delete**: [src/lib/server/sessions.ts](src/lib/server/sessions.ts) → `deleteSession()`
+- **Cleanup**: [src/lib/server/sessions.ts](src/lib/server/sessions.ts) → `cleanupExpiredSessions()`
 
-**File:** `src/lib/server/signed-urls.ts`
+## Password Reset Security
 
-```typescript
-// Generate signature
-const message = `${attachmentId}:${expires}`;
-const signature = createHmac('sha256', SECRET_KEY).update(message).digest('hex');
+### Token Generation
 
-// Verify signature (timing-safe comparison)
-const signatureBuffer = Buffer.from(signature, 'hex');
-const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+- **Token**: 32-byte cryptographically secure random
+- **Storage**: HMAC-SHA256 hashed in database
+- **Expiry**: 1 hour
+- **Single Use**: Marked as used after successful reset
 
-if (signatureBuffer.length !== expectedBuffer.length) {
-	return { valid: false, error: 'Invalid signature' };
-}
+### Reset Flow
 
-const isValid = timingSafeEqual(signatureBuffer, expectedBuffer);
-```
+1. User requests reset → token generated → email sent (TODO: implement)
+2. User clicks link → validates token → sets new password
+3. Token marked as used → all sessions invalidated → user must re-login
 
-**Why:**
+### Security Measures
 
-- **HMAC-SHA256:** Cryptographically secure hashing prevents forgery
-- **Timing-safe comparison:** Prevents timing attacks that could reveal signature bytes
-- **Tamper-proof:** Any modification to URL invalidates signature
+- **Timing-safe validation**: Constant-time comparison prevents timing attacks
+- **User enumeration prevention**: Always return success (don't reveal if user exists)
+- **Token format**: `tokenId:token` prevents database enumeration
+- **Session invalidation**: Force re-login after password reset
+- **Cleanup**: Expired/used tokens removed every 6 hours
 
-### 7. **Time-Based Expiration**
+## Production Deployment Checklist
 
-```typescript
-// Check expiration
-if (Date.now() > expires) {
-	return { valid: false, error: 'URL has expired' };
-}
-```
+Before deploying to production, ensure:
 
-**Why:** Limits the window of opportunity for leaked URLs. Default: 1 hour, max: 24 hours.
+### Required Environment Variables
 
-### 8. **CORS Security**
+- [ ] `SESSION_SECRET` set to cryptographically random value
+- [ ] `RESET_SECRET` set (or confirmed SESSION_SECRET fallback is acceptable)
+- [ ] `CRON_SECRET` set for cleanup job authentication
+- [ ] All default values removed from environment
 
-**File:** `src/routes/api/traces/[attachmentId]/+server.ts`
+### Security Configuration
 
-```typescript
-headers: {
-	'Access-Control-Allow-Origin': '*',
-	'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
-	'Access-Control-Allow-Headers': 'Content-Type, Range'
-}
-```
+- [ ] HTTPS enabled (required for secure cookies)
+- [ ] CSRF protection tested and working
+- [ ] Rate limiting tested (consider Redis migration for scaling)
+- [ ] Session cleanup cron job verified in Vercel dashboard
+- [ ] Password requirements enforced on all endpoints
 
-**Why:** Allows `trace.playwright.dev` to fetch traces while restricting to safe methods (GET, HEAD, OPTIONS). The signature already provides authentication.
+### Monitoring & Logging
 
-## Attack Surface Analysis
+- [ ] Rate limit violations logged
+- [ ] Failed authentication attempts logged
+- [ ] Cron job execution logged
+- [ ] Environment validation warnings reviewed
 
-### Protected Against:
+### Email Configuration (TODO)
 
-1. ✅ **Unauthorized Access:** Authentication required to generate signed URLs
-2. ✅ **Privilege Escalation:** Authorization checks ensure users can only access their project's attachments
-3. ✅ **URL Forgery:** HMAC signatures prevent creating fake URLs
-4. ✅ **Replay Attacks:** Time-based expiration limits window
-5. ✅ **Path Traversal:** Strict path validation prevents filesystem access outside uploads
-6. ✅ **MIME Type Bypass:** Exact MIME type matching prevents serving arbitrary files
-7. ✅ **Timing Attacks:** Constant-time signature comparison
-8. ✅ **Missing Configuration:** Application fails to start without signing secret
+- [ ] Configure email service for password reset
+- [ ] Remove console.log of reset links
+- [ ] Test email delivery in production
 
-### Potential Improvements:
+## Future Improvements
 
-1. **Rate Limiting:** Add rate limiting per user/IP to prevent DoS via signed URL generation
-2. **Revocation List:** Track and revoke compromised signatures
-3. **Audit Logging:** Log signed URL generation and usage for security monitoring
-4. **Byte-Range Requests:** Support partial content for large trace files
-5. **Content-Disposition:** Consider forcing download instead of inline display for additional security
+### Priority 1: Production Scaling
 
-## Threat Model
+1. **Redis-Based Rate Limiting**
+    - Migrate from in-memory to Redis/Upstash
+    - Add IP-based rate limiting
+    - Implement gradual backoff
 
-### Scenario 1: Attacker obtains a signed URL
+2. **Email Integration**
+    - Set up transactional email service (Resend, SendGrid, etc.)
+    - Design password reset email template
+    - Remove console.log of reset links
 
-**Risk:** Low
-**Mitigation:**
+### Priority 2: Enhanced Security
 
-- URL expires within 1-24 hours
-- Only grants access to specific trace file
-- Signature cannot be modified to access other files
-- CORS prevents use from malicious websites (except trace.playwright.dev)
+3. **Email Verification**
+    - Require email verification on signup
+    - Send verification link with time-limited token
+    - Mark accounts as verified in database
 
-### Scenario 2: Attacker tries to forge signed URLs
+4. **Two-Factor Authentication (2FA)**
+    - TOTP-based 2FA support
+    - Backup codes for account recovery
+    - Remember device option
 
-**Risk:** Very Low
-**Mitigation:**
+5. **Session Management UI**
+    - View active sessions
+    - Revoke individual sessions
+    - "Logout from all devices" functionality
 
-- Would need to crack HMAC-SHA256 (computationally infeasible)
-- Secret key is never exposed to client
-- Timing-safe comparison prevents timing attacks
+### Priority 3: Monitoring & Compliance
 
-### Scenario 3: Attacker has database access
+6. **Audit Logs**
+    - Track all authentication events
+    - Log IP addresses and user agents
+    - Retention policy for compliance
 
-**Risk:** High (but out of scope for this feature)
-**Mitigation:**
+7. **Security Headers**
+    - Content-Security-Policy
+    - X-Frame-Options
+    - X-Content-Type-Options
+    - Referrer-Policy
 
-- Can read attachment metadata but not generate signed URLs
-- Would need signing secret (stored in environment, not database)
-- Standard database security measures apply
+8. **SSO Integration**
+    - Support for Authentik, Authelia
+    - SAML/OAuth provider support
+    - Enterprise directory integration
 
-### Scenario 4: Authenticated user tries to access unauthorized attachments
+## Reporting Security Issues
 
-**Risk:** Very Low
-**Mitigation:**
-
-- Authorization check verifies project membership
-- Cannot generate signed URLs for other users' attachments
-- Database queries validate team membership
-
-## Configuration Checklist
-
-- [ ] Generate secure signing secret: `openssl rand -hex 32`
-- [ ] Add `URL_SIGNING_SECRET` to environment variables
-- [ ] Verify `.env` files are in `.gitignore`
-- [ ] Test signed URL generation with valid credentials
-- [ ] Test authorization checks (try accessing other user's attachments)
-- [ ] Verify URLs expire correctly
-- [ ] Test CORS headers in browser console
-- [ ] Monitor logs for security events
-
-## Incident Response
-
-If a signed URL is compromised:
-
-1. **Short-term:** Wait for URL to expire (1-24 hours)
-2. **Medium-term:** Rotate `URL_SIGNING_SECRET` (invalidates all existing signed URLs)
-3. **Long-term:** Implement revocation list for granular control
-
-To rotate the secret:
-
-```bash
-# Generate new secret
-NEW_SECRET=$(openssl rand -hex 32)
-
-# Update environment variable
-# For Vercel:
-vercel env add URL_SIGNING_SECRET production
-# Paste new secret when prompted
-
-# Redeploy
-vercel deploy --prod
-```
+If you discover a security vulnerability, please email [security@qastudio.dev](mailto:security@qastudio.dev) instead of creating a public issue.
 
 ## References
 
-- OWASP: [Cryptographic Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html)
-- Node.js: [Timing-Safe Comparison](https://nodejs.org/api/crypto.html#cryptotimingsafeequala-b)
-- HMAC: [RFC 2104](https://datatracker.ietf.org/doc/html/rfc2104)
+- [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)
+- [OWASP Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)
+- [OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)

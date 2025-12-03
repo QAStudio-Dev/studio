@@ -1,193 +1,311 @@
-# Security Fixes - Signed URL Implementation
+# Security Improvements Summary
 
-This document summarizes the security improvements made to the signed URL feature for serving Playwright traces.
+This document summarizes the security fixes and improvements made to the QA Studio authentication system.
 
-## Issues Addressed
+## Critical Issues Fixed
 
-### 1. ✅ Weak Fallback Secret
+### 1. ✅ CSRF Protection Enforced (HIGH PRIORITY)
 
-**File:** `src/lib/server/signed-urls.ts`
-**Issue:** Hardcoded fallback secret `'fallback-secret-key'` made URLs trivially forgeable
-**Fix:** Application now fails to start if `URL_SIGNING_SECRET` is not configured
+**Issue**: CSRF tokens were generated but never validated in authentication endpoints.
+
+**Fix**: Added CSRF validation to all state-changing authentication endpoints:
+
+- [/api/auth/login](src/routes/api/auth/login/+server.ts#L39-42)
+- [/api/auth/signup](src/routes/api/auth/signup/+server.ts#L12-15)
+- [/api/auth/setup-password](src/routes/api/auth/setup-password/+server.ts#L17-20)
+- [/api/auth/request-reset](src/routes/api/auth/request-reset/+server.ts#L12-15)
+- [/api/auth/reset-password](src/routes/api/auth/reset-password/+server.ts#L16-19)
+
+**Implementation**:
 
 ```typescript
-// Before
-const SECRET_KEY = env.URL_SIGNING_SECRET || env.CLERK_SECRET_KEY || 'fallback-secret-key';
+const { email, password, csrfToken: submittedCsrfToken } = await event.request.json();
 
-// After
-const SECRET_KEY = env.URL_SIGNING_SECRET;
-if (!SECRET_KEY) {
-	throw new Error('URL_SIGNING_SECRET must be configured...');
+// Validate CSRF token
+if (!submittedCsrfToken || !verifyCsrfToken(event, submittedCsrfToken)) {
+	throw error(403, { message: 'Invalid CSRF token' });
 }
 ```
 
-### 2. ✅ Missing Authentication Check
+**Impact**: Prevents Cross-Site Request Forgery attacks on authentication endpoints.
 
-**File:** `src/routes/api/attachments/[attachmentId]/signed-url/+server.ts`
-**Issue:** Any authenticated user could generate signed URLs for any attachment
-**Fix:** Added project-based authorization
+### 2. ✅ Environment Variable Validation (HIGH PRIORITY)
 
-```typescript
-// Verify user is authenticated
-const session = await locals.clerk?.session();
-if (!session?.userId) throw error(401);
+**Issue**: Critical secrets fell back to hardcoded values if environment variables weren't set.
 
-// Verify user has access to attachment's project
-const project = attachment.testResult?.testRun?.project;
-const hasAccess =
-	project.createdBy === userId || (project.teamId && user?.teamId === project.teamId);
+**Fix**: Created comprehensive environment validation system:
 
-if (!hasAccess) throw error(403);
-```
+- New module: [src/lib/server/env.ts](src/lib/server/env.ts)
+- Validates at server startup: [src/hooks.server.ts](src/hooks.server.ts#L12-14)
+- Fails fast in production if secrets are missing or using default values
 
-### 3. ✅ File Type Validation Insufficient
-
-**File:** `src/routes/api/traces/[attachmentId]/+server.ts`
-**Issue:** String-based MIME check (`includes('zip')`) could be bypassed
-**Fix:** Strict Set-based matching
+**Implementation**:
 
 ```typescript
-// Before
-if (!attachment.mimeType.includes('zip') &&
-    !attachment.mimeType.includes('application/zip')) {
-
-// After
-const ALLOWED_TRACE_MIME_TYPES = new Set([
-	'application/zip',
-	'application/x-zip-compressed'
-]);
-if (!ALLOWED_TRACE_MIME_TYPES.has(attachment.mimeType)) {
-```
-
-### 4. ✅ Path Traversal Risk
-
-**File:** `src/routes/api/traces/[attachmentId]/+server.ts`
-**Issue:** Path traversal sequences (`../`) could access files outside uploads directory
-**Fix:** Path validation using resolved paths
-
-```typescript
-// Before
-const filename = attachment.url.replace('/api/attachments/local/', '');
-const filePath = join(process.cwd(), 'uploads', 'attachments', filename);
-
-// After
-const filename = attachment.url.replace('/api/attachments/local/', '');
-const uploadDir = resolve(process.cwd(), 'uploads', 'attachments');
-const filePath = resolve(uploadDir, filename);
-
-// Prevent path traversal
-if (!filePath.startsWith(uploadDir)) {
-	throw error(403, 'Invalid file path');
+// Production: Requires actual values, no defaults
+if (process.env.NODE_ENV === 'production') {
+	if (!value) {
+		throw new Error(`Missing required environment variable: ${name}`);
+	}
+	if (defaultValue && value === defaultValue) {
+		throw new Error(`Using default development value in production`);
+	}
 }
+
+// Development: Allows defaults with warnings
 ```
 
-### 5. ✅ Missing Input Validation
+**Impact**: Prevents accidental production deployments with insecure default secrets.
 
-**File:** `src/routes/api/attachments/[attachmentId]/signed-url/+server.ts`
-**Issue:** No validation for expiration parameter (negative/extreme values)
-**Fix:** Range validation (1-1440 minutes)
+**Updated Files**:
 
-```typescript
-// Before
-const expiresInMinutes = parseInt(url.searchParams.get('expiresIn') || '60', 10);
-if (expiresInMs > 24 * 60 * 60 * 1000) throw error(400);
+- [src/lib/server/sessions.ts](src/lib/server/sessions.ts) - Now uses `getSessionSecret()`
+- [src/lib/server/password-reset.ts](src/lib/server/password-reset.ts) - Now uses `getResetSecret()`
+- [.env.example](.env.example) - Added SESSION_SECRET and RESET_SECRET documentation
 
-// After
-const expiresInMinutes = parseInt(url.searchParams.get('expiresIn') || '60', 10);
-if (isNaN(expiresInMinutes) || expiresInMinutes < 1 || expiresInMinutes > 1440) {
-	throw error(400, 'Expiration must be between 1 and 1440 minutes');
-}
-```
+### 3. ✅ Session Cleanup Enhancement (MEDIUM PRIORITY)
 
-## Testing
+**Issue**: Session cleanup endpoint existed but lacked proper error handling and logging.
 
-Run the following tests to verify security:
+**Fix**: Enhanced existing cleanup endpoint:
 
-### 1. Test Missing Secret
+- Improved error handling: [src/routes/api/cron/cleanup-sessions/+server.ts](src/routes/api/cron/cleanup-sessions/+server.ts)
+- Added detailed logging for monitoring
+- Validates CRON_SECRET to prevent unauthorized access
+- Returns performance metrics (duration)
 
-```bash
-# Remove URL_SIGNING_SECRET from .env
-# Start server - should fail with clear error message
-npm run dev
-# Expected: Error "URL_SIGNING_SECRET must be configured..."
-```
+**Already Configured**:
 
-### 2. Test Unauthorized Access
+- Cron job runs every 6 hours: [vercel.json](vercel.json#L7-10)
+- Cleans up both expired sessions and password reset tokens
 
-```bash
-# Login as User A
-# Try to get signed URL for User B's attachment
-curl -H "Cookie: __clerk_db_jwt=..." \
-  http://localhost:5173/api/attachments/{userB_attachment}/signed-url
-# Expected: 403 Forbidden
-```
+**Impact**: Database no longer accumulates stale data, performance maintained over time.
 
-### 3. Test MIME Type Validation
+### 4. ✅ Comprehensive Documentation (MEDIUM PRIORITY)
 
-```bash
-# Try to access non-trace file through trace endpoint
-# (Would need to manually create DB record with wrong MIME type)
-# Expected: 403 "This endpoint only serves trace files"
-```
+**Created**:
 
-### 4. Test Path Traversal
+- [SECURITY.md](SECURITY.md) - Complete security guide covering all aspects
+- [tests/README.md](tests/README.md) - Test suite documentation
 
-```bash
-# Try to create attachment URL with path traversal
-# Create attachment with url: "/api/attachments/local/../../../etc/passwd"
-# Expected: 403 "Invalid file path"
-```
+**Security Guide Contents**:
 
-### 5. Test Expiration Validation
+- Authentication security best practices
+- CSRF protection implementation
+- Rate limiting current state & production recommendations
+- Environment variable requirements
+- Session management details
+- Password reset security
+- Production deployment checklist
+- Future enhancements roadmap
 
-```bash
-# Test negative expiration
-curl http://localhost:5173/api/attachments/{id}/signed-url?expiresIn=-1
-# Expected: 400 "Expiration must be between 1 and 1440 minutes"
+**Impact**: Team has clear guidance on security implementation and maintenance.
 
-# Test too large expiration
-curl http://localhost:5173/api/attachments/{id}/signed-url?expiresIn=99999
-# Expected: 400 "Expiration must be between 1 and 1440 minutes"
-```
+### 5. ✅ Comprehensive Test Suite (MEDIUM PRIORITY)
 
-## Configuration Required
+**Created**:
 
-Add to `.env`:
+**Unit Tests**:
 
-```bash
-# Generate with: openssl rand -hex 32
-URL_SIGNING_SECRET=your_generated_secret_here
-```
+- [src/lib/server/crypto.test.ts](src/lib/server/crypto.test.ts) - Password hashing, token generation
+- [src/lib/server/sessions.test.ts](src/lib/server/sessions.test.ts) - Session management, CSRF
+- [src/lib/server/env.test.ts](src/lib/server/env.test.ts) - Environment validation
 
-For Vercel deployment:
+**E2E Tests**:
 
-```bash
-vercel env add URL_SIGNING_SECRET production
-# Paste generated secret when prompted
-```
+- [e2e/pages/auth.ts](e2e/pages/auth.ts) - Page object model for auth flows
+- [e2e/tests/auth.test.ts](e2e/tests/auth.test.ts) - Complete authentication flow tests
+
+**Coverage**:
+
+- Login/signup flows
+- Password reset flow
+- CSRF protection
+- Rate limiting
+- Session management
+- Form validation
+- Accessibility
+
+**Impact**: Regression prevention, confidence in authentication security.
+
+## Rate Limiting (Current Limitations)
+
+**Current State**: In-memory rate limiting with known limitations.
+
+**Limitations Documented in [SECURITY.md](SECURITY.md)**:
+
+- Resets on server restart
+- Not suitable for multi-instance deployments
+- No automatic cleanup
+
+**Recommendation**: Migrate to Redis-based rate limiting for production.
+
+**Migration Guide Provided**:
+
+- Option 1: Upstash Redis (recommended for Vercel)
+- Option 2: Generic Redis with rate-limiter-flexible
+- Example implementations included in SECURITY.md
+
+**Current Rules**:
+
+- 5 login attempts per email
+- 15-minute cooldown
+- Counter reset on successful login
+
+## Security Best Practices Implemented
+
+### Password Security
+
+- ✅ Bcrypt with 12 rounds (OWASP 2025 recommended)
+- ✅ Automatic salting
+- ✅ Constant-time comparison
+- ✅ Password requirements enforced (8+ chars, uppercase, lowercase, number)
+
+### Session Security
+
+- ✅ Cryptographically secure tokens (32 bytes)
+- ✅ HMAC-SHA256 hashed in database
+- ✅ HTTP-only cookies (XSS protection)
+- ✅ SameSite=lax (CSRF protection)
+- ✅ Secure flag in production
+- ✅ 30-day expiration
+- ✅ Automatic cleanup every 6 hours
+
+### CSRF Protection
+
+- ✅ Token generation on session creation
+- ✅ Token stored in non-httpOnly cookie (client can read)
+- ✅ Validation on all state-changing operations
+- ✅ 403 Forbidden on validation failure
+
+### Environment Security
+
+- ✅ Required secrets validated at startup
+- ✅ Production mode rejects defaults
+- ✅ Development warnings for missing values
+- ✅ Fail-fast approach prevents misconfigurations
+
+### Password Reset Security
+
+- ✅ 1-hour token expiration
+- ✅ Single-use tokens
+- ✅ User enumeration prevention
+- ✅ Session invalidation after reset
+- ✅ Token format: `tokenId:token` prevents database enumeration
 
 ## Files Modified
 
-1. `src/lib/server/signed-urls.ts` - Removed fallback secret
-2. `src/routes/api/attachments/[attachmentId]/signed-url/+server.ts` - Added auth + validation
-3. `src/routes/api/traces/[attachmentId]/+server.ts` - Fixed MIME validation + path traversal
-4. `.env.example` - Added URL_SIGNING_SECRET
-5. `docs/SECURITY.md` - Comprehensive security documentation
+### New Files Created
 
-## Deployment Checklist
+1. [src/lib/server/env.ts](src/lib/server/env.ts) - Environment validation
+2. [SECURITY.md](SECURITY.md) - Security documentation
+3. [SECURITY_FIXES.md](SECURITY_FIXES.md) - This file
+4. [tests/README.md](tests/README.md) - Test documentation
+5. [src/lib/server/crypto.test.ts](src/lib/server/crypto.test.ts) - Crypto tests
+6. [src/lib/server/sessions.test.ts](src/lib/server/sessions.test.ts) - Session tests
+7. [src/lib/server/env.test.ts](src/lib/server/env.test.ts) - Environment tests
+8. [e2e/pages/auth.ts](e2e/pages/auth.ts) - Auth page objects
+9. [e2e/tests/auth.test.ts](e2e/tests/auth.test.ts) - Auth E2E tests
+
+### Files Modified
+
+1. [src/routes/api/auth/login/+server.ts](src/routes/api/auth/login/+server.ts) - Added CSRF validation
+2. [src/routes/api/auth/signup/+server.ts](src/routes/api/auth/signup/+server.ts) - Added CSRF validation
+3. [src/routes/api/auth/setup-password/+server.ts](src/routes/api/auth/setup-password/+server.ts) - Added CSRF validation
+4. [src/routes/api/auth/request-reset/+server.ts](src/routes/api/auth/request-reset/+server.ts) - Added CSRF validation
+5. [src/routes/api/auth/reset-password/+server.ts](src/routes/api/auth/reset-password/+server.ts) - Added CSRF validation
+6. [src/lib/server/sessions.ts](src/lib/server/sessions.ts) - Use getSessionSecret()
+7. [src/lib/server/password-reset.ts](src/lib/server/password-reset.ts) - Use getResetSecret()
+8. [src/hooks.server.ts](src/hooks.server.ts) - Added validateEnvironment()
+9. [src/routes/api/cron/cleanup-sessions/+server.ts](src/routes/api/cron/cleanup-sessions/+server.ts) - Enhanced error handling
+10. [.env.example](.env.example) - Added auth secrets documentation
+
+## Testing
+
+### Run Unit Tests
+
+```bash
+npm run test:unit
+```
+
+### Run E2E Tests
+
+```bash
+npm run test:e2e
+```
+
+### Run All Tests
+
+```bash
+npm test
+```
+
+## Production Deployment Checklist
 
 Before deploying to production:
 
-- [ ] Generate secure signing secret: `openssl rand -hex 32`
-- [ ] Add `URL_SIGNING_SECRET` to production environment variables
-- [ ] Verify `.env` files are in `.gitignore`
-- [ ] Test signed URL generation works
-- [ ] Test authorization (users can't access others' attachments)
-- [ ] Test URL expiration
-- [ ] Verify build succeeds: `npm run build`
-- [ ] Check logs for any errors on startup
+- [ ] Set `SESSION_SECRET` environment variable (generate with crypto.randomBytes)
+- [ ] Set `RESET_SECRET` environment variable (or confirm SESSION_SECRET fallback)
+- [ ] Set `CRON_SECRET` environment variable
+- [ ] Verify HTTPS is enabled
+- [ ] Test CSRF protection in production
+- [ ] Review rate limiting strategy (consider Redis migration)
+- [ ] Verify session cleanup cron job is running
+- [ ] Test password reset flow end-to-end
+- [ ] Run full test suite: `npm test`
+- [ ] Review SECURITY.md for additional recommendations
+
+## Frontend Integration Required
+
+To complete CSRF protection, frontend forms must include CSRF tokens:
+
+```typescript
+// Read CSRF token from cookie
+const csrfToken = document.cookie
+	.split('; ')
+	.find((row) => row.startsWith('qa_studio_csrf='))
+	?.split('=')[1];
+
+// Include in authentication requests
+await fetch('/api/auth/login', {
+	method: 'POST',
+	headers: { 'Content-Type': 'application/json' },
+	body: JSON.stringify({
+		email,
+		password,
+		csrfToken // <-- Add this
+	})
+});
+```
+
+**Files to Update**:
+
+- [src/routes/login/+page.svelte](src/routes/login/+page.svelte)
+- [src/routes/signup/+page.svelte](src/routes/signup/+page.svelte)
+- [src/routes/setup-password/+page.svelte](src/routes/setup-password/+page.svelte)
+- [src/routes/forgot-password/+page.svelte](src/routes/forgot-password/+page.svelte)
+- [src/routes/reset-password/+page.svelte](src/routes/reset-password/+page.svelte)
+
+## Future Enhancements
+
+See [SECURITY.md#future-improvements](SECURITY.md#future-improvements) for:
+
+1. Redis-based rate limiting
+2. Email integration for password reset
+3. Email verification
+4. Two-factor authentication
+5. Session management UI
+6. Audit logs
+7. Security headers
+8. SSO integration
 
 ## References
 
-- [SECURITY.md](SECURITY.md) - Full security documentation
-- [SIGNED_URLS.md](SIGNED_URLS.md) - Technical implementation details
+- [SECURITY.md](SECURITY.md) - Complete security guide
+- [tests/README.md](tests/README.md) - Test documentation
+- [CLAUDE.md](CLAUDE.md) - Project documentation (includes auth section)
+- [OWASP Cheat Sheets](https://cheatsheetseries.owasp.org/)
+
+## Questions?
+
+For security questions or to report vulnerabilities, contact [security@qastudio.dev](mailto:security@qastudio.dev).
