@@ -16,7 +16,7 @@ open http://localhost:9001  # MinIO Console (Storage)
 open http://localhost:8025  # MailHog (Email Testing)
 ```
 
-**Note:** The first run uses secure default passwords. To customize them, see [Configuration](#configuration) below.
+**⚠️ SECURITY NOTE:** The default passwords are for **development only**. Never use these defaults in production. See [Production Deployment](#production-deployment) for security requirements.
 
 That's it! QA Studio is now running with:
 
@@ -46,12 +46,22 @@ npm run docker:dev:down      # Stop all services
 npm run docker:dev:clean     # Stop and remove all data volumes
 
 # Production
-npm run docker:prod          # Start production build
+npm run docker:prod          # Start production build (requires .env)
 npm run docker:prod:build    # Rebuild production and start
 
-# Utilities
+# Logs & Monitoring
 npm run docker:logs          # Follow web app logs
+npm run docker:logs:all      # Follow all service logs
 npm run docker:shell         # Open shell in web container
+npm run docker:restart       # Restart web service
+
+# Database Management
+npm run docker:db:studio     # Open Prisma Studio (GUI)
+npm run docker:db:migrate    # Create new migration
+npm run docker:db:reset      # Reset database (destructive!)
+npm run docker:db:seed       # Seed database
+npm run docker:db:backup     # Backup database to file
+npm run docker:db:restore    # Restore from backup file
 
 # Manual commands
 docker-compose ps            # List running services
@@ -263,13 +273,37 @@ npm run docker:prod:build
 # - Compiled assets only
 ```
 
-**Important for Production:**
+**🔒 CRITICAL - Production Security Checklist:**
 
-1. Change all passwords in `.env`
-2. Generate secure `SESSION_SECRET`: `openssl rand -base64 32`
-3. Use HTTPS reverse proxy (nginx, Traefik, Caddy)
-4. Set up backups for volumes
-5. Consider managed services for database/redis
+**Required before deploying to production:**
+
+1. **Create `.env` file with secure passwords:**
+
+    ```bash
+    # Generate strong passwords
+    DB_PASSWORD=$(openssl rand -base64 32)
+    REDIS_PASSWORD=$(openssl rand -base64 32)
+    MINIO_PASSWORD=$(openssl rand -base64 32)
+    SESSION_SECRET=$(openssl rand -base64 32)
+    ```
+
+2. **NEVER use default passwords from `.env.docker` in production**
+    - These are publicly documented and insecure
+    - Production compose file requires `.env` to be set
+
+3. **Use HTTPS reverse proxy** (nginx, Traefik, Caddy)
+    - Never expose services directly to the internet
+
+4. **Close unnecessary ports:**
+    - Production compose closes database/redis ports by default
+    - Only expose web app through reverse proxy
+
+5. **Set up volume backups:**
+    - See [Data Persistence](#data-persistence) section
+
+6. **Consider managed services:**
+    - For critical workloads, use managed PostgreSQL/Redis
+    - Self-hosting is great for control, but requires proper maintenance
 
 ## Architecture
 

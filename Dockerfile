@@ -42,11 +42,14 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Prune dev dependencies
+# Prune dev dependencies (keeping Prisma client)
 RUN npm prune --production
 
+# Regenerate Prisma Client to ensure it's available
+RUN npx prisma generate
+
 # Stage 4: Production runner
-FROM node:20-alpine AS production
+FROM node:22-alpine AS production
 
 # Install dumb-init to handle signals properly
 RUN apk add --no-cache dumb-init

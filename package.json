@@ -24,7 +24,15 @@
     "docker:prod": "docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d",
     "docker:prod:build": "docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build",
     "docker:logs": "docker-compose logs -f web",
-    "docker:shell": "docker-compose exec web sh"
+    "docker:logs:all": "docker-compose logs -f",
+    "docker:shell": "docker-compose exec web sh",
+    "docker:restart": "docker-compose restart web",
+    "docker:db:studio": "docker-compose exec web npx prisma studio",
+    "docker:db:migrate": "docker-compose exec web npx prisma migrate dev",
+    "docker:db:reset": "docker-compose exec web npx prisma migrate reset",
+    "docker:db:seed": "docker-compose exec web npx prisma db seed",
+    "docker:db:backup": "docker-compose exec postgres pg_dump -U qastudio qastudio > backup-$(date +%Y%m%d-%H%M%S).sql",
+    "docker:db:restore": "docker-compose exec -T postgres psql -U qastudio qastudio <"
   },
   "devDependencies": {
     "@eslint/compat": "^1.4.0",
