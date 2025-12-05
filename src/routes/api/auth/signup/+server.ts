@@ -164,7 +164,8 @@ export const POST: RequestHandler = async (event) => {
 		});
 
 		// Send welcome email (async, don't wait)
-		const userName = firstName || lastName ? `${firstName || ''} ${lastName || ''}`.trim() : undefined;
+		const userName =
+			firstName || lastName ? `${firstName || ''} ${lastName || ''}`.trim() : undefined;
 		sendWelcomeEmail({
 			to: user.email,
 			name: userName

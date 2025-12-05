@@ -201,7 +201,7 @@
 							Start with Free and upgrade anytime as your needs grow.
 						</p>
 
-						<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 items-start">
+						<div class="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
 							<!-- Free Plan -->
 							<button
 								type="button"
