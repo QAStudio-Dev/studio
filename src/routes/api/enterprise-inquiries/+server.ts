@@ -153,35 +153,40 @@ export const POST: RequestHandler = async (event) => {
 		});
 	}
 
-	// Check for duplicate inquiry within the duplicate detection window
-	const recentInquiry = await db.enterpriseInquiry.findFirst({
-		where: {
-			email: email.toLowerCase(),
-			createdAt: {
-				gte: new Date(Date.now() - RATE_LIMITS.ENTERPRISE_INQUIRY_DUPLICATE_WINDOW_MS)
+	// Use transaction to prevent race conditions between duplicate check and create
+	// The unique index provides database-level protection, but we also check explicitly
+	// to return a better error message to the user
+	const inquiry = await db.$transaction(async (tx) => {
+		// Check for duplicate inquiry within the duplicate detection window
+		const recentInquiry = await tx.enterpriseInquiry.findFirst({
+			where: {
+				email: email.toLowerCase(),
+				createdAt: {
+					gte: new Date(Date.now() - RATE_LIMITS.ENTERPRISE_INQUIRY_DUPLICATE_WINDOW_MS)
+				}
 			}
-		}
-	});
-
-	if (recentInquiry) {
-		throw error(400, {
-			message:
-				'You already submitted an inquiry recently. Our team will contact you within 1 business day.'
 		});
-	}
 
-	// Create the inquiry
-	const inquiry = await db.enterpriseInquiry.create({
-		data: {
-			teamId: user?.teamId || null,
-			companyName: companyName.trim(),
-			contactName: contactName?.trim() || null,
-			email: email.toLowerCase().trim(),
-			phone: phone?.trim() || null,
-			estimatedSeats: validatedSeats,
-			requirements: requirements?.trim() || null,
-			status: 'pending'
+		if (recentInquiry) {
+			throw error(400, {
+				message:
+					'You already submitted an inquiry recently. Our team will contact you within 1 business day.'
+			});
 		}
+
+		// Create the inquiry (protected by unique index at database level)
+		return await tx.enterpriseInquiry.create({
+			data: {
+				teamId: user?.teamId || null,
+				companyName: companyName.trim(),
+				contactName: contactName?.trim() || null,
+				email: email.toLowerCase().trim(),
+				phone: phone?.trim() || null,
+				estimatedSeats: validatedSeats,
+				requirements: requirements?.trim() || null,
+				status: 'pending'
+			}
+		});
 	});
 
 	// TODO: Send email notification to sales team
