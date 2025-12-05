@@ -110,10 +110,13 @@ function cleanupExpiredEntries() {
 	}
 }
 
-// Periodic cleanup of expired entries (singleton pattern to prevent multiple intervals)
-let cleanupInterval: NodeJS.Timeout | null = null;
-if (!isCacheEnabled && !cleanupInterval) {
-	cleanupInterval = setInterval(cleanupExpiredEntries, RATE_LIMIT_CONFIG.CLEANUP_INTERVAL_MS);
+// Periodic cleanup of expired entries (global singleton pattern to prevent multiple intervals)
+const CLEANUP_KEY = Symbol.for('enterprise-inquiry-cleanup');
+if (!isCacheEnabled && !(globalThis as any)[CLEANUP_KEY]) {
+	(globalThis as any)[CLEANUP_KEY] = setInterval(
+		cleanupExpiredEntries,
+		RATE_LIMIT_CONFIG.CLEANUP_INTERVAL_MS
+	);
 }
 
 async function checkRateLimit(email: string): Promise<boolean> {

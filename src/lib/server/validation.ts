@@ -36,10 +36,10 @@ export async function validateRequestBody<T>(request: Request, schema: z.ZodSche
  *
  * Pattern: localpart@domain.tld
  * - Local part: a-zA-Z0-9._+-
- * - Domain: a-zA-Z0-9.- (supports subdomains like mail.example.com)
+ * - Domain: a-zA-Z0-9.- (supports both example.com and mail.example.com)
  * - TLD: a-zA-Z (2+ characters)
  */
-export const EMAIL_REGEX = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9]+([.-][a-zA-Z0-9]+)*\.[a-zA-Z]{2,}$/;
+export const EMAIL_REGEX = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 /**
  * Validate an email address

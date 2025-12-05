@@ -9,7 +9,7 @@ import {
 } from '$lib/server/validation';
 import { requireRole } from '$lib/server/auth';
 import { createAuditLog } from '$lib/server/audit';
-import type { Prisma } from '$prisma/client';
+import { TeamPlan, type Prisma } from '$prisma/client';
 
 export const load: PageServerLoad = async (event) => {
 	// Require OWNER role to access admin panel
@@ -80,6 +80,11 @@ export const actions: Actions = {
 			return fail(400, { error: 'Team ID and plan are required' });
 		}
 
+		// Validate plan value
+		if (!Object.values(TeamPlan).includes(plan as TeamPlan)) {
+			return fail(400, { error: 'Invalid plan value' });
+		}
+
 		// Get team before update for audit trail
 		const team = await db.team.findUnique({
 			where: { id: teamId },
@@ -91,11 +96,11 @@ export const actions: Actions = {
 		}
 
 		const updateData: Prisma.TeamUpdateInput = {
-			plan
+			plan: plan as TeamPlan
 		};
 
 		// Add enterprise-specific fields
-		if (plan === 'enterprise') {
+		if (plan === TeamPlan.ENTERPRISE) {
 			// Validate and parse custom seats
 			if (customSeats) {
 				const parsed = parseIntInRange(

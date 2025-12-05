@@ -2,6 +2,7 @@
 	import { Building2, Users, Mail, Phone, Calendar, Shield } from 'lucide-svelte';
 	import { enhance } from '$app/forms';
 	import { onMount } from 'svelte';
+	import { TeamPlan } from '$prisma/client';
 
 	let { data } = $props();
 
@@ -11,7 +12,7 @@
 	let selectedInquiry = $state<string | null>(null);
 
 	// Form states
-	let upgradePlan = $state('pro');
+	let upgradePlan = $state<TeamPlan>(TeamPlan.PRO);
 	let upgradeCustomSeats = $state<string>('');
 	let upgradeContractEnd = $state('');
 	let upgradeAccountManager = $state('');
@@ -82,13 +83,13 @@
 		};
 	});
 
-	function getPlanBadgeClass(plan: string) {
+	function getPlanBadgeClass(plan: TeamPlan) {
 		switch (plan) {
-			case 'free':
+			case TeamPlan.FREE:
 				return 'badge preset-filled-surface-500';
-			case 'pro':
+			case TeamPlan.PRO:
 				return 'badge preset-filled-primary-500';
-			case 'enterprise':
+			case TeamPlan.ENTERPRISE:
 				return 'badge preset-filled-secondary-500';
 			default:
 				return 'badge preset-outlined-surface-500';
@@ -166,7 +167,7 @@
 								<span class={getPlanBadgeClass(team.plan)}>
 									{team.plan}
 								</span>
-								{#if team.plan === 'enterprise' && team.customSeats}
+								{#if team.plan === TeamPlan.ENTERPRISE && team.customSeats}
 									<div class="text-surface-600-300 mt-1 text-xs">
 										{team.customSeats} seats
 									</div>
@@ -271,13 +272,13 @@
 					<label class="label">
 						<span class="mb-2 block font-medium">Plan</span>
 						<select name="plan" class="input" bind:value={upgradePlan} required>
-							<option value="free">Free</option>
-							<option value="pro">Pro</option>
-							<option value="enterprise">Enterprise</option>
+							<option value={TeamPlan.FREE}>Free</option>
+							<option value={TeamPlan.PRO}>Pro</option>
+							<option value={TeamPlan.ENTERPRISE}>Enterprise</option>
 						</select>
 					</label>
 
-					{#if upgradePlan === 'enterprise'}
+					{#if upgradePlan === TeamPlan.ENTERPRISE}
 						<!-- Enterprise-specific fields -->
 						<label class="label">
 							<span class="mb-2 block font-medium">Custom Seats</span>

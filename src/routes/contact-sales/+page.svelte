@@ -15,6 +15,8 @@
 	let error = $state('');
 	let success = $state(false);
 
+	const REDIRECT_DELAY_MS = 3000;
+
 	async function handleSubmit() {
 		if (!companyName.trim() || !email.trim()) {
 			error = 'Please fill in required fields';
@@ -46,10 +48,10 @@
 
 			success = true;
 
-			// Redirect to thank you page after 2 seconds
+			// Redirect to home page after delay
 			setTimeout(() => {
 				goto('/');
-			}, 3000);
+			}, REDIRECT_DELAY_MS);
 		} catch (err) {
 			error =
 				err instanceof Error
