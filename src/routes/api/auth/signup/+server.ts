@@ -42,9 +42,13 @@ function cleanupExpiredSignupEntries() {
 	}
 }
 
-// Periodic cleanup of expired entries
-if (!isCacheEnabled) {
-	setInterval(cleanupExpiredSignupEntries, RATE_LIMIT_CONFIG.CLEANUP_INTERVAL_MS);
+// Periodic cleanup of expired entries (singleton pattern to prevent multiple intervals)
+let cleanupInterval: NodeJS.Timeout | null = null;
+if (!isCacheEnabled && !cleanupInterval) {
+	cleanupInterval = setInterval(
+		cleanupExpiredSignupEntries,
+		RATE_LIMIT_CONFIG.CLEANUP_INTERVAL_MS
+	);
 }
 
 async function checkRateLimit(email: string): Promise<boolean> {
