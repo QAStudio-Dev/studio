@@ -1,7 +1,7 @@
--- Add unique constraint to prevent duplicate inquiries from same email within 24 hours
--- This uses a PostgreSQL partial unique index with a time-based condition
--- Note: This prevents race conditions at the database level
+-- Add composite unique index on email and createdAt
+-- This helps with duplicate detection queries and performance
+-- The application layer handles the 24-hour duplicate window check
+-- (using NOW() in index predicate is not allowed as it's not immutable)
 
-CREATE UNIQUE INDEX "EnterpriseInquiry_email_recent_unique"
-ON "EnterpriseInquiry" ("email")
-WHERE "createdAt" > NOW() - INTERVAL '24 hours';
+CREATE INDEX IF NOT EXISTS "EnterpriseInquiry_email_createdAt_idx"
+ON "EnterpriseInquiry" ("email", "createdAt" DESC);

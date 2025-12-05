@@ -30,21 +30,24 @@ export const load: LayoutServerLoad = async (event) => {
 			};
 
 			// Fetch user's projects
-			const userProjects = await db.project.findMany({
-				where: {
-					teamId: dbUser.teamId || undefined
-				},
-				select: {
-					id: true,
-					name: true,
-					key: true
-				},
-				orderBy: {
-					createdAt: 'desc'
-				}
-			});
+			// Only fetch projects if user has a team
+			if (dbUser.teamId) {
+				const userProjects = await db.project.findMany({
+					where: {
+						teamId: dbUser.teamId
+					},
+					select: {
+						id: true,
+						name: true,
+						key: true
+					},
+					orderBy: {
+						createdAt: 'desc'
+					}
+				});
 
-			projects = userProjects;
+				projects = userProjects;
+			}
 		}
 	}
 

@@ -26,19 +26,22 @@ export const GET: RequestHandler = async ({ locals }) => {
 	};
 
 	// Fetch user's projects
-	const projects = await db.project.findMany({
-		where: {
-			teamId: dbUser.teamId || undefined
-		},
-		select: {
-			id: true,
-			name: true,
-			key: true
-		},
-		orderBy: {
-			createdAt: 'desc'
-		}
-	});
+	// Only fetch projects if user has a team
+	const projects = dbUser.teamId
+		? await db.project.findMany({
+				where: {
+					teamId: dbUser.teamId
+				},
+				select: {
+					id: true,
+					name: true,
+					key: true
+				},
+				orderBy: {
+					createdAt: 'desc'
+				}
+			})
+		: [];
 
 	return json({
 		userId,
