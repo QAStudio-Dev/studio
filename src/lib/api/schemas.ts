@@ -836,6 +836,95 @@ export const AttachmentsApi = {
 } as const;
 
 // ============================================
+// ENTERPRISE INQUIRIES API
+// ============================================
+
+export type EnterpriseInquiryResponse = {
+	id: string;
+	teamId: string | null;
+	companyName: string;
+	contactName: string | null;
+	email: string;
+	phone: string | null;
+	estimatedSeats: number | null;
+	requirements: string | null;
+	status: string;
+	assignedTo: string | null;
+	notes: string | null;
+	createdAt: Date | string;
+	updatedAt: Date | string;
+};
+
+export type CreateEnterpriseInquiryBody = {
+	companyName: string;
+	contactName?: string;
+	email: string;
+	phone?: string;
+	estimatedSeats?: number;
+	requirements?: string;
+	csrfToken: string;
+};
+
+export const EnterpriseInquiryApi = {
+	submit: {
+		method: 'POST',
+		path: '/api/enterprise-inquiries',
+		description: 'Submit an enterprise inquiry for custom pricing and features',
+		tags: ['Enterprise'],
+		body: {
+			description: 'Enterprise inquiry details with CSRF token for security',
+			example: {
+				companyName: 'Acme Corporation',
+				contactName: 'John Smith',
+				email: 'john.smith@acme.com',
+				phone: '+1-555-123-4567',
+				estimatedSeats: 500,
+				requirements: 'Need SSO integration, custom deployment, and dedicated support',
+				csrfToken: 'csrf_token_from_page'
+			} as CreateEnterpriseInquiryBody
+		},
+		responses: {
+			200: {
+				description: 'Inquiry submitted successfully',
+				example: {
+					id: 'clx1a2b3c4d5e6f7g8h9i0j1',
+					teamId: null,
+					companyName: 'Acme Corporation',
+					contactName: 'John Smith',
+					email: 'john.smith@acme.com',
+					phone: '+1-555-123-4567',
+					estimatedSeats: 500,
+					requirements: 'Need SSO integration, custom deployment, and dedicated support',
+					status: 'pending',
+					assignedTo: null,
+					notes: null,
+					createdAt: '2024-01-15T10:30:00Z',
+					updatedAt: '2024-01-15T10:30:00Z'
+				} as EnterpriseInquiryResponse
+			},
+			400: {
+				description: 'Invalid request (validation error)',
+				example: {
+					error: 'Invalid email address format'
+				} as ErrorResponse
+			},
+			403: {
+				description: 'Invalid CSRF token',
+				example: {
+					error: 'Invalid CSRF token'
+				} as ErrorResponse
+			},
+			429: {
+				description: 'Rate limit exceeded',
+				example: {
+					error: 'Too many requests. Please try again in 1 hour.'
+				} as ErrorResponse
+			}
+		}
+	} satisfies ApiSchema
+} as const;
+
+// ============================================
 // ALL API SCHEMAS
 // ============================================
 
@@ -847,5 +936,6 @@ export const ApiSchemas = {
 	milestones: MilestonesApi,
 	environments: EnvironmentsApi,
 	testSuites: TestSuitesApi,
-	attachments: AttachmentsApi
+	attachments: AttachmentsApi,
+	enterpriseInquiry: EnterpriseInquiryApi
 } as const;

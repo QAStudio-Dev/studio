@@ -6,7 +6,7 @@
 
 	let teamName = $state('');
 	let teamDescription = $state('');
-	let selectedPlan: 'free' | 'pro' = $state('pro');
+	let selectedPlan: 'free' | 'pro' | 'enterprise' = $state('pro');
 	let billingPeriod: 'monthly' | 'yearly' = $state('yearly');
 	let loading = $state(false);
 	let error = $state('');
@@ -48,6 +48,12 @@
 
 			const { team } = await createRes.json();
 
+			// If Enterprise plan selected, redirect to contact sales
+			if (selectedPlan === 'enterprise') {
+				goto('/contact-sales');
+				return;
+			}
+
 			// If Pro plan selected, redirect to Stripe Checkout
 			if (selectedPlan === 'pro') {
 				const priceId =
@@ -59,8 +65,6 @@
 						'Stripe price ID not configured. Please contact support or check your environment variables.'
 					);
 				}
-
-				console.log('Using Stripe Price ID:', priceId); // Debug log
 
 				const checkoutRes = await fetch('/api/teams/checkout', {
 					method: 'POST',
@@ -133,7 +137,7 @@
 	</div>
 
 	<!-- Pricing Cards -->
-	<div class="mx-auto mb-12 grid max-w-5xl gap-8 lg:grid-cols-2">
+	<div class="mx-auto mb-12 grid max-w-6xl gap-8 lg:grid-cols-3">
 		<!-- Free Plan -->
 		<button
 			class="card p-8 text-left transition-all duration-200 hover:scale-[1.02] {selectedPlan ===
@@ -225,6 +229,45 @@
 
 			<ul class="space-y-4">
 				{#each PRICING.PRO.features as feature}
+					<li class="flex items-start gap-3">
+						<Check class="mt-0.5 h-5 w-5 flex-shrink-0 text-primary-500" />
+						<span>{feature}</span>
+					</li>
+				{/each}
+			</ul>
+		</button>
+
+		<!-- Enterprise Plan -->
+		<button
+			class="card p-8 text-left transition-all duration-200 hover:scale-[1.02] {selectedPlan ===
+			'enterprise'
+				? 'shadow-xl ring-2 ring-primary-500'
+				: 'hover:shadow-lg'}"
+			onclick={() => (selectedPlan = 'enterprise')}
+			disabled={loading}
+		>
+			<div class="mb-6 flex items-start justify-between">
+				<div>
+					<div class="mb-2 inline-flex items-center gap-2">
+						<Sparkles class="h-5 w-5 text-primary-500" />
+						<h3 class="text-2xl font-bold">{PRICING.ENTERPRISE.name}</h3>
+					</div>
+					<p class="text-surface-600-300 text-sm">{PRICING.ENTERPRISE.description}</p>
+				</div>
+				{#if selectedPlan === 'enterprise'}
+					<div class="badge preset-filled-primary-500">Selected</div>
+				{/if}
+			</div>
+
+			<div class="mb-8">
+				<div class="flex items-baseline gap-2">
+					<span class="text-5xl font-bold">{PRICING.ENTERPRISE.priceDisplay}</span>
+				</div>
+				<p class="text-surface-600-300 mt-2 text-sm">{PRICING.ENTERPRISE.tagline}</p>
+			</div>
+
+			<ul class="space-y-4">
+				{#each PRICING.ENTERPRISE.features as feature}
 					<li class="flex items-start gap-3">
 						<Check class="mt-0.5 h-5 w-5 flex-shrink-0 text-primary-500" />
 						<span>{feature}</span>

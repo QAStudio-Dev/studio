@@ -6,7 +6,7 @@
 	let { data } = $props();
 
 	let teamName = $state('');
-	let selectedPlan = $state<'free' | 'pro'>('free');
+	let selectedPlan = $state<'free' | 'pro' | 'enterprise'>('free');
 	let loading = $state(false);
 	let error = $state('');
 	let step = $state<1 | 2>(1);
@@ -14,6 +14,12 @@
 	async function createTeam() {
 		if (!teamName.trim()) {
 			error = 'Please enter a team name';
+			return;
+		}
+
+		// If Enterprise plan selected, redirect to contact sales
+		if (selectedPlan === 'enterprise') {
+			goto('/contact-sales');
 			return;
 		}
 
@@ -195,7 +201,7 @@
 							Start with Free and upgrade anytime as your needs grow.
 						</p>
 
-						<div class="grid gap-4 sm:grid-cols-2">
+						<div class="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
 							<!-- Free Plan -->
 							<button
 								type="button"
@@ -215,7 +221,7 @@
 									</div>
 								{/if}
 
-								<div class="mb-2">
+								<div class="mb-4 h-[120px]">
 									<h3
 										class="text-xl font-bold text-surface-900 dark:text-surface-100"
 									>
@@ -253,24 +259,22 @@
 									? 'border-primary-500 bg-primary-50/50 shadow-lg dark:bg-primary-950/30'
 									: 'border-surface-300 bg-white hover:border-primary-300 dark:border-surface-700 dark:bg-surface-800 dark:hover:border-primary-700'}"
 							>
-								{#if selectedPlan === 'pro'}
-									<div class="absolute top-4 right-4">
+								<div class="absolute top-4 right-4">
+									{#if selectedPlan === 'pro'}
 										<div
 											class="flex h-6 w-6 items-center justify-center rounded-full bg-primary-500"
 										>
 											<Check class="h-4 w-4 text-white" />
 										</div>
-									</div>
-								{/if}
-
-								<div class="absolute top-4 right-4">
-									<span
-										class="rounded-full bg-primary-500 px-2 py-1 text-xs font-semibold text-white"
-										>Popular</span
-									>
+									{:else}
+										<span
+											class="rounded-full bg-primary-500 px-2 py-1 text-xs font-semibold text-white"
+											>Popular</span
+										>
+									{/if}
 								</div>
 
-								<div class="mb-2">
+								<div class="mb-4 h-[120px]">
 									<h3
 										class="text-xl font-bold text-surface-900 dark:text-surface-100"
 									>
@@ -289,6 +293,49 @@
 									class="mt-4 space-y-2 text-sm text-surface-600 dark:text-surface-400"
 								>
 									{#each PRICING.PRO.features as feature}
+										<li class="flex items-start gap-2">
+											<Check
+												class="mt-0.5 h-4 w-4 flex-shrink-0 text-primary-500"
+											/>
+											<span>{feature}</span>
+										</li>
+									{/each}
+								</ul>
+							</button>
+
+							<!-- Enterprise Plan -->
+							<button
+								type="button"
+								onclick={() => (selectedPlan = 'enterprise')}
+								class="group relative rounded-xl border-2 p-6 text-left transition-all {selectedPlan ===
+								'enterprise'
+									? 'border-primary-500 bg-primary-50/50 shadow-lg dark:bg-primary-950/30'
+									: 'border-surface-300 bg-white hover:border-primary-300 dark:border-surface-700 dark:bg-surface-800 dark:hover:border-primary-700'}"
+							>
+								{#if selectedPlan === 'enterprise'}
+									<div class="absolute top-4 right-4">
+										<div
+											class="flex h-6 w-6 items-center justify-center rounded-full bg-primary-500"
+										>
+											<Check class="h-4 w-4 text-white" />
+										</div>
+									</div>
+								{/if}
+
+								<div class="mb-4 h-[120px]">
+									<h3
+										class="text-xl font-bold text-surface-900 dark:text-surface-100"
+									>
+										{PRICING.ENTERPRISE.name}
+									</h3>
+									<p class="mt-2 text-sm text-surface-600 dark:text-surface-400">
+										Contact sales for pricing
+									</p>
+								</div>
+								<ul
+									class="mt-4 space-y-2 text-sm text-surface-600 dark:text-surface-400"
+								>
+									{#each PRICING.ENTERPRISE.features as feature}
 										<li class="flex items-start gap-2">
 											<Check
 												class="mt-0.5 h-4 w-4 flex-shrink-0 text-primary-500"

@@ -12,6 +12,9 @@
 	let loading = $state(false);
 	let error = $state('');
 
+	// Small delay to ensure database write is fully committed before redirect
+	const DB_WRITE_DELAY_MS = 100;
+
 	function handleKeyInput(e: Event) {
 		const input = e.target as HTMLInputElement;
 		// Auto-format key to uppercase
@@ -57,16 +60,13 @@
 
 			const { project } = await res.json();
 
-			console.log('Project created successfully:', project);
-
 			// Trigger project list refresh in header
 			triggerProjectsRefresh();
 
 			// Small delay to ensure database write is committed
-			await new Promise((resolve) => setTimeout(resolve, 100));
+			await new Promise((resolve) => setTimeout(resolve, DB_WRITE_DELAY_MS));
 
 			// Redirect to project page
-			console.log('Redirecting to:', `/projects/${project.id}`);
 			await goto(`/projects/${project.id}`);
 		} catch (err: any) {
 			error = err.message;

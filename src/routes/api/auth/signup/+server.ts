@@ -6,6 +6,8 @@ import { createSession, setSessionCookie, verifyCsrfToken } from '$lib/server/se
 import { Ratelimit } from '@upstash/ratelimit';
 import { redis, isCacheEnabled } from '$lib/server/redis';
 import { createAuditLog } from '$lib/server/audit';
+import { sendWelcomeEmail } from '$lib/server/email';
+import { RATE_LIMIT_CONFIG } from '$lib/config';
 
 /**
  * Rate limiting for signup attempts
@@ -18,10 +20,35 @@ const signupAttemptsMemory = new Map<string, { count: number; resetAt: number }>
 if (isCacheEnabled) {
 	ratelimit = new Ratelimit({
 		redis,
-		limiter: Ratelimit.slidingWindow(3, '60 m'), // 3 attempts per hour
+		limiter: Ratelimit.slidingWindow(
+			RATE_LIMIT_CONFIG.SIGNUP_MAX_ATTEMPTS,
+			`${RATE_LIMIT_CONFIG.SIGNUP_WINDOW_HOURS * 60} m`
+		),
 		analytics: true,
 		prefix: 'ratelimit:signup'
 	});
+}
+
+/**
+ * Clean up expired entries from in-memory rate limiter
+ * Prevents memory leaks by removing entries past their reset time
+ */
+function cleanupExpiredSignupEntries() {
+	const now = Date.now();
+	for (const [email, attempt] of signupAttemptsMemory.entries()) {
+		if (now > attempt.resetAt) {
+			signupAttemptsMemory.delete(email);
+		}
+	}
+}
+
+// Periodic cleanup of expired entries (global singleton pattern to prevent multiple intervals)
+const CLEANUP_KEY = Symbol.for('signup-cleanup');
+if (!isCacheEnabled && !(globalThis as any)[CLEANUP_KEY]) {
+	(globalThis as any)[CLEANUP_KEY] = setInterval(
+		cleanupExpiredSignupEntries,
+		RATE_LIMIT_CONFIG.CLEANUP_INTERVAL_MS
+	);
 }
 
 async function checkRateLimit(email: string): Promise<boolean> {
@@ -36,12 +63,20 @@ async function checkRateLimit(email: string): Promise<boolean> {
 	const attempt = signupAttemptsMemory.get(email);
 
 	if (!attempt || now > attempt.resetAt) {
+		// Clean up this entry if expired
+		if (attempt && now > attempt.resetAt) {
+			signupAttemptsMemory.delete(email);
+		}
+
 		// Reset or create new entry
-		signupAttemptsMemory.set(email, { count: 1, resetAt: now + 60 * 60 * 1000 }); // 1 hour
+		signupAttemptsMemory.set(email, {
+			count: 1,
+			resetAt: now + RATE_LIMIT_CONFIG.SIGNUP_WINDOW_HOURS * 60 * 60 * 1000
+		});
 		return true;
 	}
 
-	if (attempt.count >= 3) {
+	if (attempt.count >= RATE_LIMIT_CONFIG.SIGNUP_MAX_ATTEMPTS) {
 		// Too many attempts
 		return false;
 	}
@@ -160,6 +195,17 @@ export const POST: RequestHandler = async (event) => {
 				role: user.role
 			},
 			event
+		});
+
+		// Send welcome email (async, don't wait)
+		const userName =
+			firstName || lastName ? `${firstName || ''} ${lastName || ''}`.trim() : undefined;
+		sendWelcomeEmail({
+			to: user.email,
+			name: userName
+		}).catch((error) => {
+			console.error('Failed to send welcome email:', error);
+			// Don't fail signup if email fails
 		});
 
 		// Return user data (excluding password hash)

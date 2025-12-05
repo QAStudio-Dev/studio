@@ -2,10 +2,15 @@
 import type { LayoutServerLoad } from './$types';
 import { getUser } from '$lib/server/users';
 import { db } from '$lib/server/db';
+import { getCsrfToken } from '$lib/server/sessions';
 
-export const load: LayoutServerLoad = async ({ locals }) => {
+export const load: LayoutServerLoad = async (event) => {
+	const { locals } = event;
 	// Get user ID from auth
 	const userId = locals.userId || null;
+
+	// Generate CSRF token for forms
+	const csrfToken = getCsrfToken(event);
 
 	// Fetch user data if authenticated
 	let user = null;
@@ -46,6 +51,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 	return {
 		userId,
 		user,
-		projects
+		projects,
+		csrfToken
 	};
 };

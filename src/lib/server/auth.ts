@@ -7,17 +7,11 @@ import { FREE_TIER_LIMITS } from '$lib/constants';
 /**
  * Require authentication for API routes
  * Throws 401 if user is not authenticated
- * Ensures user exists in database
+ * Uses self-hosted session authentication (set by middleware in hooks.server.ts)
  */
 export async function requireAuth(event: RequestEvent) {
-	// Check if Clerk auth is available
-	if (!event.locals.auth || typeof event.locals.auth !== 'function') {
-		throw error(401, {
-			message: 'Unauthorized - Authentication required'
-		});
-	}
-
-	const { userId } = event.locals.auth() || {};
+	// Use userId directly from locals (set by session middleware)
+	const userId = event.locals.userId;
 
 	if (!userId) {
 		throw error(401, {
@@ -25,7 +19,7 @@ export async function requireAuth(event: RequestEvent) {
 		});
 	}
 
-	// Ensure user exists in database (sync from Clerk if needed)
+	// Ensure user exists in database
 	await ensureUser(userId);
 
 	return userId;
@@ -33,29 +27,53 @@ export async function requireAuth(event: RequestEvent) {
 
 /**
  * Get current user ID if authenticated, otherwise returns null
+ * Uses self-hosted session authentication (set by middleware in hooks.server.ts)
  */
 export function getCurrentUserId(event: RequestEvent): string | null {
-	if (!event.locals.auth || typeof event.locals.auth !== 'function') {
-		return null;
-	}
-	const { userId } = event.locals.auth() || {};
-	return userId || null;
+	return event.locals.userId || null;
 }
 
 /**
  * Get current user session data
+ * Uses self-hosted session authentication (set by middleware in hooks.server.ts)
  */
 export function getCurrentSession(event: RequestEvent) {
-	if (!event.locals.auth || typeof event.locals.auth !== 'function') {
+	// Return session object with userId to match the middleware pattern
+	return { userId: event.locals.userId || null };
+}
+
+/**
+ * Get authenticated user with full data
+ * Returns user object from database or null if not authenticated
+ */
+export async function getAuthenticatedUser(event: RequestEvent) {
+	// Use userId directly from locals (set by middleware)
+	const userId = event.locals.userId;
+	if (!userId) {
 		return null;
 	}
-	return event.locals.auth();
+
+	const user = await db.user.findUnique({
+		where: { id: userId },
+		select: {
+			id: true,
+			email: true,
+			firstName: true,
+			lastName: true,
+			role: true,
+			teamId: true,
+			imageUrl: true
+		}
+	});
+
+	return user;
 }
 
 /**
  * Require specific role for access
+ * Returns the user ID if authorized
  */
-export async function requireRole(event: RequestEvent, allowedRoles: string[]) {
+export async function requireRole(event: RequestEvent, allowedRoles: string[]): Promise<string> {
 	const userId = await requireAuth(event);
 	const user = await ensureUser(userId);
 
@@ -65,7 +83,7 @@ export async function requireRole(event: RequestEvent, allowedRoles: string[]) {
 		});
 	}
 
-	return user;
+	return userId;
 }
 
 /**

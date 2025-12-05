@@ -4,6 +4,8 @@ import { db } from '$lib/server/db';
 import { createPasswordResetToken } from '$lib/server/password-reset';
 import { verifyCsrfToken } from '$lib/server/sessions';
 import { createAuditLog } from '$lib/server/audit';
+import { sendPasswordResetEmail } from '$lib/server/email';
+import { APP_CONFIG } from '$lib/config';
 
 export const POST: RequestHandler = async (event) => {
 	try {
@@ -29,7 +31,6 @@ export const POST: RequestHandler = async (event) => {
 		});
 
 		// Always return success to prevent user enumeration
-		// In production, you would send an email with the reset link
 		if (user) {
 			const { tokenId, token } = await createPasswordResetToken(user.id);
 
@@ -46,25 +47,25 @@ export const POST: RequestHandler = async (event) => {
 				event
 			});
 
-			// TODO: Implement email sending using Resend API
-			// Email template should include:
-			// - Reset link with tokenId and token
-			// - Expiry notice (1 hour)
-			// - Security warning to ignore if not requested
+			// Build reset URL
+			const baseUrl = process.env.PUBLIC_APP_URL || APP_CONFIG.DEFAULT_URL;
+			const resetUrl = `${baseUrl}/reset-password?token=${tokenId}:${token}`;
 
-			// Development-only: Log reset link to console
+			// Send password reset email (async, don't wait)
+			sendPasswordResetEmail({
+				to: user.email,
+				resetUrl,
+				expiresInMinutes: 60
+			}).catch((error) => {
+				console.error('Failed to send password reset email:', error);
+				// Don't fail the request if email fails
+			});
+
+			// Development-only: Also log reset link to console for convenience
 			if (process.env.NODE_ENV !== 'production') {
-				const baseUrl = process.env.PUBLIC_BASE_URL || 'http://localhost:5173';
-				const resetUrl = `${baseUrl}/reset-password?token=${tokenId}:${token}`;
 				console.log(`\n📧 Password reset link for ${email}:`);
 				console.log(`   ${resetUrl}`);
 				console.log(`   ⏰ Expires in 1 hour\n`);
-			} else {
-				// Production: Email integration required
-				console.warn(
-					`[SECURITY] Password reset requested for ${email} but email is not configured. ` +
-						`User will not receive reset link. Configure Resend API to enable password reset emails.`
-				);
 			}
 		}
 

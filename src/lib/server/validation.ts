@@ -28,3 +28,110 @@ export async function validateRequestBody<T>(request: Request, schema: z.ZodSche
 	const rawBody = await request.json();
 	return schema.parse(rawBody);
 }
+
+/**
+ * Email validation regex - Restrictive pattern for enterprise use
+ * Allows: alphanumeric, dots, hyphens, underscores, and plus signs
+ * More restrictive than RFC 5322 for security (prevents SQL injection risky characters)
+ *
+ * Pattern: localpart@domain.tld
+ * - Local part: a-zA-Z0-9._+-
+ * - Domain: a-zA-Z0-9.- (supports both example.com and mail.example.com)
+ * - TLD: a-zA-Z (2+ characters)
+ */
+export const EMAIL_REGEX = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+/**
+ * Validate an email address
+ * Always normalizes email to lowercase for consistency
+ * @param email - Email address to validate
+ * @returns true if valid, false otherwise
+ */
+export function isValidEmail(email: string): boolean {
+	if (!email || typeof email !== 'string') {
+		return false;
+	}
+	return EMAIL_REGEX.test(email.trim().toLowerCase());
+}
+
+/**
+ * Validate and parse an integer with range checking
+ * @param value - Value to parse
+ * @param min - Minimum allowed value (inclusive)
+ * @param max - Maximum allowed value (inclusive)
+ * @returns Parsed integer or null if invalid
+ */
+export function parseIntInRange(
+	value: string | number | null | undefined,
+	min: number,
+	max: number
+): number | null {
+	if (value === null || value === undefined || value === '') {
+		return null;
+	}
+
+	const parsed = typeof value === 'number' ? value : parseInt(value);
+
+	if (isNaN(parsed) || parsed < min || parsed > max) {
+		return null;
+	}
+
+	return parsed;
+}
+
+/**
+ * Validation constants
+ */
+export const VALIDATION_LIMITS = {
+	// String lengths
+	EMAIL_MAX_LENGTH: 255,
+	NAME_MAX_LENGTH: 255,
+	PHONE_MAX_LENGTH: 50,
+	DESCRIPTION_MAX_LENGTH: 2000,
+
+	// Numeric ranges
+	SEATS_MIN: 1,
+	SEATS_MAX: 1_000_000
+} as const;
+
+/**
+ * Rate limiting constants
+ * Import from config for environment variable support
+ */
+import { RATE_LIMIT_CONFIG } from '$lib/config';
+
+export const RATE_LIMITS = {
+	// Enterprise inquiries - configurable via environment variables
+	ENTERPRISE_INQUIRY_MAX_ATTEMPTS: RATE_LIMIT_CONFIG.ENTERPRISE_INQUIRY_MAX_ATTEMPTS,
+	ENTERPRISE_INQUIRY_WINDOW_MS:
+		RATE_LIMIT_CONFIG.ENTERPRISE_INQUIRY_WINDOW_HOURS * 60 * 60 * 1000,
+
+	// Duplicate inquiry detection window - configurable via environment variables
+	ENTERPRISE_INQUIRY_DUPLICATE_WINDOW_MS:
+		RATE_LIMIT_CONFIG.ENTERPRISE_INQUIRY_DUPLICATE_WINDOW_HOURS * 60 * 60 * 1000
+} as const;
+
+/**
+ * Valid enterprise inquiry status values
+ */
+export const INQUIRY_STATUSES = [
+	'pending',
+	'contacted',
+	'qualified',
+	'converted',
+	'rejected'
+] as const;
+
+/**
+ * Type for inquiry status
+ */
+export type InquiryStatus = (typeof INQUIRY_STATUSES)[number];
+
+/**
+ * Validate inquiry status value
+ * @param status - Status value to validate
+ * @returns true if valid, false otherwise
+ */
+export function isValidInquiryStatus(status: string): status is InquiryStatus {
+	return INQUIRY_STATUSES.includes(status as InquiryStatus);
+}

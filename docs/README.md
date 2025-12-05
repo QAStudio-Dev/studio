@@ -7,7 +7,8 @@ Welcome to the QA Studio documentation! This directory contains comprehensive gu
 ### Features & Setup
 
 - [PRICING.md](PRICING.md) - Pricing plans and billing configuration
-- [STRIPE_SETUP.md](STRIPE_SETUP.md) - Payment and subscription setup
+- [STRIPE_SETUP.md](STRIPE_SETUP.md) - Payment and subscription setup (Pro plan)
+- [ENTERPRISE_SETUP.md](ENTERPRISE_SETUP.md) - **Enterprise plan admin panel and manual management**
 - [TEAMS_AND_ROLES.md](TEAMS_AND_ROLES.md) - Team structure and permissions
 - [TEAM_INVITATIONS.md](TEAM_INVITATIONS.md) - Inviting users to teams
 - [API_KEYS_SETUP.md](API_KEYS_SETUP.md) - Setting up API keys for programmatic access
@@ -19,8 +20,9 @@ Welcome to the QA Studio documentation! This directory contains comprehensive gu
 
 ### API & Development
 
-- [REPORTER_API.md](REPORTER_API.md) - Using the test reporter API
-- [PLAYWRIGHT_API_GUIDE.md](PLAYWRIGHT_API_GUIDE.md) - Playwright integration guide
+- [TESTING_FRAMEWORKS.md](TESTING_FRAMEWORKS.md) - **Multi-framework testing support (Cypress, Jest, PyTest, etc.)**
+- [PLAYWRIGHT_API_GUIDE.md](PLAYWRIGHT_API_GUIDE.md) - Playwright-specific integration guide
+- [REPORTER_API.md](REPORTER_API.md) - Reporter API reference
 
 ### Security
 
