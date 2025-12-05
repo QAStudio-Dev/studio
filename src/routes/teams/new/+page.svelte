@@ -66,8 +66,6 @@
 					);
 				}
 
-				console.log('Using Stripe Price ID:', priceId); // Debug log
-
 				const checkoutRes = await fetch('/api/teams/checkout', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },

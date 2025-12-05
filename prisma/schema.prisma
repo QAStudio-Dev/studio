@@ -757,6 +757,8 @@ model EnterpriseInquiry {
   @@index([email])
   @@index([status])
   @@index([createdAt])
+  @@index([email, createdAt]) // Composite for duplicate inquiry check (email + date range)
+  @@index([status, createdAt]) // Composite for filtering and sorting inquiries by status
 }
 
 // ============================================

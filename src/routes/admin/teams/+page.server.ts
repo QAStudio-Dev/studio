@@ -86,10 +86,48 @@ export const actions: Actions = {
 
 		// Add enterprise-specific fields
 		if (plan === 'enterprise') {
-			if (customSeats) updateData.customSeats = parseInt(customSeats);
-			if (contractEnd) updateData.contractEnd = new Date(contractEnd);
-			if (accountManager) updateData.accountManager = accountManager.trim();
-			if (invoiceEmail) updateData.invoiceEmail = invoiceEmail.trim();
+			// Validate and parse custom seats
+			if (customSeats) {
+				const parsed = parseInt(customSeats);
+				if (isNaN(parsed) || parsed < 1 || parsed > 1000000) {
+					return fail(400, {
+						error: 'Custom seats must be a positive number between 1 and 1,000,000'
+					});
+				}
+				updateData.customSeats = parsed;
+			}
+
+			// Validate contract end date
+			if (contractEnd) {
+				const endDate = new Date(contractEnd);
+				if (isNaN(endDate.getTime())) {
+					return fail(400, { error: 'Invalid contract end date' });
+				}
+				updateData.contractEnd = endDate;
+			}
+
+			// Validate account manager email
+			if (accountManager) {
+				const emailRegex =
+					/^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+				const trimmed = accountManager.trim();
+				if (trimmed && !emailRegex.test(trimmed)) {
+					return fail(400, { error: 'Invalid account manager email address' });
+				}
+				updateData.accountManager = trimmed;
+			}
+
+			// Validate invoice email
+			if (invoiceEmail) {
+				const emailRegex =
+					/^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+				const trimmed = invoiceEmail.trim();
+				if (trimmed && !emailRegex.test(trimmed)) {
+					return fail(400, { error: 'Invalid invoice email address' });
+				}
+				updateData.invoiceEmail = trimmed;
+			}
+
 			updateData.contractStart = new Date();
 		} else {
 			// Clear enterprise fields for non-enterprise plans

@@ -57,8 +57,6 @@
 
 			const { project } = await res.json();
 
-			console.log('Project created successfully:', project);
-
 			// Trigger project list refresh in header
 			triggerProjectsRefresh();
 
@@ -66,7 +64,6 @@
 			await new Promise((resolve) => setTimeout(resolve, 100));
 
 			// Redirect to project page
-			console.log('Redirecting to:', `/projects/${project.id}`);
 			await goto(`/projects/${project.id}`);
 		} catch (err: any) {
 			error = err.message;
