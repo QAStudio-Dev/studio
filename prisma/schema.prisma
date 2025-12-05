@@ -97,12 +97,23 @@ model PasswordResetToken {
 }
 
 model Team {
-  id            String   @id @default(cuid())
+  id            String  @id @default(cuid())
   name          String
   description   String?
-  overSeatLimit Boolean  @default(false) // True when team has more members than paid seats
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  overSeatLimit Boolean @default(false) // True when team has more members than paid seats
+
+  // Plan information
+  plan String @default("free") // 'free' | 'pro' | 'enterprise'
+
+  // Enterprise-specific fields
+  customSeats    Int? // Override seat limit for enterprise
+  contractStart  DateTime? // Enterprise contract start date
+  contractEnd    DateTime? // Enterprise contract end date
+  accountManager String? // Sales rep email
+  invoiceEmail   String? // Billing contact email
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
   members             User[]
@@ -112,8 +123,10 @@ model Team {
   invitations         TeamInvitation[]
   authenticatorTokens AuthenticatorToken[]
   auditLogs           AuditLog[]           @relation("AuditLogTeam")
+  enterpriseInquiries EnterpriseInquiry[]
 
   @@index([name])
+  @@index([plan])
   @@index([overSeatLimit])
   @@index([overSeatLimit, id]) // Composite index for middleware queries
 }
@@ -717,6 +730,33 @@ enum InvitationStatus {
   DECLINED
   EXPIRED
   CANCELED
+}
+
+// ============================================
+// ENTERPRISE INQUIRIES
+// ============================================
+
+model EnterpriseInquiry {
+  id             String   @id @default(cuid())
+  teamId         String? // Optional - may not have team yet
+  companyName    String
+  contactName    String?
+  email          String
+  phone          String?
+  estimatedSeats Int?
+  requirements   String? // Additional requirements/notes
+  status         String   @default("pending") // 'pending' | 'contacted' | 'qualified' | 'converted' | 'rejected'
+  assignedTo     String? // Sales rep assigned
+  notes          String? // Internal notes
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  team Team? @relation(fields: [teamId], references: [id], onDelete: SetNull)
+
+  @@index([teamId])
+  @@index([email])
+  @@index([status])
+  @@index([createdAt])
 }
 
 // ============================================

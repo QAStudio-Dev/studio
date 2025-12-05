@@ -5,6 +5,8 @@
  * Pro plan is priced per seat:
  * - $10/month per seat
  * - $100/year per seat (same as monthly, no discount on annual)
+ *
+ * Enterprise plan is custom pricing (contact sales)
  */
 
 export const PRICING = {
@@ -42,14 +44,33 @@ export const PRICING = {
 			'Priority support',
 			'Custom integrations'
 		]
+	},
+	ENTERPRISE: {
+		name: 'Enterprise',
+		priceDisplay: 'Custom',
+		description: 'For organizations with advanced needs',
+		tagline: 'Contact sales',
+		contactSales: true,
+		features: [
+			'Unlimited team members',
+			'Unlimited projects',
+			'Everything in Pro, plus:',
+			'SSO/SAML authentication',
+			'Advanced user permissions',
+			'Audit logs',
+			'SLA guarantees',
+			'Dedicated support',
+			'Custom contract terms',
+			'On-premise deployment options'
+		]
 	}
 } as const;
 
 /**
  * Calculate monthly equivalent for yearly pricing
  */
-export function getMonthlyEquivalent(plan: 'free' | 'pro'): number {
-	if (plan === 'free') return 0;
+export function getMonthlyEquivalent(plan: 'free' | 'pro' | 'enterprise'): number {
+	if (plan === 'free' || plan === 'enterprise') return 0;
 	return PRICING.PRO.pricePerSeatYearly / 12;
 }
 
@@ -57,11 +78,11 @@ export function getMonthlyEquivalent(plan: 'free' | 'pro'): number {
  * Calculate total cost for a plan
  */
 export function calculatePlanCost(
-	plan: 'free' | 'pro',
+	plan: 'free' | 'pro' | 'enterprise',
 	seats: number,
 	period: 'monthly' | 'yearly'
 ): number {
-	if (plan === 'free') return 0;
+	if (plan === 'free' || plan === 'enterprise') return 0;
 
 	const pricePerSeat =
 		period === 'monthly' ? PRICING.PRO.pricePerSeatMonthly : PRICING.PRO.pricePerSeatYearly;
@@ -84,11 +105,25 @@ export function formatPrice(
 /**
  * Get plan limits
  */
-export function getPlanLimits(plan: 'free' | 'pro') {
+export function getPlanLimits(plan: 'free' | 'pro' | 'enterprise') {
+	if (plan === 'enterprise') {
+		return {
+			seats: -1, // Unlimited
+			attachmentRetention: -1, // Unlimited
+			aiAnalysis: true,
+			sso: true,
+			auditLogs: true,
+			sla: true
+		};
+	}
+
 	const planData = plan === 'free' ? PRICING.FREE : PRICING.PRO;
 	return {
 		seats: planData.includedSeats,
 		attachmentRetention: plan === 'free' ? 7 : 30,
-		aiAnalysis: plan === 'pro'
+		aiAnalysis: plan === 'pro',
+		sso: false,
+		auditLogs: false,
+		sla: false
 	};
 }
