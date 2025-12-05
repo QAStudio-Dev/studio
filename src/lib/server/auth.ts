@@ -53,6 +53,33 @@ export function getCurrentSession(event: RequestEvent) {
 }
 
 /**
+ * Get authenticated user with full data
+ * Returns user object from database or null if not authenticated
+ */
+export async function getAuthenticatedUser(event: RequestEvent) {
+	// Use userId directly from locals (set by middleware)
+	const userId = event.locals.userId;
+	if (!userId) {
+		return null;
+	}
+
+	const user = await db.user.findUnique({
+		where: { id: userId },
+		select: {
+			id: true,
+			email: true,
+			firstName: true,
+			lastName: true,
+			role: true,
+			teamId: true,
+			imageUrl: true
+		}
+	});
+
+	return user;
+}
+
+/**
  * Require specific role for access
  */
 export async function requireRole(event: RequestEvent, allowedRoles: string[]) {
