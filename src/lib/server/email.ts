@@ -1,16 +1,17 @@
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
+import { EMAIL_CONFIG, APP_CONFIG } from '$lib/config';
 
-// Email configuration from environment variables
-const EMAIL_HOST = process.env.EMAIL_HOST || 'smtp.gmail.com';
-const EMAIL_PORT = parseInt(process.env.EMAIL_PORT || '587');
+// Email configuration from environment variables with config defaults
+const EMAIL_HOST = process.env.EMAIL_HOST || EMAIL_CONFIG.DEFAULT_HOST;
+const EMAIL_PORT = parseInt(process.env.EMAIL_PORT || EMAIL_CONFIG.DEFAULT_PORT.toString());
 const EMAIL_USER = process.env.EMAIL_USER;
 const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD;
 const EMAIL_SECURE = process.env.EMAIL_SECURE === 'true'; // true for 465, false for 587
 
-// Use EMAIL_FROM if set, otherwise fall back to EMAIL_USER
+// Use EMAIL_FROM if set, otherwise fall back to EMAIL_USER, then config default
 // This allows using a display name: EMAIL_FROM="QA Studio <ben@qastudio.dev>"
-const EMAIL_FROM = process.env.EMAIL_FROM || EMAIL_USER || 'noreply@qastudio.dev';
+const EMAIL_FROM = process.env.EMAIL_FROM || EMAIL_USER || EMAIL_CONFIG.DEFAULT_FROM;
 
 // Create reusable transporter
 let transporter: Transporter | null = null;
@@ -180,7 +181,7 @@ export async function sendInvitationAcceptedEmail(
 	memberName: string,
 	memberEmail: string
 ) {
-	const appUrl = process.env.PUBLIC_APP_URL || 'https://qastudio.dev';
+	const appUrl = process.env.PUBLIC_APP_URL || APP_CONFIG.DEFAULT_URL;
 
 	const text = `
 New Team Member!
@@ -248,8 +249,8 @@ export async function sendEnterpriseInquiryEmail({
 	requirements?: string | null;
 	inquiryId: string;
 }) {
-	const salesEmail = process.env.SALES_EMAIL || 'ben@qastudio.dev';
-	const appUrl = process.env.PUBLIC_APP_URL || 'https://qastudio.dev';
+	const salesEmail = process.env.SALES_EMAIL || EMAIL_CONFIG.DEFAULT_SALES_EMAIL;
+	const appUrl = process.env.PUBLIC_APP_URL || APP_CONFIG.DEFAULT_URL;
 
 	const text = `
 New Enterprise Inquiry!
@@ -366,7 +367,7 @@ export async function sendWelcomeEmail({
 	name?: string;
 	teamName?: string;
 }) {
-	const appUrl = process.env.PUBLIC_APP_URL || 'https://qastudio.dev';
+	const appUrl = process.env.PUBLIC_APP_URL || APP_CONFIG.DEFAULT_URL;
 	const greeting = name ? `Hi ${name}` : 'Welcome';
 
 	const text = `

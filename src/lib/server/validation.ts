@@ -43,6 +43,7 @@ export const EMAIL_REGEX = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 /**
  * Validate an email address
+ * Always normalizes email to lowercase for consistency
  * @param email - Email address to validate
  * @returns true if valid, false otherwise
  */
@@ -50,7 +51,7 @@ export function isValidEmail(email: string): boolean {
 	if (!email || typeof email !== 'string') {
 		return false;
 	}
-	return EMAIL_REGEX.test(email.trim());
+	return EMAIL_REGEX.test(email.trim().toLowerCase());
 }
 
 /**

@@ -5,6 +5,7 @@ import { createPasswordResetToken } from '$lib/server/password-reset';
 import { verifyCsrfToken } from '$lib/server/sessions';
 import { createAuditLog } from '$lib/server/audit';
 import { sendPasswordResetEmail } from '$lib/server/email';
+import { APP_CONFIG } from '$lib/config';
 
 export const POST: RequestHandler = async (event) => {
 	try {
@@ -47,7 +48,7 @@ export const POST: RequestHandler = async (event) => {
 			});
 
 			// Build reset URL
-			const baseUrl = process.env.PUBLIC_APP_URL || 'https://qastudio.dev';
+			const baseUrl = process.env.PUBLIC_APP_URL || APP_CONFIG.DEFAULT_URL;
 			const resetUrl = `${baseUrl}/reset-password?token=${tokenId}:${token}`;
 
 			// Send password reset email (async, don't wait)

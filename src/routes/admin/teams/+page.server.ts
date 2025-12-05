@@ -8,6 +8,7 @@ import {
 	isValidInquiryStatus
 } from '$lib/server/validation';
 import { requireRole } from '$lib/server/auth';
+import { createAuditLog } from '$lib/server/audit';
 import type { Prisma } from '$prisma/client';
 
 export const load: PageServerLoad = async (event) => {
@@ -63,7 +64,7 @@ export const load: PageServerLoad = async (event) => {
 export const actions: Actions = {
 	upgradeToPlan: async (event) => {
 		// Require OWNER role
-		await requireRole(event, ['OWNER']);
+		const userId = await requireRole(event, ['OWNER']);
 
 		const { request } = event;
 
@@ -77,6 +78,16 @@ export const actions: Actions = {
 
 		if (!teamId || !plan) {
 			return fail(400, { error: 'Team ID and plan are required' });
+		}
+
+		// Get team before update for audit trail
+		const team = await db.team.findUnique({
+			where: { id: teamId },
+			select: { id: true, name: true, plan: true }
+		});
+
+		if (!team) {
+			return fail(404, { error: 'Team not found' });
 		}
 
 		const updateData: Prisma.TeamUpdateInput = {
@@ -142,12 +153,31 @@ export const actions: Actions = {
 			data: updateData
 		});
 
+		// Audit log the plan change
+		await createAuditLog({
+			userId,
+			teamId,
+			action: 'TEAM_PLAN_CHANGED',
+			resourceType: 'Team',
+			resourceId: teamId,
+			metadata: {
+				teamName: team.name,
+				oldPlan: team.plan,
+				newPlan: plan,
+				customSeats: updateData.customSeats,
+				contractEnd: updateData.contractEnd,
+				accountManager: updateData.accountManager,
+				invoiceEmail: updateData.invoiceEmail
+			},
+			event
+		});
+
 		return { success: true };
 	},
 
 	updateInquiryStatus: async (event) => {
 		// Require OWNER role
-		await requireRole(event, ['OWNER']);
+		const userId = await requireRole(event, ['OWNER']);
 
 		const { request } = event;
 
@@ -159,6 +189,16 @@ export const actions: Actions = {
 
 		if (!inquiryId) {
 			return fail(400, { error: 'Inquiry ID is required' });
+		}
+
+		// Get inquiry before update for audit trail
+		const inquiry = await db.enterpriseInquiry.findUnique({
+			where: { id: inquiryId },
+			select: { id: true, companyName: true, email: true, status: true, teamId: true }
+		});
+
+		if (!inquiry) {
+			return fail(404, { error: 'Inquiry not found' });
 		}
 
 		// Validate status if provided
@@ -174,6 +214,24 @@ export const actions: Actions = {
 		await db.enterpriseInquiry.update({
 			where: { id: inquiryId },
 			data: updateData
+		});
+
+		// Audit log the inquiry status change
+		await createAuditLog({
+			userId,
+			teamId: inquiry.teamId || undefined,
+			action: 'ENTERPRISE_INQUIRY_UPDATED',
+			resourceType: 'EnterpriseInquiry',
+			resourceId: inquiryId,
+			metadata: {
+				companyName: inquiry.companyName,
+				email: inquiry.email,
+				oldStatus: inquiry.status,
+				newStatus: status || inquiry.status,
+				assignedTo: assignedTo || undefined,
+				notesUpdated: notes !== undefined
+			},
+			event
 		});
 
 		return { success: true };
