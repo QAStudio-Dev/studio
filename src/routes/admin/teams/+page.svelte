@@ -240,14 +240,17 @@
 	<div
 		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
 		onclick={(e) => handleBackdropClick(e, closeUpgradeModal)}
-		role="presentation"
+		role="button"
+		tabindex="-1"
+		aria-label="Close modal"
 	>
 		<div
 			class="max-h-[90vh] w-full max-w-2xl overflow-y-auto card p-8"
 			role="dialog"
 			aria-modal="true"
+			aria-labelledby="upgrade-modal-title"
 		>
-			<h2 class="mb-6 text-2xl font-bold">Manage Team Plan</h2>
+			<h2 id="upgrade-modal-title" class="mb-6 text-2xl font-bold">Manage Team Plan</h2>
 
 			<form
 				method="POST"
@@ -345,10 +348,17 @@
 	<div
 		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
 		onclick={(e) => handleBackdropClick(e, closeInquiryModal)}
-		role="presentation"
+		role="button"
+		tabindex="-1"
+		aria-label="Close modal"
 	>
-		<div class="w-full max-w-2xl card p-8" role="dialog" aria-modal="true">
-			<h2 class="mb-6 text-2xl font-bold">Manage Inquiry</h2>
+		<div
+			class="w-full max-w-2xl card p-8"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="inquiry-modal-title"
+		>
+			<h2 id="inquiry-modal-title" class="mb-6 text-2xl font-bold">Manage Inquiry</h2>
 
 			<form
 				method="POST"

@@ -47,6 +47,11 @@ export async function hasAvailableSeats(teamId: string): Promise<boolean> {
 		return false;
 	}
 
+	// Enterprise teams with custom seats use customSeats as the limit
+	if (team.plan === 'ENTERPRISE' && team.customSeats) {
+		return team.members.length < team.customSeats;
+	}
+
 	// Free teams (no subscription) only allow limited members
 	if (!team.subscription) {
 		return team.members.length < FREE_TIER_LIMITS.MEMBERS;
@@ -143,18 +148,31 @@ export async function getTeamLimits(teamId: string) {
 
 	const isFree = !team.subscription || team.subscription.status === 'CANCELED';
 
+	// Determine seat limit based on plan
+	let maxSeats = 1;
+	if (team.plan === 'ENTERPRISE' && team.customSeats) {
+		// Enterprise plans use customSeats
+		maxSeats = team.customSeats;
+	} else if (team.subscription) {
+		// Pro plans use subscription seats
+		maxSeats = team.subscription.seats;
+	} else {
+		// Free plan uses default limit
+		maxSeats = FREE_TIER_LIMITS.MEMBERS;
+	}
+
 	return {
-		plan: isFree ? 'free' : 'pro',
+		plan: team.plan.toLowerCase() as 'free' | 'pro' | 'enterprise',
 		seats: {
-			max: team.subscription?.seats || 1,
+			max: maxSeats,
 			used: team.members.length,
-			available: (team.subscription?.seats || 1) - team.members.length
+			available: maxSeats - team.members.length
 		},
 		features: {
 			ai_analysis: !isFree,
 			advanced_reports: !isFree,
 			integrations: !isFree,
-			unlimited_projects: true // Both plans have unlimited projects
+			unlimited_projects: true // All plans have unlimited projects
 		},
 		subscription: team.subscription
 			? {

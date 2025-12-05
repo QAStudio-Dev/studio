@@ -103,7 +103,7 @@ model Team {
   overSeatLimit Boolean @default(false) // True when team has more members than paid seats
 
   // Plan information
-  plan String @default("free") // 'free' | 'pro' | 'enterprise'
+  plan TeamPlan @default(FREE)
 
   // Enterprise-specific fields
   customSeats    Int? // Override seat limit for enterprise
@@ -176,6 +176,12 @@ enum UserRole {
   MANAGER // Can manage projects and teams
   TESTER // Can create and execute tests
   VIEWER // Read-only access
+}
+
+enum TeamPlan {
+  FREE // Free tier with limited features
+  PRO // Pro tier with full features
+  ENTERPRISE // Enterprise tier with custom pricing and features
 }
 
 // ============================================

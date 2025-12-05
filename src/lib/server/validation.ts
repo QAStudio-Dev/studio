@@ -30,13 +30,16 @@ export async function validateRequestBody<T>(request: Request, schema: z.ZodSche
 }
 
 /**
- * RFC 5322 compliant email validation regex
- * Validates email addresses according to the RFC 5322 standard
+ * Email validation regex - Restrictive pattern for enterprise use
+ * Allows: alphanumeric, dots, hyphens, underscores, and plus signs
+ * More restrictive than RFC 5322 for security (prevents SQL injection risky characters)
  *
- * @see https://datatracker.ietf.org/doc/html/rfc5322#section-3.4.1
+ * Pattern: localpart@domain.tld
+ * - Local part: a-zA-Z0-9._+-
+ * - Domain: a-zA-Z0-9.-
+ * - TLD: a-zA-Z (2+ characters)
  */
-export const EMAIL_REGEX =
-	/^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+export const EMAIL_REGEX = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 /**
  * Validate an email address
