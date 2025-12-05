@@ -11,7 +11,7 @@
 
 	// Form states
 	let upgradePlan = $state('pro');
-	let upgradeCustomSeats = $state<number | undefined>(undefined);
+	let upgradeCustomSeats = $state<string>('');
 	let upgradeContractEnd = $state('');
 	let upgradeAccountManager = $state('');
 	let upgradeInvoiceEmail = $state('');
@@ -25,7 +25,7 @@
 		const team = data.teams.find((t) => t.id === teamId);
 		if (team) {
 			upgradePlan = team.plan;
-			upgradeCustomSeats = team.customSeats || undefined;
+			upgradeCustomSeats = team.customSeats?.toString() || '';
 			upgradeContractEnd = team.contractEnd
 				? new Date(team.contractEnd).toISOString().split('T')[0]
 				: '';
@@ -208,9 +208,13 @@
 			<form
 				method="POST"
 				action="?/upgradeToPlan"
-				use:enhance
-				onsubmit={() => {
-					showUpgradeModal = false;
+				use:enhance={() => {
+					return async ({ result, update }) => {
+						if (result.type === 'success') {
+							showUpgradeModal = false;
+						}
+						await update();
+					};
 				}}
 			>
 				<input type="hidden" name="teamId" value={selectedTeam} />
@@ -301,9 +305,13 @@
 			<form
 				method="POST"
 				action="?/updateInquiryStatus"
-				use:enhance
-				onsubmit={() => {
-					showInquiryModal = false;
+				use:enhance={() => {
+					return async ({ result, update }) => {
+						if (result.type === 'success') {
+							showInquiryModal = false;
+						}
+						await update();
+					};
 				}}
 			>
 				<input type="hidden" name="inquiryId" value={selectedInquiry} />

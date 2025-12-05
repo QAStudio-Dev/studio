@@ -50,8 +50,12 @@
 			setTimeout(() => {
 				goto('/');
 			}, 3000);
-		} catch (err: any) {
-			error = err.message;
+		} catch (err) {
+			error =
+				err instanceof Error
+					? err.message
+					: 'An unexpected error occurred. Please try again.';
+			console.error('Enterprise inquiry submission error:', err);
 		} finally {
 			loading = false;
 		}
