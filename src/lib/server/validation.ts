@@ -96,14 +96,19 @@ export const VALIDATION_LIMITS = {
 
 /**
  * Rate limiting constants
+ * Import from config for environment variable support
  */
-export const RATE_LIMITS = {
-	// Enterprise inquiries: 5 per hour per email
-	ENTERPRISE_INQUIRY_MAX_ATTEMPTS: 5,
-	ENTERPRISE_INQUIRY_WINDOW_MS: 60 * 60 * 1000, // 1 hour
+import { RATE_LIMIT_CONFIG } from '$lib/config';
 
-	// Duplicate inquiry detection window
-	ENTERPRISE_INQUIRY_DUPLICATE_WINDOW_MS: 24 * 60 * 60 * 1000 // 24 hours
+export const RATE_LIMITS = {
+	// Enterprise inquiries - configurable via environment variables
+	ENTERPRISE_INQUIRY_MAX_ATTEMPTS: RATE_LIMIT_CONFIG.ENTERPRISE_INQUIRY_MAX_ATTEMPTS,
+	ENTERPRISE_INQUIRY_WINDOW_MS:
+		RATE_LIMIT_CONFIG.ENTERPRISE_INQUIRY_WINDOW_HOURS * 60 * 60 * 1000,
+
+	// Duplicate inquiry detection window - configurable via environment variables
+	ENTERPRISE_INQUIRY_DUPLICATE_WINDOW_MS:
+		RATE_LIMIT_CONFIG.ENTERPRISE_INQUIRY_DUPLICATE_WINDOW_HOURS * 60 * 60 * 1000
 } as const;
 
 /**

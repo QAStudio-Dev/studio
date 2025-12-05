@@ -15,49 +15,72 @@ export const load: PageServerLoad = async (event) => {
 	// Require OWNER role to access admin panel
 	await requireRole(event, ['OWNER']);
 
-	// Fetch all teams with subscription and member info
-	const teams = await db.team.findMany({
-		include: {
-			members: {
-				select: {
-					id: true,
-					email: true,
-					firstName: true,
-					lastName: true,
-					role: true
+	// Get pagination parameters from URL
+	const url = new URL(event.request.url);
+	const teamsPage = parseInt(url.searchParams.get('teamsPage') || '1');
+	const inquiriesPage = parseInt(url.searchParams.get('inquiriesPage') || '1');
+	const pageSize = 50; // Items per page
+
+	// Fetch teams with pagination
+	const [teams, teamsCount] = await Promise.all([
+		db.team.findMany({
+			take: pageSize,
+			skip: (teamsPage - 1) * pageSize,
+			include: {
+				members: {
+					select: {
+						id: true,
+						email: true,
+						firstName: true,
+						lastName: true,
+						role: true
+					}
+				},
+				subscription: true,
+				_count: {
+					select: {
+						members: true,
+						projects: true
+					}
 				}
 			},
-			subscription: true,
-			_count: {
-				select: {
-					members: true,
-					projects: true
-				}
+			orderBy: {
+				createdAt: 'desc'
 			}
-		},
-		orderBy: {
-			createdAt: 'desc'
-		}
-	});
+		}),
+		db.team.count()
+	]);
 
-	// Fetch enterprise inquiries
-	const inquiries = await db.enterpriseInquiry.findMany({
-		include: {
-			team: {
-				select: {
-					id: true,
-					name: true
+	// Fetch enterprise inquiries with pagination
+	const [inquiries, inquiriesCount] = await Promise.all([
+		db.enterpriseInquiry.findMany({
+			take: pageSize,
+			skip: (inquiriesPage - 1) * pageSize,
+			include: {
+				team: {
+					select: {
+						id: true,
+						name: true
+					}
 				}
+			},
+			orderBy: {
+				createdAt: 'desc'
 			}
-		},
-		orderBy: {
-			createdAt: 'desc'
-		}
-	});
+		}),
+		db.enterpriseInquiry.count()
+	]);
 
 	return {
 		teams,
-		inquiries
+		teamsCount,
+		teamsPage,
+		teamsTotalPages: Math.ceil(teamsCount / pageSize),
+		inquiries,
+		inquiriesCount,
+		inquiriesPage,
+		inquiriesTotalPages: Math.ceil(inquiriesCount / pageSize),
+		pageSize
 	};
 };
 
@@ -80,8 +103,9 @@ export const actions: Actions = {
 			return fail(400, { error: 'Team ID and plan are required' });
 		}
 
-		// Validate plan value
-		if (!Object.values(TeamPlan).includes(plan as TeamPlan)) {
+		// Validate plan value - use actual enum value instead of type casting for safety
+		const planValue = TeamPlan[plan as keyof typeof TeamPlan];
+		if (!planValue) {
 			return fail(400, { error: 'Invalid plan value' });
 		}
 
@@ -96,11 +120,11 @@ export const actions: Actions = {
 		}
 
 		const updateData: Prisma.TeamUpdateInput = {
-			plan: plan as TeamPlan
+			plan: planValue
 		};
 
 		// Add enterprise-specific fields
-		if (plan === TeamPlan.ENTERPRISE) {
+		if (planValue === TeamPlan.ENTERPRISE) {
 			// Validate and parse custom seats
 			if (customSeats) {
 				const parsed = parseIntInRange(
@@ -168,7 +192,7 @@ export const actions: Actions = {
 			metadata: {
 				teamName: team.name,
 				oldPlan: team.plan,
-				newPlan: plan,
+				newPlan: planValue,
 				customSeats: updateData.customSeats,
 				contractEnd: updateData.contractEnd,
 				accountManager: updateData.accountManager,

@@ -2,7 +2,7 @@
 	import { Building2, Users, Mail, Phone, Calendar, Shield } from 'lucide-svelte';
 	import { enhance } from '$app/forms';
 	import { onMount } from 'svelte';
-	import { TeamPlan } from '$prisma/client';
+	import { TeamPlan, type TeamPlanType } from '$lib/types/team';
 
 	let { data } = $props();
 
@@ -12,7 +12,7 @@
 	let selectedInquiry = $state<string | null>(null);
 
 	// Form states
-	let upgradePlan = $state<TeamPlan>(TeamPlan.PRO);
+	let upgradePlan = $state<TeamPlanType>(TeamPlan.PRO);
 	let upgradeCustomSeats = $state<string>('');
 	let upgradeContractEnd = $state('');
 	let upgradeAccountManager = $state('');
@@ -83,7 +83,7 @@
 		};
 	});
 
-	function getPlanBadgeClass(plan: TeamPlan) {
+	function getPlanBadgeClass(plan: TeamPlanType) {
 		switch (plan) {
 			case TeamPlan.FREE:
 				return 'badge preset-filled-surface-500';

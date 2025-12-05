@@ -4,7 +4,7 @@ import { db } from '$lib/server/db';
 import { verifyCsrfToken } from '$lib/server/sessions';
 import { Ratelimit } from '@upstash/ratelimit';
 import { redis, isCacheEnabled } from '$lib/server/redis';
-import { VALIDATION_LIMITS, RATE_LIMITS } from '$lib/server/validation';
+import { VALIDATION_LIMITS, RATE_LIMITS, EMAIL_REGEX } from '$lib/server/validation';
 import { getAuthenticatedUser } from '$lib/server/auth';
 import { sendEnterpriseInquiryEmail } from '$lib/server/email';
 import { z } from 'zod';
@@ -39,7 +39,7 @@ const enterpriseInquirySchema = z.object({
 			VALIDATION_LIMITS.EMAIL_MAX_LENGTH,
 			`Email must be ${VALIDATION_LIMITS.EMAIL_MAX_LENGTH} characters or less`
 		)
-		.email('Invalid email address format')
+		.regex(EMAIL_REGEX, 'Invalid email address format')
 		.transform((val) => val.toLowerCase()),
 	phone: z
 		.string()
