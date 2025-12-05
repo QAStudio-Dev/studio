@@ -101,3 +101,28 @@ export const RATE_LIMITS = {
 	// Duplicate inquiry detection window
 	ENTERPRISE_INQUIRY_DUPLICATE_WINDOW_MS: 24 * 60 * 60 * 1000 // 24 hours
 } as const;
+
+/**
+ * Valid enterprise inquiry status values
+ */
+export const INQUIRY_STATUSES = [
+	'pending',
+	'contacted',
+	'qualified',
+	'converted',
+	'rejected'
+] as const;
+
+/**
+ * Type for inquiry status
+ */
+export type InquiryStatus = (typeof INQUIRY_STATUSES)[number];
+
+/**
+ * Validate inquiry status value
+ * @param status - Status value to validate
+ * @returns true if valid, false otherwise
+ */
+export function isValidInquiryStatus(status: string): status is InquiryStatus {
+	return INQUIRY_STATUSES.includes(status as InquiryStatus);
+}

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Building2, Users, Mail, Phone, Calendar, Shield } from 'lucide-svelte';
 	import { enhance } from '$app/forms';
+	import { onMount } from 'svelte';
 
 	let { data } = $props();
 
@@ -45,6 +46,41 @@
 		}
 		showInquiryModal = true;
 	}
+
+	function closeUpgradeModal() {
+		showUpgradeModal = false;
+		selectedTeam = null;
+	}
+
+	function closeInquiryModal() {
+		showInquiryModal = false;
+		selectedInquiry = null;
+	}
+
+	function handleEscapeKey(event: KeyboardEvent) {
+		if (event.key === 'Escape') {
+			if (showUpgradeModal) {
+				closeUpgradeModal();
+			} else if (showInquiryModal) {
+				closeInquiryModal();
+			}
+		}
+	}
+
+	function handleBackdropClick(event: MouseEvent, closeModal: () => void) {
+		// Close modal if clicking on backdrop (not the modal content)
+		if (event.target === event.currentTarget) {
+			closeModal();
+		}
+	}
+
+	// Add ESC key listener
+	onMount(() => {
+		window.addEventListener('keydown', handleEscapeKey);
+		return () => {
+			window.removeEventListener('keydown', handleEscapeKey);
+		};
+	});
 
 	function getPlanBadgeClass(plan: string) {
 		switch (plan) {
@@ -201,8 +237,16 @@
 
 <!-- Upgrade Team Modal -->
 {#if showUpgradeModal && selectedTeam}
-	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-		<div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto card p-8">
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+		onclick={(e) => handleBackdropClick(e, closeUpgradeModal)}
+		role="presentation"
+	>
+		<div
+			class="max-h-[90vh] w-full max-w-2xl overflow-y-auto card p-8"
+			role="dialog"
+			aria-modal="true"
+		>
 			<h2 class="mb-6 text-2xl font-bold">Manage Team Plan</h2>
 
 			<form
@@ -285,7 +329,7 @@
 						<button
 							type="button"
 							class="btn preset-outlined-surface-500"
-							onclick={() => (showUpgradeModal = false)}
+							onclick={closeUpgradeModal}
 						>
 							Cancel
 						</button>
@@ -298,8 +342,12 @@
 
 <!-- Inquiry Management Modal -->
 {#if showInquiryModal && selectedInquiry}
-	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-		<div class="w-full max-w-2xl card p-8">
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+		onclick={(e) => handleBackdropClick(e, closeInquiryModal)}
+		role="presentation"
+	>
+		<div class="w-full max-w-2xl card p-8" role="dialog" aria-modal="true">
 			<h2 class="mb-6 text-2xl font-bold">Manage Inquiry</h2>
 
 			<form
@@ -355,7 +403,7 @@
 						<button
 							type="button"
 							class="btn preset-outlined-surface-500"
-							onclick={() => (showInquiryModal = false)}
+							onclick={closeInquiryModal}
 						>
 							Cancel
 						</button>

@@ -1,8 +1,14 @@
 import { error, redirect, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { db } from '$lib/server/db';
-import { isValidEmail, parseIntInRange, VALIDATION_LIMITS } from '$lib/server/validation';
+import {
+	isValidEmail,
+	parseIntInRange,
+	VALIDATION_LIMITS,
+	isValidInquiryStatus
+} from '$lib/server/validation';
 import { requireRole } from '$lib/server/auth';
+import type { Prisma } from '$prisma/client';
 
 export const load: PageServerLoad = async (event) => {
 	// Require OWNER role to access admin panel
@@ -73,7 +79,7 @@ export const actions: Actions = {
 			return fail(400, { error: 'Team ID and plan are required' });
 		}
 
-		const updateData: any = {
+		const updateData: Prisma.TeamUpdateInput = {
 			plan
 		};
 
@@ -155,7 +161,12 @@ export const actions: Actions = {
 			return fail(400, { error: 'Inquiry ID is required' });
 		}
 
-		const updateData: any = {};
+		// Validate status if provided
+		if (status && !isValidInquiryStatus(status)) {
+			return fail(400, { error: 'Invalid status value' });
+		}
+
+		const updateData: Prisma.EnterpriseInquiryUpdateInput = {};
 		if (status) updateData.status = status;
 		if (assignedTo) updateData.assignedTo = assignedTo.trim();
 		if (notes !== undefined) updateData.notes = notes.trim() || null;
