@@ -6,6 +6,7 @@ import { createSession, setSessionCookie, verifyCsrfToken } from '$lib/server/se
 import { Ratelimit } from '@upstash/ratelimit';
 import { redis, isCacheEnabled } from '$lib/server/redis';
 import { createAuditLog } from '$lib/server/audit';
+import { sendWelcomeEmail } from '$lib/server/email';
 
 /**
  * Rate limiting for signup attempts
@@ -160,6 +161,16 @@ export const POST: RequestHandler = async (event) => {
 				role: user.role
 			},
 			event
+		});
+
+		// Send welcome email (async, don't wait)
+		const userName = firstName || lastName ? `${firstName || ''} ${lastName || ''}`.trim() : undefined;
+		sendWelcomeEmail({
+			to: user.email,
+			name: userName
+		}).catch((error) => {
+			console.error('Failed to send welcome email:', error);
+			// Don't fail signup if email fails
 		});
 
 		// Return user data (excluding password hash)

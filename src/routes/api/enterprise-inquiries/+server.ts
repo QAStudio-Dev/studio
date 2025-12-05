@@ -11,6 +11,7 @@ import {
 	RATE_LIMITS
 } from '$lib/server/validation';
 import { getAuthenticatedUser } from '$lib/server/auth';
+import { sendEnterpriseInquiryEmail } from '$lib/server/email';
 
 /**
  * Rate limiting for enterprise inquiries
@@ -189,21 +190,20 @@ export const POST: RequestHandler = async (event) => {
 		});
 	});
 
-	// TODO: Send email notification to sales team
-	// You can implement this with your email service
-	// Example:
-	// await sendEmail({
-	//   to: 'sales@yourdomain.com',
-	//   subject: `New Enterprise Inquiry: ${companyName}`,
-	//   html: `
-	//     <h2>New Enterprise Lead</h2>
-	//     <p><strong>Company:</strong> ${companyName}</p>
-	//     <p><strong>Contact:</strong> ${email}</p>
-	//     <p><strong>Seats:</strong> ${validatedSeats || 'Not specified'}</p>
-	//     <p><strong>Requirements:</strong> ${requirements || 'None'}</p>
-	//     <a href="https://yourdomain.com/admin/teams">View in Admin Panel</a>
-	//   `
-	// });
+	// Send email notification to sales team
+	// Don't await - send async to avoid delaying response to user
+	sendEnterpriseInquiryEmail({
+		companyName: inquiry.companyName,
+		contactName: inquiry.contactName,
+		email: inquiry.email,
+		phone: inquiry.phone,
+		estimatedSeats: inquiry.estimatedSeats,
+		requirements: inquiry.requirements,
+		inquiryId: inquiry.id
+	}).catch((error) => {
+		// Log error but don't fail the request
+		console.error('Failed to send enterprise inquiry email:', error);
+	});
 
 	return json({
 		success: true,
