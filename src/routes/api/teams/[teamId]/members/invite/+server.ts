@@ -4,6 +4,7 @@ import { db } from '$lib/server/db';
 import { requireAuth, requireRole, requireCurrentSubscription } from '$lib/server/auth';
 import { requireAvailableSeats } from '$lib/server/subscriptions';
 import crypto from 'crypto';
+import { createAuditLog } from '$lib/server/audit';
 
 /**
  * Invite a user to the team by email
@@ -126,6 +127,22 @@ ${inviteUrl}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 	`);
 
+	// Audit log invitation sent
+	await createAuditLog({
+		userId: user.id,
+		teamId,
+		action: 'TEAM_INVITATION_SENT',
+		resourceType: 'TeamInvitation',
+		resourceId: invitation.id,
+		metadata: {
+			teamName: invitation.team.name,
+			inviteeEmail: invitation.email,
+			role: invitation.role,
+			expiresAt: invitation.expiresAt
+		},
+		event
+	});
+
 	return json({
 		success: true,
 		invitation: {
@@ -222,6 +239,20 @@ export const DELETE: RequestHandler = async (event) => {
 	await db.teamInvitation.update({
 		where: { id: invitationId },
 		data: { status: 'CANCELED' }
+	});
+
+	// Audit log invitation revocation
+	await createAuditLog({
+		userId: user.id,
+		teamId,
+		action: 'TEAM_INVITATION_REVOKED',
+		resourceType: 'TeamInvitation',
+		resourceId: invitationId,
+		metadata: {
+			inviteeEmail: invitation.email,
+			role: invitation.role
+		},
+		event
 	});
 
 	return json({ success: true });

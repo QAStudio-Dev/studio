@@ -87,7 +87,8 @@ export const load: PageServerLoad = async (event) => {
 export const actions: Actions = {
 	upgradeToPlan: async (event) => {
 		// Require OWNER role
-		const userId = await requireRole(event, ['OWNER']);
+		const user = await requireRole(event, ['OWNER']);
+		const userId = user.id;
 
 		const { request } = event;
 
@@ -206,7 +207,8 @@ export const actions: Actions = {
 
 	updateInquiryStatus: async (event) => {
 		// Require OWNER role
-		const userId = await requireRole(event, ['OWNER']);
+		const user = await requireRole(event, ['OWNER']);
+		const userId = user.id;
 
 		const { request } = event;
 

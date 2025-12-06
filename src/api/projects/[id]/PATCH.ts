@@ -2,6 +2,8 @@ import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { serializeDates } from '$lib/utils/date';
 import { deleteCache, CacheKeys } from '$lib/server/redis';
+import { createAuditLog } from '$lib/server/audit';
+import { requireApiAuth } from '$lib/server/api-auth';
 
 export const Param = z.object({
 	id: z.string()
@@ -43,7 +45,10 @@ export const Modifier = (r: any) => {
 };
 
 export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
-	async (input): Promise<any> => {
+	async (input, event): Promise<any> => {
+		// Get authenticated user
+		const userId = await requireApiAuth(event);
+
 		const updateData: any = {};
 		if (input.name !== undefined) updateData.name = input.name;
 		if (input.description !== undefined) updateData.description = input.description;
@@ -54,6 +59,9 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 			const existingProject = await db.project.findUnique({
 				where: { id: input.id },
 				select: {
+					name: true,
+					key: true,
+					description: true,
 					createdBy: true,
 					teamId: true,
 					team: {
@@ -91,6 +99,34 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 
 			// Invalidate caches after mutation
 			await deleteCache(cachesToInvalidate);
+
+			// Audit log project update
+			await createAuditLog({
+				userId,
+				teamId: existingProject.teamId ?? undefined,
+				action: 'PROJECT_UPDATED',
+				resourceType: 'Project',
+				resourceId: project.id,
+				metadata: {
+					projectName: project.name,
+					projectKey: project.key,
+					changes: {
+						name:
+							input.name !== undefined
+								? { from: existingProject.name, to: project.name }
+								: undefined,
+						key:
+							input.key !== undefined
+								? { from: existingProject.key, to: project.key }
+								: undefined,
+						description:
+							input.description !== undefined
+								? { from: existingProject.description, to: project.description }
+								: undefined
+					}
+				},
+				event
+			});
 
 			return serializeDates(project);
 		} catch (err: any) {

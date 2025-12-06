@@ -2,6 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { requireAuth } from '$lib/server/auth';
+import { createAuditLog } from '$lib/server/audit';
 
 /**
  * Create a new team
@@ -49,6 +50,20 @@ export const POST: RequestHandler = async (event) => {
 	await db.user.update({
 		where: { id: userId },
 		data: { role: 'ADMIN' }
+	});
+
+	// Audit log team creation
+	await createAuditLog({
+		userId,
+		teamId: team.id,
+		action: 'TEAM_CREATED',
+		resourceType: 'Team',
+		resourceId: team.id,
+		metadata: {
+			teamName: team.name,
+			description: team.description
+		},
+		event
 	});
 
 	return json({ team });

@@ -4,6 +4,7 @@ import { db } from '$lib/server/db';
 import { requireCurrentSubscription } from '$lib/server/auth';
 import { generateProjectId } from '$lib/server/ids';
 import { FREE_TIER_LIMITS } from '$lib/constants';
+import { createAuditLog } from '$lib/server/audit';
 
 /**
  * Create a new project
@@ -86,6 +87,21 @@ export const POST: RequestHandler = async (event) => {
 				}
 			}
 		}
+	});
+
+	// Audit log project creation
+	await createAuditLog({
+		userId,
+		teamId: user.teamId ?? undefined,
+		action: 'PROJECT_CREATED',
+		resourceType: 'Project',
+		resourceId: project.id,
+		metadata: {
+			projectName: project.name,
+			projectKey: project.key,
+			description: project.description
+		},
+		event
 	});
 
 	return json({ project });

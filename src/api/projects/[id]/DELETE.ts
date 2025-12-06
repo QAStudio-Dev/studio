@@ -2,6 +2,7 @@ import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { deleteCache, CacheKeys } from '$lib/server/redis';
 import { requireApiAuth } from '$lib/server/api-auth';
+import { createAuditLog } from '$lib/server/audit';
 
 export const Param = z.object({
 	id: z.string()
@@ -42,6 +43,8 @@ export default new Endpoint({ Param, Output, Error, Modifier }).handle(async (in
 			},
 			select: {
 				id: true,
+				name: true,
+				key: true,
 				createdBy: true,
 				teamId: true,
 				team: {
@@ -80,6 +83,20 @@ export default new Endpoint({ Param, Output, Error, Modifier }).handle(async (in
 
 		// Invalidate caches after deletion
 		await deleteCache(cachesToInvalidate);
+
+		// Audit log project deletion
+		await createAuditLog({
+			userId,
+			teamId: project.teamId ?? undefined,
+			action: 'PROJECT_DELETED',
+			resourceType: 'Project',
+			resourceId: project.id,
+			metadata: {
+				projectName: project.name,
+				projectKey: project.key
+			},
+			event: evt
+		});
 
 		return { success: true };
 	} catch (err: any) {
