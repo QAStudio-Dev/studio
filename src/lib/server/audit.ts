@@ -84,8 +84,9 @@ export async function createAuditLog(params: AuditLogParams): Promise<void> {
 	const { userId, teamId, action, resourceType, resourceId, metadata, event } = params;
 
 	// Skip creating audit log if userId is 'anonymous' or null (not a valid user)
+	// Allow 'system' as a special user ID for automated operations (cron jobs, etc.)
 	// These events should be logged elsewhere (e.g., application logs)
-	if (!userId || userId === 'anonymous') {
+	if (!userId || (userId !== 'system' && userId === 'anonymous')) {
 		console.warn(`Skipping audit log for anonymous ${action} on ${resourceType}`, {
 			ipAddress: event?.request.headers.get('x-forwarded-for') || event?.getClientAddress(),
 			metadata

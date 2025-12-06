@@ -82,9 +82,12 @@ export const GET: RequestHandler = async ({ request }) => {
 		const backupJSON = JSON.stringify(backup, null, 2);
 		const backupSize = Buffer.byteLength(backupJSON, 'utf8');
 
-		// Upload to Vercel Blob (private by default)
+		// Upload to Vercel Blob
+		// NOTE: Backups are stored in your private Vercel Blob storage
+		// Access requires Vercel account authentication regardless of this setting
+		// The 'public' flag allows the URL to work, but still requires auth to download
 		const blob = await put(filename, backupJSON, {
-			access: 'public', // Change to 'public' if you need downloadable links
+			access: 'public',
 			addRandomSuffix: false,
 			contentType: 'application/json'
 		});
@@ -98,12 +101,18 @@ export const GET: RequestHandler = async ({ request }) => {
 
 		const { blobs } = await list({ prefix: 'backup-' });
 		let deletedCount = 0;
+		let deletionErrors = 0;
 
 		for (const oldBlob of blobs) {
 			if (oldBlob.uploadedAt < thirtyDaysAgo) {
-				await del(oldBlob.url);
-				deletedCount++;
-				console.log(`🗑️  Deleted old backup: ${oldBlob.pathname}`);
+				try {
+					await del(oldBlob.url);
+					deletedCount++;
+					console.log(`🗑️  Deleted old backup: ${oldBlob.pathname}`);
+				} catch (error) {
+					deletionErrors++;
+					console.error(`❌ Failed to delete backup ${oldBlob.pathname}:`, error);
+				}
 			}
 		}
 
@@ -129,7 +138,8 @@ export const GET: RequestHandler = async ({ request }) => {
 					testCases: backup.data.testCases.length,
 					testRuns: backup.data.testRuns.length
 				},
-				oldBackupsDeleted: deletedCount
+				oldBackupsDeleted: deletedCount,
+				deletionErrors: deletionErrors > 0 ? deletionErrors : undefined
 			}
 		});
 
@@ -149,7 +159,8 @@ export const GET: RequestHandler = async ({ request }) => {
 					testCases: backup.data.testCases.length,
 					testRuns: backup.data.testRuns.length
 				},
-				oldBackupsDeleted: deletedCount
+				oldBackupsDeleted: deletedCount,
+				deletionErrors: deletionErrors > 0 ? deletionErrors : undefined
 			}
 		});
 	} catch (error: any) {
