@@ -17,7 +17,7 @@ datasource db {
 model User {
   id            String   @id @default(cuid()) // Generated internally (no longer Clerk ID)
   email         String   @unique
-  passwordHash  String // Bcrypt hashed password
+  passwordHash  String? // Bcrypt hashed password (nullable for system user)
   firstName     String?
   lastName      String?
   imageUrl      String?
