@@ -4,6 +4,7 @@ import { CRON_SECRET } from '$env/static/private';
 import { put, list, del } from '@vercel/blob';
 import { createAuditLog } from '$lib/server/audit';
 import { db } from '$lib/server/db';
+import { createHash } from 'crypto';
 
 // Backup retention configuration
 const BACKUP_RETENTION_DAYS = 30;
@@ -97,6 +98,36 @@ export const GET: RequestHandler = async ({ request }) => {
 		const backupJSON = JSON.stringify(backup, null, 2);
 		const backupSize = Buffer.byteLength(backupJSON, 'utf8');
 
+		// Validate backup integrity (ensure it can be parsed and has required fields)
+		try {
+			const parsed = JSON.parse(backupJSON);
+			if (!parsed.data || !parsed.version || !parsed.timestamp) {
+				throw new Error('Backup missing required fields (data, version, timestamp)');
+			}
+			if (typeof parsed.version !== 'string' || typeof parsed.timestamp !== 'string') {
+				throw new Error('Backup has invalid field types');
+			}
+			// Verify all expected tables are present
+			const requiredTables = [
+				'users',
+				'teams',
+				'projects',
+				'testSuites',
+				'testCases',
+				'testRuns'
+			];
+			for (const table of requiredTables) {
+				if (!Array.isArray(parsed.data[table])) {
+					throw new Error(`Backup missing required table: ${table}`);
+				}
+			}
+		} catch (error: any) {
+			throw new Error(`Backup validation failed: ${error.message}`);
+		}
+
+		// Generate checksum for integrity verification
+		const checksum = createHash('sha256').update(backupJSON).digest('hex');
+
 		// Upload to Vercel Blob
 		// NOTE: Backups are stored in Vercel Blob storage
 		// While the blob URL is 'public', it requires authentication via Vercel account
@@ -117,6 +148,7 @@ export const GET: RequestHandler = async ({ request }) => {
 		const { blobs } = await list({ prefix: 'backup-' });
 		let deletedCount = 0;
 		let deletionErrors = 0;
+		const failedDeletions: Array<{ pathname: string; error: string }> = [];
 		const oldBackupsChecked = blobs.filter((b) => b.uploadedAt < cutoffDate).length;
 
 		for (const oldBlob of blobs) {
@@ -125,11 +157,35 @@ export const GET: RequestHandler = async ({ request }) => {
 					await del(oldBlob.url);
 					deletedCount++;
 					console.log(`🗑️  Deleted old backup: ${oldBlob.pathname}`);
-				} catch (error) {
+				} catch (error: any) {
 					deletionErrors++;
+					const errorMessage = error?.message || String(error);
+					failedDeletions.push({
+						pathname: oldBlob.pathname,
+						error: errorMessage
+					});
 					console.error(`❌ Failed to delete backup ${oldBlob.pathname}:`, error);
 				}
 			}
+		}
+
+		// Alert on deletion failures via audit log
+		if (deletionErrors > 0) {
+			await createAuditLog({
+				userId: 'system',
+				teamId: undefined,
+				action: 'DATABASE_BACKUP_DELETION_FAILED',
+				resourceType: 'System',
+				resourceId: 'backup-cleanup',
+				metadata: {
+					timestamp: new Date().toISOString(),
+					failedCount: deletionErrors,
+					totalAttempted: oldBackupsChecked,
+					failedBackups: failedDeletions,
+					warning:
+						'Failed to delete old backups. This may lead to storage quota issues. Manual cleanup may be required.'
+				}
+			});
 		}
 
 		// Audit log the backup
@@ -145,6 +201,7 @@ export const GET: RequestHandler = async ({ request }) => {
 				size: backupSize,
 				sizeHuman: `${(backupSize / 1024 / 1024).toFixed(2)} MB`,
 				timestamp: new Date().toISOString(),
+				checksum,
 				tablesBackedUp: Object.keys(backup.data),
 				recordCounts: {
 					users: backup.data.users.length,
@@ -168,6 +225,7 @@ export const GET: RequestHandler = async ({ request }) => {
 				size: backupSize,
 				sizeHuman: `${(backupSize / 1024 / 1024).toFixed(2)} MB`,
 				timestamp,
+				checksum,
 				recordCounts: {
 					users: backup.data.users.length,
 					teams: backup.data.teams.length,

@@ -86,6 +86,34 @@ These tables are NOT included in backups for the following reasons:
     - Reason: OAuth tokens and webhooks, should be re-authorized
     - Action Required: Users must re-connect Slack after restore
 
+## Backup Integrity & Validation
+
+### Automatic Validation
+
+Every backup is automatically validated before upload:
+
+1. **JSON Structure Validation**: Ensures backup can be parsed and contains all required fields
+2. **Required Fields Check**: Validates presence of `data`, `version`, and `timestamp` fields
+3. **Table Verification**: Confirms all expected tables are present (users, teams, projects, testSuites, testCases, testRuns)
+4. **SHA-256 Checksum**: Generates integrity hash for verification during restoration
+
+### Checksum Verification
+
+Each backup includes a SHA-256 checksum in the audit log and response metadata. To verify backup integrity:
+
+```bash
+# Download backup
+vercel blob download <blob-url> -o backup.json
+
+# Verify checksum
+sha256sum backup.json
+# Compare with checksum from audit log
+```
+
+### Schema Versioning
+
+Backups include a `version` field (currently `1.0`) to handle future schema changes during restoration.
+
 ## Security
 
 ### Access Control
@@ -95,12 +123,56 @@ These tables are NOT included in backups for the following reasons:
 - **Passwords**: Never backed up (excluded from User data)
 - **Tokens**: API keys and auth tokens excluded for security
 - **Audit Trail**: All backups logged with 'system' user (special internal user for automated operations)
+- **Integrity**: SHA-256 checksums recorded in audit logs for tamper detection
 
-### Data Privacy
+### Data Privacy & Compliance
 
-- Backups comply with GDPR by excluding sensitive authentication data
-- User emails are included (required for account recovery)
-- Team and project data is business-critical and included
+**⚠️ CRITICAL: GDPR/CCPA Compliance Notice**
+
+Backups contain Personally Identifiable Information (PII) and are subject to data protection regulations:
+
+**PII Included in Backups:**
+
+- ✅ User emails (required for account recovery)
+- ✅ User first and last names
+- ✅ Team names and associations
+- ✅ Project metadata (may contain customer names)
+- ✅ Test case descriptions (may contain sensitive business data)
+
+**Excluded for Security/Privacy:**
+
+- ❌ Password hashes
+- ❌ API keys
+- ❌ Authentication tokens (TOTP secrets, reset tokens)
+- ❌ Session data
+
+**Compliance Requirements:**
+
+1. **GDPR (EU) Compliance:**
+    - **Right to Erasure**: When users request data deletion, backups containing their data remain for 30 days (retention policy). Document this in your privacy policy.
+    - **Data Retention**: 30-day retention may exceed necessary retention period. Review with legal counsel.
+    - **Data Transfers**: Backups stored in Vercel Blob (US-based). Ensure appropriate safeguards for international transfers.
+    - **Access Logs**: Monitor audit logs for backup access compliance (SOC 2, ISO 27001).
+
+2. **CCPA (California) Compliance:**
+    - Users have right to know what PII is collected and stored in backups
+    - Must be able to provide backup data to users upon request
+    - 30-day retention applies to deletion requests
+
+3. **Recommended Actions:**
+    - **Update Privacy Policy**: Document backup retention and PII storage
+    - **Data Processing Agreement**: Ensure Vercel's DPA covers backup storage
+    - **Encryption**: Backups encrypted at rest by Vercel Blob (AES-256)
+    - **Access Control**: Limit backup access to authorized personnel only
+    - **Audit Trail**: All backup operations logged with `DATABASE_BACKUP_CREATED` events
+    - **Deletion Procedure**: Implement process to manually delete backups when legally required
+
+4. **High-Risk Data:**
+    - If your application processes health data (HIPAA), financial data (PCI-DSS), or other regulated data, backups may require:
+        - Additional encryption (client-side encryption before upload)
+        - Shorter retention periods
+        - Geographic restrictions on storage location
+        - Separate compliance certifications
 
 ## Restoration Procedure
 
@@ -109,18 +181,26 @@ These tables are NOT included in backups for the following reasons:
 ### Prerequisites
 
 1. Download backup JSON from Vercel Blob storage
-2. Verify backup integrity (valid JSON, expected structure)
+2. Verify backup integrity (checksum, valid JSON, expected structure)
 3. **Stop all application traffic** (maintenance mode)
 
 ### Restoration Steps
 
-#### 1. Download Backup
+#### 1. Download and Verify Backup
 
 ```bash
 # From Vercel Dashboard: Storage → Blob → Download backup JSON
 # Or via CLI:
 vercel blob list --prefix backup-
 vercel blob download <blob-url> -o backup.json
+
+# Verify checksum (get expected checksum from audit log)
+sha256sum backup.json
+# Should match checksum from: SELECT metadata->>'checksum' FROM audit_log WHERE action = 'DATABASE_BACKUP_CREATED' ORDER BY created_at DESC LIMIT 1;
+
+# Validate JSON structure
+jq '.version, .timestamp, .data | keys' backup.json
+# Should output: "1.0", timestamp, and list of tables
 ```
 
 #### 2. Prepare Database
@@ -240,6 +320,37 @@ ORDER BY created_at DESC
 LIMIT 10;
 ```
 
+### Deletion Failure Alerts
+
+**IMPORTANT**: Deletion failures are automatically logged to the audit trail for monitoring:
+
+```sql
+-- Check for deletion failures
+SELECT
+  created_at,
+  metadata->>'failedCount' as failed_count,
+  metadata->>'totalAttempted' as total_attempted,
+  metadata->'failedBackups' as failed_backups,
+  metadata->>'warning' as warning
+FROM audit_log
+WHERE action = 'DATABASE_BACKUP_DELETION_FAILED'
+ORDER BY created_at DESC;
+```
+
+**Recommended Actions**:
+
+1. Set up automated monitoring to query this table periodically
+2. Configure alerts when `DATABASE_BACKUP_DELETION_FAILED` events are detected
+3. Investigate storage quota and permissions if deletions consistently fail
+4. Consider manual cleanup if automated deletion is blocked
+
+**Storage Quota Risks**:
+
+- Failed deletions can lead to storage quota exhaustion
+- Vercel Blob free tier: 4.5GB limit
+- Monitor total backup storage size regularly
+- Manual cleanup may be required if automated cleanup fails repeatedly
+
 ### Manual Trigger
 
 To manually trigger a backup:
@@ -248,6 +359,51 @@ To manually trigger a backup:
 curl -X GET https://qastudio.dev/api/cron/backup-database \
   -H "Authorization: Bearer $CRON_SECRET"
 ```
+
+### Manual Backup Deletion (GDPR/CCPA Compliance)
+
+**When to Delete Backups Manually:**
+
+- User exercises "Right to Erasure" (GDPR Article 17)
+- User requests data deletion under CCPA
+- Legal hold or investigation requires specific backup removal
+- Compliance audit requires proof of deletion
+
+**Deletion Procedure:**
+
+```bash
+# 1. List all backups
+vercel blob list --prefix backup-
+
+# 2. Identify backups containing user data (by timestamp)
+# Example: User deleted on 2025-12-01, backups before this date may contain their data
+
+# 3. Delete specific backup
+vercel blob delete <blob-url>
+
+# 4. Verify deletion
+vercel blob list --prefix backup- | grep <filename>
+
+# 5. Document deletion in compliance log
+# Record: timestamp, backup filename, reason, authorized by
+```
+
+**Important Notes:**
+
+- Deletion is **permanent and irreversible**
+- Document all manual deletions for compliance audits
+- Consider creating a compliance deletion log separate from audit trail
+- Automated 30-day retention continues unless manually overridden
+- May need to delete multiple backups if user data spans multiple days
+
+**Compliance Checklist:**
+
+- [ ] Verify user's deletion request is authenticated
+- [ ] Identify all backups containing user's PII (check 30-day window)
+- [ ] Delete backups from Vercel Blob storage
+- [ ] Verify deletion from Vercel dashboard
+- [ ] Document deletion (timestamp, backup IDs, reason, approver)
+- [ ] Respond to user's deletion request within regulatory timeframe (30 days GDPR, 45 days CCPA)
 
 ## Recommendations
 
@@ -277,10 +433,24 @@ curl -X GET https://qastudio.dev/api/cron/backup-database \
         - Older test runs should be archived separately if historical data is needed
         - If you have extremely high test volume, consider further limiting the window
 
-5. **Consider Compliance**
-    - GDPR: Right to erasure (ensure deleted users not in backups)
-    - HIPAA: Encrypt backups at rest (Vercel Blob does this)
-    - SOC 2: Audit backup access logs
+5. **Compliance & Data Protection**
+    - **GDPR Compliance**:
+        - Document 30-day backup retention in privacy policy
+        - Implement process for manual backup deletion (Right to Erasure)
+        - Review data transfer safeguards for US-based Vercel Blob storage
+        - Maintain audit logs of all backup access and deletion events
+    - **CCPA Compliance**:
+        - Disclose backup retention in privacy notice
+        - Provide backup data to users upon request
+        - Respond to deletion requests within 45-day window
+    - **HIPAA** (if applicable):
+        - Verify Vercel's BAA covers backup storage
+        - Consider client-side encryption before upload
+        - Implement access controls and audit logging
+    - **SOC 2 / ISO 27001**:
+        - Monitor backup access via audit logs
+        - Document backup procedures and controls
+        - Regular restoration testing (quarterly recommended)
 
 ## Troubleshooting
 

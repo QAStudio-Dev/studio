@@ -192,6 +192,7 @@ describe('GET /api/cron/backup-database', () => {
 					filename: expect.stringMatching(/^backup-[\d-TZ]+\.json$/),
 					blobUrl: expect.any(String),
 					size: expect.any(Number),
+					checksum: expect.stringMatching(/^[a-f0-9]{64}$/),
 					recordCounts: {
 						users: 1,
 						teams: 1,
@@ -215,6 +216,7 @@ describe('GET /api/cron/backup-database', () => {
 					url: expect.any(String),
 					size: expect.any(Number),
 					sizeHuman: expect.stringMatching(/\d+\.\d+ MB/),
+					checksum: expect.stringMatching(/^[a-f0-9]{64}$/), // SHA-256 hex
 					recordCounts: {
 						users: 1,
 						teams: 1,
@@ -296,6 +298,58 @@ describe('GET /api/cron/backup-database', () => {
 			expect(result.success).toBe(true);
 			expect(result.backup.oldBackupsDeleted).toBe(0);
 			expect(result.backup.deletionErrors).toBe(1);
+		});
+
+		it('should create audit log alert when deletion fails', async () => {
+			const now = new Date();
+			const thirtyOneDaysAgo = new Date(now.getTime() - 31 * 24 * 60 * 60 * 1000);
+
+			vi.mocked(list).mockResolvedValue({
+				blobs: [
+					{
+						pathname: 'backup-old.json',
+						url: 'https://blob/old',
+						uploadedAt: thirtyOneDaysAgo
+					}
+				]
+			} as any);
+
+			// Mock deletion failure
+			vi.mocked(del).mockRejectedValue(new Error('Blob deletion failed'));
+
+			const response = await GET({ request: mockRequest } as any);
+			expect(response.status).toBe(200);
+
+			// Should have TWO audit log calls: one for deletion failure alert, one for backup success
+			expect(vi.mocked(createAuditLog)).toHaveBeenCalledTimes(2);
+
+			// First call should be the deletion failure alert
+			expect(vi.mocked(createAuditLog)).toHaveBeenNthCalledWith(1, {
+				userId: 'system',
+				teamId: undefined,
+				action: 'DATABASE_BACKUP_DELETION_FAILED',
+				resourceType: 'System',
+				resourceId: 'backup-cleanup',
+				metadata: expect.objectContaining({
+					failedCount: 1,
+					totalAttempted: 1,
+					failedBackups: [
+						{
+							pathname: 'backup-old.json',
+							error: 'Blob deletion failed'
+						}
+					],
+					warning: expect.stringContaining('Failed to delete old backups')
+				})
+			});
+
+			// Second call should be the successful backup
+			expect(vi.mocked(createAuditLog)).toHaveBeenNthCalledWith(
+				2,
+				expect.objectContaining({
+					action: 'DATABASE_BACKUP_CREATED'
+				})
+			);
 		});
 
 		it('should track deletion statistics correctly', async () => {
@@ -392,6 +446,46 @@ describe('GET /api/cron/backup-database', () => {
 			const result = await response.json();
 
 			expect(result.backup.filename).toMatch(/^backup-[\d-TZ]+\.json$/);
+		});
+	});
+
+	describe('Backup validation and integrity', () => {
+		beforeEach(() => {
+			mockRequest = new Request('http://localhost/api/cron/backup-database', {
+				method: 'GET',
+				headers: {
+					Authorization: 'Bearer test-cron-secret-123'
+				}
+			});
+		});
+
+		it('should validate backup JSON structure', async () => {
+			const response = await GET({ request: mockRequest } as any);
+			const result = await response.json();
+
+			expect(response.status).toBe(200);
+			expect(result.success).toBe(true);
+			// If validation fails, the endpoint would throw an error
+		});
+
+		it('should generate SHA-256 checksum for backup', async () => {
+			const response = await GET({ request: mockRequest } as any);
+			const result = await response.json();
+
+			expect(result.backup.checksum).toMatch(/^[a-f0-9]{64}$/);
+			expect(result.backup.checksum.length).toBe(64);
+		});
+
+		it('should include checksum in audit log', async () => {
+			await GET({ request: mockRequest } as any);
+
+			expect(vi.mocked(createAuditLog)).toHaveBeenCalledWith(
+				expect.objectContaining({
+					metadata: expect.objectContaining({
+						checksum: expect.stringMatching(/^[a-f0-9]{64}$/)
+					})
+				})
+			);
 		});
 	});
 });
