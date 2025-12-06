@@ -71,9 +71,9 @@ export async function getAuthenticatedUser(event: RequestEvent) {
 
 /**
  * Require specific role for access
- * Returns the user ID if authorized
+ * Returns the user object if authorized
  */
-export async function requireRole(event: RequestEvent, allowedRoles: string[]): Promise<string> {
+export async function requireRole(event: RequestEvent, allowedRoles: string[]) {
 	const userId = await requireAuth(event);
 	const user = await ensureUser(userId);
 
@@ -83,7 +83,7 @@ export async function requireRole(event: RequestEvent, allowedRoles: string[]): 
 		});
 	}
 
-	return userId;
+	return user;
 }
 
 /**

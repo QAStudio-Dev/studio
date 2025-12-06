@@ -61,7 +61,10 @@ export type AuditAction =
 	| 'UNAUTHORIZED_ACCESS_ATTEMPT'
 	| 'RATE_LIMIT_EXCEEDED'
 	| 'SUSPICIOUS_ACTIVITY_DETECTED'
-	| 'SETTINGS_CHANGED';
+	| 'SETTINGS_CHANGED'
+	// System Operations
+	| 'DATABASE_BACKUP_CREATED'
+	| 'DATABASE_BACKUP_FAILED';
 
 interface AuditLogParams {
 	userId?: string | null; // Optional for anonymous events

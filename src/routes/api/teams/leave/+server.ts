@@ -4,6 +4,7 @@ import { requireAuth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import { stripe } from '$lib/server/stripe';
 import { deleteCache, CacheKeys } from '$lib/server/redis';
+import { createAuditLog } from '$lib/server/audit';
 
 /**
  * POST /api/teams/leave
@@ -72,10 +73,25 @@ export const POST: RequestHandler = async (event) => {
 			// Invalidate user's project cache - team and all team projects are deleted
 			await deleteCache(CacheKeys.projects(userId));
 
+			// Audit log team deletion (last member leaving)
+			await createAuditLog({
+				userId,
+				teamId: user.teamId,
+				action: 'TEAM_DELETED',
+				resourceType: 'Team',
+				resourceId: user.teamId,
+				metadata: {
+					teamName: user.team.name,
+					reason: 'Last member left team'
+				},
+				event
+			});
+
 			return json({ message: 'Successfully deleted team and left' });
 		}
 
 		const teamId = user.teamId;
+		const teamName = user.team?.name;
 
 		// Remove user from team by setting teamId to null
 		await db.user.update({
@@ -87,6 +103,21 @@ export const POST: RequestHandler = async (event) => {
 
 		// Invalidate caches after member leaves team
 		await deleteCache([CacheKeys.projects(userId), CacheKeys.teamStatus(teamId)]);
+
+		// Audit log team member removal
+		await createAuditLog({
+			userId,
+			teamId,
+			action: 'TEAM_MEMBER_REMOVED',
+			resourceType: 'Team',
+			resourceId: teamId,
+			metadata: {
+				teamName,
+				memberEmail: user.email,
+				reason: 'User left team voluntarily'
+			},
+			event
+		});
 
 		return json({ message: 'Successfully left the team' });
 	} catch (error: any) {

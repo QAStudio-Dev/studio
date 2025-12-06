@@ -4,6 +4,7 @@ import { db } from '$lib/server/db';
 import { requireAuth } from '$lib/server/auth';
 import { ensureUser } from '$lib/server/users';
 import { deleteCache, CacheKeys } from '$lib/server/redis';
+import { createAuditLog } from '$lib/server/audit';
 
 /**
  * Accept an invitation
@@ -113,6 +114,35 @@ export const POST: RequestHandler = async (event) => {
 
 	// Invalidate caches after member joins team
 	await deleteCache([CacheKeys.projects(userId), CacheKeys.teamStatus(invitation.teamId)]);
+
+	// Audit log invitation acceptance and team member addition
+	await createAuditLog({
+		userId,
+		teamId: invitation.teamId,
+		action: 'TEAM_INVITATION_ACCEPTED',
+		resourceType: 'TeamInvitation',
+		resourceId: invitation.id,
+		metadata: {
+			teamName: invitation.team.name,
+			userEmail: user.email,
+			role: invitation.role
+		},
+		event
+	});
+
+	await createAuditLog({
+		userId,
+		teamId: invitation.teamId,
+		action: 'TEAM_MEMBER_ADDED',
+		resourceType: 'Team',
+		resourceId: invitation.teamId,
+		metadata: {
+			teamName: invitation.team.name,
+			memberEmail: user.email,
+			role: invitation.role
+		},
+		event
+	});
 
 	return json({
 		success: true,
