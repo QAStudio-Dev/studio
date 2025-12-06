@@ -3,7 +3,8 @@ import { GET } from '../../../../routes/api/cron/backup-database/+server';
 
 // Mock dependencies
 vi.mock('$env/static/private', () => ({
-	CRON_SECRET: 'test-cron-secret-123'
+	CRON_SECRET: 'test-cron-secret-123',
+	BACKUP_RETENTION_DAYS: '30'
 }));
 
 vi.mock('@vercel/blob', () => ({

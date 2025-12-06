@@ -1,6 +1,14 @@
--- CreateEnum
 -- Add system user for automated operations (cron jobs, etc.)
 -- This user is used for audit logging of system-initiated actions
+--
+-- SECURITY NOTE:
+-- - passwordHash is NULL to prevent any login attempts
+-- - Email uses localhost domain to prevent external resolution
+-- - Role is OWNER to allow system operations to proceed
+-- - This user should never be used for authentication
+--
+-- ROLLBACK PROCEDURE (manual):
+-- DELETE FROM "User" WHERE id = 'system';
 
 INSERT INTO "User" (
   "id",
@@ -14,8 +22,8 @@ INSERT INTO "User" (
   "updatedAt"
 ) VALUES (
   'system',
-  'system@internal.qastudio.dev',
-  '$2b$12$SYSTEM.USER.CANNOT.LOGIN.SENTINEL.VALUE.ONLY.FOR.AUDIT.TRAIL', -- System user cannot login - hash is intentionally invalid
+  'system@localhost',  -- localhost domain prevents external resolution
+  NULL,  -- NULL password prevents any login attempts
   'System',
   'User',
   'OWNER',

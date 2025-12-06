@@ -1,13 +1,15 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { CRON_SECRET } from '$env/static/private';
+import { CRON_SECRET, BACKUP_RETENTION_DAYS } from '$env/static/private';
 import { put, list, del } from '@vercel/blob';
 import { createAuditLog } from '$lib/server/audit';
 import { db } from '$lib/server/db';
 import { createHash } from 'crypto';
 
-// Backup retention configuration
-const BACKUP_RETENTION_DAYS = 30;
+// Backup retention configuration (days)
+// Environment variable allows different retention for dev vs production
+// Default: 30 days (GDPR/CCPA compliant retention period)
+const retentionDays = parseInt(BACKUP_RETENTION_DAYS ?? '30', 10);
 
 /**
  * Daily database backup via Vercel Cron
@@ -129,12 +131,20 @@ export const GET: RequestHandler = async ({ request }) => {
 		const checksum = createHash('sha256').update(backupJSON).digest('hex');
 
 		// Upload to Vercel Blob
-		// NOTE: Backups are stored in Vercel Blob storage
-		// While the blob URL is 'public', it requires authentication via Vercel account
-		// The random suffix provides additional security through URL obscurity
+		// SECURITY NOTE: Vercel Blob only supports 'public' access mode
+		// - URLs are publicly accessible but require knowledge of the URL
+		// - addRandomSuffix provides URL unpredictability (128-bit entropy)
+		// - Vercel Blob dashboard requires Vercel account authentication
+		// - URLs should be treated as secrets (never log publicly, use audit logs)
+		//
+		// RECOMMENDATIONS FOR PRODUCTION:
+		// 1. Enable client-side encryption before upload for sensitive environments
+		// 2. Implement signed URLs with expiration for downloads
+		// 3. Monitor access patterns via Vercel Blob analytics
+		// 4. Consider Vercel Blob's private storage if/when available
 		const blob = await put(filename, backupJSON, {
-			access: 'public', // Only supported value; actual access controlled by Vercel account auth
-			addRandomSuffix: true, // Adds security through URL unpredictability
+			access: 'public', // Only supported value in Vercel Blob
+			addRandomSuffix: true, // Adds 128-bit random suffix for URL unpredictability
 			contentType: 'application/json'
 		});
 
@@ -143,29 +153,55 @@ export const GET: RequestHandler = async ({ request }) => {
 
 		// Cleanup old backups (keep last N days)
 		const cutoffDate = new Date();
-		cutoffDate.setDate(cutoffDate.getDate() - BACKUP_RETENTION_DAYS);
+		cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
 
 		const { blobs } = await list({ prefix: 'backup-' });
+		const oldBlobs = blobs.filter((b) => b.uploadedAt < cutoffDate);
+		const oldBackupsChecked = oldBlobs.length;
+
+		// Delete old backups in parallel for better performance
+		const deletionPromises = oldBlobs.map(async (blob) => {
+			try {
+				await del(blob.url);
+				console.log(`🗑️  Deleted old backup: ${blob.pathname}`);
+				return { success: true, pathname: blob.pathname };
+			} catch (error: any) {
+				const errorMessage = error?.message || String(error);
+				console.error(`❌ Failed to delete backup ${blob.pathname}:`, error);
+				return {
+					success: false,
+					pathname: blob.pathname,
+					error: errorMessage
+				};
+			}
+		});
+
+		const results = await Promise.allSettled(deletionPromises);
+
+		// Process results to count successes and failures
 		let deletedCount = 0;
 		let deletionErrors = 0;
 		const failedDeletions: Array<{ pathname: string; error: string }> = [];
-		const oldBackupsChecked = blobs.filter((b) => b.uploadedAt < cutoffDate).length;
 
-		for (const oldBlob of blobs) {
-			if (oldBlob.uploadedAt < cutoffDate) {
-				try {
-					await del(oldBlob.url);
+		for (const result of results) {
+			if (result.status === 'fulfilled') {
+				if (result.value.success) {
 					deletedCount++;
-					console.log(`🗑️  Deleted old backup: ${oldBlob.pathname}`);
-				} catch (error: any) {
+				} else {
 					deletionErrors++;
-					const errorMessage = error?.message || String(error);
 					failedDeletions.push({
-						pathname: oldBlob.pathname,
-						error: errorMessage
+						pathname: result.value.pathname,
+						error: result.value.error
 					});
-					console.error(`❌ Failed to delete backup ${oldBlob.pathname}:`, error);
 				}
+			} else {
+				// This should not happen since we catch errors inside the promise
+				// but handle it just in case
+				deletionErrors++;
+				failedDeletions.push({
+					pathname: 'unknown',
+					error: result.reason?.message || String(result.reason)
+				});
 			}
 		}
 

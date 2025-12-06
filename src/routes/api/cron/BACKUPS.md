@@ -118,12 +118,52 @@ Backups include a `version` field (currently `1.0`) to handle future schema chan
 
 ### Access Control
 
-- **Storage**: Vercel Blob (requires Vercel account access)
+- **Storage**: Vercel Blob with `access: 'public'` (only supported mode)
 - **Endpoint**: Protected by `CRON_SECRET` Bearer token
 - **Passwords**: Never backed up (excluded from User data)
 - **Tokens**: API keys and auth tokens excluded for security
 - **Audit Trail**: All backups logged with 'system' user (special internal user for automated operations)
 - **Integrity**: SHA-256 checksums recorded in audit logs for tamper detection
+
+**⚠️ CRITICAL SECURITY LIMITATION**
+
+Vercel Blob currently only supports `access: 'public'`, meaning backup URLs are **publicly accessible** to anyone with the URL. Security relies on:
+
+1. **URL Unpredictability**: Random 128-bit suffix added to filenames
+2. **URL Secrecy**: Treat backup URLs as secrets (never log publicly, only in audit logs)
+3. **Vercel Account Auth**: Dashboard access requires Vercel authentication
+
+**Risks:**
+
+- If backup URLs leak (logs, error messages, browser history), backups are exposed
+- URLs have no expiration - they remain valid indefinitely
+- No access logging to detect unauthorized downloads
+
+**Mitigation Strategies:**
+
+1. **Client-Side Encryption** (Recommended for sensitive data):
+
+    ```typescript
+    import { createCipheriv, randomBytes } from 'crypto';
+
+    // Encrypt backup before upload
+    const encryptionKey = Buffer.from(process.env.BACKUP_ENCRYPTION_KEY, 'hex');
+    const iv = randomBytes(16);
+    const cipher = createCipheriv('aes-256-gcm', encryptionKey, iv);
+
+    const encryptedBackup = Buffer.concat([cipher.update(backupJSON, 'utf8'), cipher.final()]);
+    ```
+
+2. **Rotate Backup URLs**: Delete and recreate backups periodically
+3. **Monitor Access**: Enable Vercel Blob analytics to detect suspicious access patterns
+4. **Limit Retention**: Current 30-day retention minimizes exposure window
+5. **Network Restrictions**: Deploy behind VPN if possible
+
+**For High-Security Environments:**
+
+- Consider alternative blob storage with private access (AWS S3, Azure Blob with SAS tokens)
+- Implement application-level access control with signed URLs
+- Use database provider's built-in backup features (Supabase, Neon PITR)
 
 ### Data Privacy & Compliance
 
