@@ -35,7 +35,9 @@ The backup includes the following tables with all their data:
 4. **Test Data** (`testSuites`, `testCases`, `testRuns` tables)
     - Test suites and hierarchies
     - Test cases with steps
-    - Test runs with results
+    - **Test runs with results (last 90 days only)**
+        - Older test runs are excluded to prevent memory exhaustion
+        - For complete historical data, implement separate archiving
 
 ### ❌ Intentionally Excluded Tables
 
@@ -92,6 +94,7 @@ These tables are NOT included in backups for the following reasons:
 - **Endpoint**: Protected by `CRON_SECRET` Bearer token
 - **Passwords**: Never backed up (excluded from User data)
 - **Tokens**: API keys and auth tokens excluded for security
+- **Audit Trail**: All backups logged with 'system' user (special internal user for automated operations)
 
 ### Data Privacy
 
@@ -269,13 +272,10 @@ curl -X GET https://qastudio.dev/api/cron/backup-database \
     - Large databases may exceed Blob limits
     - Consider chunked/compressed backups
     - Alert if backup size grows significantly
-    - **Performance Warning**: Test runs include all nested results without pagination
-        - For systems with thousands of test runs, this can cause:
-            - Backups exceeding 4.5GB (Vercel Blob free tier limit)
-            - Slow backup process and high memory usage
-            - Potential out-of-memory errors
-        - **Recommendation**: Consider limiting to recent test runs (e.g., last 90 days)
-        - **Alternative**: Implement backup chunking for large datasets
+    - **Performance Note**: Test runs are limited to the last 90 days
+        - This prevents memory exhaustion and blob size limits
+        - Older test runs should be archived separately if historical data is needed
+        - If you have extremely high test volume, consider further limiting the window
 
 5. **Consider Compliance**
     - GDPR: Right to erasure (ensure deleted users not in backups)

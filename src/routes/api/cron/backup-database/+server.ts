@@ -80,6 +80,13 @@ export const GET: RequestHandler = async ({ request }) => {
 				testSuites: await db.testSuite.findMany(),
 				testCases: await db.testCase.findMany(),
 				testRuns: await db.testRun.findMany({
+					where: {
+						// Only backup test runs from last 90 days to prevent memory exhaustion
+						// Older test runs should be archived separately if needed
+						createdAt: {
+							gte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+						}
+					},
 					include: {
 						results: true
 					}
