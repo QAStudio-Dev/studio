@@ -61,7 +61,11 @@ export type AuditAction =
 	| 'UNAUTHORIZED_ACCESS_ATTEMPT'
 	| 'RATE_LIMIT_EXCEEDED'
 	| 'SUSPICIOUS_ACTIVITY_DETECTED'
-	| 'SETTINGS_CHANGED';
+	| 'SETTINGS_CHANGED'
+	// System Operations
+	| 'DATABASE_BACKUP_CREATED'
+	| 'DATABASE_BACKUP_FAILED'
+	| 'DATABASE_BACKUP_DELETION_FAILED';
 
 interface AuditLogParams {
 	userId?: string | null; // Optional for anonymous events
@@ -80,15 +84,21 @@ interface AuditLogParams {
 export async function createAuditLog(params: AuditLogParams): Promise<void> {
 	const { userId, teamId, action, resourceType, resourceId, metadata, event } = params;
 
-	// Skip creating audit log if userId is 'anonymous' or null (not a valid user)
-	// These events should be logged elsewhere (e.g., application logs)
-	if (!userId || userId === 'anonymous') {
+	// Skip creating audit log if userId is null (not a valid user)
+	if (!userId) {
+		return;
+	}
+
+	// Skip anonymous users (not authenticated), but allow 'system' for automated operations
+	if (userId === 'anonymous') {
 		console.warn(`Skipping audit log for anonymous ${action} on ${resourceType}`, {
 			ipAddress: event?.request.headers.get('x-forwarded-for') || event?.getClientAddress(),
 			metadata
 		});
 		return;
 	}
+
+	// 'system' and regular user IDs continue here
 
 	// Extract IP address and user agent from event if available
 	const ipAddress = event?.request.headers.get('x-forwarded-for') || event?.getClientAddress();

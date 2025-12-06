@@ -205,6 +205,26 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
+## Privacy & Compliance
+
+QA Studio is designed with privacy best practices and we are actively working toward full GDPR/CCPA compliance.
+
+### 🔒 Security Features
+
+- **Password Security**: Bcrypt hashing (OWASP 2025 recommended)
+- **Session Security**: HTTP-only secure cookies
+- **Data Encryption**: AES-256 encryption at rest
+- **Audit Logging**: Comprehensive audit trail for all actions
+- **Self-Hosted**: Complete data sovereignty
+
+### 📚 Compliance Documentation
+
+For detailed compliance information, see:
+
+- [Database Backup System](src/routes/api/cron/BACKUPS.md) - Backup retention and GDPR/CCPA compliance procedures
+- [Audit Logging](src/lib/server/audit.ts) - Complete audit trail system
+- [Authentication Security](CLAUDE.md#authentication) - Password and session security
+
 ## Community
 
 - 💬 [Discord Server](https://discord.gg/rw3UfdB9pN) - Chat with the community
