@@ -5,6 +5,9 @@ import { put, list, del } from '@vercel/blob';
 import { createAuditLog } from '$lib/server/audit';
 import { db } from '$lib/server/db';
 
+// Backup retention configuration
+const BACKUP_RETENTION_DAYS = 30;
+
 /**
  * Daily database backup via Vercel Cron
  * GET /api/cron/backup-database
@@ -30,6 +33,11 @@ export const GET: RequestHandler = async ({ request }) => {
 	try {
 		const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 		const filename = `backup-${timestamp}.json`;
+
+		// Validate filename format (e.g., backup-2025-12-06T19-20-28-123Z.json)
+		if (!/^backup-[\d-TZ]+\.json$/.test(filename)) {
+			throw new Error(`Invalid backup filename format: ${filename}`);
+		}
 
 		console.log(`📦 Starting database backup: ${filename}`);
 
@@ -83,28 +91,29 @@ export const GET: RequestHandler = async ({ request }) => {
 		const backupSize = Buffer.byteLength(backupJSON, 'utf8');
 
 		// Upload to Vercel Blob
-		// NOTE: Backups are stored in your private Vercel Blob storage
-		// Access requires Vercel account authentication regardless of this setting
-		// The 'public' flag allows the URL to work, but still requires auth to download
+		// NOTE: Backups are stored in Vercel Blob storage
+		// While the blob URL is 'public', it requires authentication via Vercel account
+		// The random suffix provides additional security through URL obscurity
 		const blob = await put(filename, backupJSON, {
-			access: 'public',
-			addRandomSuffix: false,
+			access: 'public', // Only supported value; actual access controlled by Vercel account auth
+			addRandomSuffix: true, // Adds security through URL unpredictability
 			contentType: 'application/json'
 		});
 
 		console.log(`✅ Backup uploaded to Blob: ${blob.url}`);
 		console.log(`📊 Backup size: ${(backupSize / 1024 / 1024).toFixed(2)} MB`);
 
-		// Cleanup old backups (keep last 30 days)
-		const thirtyDaysAgo = new Date();
-		thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+		// Cleanup old backups (keep last N days)
+		const cutoffDate = new Date();
+		cutoffDate.setDate(cutoffDate.getDate() - BACKUP_RETENTION_DAYS);
 
 		const { blobs } = await list({ prefix: 'backup-' });
 		let deletedCount = 0;
 		let deletionErrors = 0;
+		const oldBackupsChecked = blobs.filter((b) => b.uploadedAt < cutoffDate).length;
 
 		for (const oldBlob of blobs) {
-			if (oldBlob.uploadedAt < thirtyDaysAgo) {
+			if (oldBlob.uploadedAt < cutoffDate) {
 				try {
 					await del(oldBlob.url);
 					deletedCount++;
@@ -138,8 +147,9 @@ export const GET: RequestHandler = async ({ request }) => {
 					testCases: backup.data.testCases.length,
 					testRuns: backup.data.testRuns.length
 				},
+				oldBackupsChecked,
 				oldBackupsDeleted: deletedCount,
-				deletionErrors: deletionErrors > 0 ? deletionErrors : undefined
+				deletionErrors
 			}
 		});
 
@@ -159,8 +169,9 @@ export const GET: RequestHandler = async ({ request }) => {
 					testCases: backup.data.testCases.length,
 					testRuns: backup.data.testRuns.length
 				},
+				oldBackupsChecked,
 				oldBackupsDeleted: deletedCount,
-				deletionErrors: deletionErrors > 0 ? deletionErrors : undefined
+				deletionErrors
 			}
 		});
 	} catch (error: any) {

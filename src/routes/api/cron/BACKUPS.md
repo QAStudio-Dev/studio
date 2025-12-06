@@ -269,6 +269,13 @@ curl -X GET https://qastudio.dev/api/cron/backup-database \
     - Large databases may exceed Blob limits
     - Consider chunked/compressed backups
     - Alert if backup size grows significantly
+    - **Performance Warning**: Test runs include all nested results without pagination
+        - For systems with thousands of test runs, this can cause:
+            - Backups exceeding 4.5GB (Vercel Blob free tier limit)
+            - Slow backup process and high memory usage
+            - Potential out-of-memory errors
+        - **Recommendation**: Consider limiting to recent test runs (e.g., last 90 days)
+        - **Alternative**: Implement backup chunking for large datasets
 
 5. **Consider Compliance**
     - GDPR: Right to erasure (ensure deleted users not in backups)
