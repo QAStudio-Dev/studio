@@ -104,8 +104,15 @@ async function getTeamSSOConfig(
 		return null;
 	}
 
-	// Decrypt client secret
-	const clientSecret = decrypt(team.ssoClientSecret);
+	// Decrypt client secret (with error handling for corrupted data)
+	let clientSecret: string;
+	try {
+		clientSecret = decrypt(team.ssoClientSecret);
+	} catch (error) {
+		console.error(`Failed to decrypt SSO client secret for team ${teamId}:`, error);
+		console.error('This may indicate corrupted encrypted data or wrong encryption key');
+		return null;
+	}
 
 	return {
 		clientId: team.ssoClientId,
@@ -211,9 +218,16 @@ export async function getTeamByEmailDomain(
 		return null;
 	}
 
-	// Basic email format validation
-	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+	// More robust email format validation
+	// Ensures: valid local part, domain with at least 2 chars before TLD, valid TLD (2-6 chars)
+	const emailRegex =
+		/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 	if (!emailRegex.test(email)) {
+		return null;
+	}
+
+	// Additional validation: email length (RFC 5321)
+	if (email.length > 254) {
 		return null;
 	}
 

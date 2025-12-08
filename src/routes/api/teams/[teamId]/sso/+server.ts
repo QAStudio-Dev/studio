@@ -82,6 +82,24 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 				'When enabling SSO, provider, clientId, clientSecret, and issuer are required'
 			);
 		}
+
+		// Validate issuer URL format
+		try {
+			const issuerUrl = new URL(ssoIssuer);
+			// Require HTTPS in production
+			if (process.env.NODE_ENV === 'production' && issuerUrl.protocol !== 'https:') {
+				throw error(400, 'Issuer URL must use HTTPS in production');
+			}
+			// Ensure it's a valid HTTP/HTTPS URL
+			if (issuerUrl.protocol !== 'http:' && issuerUrl.protocol !== 'https:') {
+				throw error(400, 'Issuer URL must be a valid HTTP or HTTPS URL');
+			}
+		} catch (err) {
+			if ((err as any)?.status === 400) {
+				throw err; // Re-throw our validation errors
+			}
+			throw error(400, 'Invalid issuer URL format');
+		}
 	}
 
 	// Encrypt client secret before storing
@@ -163,6 +181,18 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 			ssoClientSecret: null,
 			ssoIssuer: null,
 			ssoDomains: []
+		}
+	});
+
+	// Create audit log for SSO disablement
+	await db.auditLog.create({
+		data: {
+			action: 'SSO_CONFIG_DISABLED',
+			userId,
+			teamId,
+			metadata: {
+				message: 'SSO has been disabled for this team'
+			}
 		}
 	});
 
