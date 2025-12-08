@@ -11,7 +11,11 @@ import type { RequestHandler } from './$types';
 import { requireAuth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import { encrypt, decrypt } from '$lib/server/encryption';
-import { isValidProviderName, type ProviderName } from '$lib/server/oidc/registry';
+import {
+	isValidProviderName,
+	type ProviderName,
+	clearTeamProviderCache
+} from '$lib/server/oidc/registry';
 
 /**
  * Get team's SSO configuration (without exposing secrets)
@@ -127,6 +131,9 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 		}
 	});
 
+	// Clear cached provider instance to ensure new credentials are used
+	clearTeamProviderCache(teamId);
+
 	// Create audit log for SSO configuration change
 	await db.auditLog.create({
 		data: {
@@ -183,6 +190,9 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 			ssoDomains: []
 		}
 	});
+
+	// Clear cached provider instance
+	clearTeamProviderCache(teamId);
 
 	// Create audit log for SSO disablement
 	await db.auditLog.create({

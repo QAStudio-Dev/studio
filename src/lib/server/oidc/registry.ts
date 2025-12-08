@@ -68,6 +68,19 @@ const providerConfigs: Record<ProviderName, () => OIDCConfig | null> = {
 const providerInstances: Map<string, OIDCProvider> = new Map();
 
 /**
+ * Clear cached provider instance for a team
+ * Call this when SSO configuration is updated to ensure fresh credentials are used
+ *
+ * @param teamId - Team ID whose provider cache should be cleared
+ */
+export function clearTeamProviderCache(teamId: string): void {
+	// Clear all provider instances for this team (okta and google)
+	providerInstances.delete(`${teamId}:okta`);
+	providerInstances.delete(`${teamId}:google`);
+	console.log(`Cleared SSO provider cache for team ${teamId}`);
+}
+
+/**
  * Get team-specific SSO configuration from database
  *
  * @param teamId - Team ID
