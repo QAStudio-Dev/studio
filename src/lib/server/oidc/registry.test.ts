@@ -1,4 +1,16 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+// Mock the database module to avoid Prisma client import issues in CI
+vi.mock('$lib/server/db', () => ({
+	db: {}
+}));
+
+// Mock the encryption module
+vi.mock('$lib/server/encryption', () => ({
+	encrypt: vi.fn(),
+	decrypt: vi.fn()
+}));
+
 import { isValidProviderName } from './registry';
 
 describe('OIDC Registry', () => {

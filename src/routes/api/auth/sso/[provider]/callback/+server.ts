@@ -81,6 +81,7 @@ export const GET: RequestHandler = async ({ params, url, cookies }) => {
 
 		if (!user) {
 			// Auto-provision new user
+			// If teamId is provided, associate user with that team
 			user = await db.user.create({
 				data: {
 					email,
@@ -91,11 +92,14 @@ export const GET: RequestHandler = async ({ params, url, cookies }) => {
 					passwordHash: null, // SSO users don't need passwords
 					role: 'TESTER', // Default role - customize based on your needs
 					ssoProvider: providerName,
-					ssoProviderId: userInfo.sub
+					ssoProviderId: userInfo.sub,
+					teamId: teamId || null // Associate with team if SSO was team-specific
 				}
 			});
 
-			console.log(`Auto-provisioned new user from ${providerName} SSO: ${email}`);
+			console.log(
+				`Auto-provisioned new user from ${providerName} SSO: ${email}${teamId ? ` (team: ${teamId})` : ''}`
+			);
 		} else if (!user.ssoProvider) {
 			// Link existing password-based user to SSO
 			user = await db.user.update({

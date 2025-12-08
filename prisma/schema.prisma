@@ -120,8 +120,8 @@ model Team {
   // SSO Configuration (Enterprise feature)
   ssoEnabled      Boolean  @default(false) // Enable SSO for this team
   ssoProvider     String? // 'okta', 'google', 'azure', etc.
-  ssoClientId     String? // OAuth Client ID (encrypted)
-  ssoClientSecret String? // OAuth Client Secret (encrypted)
+  ssoClientId     String? // OAuth Client ID (public, not encrypted)
+  ssoClientSecret String? // OAuth Client Secret (encrypted with AES-256-GCM)
   ssoIssuer       String? // OIDC Issuer URL
   ssoDomains      String[] // Email domains that trigger SSO (e.g., ['acme.com'])
 
