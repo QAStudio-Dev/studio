@@ -24,6 +24,10 @@ model User {
   role          UserRole @default(TESTER)
   emailVerified Boolean  @default(false)
 
+  // SSO fields
+  ssoProvider   String? // 'okta', 'google', null for password auth
+  ssoProviderId String? // External user ID from SSO provider
+
   // Team membership
   teamId String?
 
@@ -46,6 +50,7 @@ model User {
   @@index([email])
   @@index([teamId])
   @@index([role])
+  @@index([ssoProvider, ssoProviderId])
 }
 
 model ApiKey {
@@ -112,6 +117,14 @@ model Team {
   accountManager String? // Sales rep email
   invoiceEmail   String? // Billing contact email
 
+  // SSO Configuration (Enterprise feature)
+  ssoEnabled      Boolean  @default(false) // Enable SSO for this team
+  ssoProvider     String? // 'okta', 'google', 'azure', etc.
+  ssoClientId     String? // OAuth Client ID (encrypted)
+  ssoClientSecret String? // OAuth Client Secret (encrypted)
+  ssoIssuer       String? // OIDC Issuer URL
+  ssoDomains      String[] // Email domains that trigger SSO (e.g., ['acme.com'])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -129,6 +142,8 @@ model Team {
   @@index([plan])
   @@index([overSeatLimit])
   @@index([overSeatLimit, id]) // Composite index for middleware queries
+  @@index([ssoEnabled])
+  @@index([ssoProvider])
 }
 
 model Subscription {
