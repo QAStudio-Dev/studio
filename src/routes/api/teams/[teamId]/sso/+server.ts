@@ -109,6 +109,21 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 		}
 	});
 
+	// Create audit log for SSO configuration change
+	await db.auditLog.create({
+		data: {
+			action: 'SSO_CONFIG_UPDATED',
+			userId,
+			teamId,
+			metadata: {
+				provider: ssoProvider,
+				enabled: ssoEnabled,
+				domainsCount: ssoDomains?.length || 0,
+				credentialsUpdated: !!ssoClientSecret
+			}
+		}
+	});
+
 	return json({
 		success: true,
 		teamId: updatedTeam.id,

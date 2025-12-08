@@ -193,12 +193,13 @@ export const GET: RequestHandler = async ({ params, url, cookies }) => {
 	} catch (err) {
 		console.error(`SSO callback error (${providerName}):`, err);
 
-		// Re-throw SvelteKit errors (redirect, error)
-		if (err instanceof Error && (err.message.includes('redirect') || 'status' in err)) {
+		// Re-throw SvelteKit errors properly (Redirect and HttpError)
+		// These are intentional control flow errors, not failures
+		if ((err as any)?.status !== undefined || (err as any)?.location !== undefined) {
 			throw err;
 		}
 
-		// Log and redirect to login with error
+		// Log and redirect to login with error message
 		const errorMessage =
 			err instanceof Error ? err.message : 'Authentication failed. Please try again.';
 		throw redirect(302, `/login?error=${encodeURIComponent(errorMessage)}`);

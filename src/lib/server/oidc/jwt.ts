@@ -152,15 +152,15 @@ export async function verifyJWT(
 
 	// Verify claims
 	const now = Math.floor(Date.now() / 1000);
+	const clockSkew = 60; // Allow 60 second clock skew for exp and iat
 
-	// Check expiration
-	if (payload.exp < now) {
+	// Check expiration (with clock skew tolerance)
+	if (payload.exp < now - clockSkew) {
 		throw new Error('Token expired');
 	}
 
-	// Check issued at (token not used before it was issued)
-	if (payload.iat > now + 60) {
-		// Allow 60 second clock skew
+	// Check issued at (token not used before it was issued, with clock skew tolerance)
+	if (payload.iat > now + clockSkew) {
 		throw new Error('Token used before issued');
 	}
 
