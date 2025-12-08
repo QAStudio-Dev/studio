@@ -8,9 +8,19 @@ import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 // Encryption key must be exactly 64 hex characters (32 bytes) for AES-256
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
 
+// Example/test keys that should never be used in production
+const INSECURE_KEYS = [
+	'0000000000000000000000000000000000000000000000000000000000000000',
+	'1111111111111111111111111111111111111111111111111111111111111111',
+	'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+	'0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+	'deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+	'cafebabecafebabecafebabecafebabecafebabecafebabecafebabecafebabe'
+];
+
 /**
  * Validate and parse the encryption key
- * @throws Error if key is invalid
+ * @throws Error if key is invalid or insecure
  */
 function getValidatedKey(): Buffer {
 	if (!ENCRYPTION_KEY) {
@@ -27,6 +37,26 @@ function getValidatedKey(): Buffer {
 				ENCRYPTION_KEY.length +
 				'. Generate a valid key with: openssl rand -hex 32'
 		);
+	}
+
+	// Prevent use of example/default keys in production
+	if (process.env.NODE_ENV === 'production') {
+		const normalizedKey = ENCRYPTION_KEY.toLowerCase();
+		if (INSECURE_KEYS.includes(normalizedKey)) {
+			throw new Error(
+				'ENCRYPTION_KEY appears to be an example/test key and cannot be used in production. ' +
+					'Generate a secure key with: openssl rand -hex 32'
+			);
+		}
+
+		// Additional check: key should have reasonable entropy (not all same character)
+		const uniqueChars = new Set(normalizedKey).size;
+		if (uniqueChars < 8) {
+			throw new Error(
+				'ENCRYPTION_KEY has insufficient entropy (too few unique characters). ' +
+					'Generate a secure key with: openssl rand -hex 32'
+			);
+		}
 	}
 
 	return Buffer.from(ENCRYPTION_KEY, 'hex');
@@ -64,13 +94,25 @@ export function encrypt(text: string): string {
 
 /**
  * Decrypt text that was encrypted with encrypt()
+ * @param encryptedText - Encrypted string in format iv:authTag:encryptedData
+ * @param options - Decryption options
+ * @param options.strict - If true, throws error on unencrypted data (recommended for production)
  */
-export function decrypt(encryptedText: string): string {
+export function decrypt(encryptedText: string, options: { strict?: boolean } = {}): string {
+	const { strict = process.env.NODE_ENV === 'production' } = options;
+
 	// Check if data is encrypted (has the iv:authTag:data format)
 	const parts = encryptedText.split(':');
 	if (parts.length !== 3) {
-		// Assume it's plain text (for backward compatibility with existing data)
-		console.warn('Data appears to be unencrypted - returning as plain text');
+		if (strict) {
+			throw new Error(
+				'Data is not encrypted. In production, all sensitive data must be encrypted.'
+			);
+		}
+		// Backward compatibility: assume plain text (only for development/migration)
+		console.warn(
+			'Data appears to be unencrypted - returning as plain text (strict mode disabled)'
+		);
 		return encryptedText;
 	}
 

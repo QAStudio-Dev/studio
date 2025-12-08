@@ -57,6 +57,12 @@ export const GET: RequestHandler = async ({ params, url, cookies }) => {
 			throw error(400, 'Invalid state parameter - possible CSRF attack');
 		}
 
+		// Check lengths match first (timingSafeEqual throws on different lengths)
+		if (state.length !== storedState.length) {
+			console.error('CSRF validation failed - state length mismatch');
+			throw error(400, 'Invalid state parameter - possible CSRF attack');
+		}
+
 		// Use timing-safe comparison to prevent timing attacks
 		const stateMatch = timingSafeEqual(
 			Buffer.from(state, 'utf8'),
