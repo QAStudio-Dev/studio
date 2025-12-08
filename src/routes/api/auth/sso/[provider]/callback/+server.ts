@@ -12,6 +12,7 @@ import type { RequestHandler } from './$types';
 import { getProvider, isValidProviderName } from '$lib/server/oidc/registry';
 import { db } from '$lib/server/db';
 import { createSession, setSessionCookie } from '$lib/server/sessions';
+import { timingSafeEqual } from 'crypto';
 
 export const GET: RequestHandler = async ({ params, url, cookies }) => {
 	const providerName = params.provider;
@@ -50,8 +51,19 @@ export const GET: RequestHandler = async ({ params, url, cookies }) => {
 		const storedState = cookies.get(`oauth_state_${providerName}`);
 		const storedNonce = cookies.get(`oauth_nonce_${providerName}`);
 
-		// Verify state (CSRF protection)
-		if (!state || !storedState || state !== storedState) {
+		// Verify state (CSRF protection) using constant-time comparison
+		if (!state || !storedState) {
+			console.error('CSRF validation failed - missing state');
+			throw error(400, 'Invalid state parameter - possible CSRF attack');
+		}
+
+		// Use timing-safe comparison to prevent timing attacks
+		const stateMatch = timingSafeEqual(
+			Buffer.from(state, 'utf8'),
+			Buffer.from(storedState, 'utf8')
+		);
+
+		if (!stateMatch) {
 			console.error('CSRF validation failed - state mismatch');
 			throw error(400, 'Invalid state parameter - possible CSRF attack');
 		}
@@ -74,6 +86,40 @@ export const GET: RequestHandler = async ({ params, url, cookies }) => {
 			throw error(400, 'No email provided by SSO provider');
 		}
 
+		// Validate and sanitize user data from SSO provider (prevent DB errors from long values)
+		const firstName = (userInfo.given_name || '').substring(0, 100).trim();
+		const lastName = (userInfo.family_name || '').substring(0, 100).trim();
+		const imageUrl = userInfo.picture?.substring(0, 500) || null;
+		const ssoProviderId = userInfo.sub?.substring(0, 255);
+
+		if (!ssoProviderId) {
+			throw error(400, 'No subject (sub) claim in ID token');
+		}
+
+		// Validate team ownership if teamId cookie exists (prevent cookie manipulation)
+		if (teamId) {
+			const domain = email.split('@')[1];
+			if (domain) {
+				const teamOwnsEmail = await db.team.findFirst({
+					where: {
+						id: teamId,
+						ssoEnabled: true,
+						ssoDomains: {
+							has: domain
+						}
+					},
+					select: { id: true }
+				});
+
+				if (!teamOwnsEmail) {
+					console.error(
+						`Team cookie manipulation detected: teamId=${teamId} does not own domain ${domain}`
+					);
+					throw error(403, 'Invalid team association');
+				}
+			}
+		}
+
 		// Find or create user
 		let user = await db.user.findUnique({
 			where: { email }
@@ -85,14 +131,14 @@ export const GET: RequestHandler = async ({ params, url, cookies }) => {
 			user = await db.user.create({
 				data: {
 					email,
-					firstName: userInfo.given_name || '',
-					lastName: userInfo.family_name || '',
-					imageUrl: userInfo.picture,
+					firstName,
+					lastName,
+					imageUrl,
 					emailVerified: userInfo.email_verified ?? true,
 					passwordHash: null, // SSO users don't need passwords
 					role: 'TESTER', // Default role - customize based on your needs
 					ssoProvider: providerName,
-					ssoProviderId: userInfo.sub,
+					ssoProviderId,
 					teamId: teamId || null // Associate with team if SSO was team-specific
 				}
 			});
@@ -106,13 +152,13 @@ export const GET: RequestHandler = async ({ params, url, cookies }) => {
 				where: { id: user.id },
 				data: {
 					ssoProvider: providerName,
-					ssoProviderId: userInfo.sub,
+					ssoProviderId,
 					emailVerified: true
 				}
 			});
 
 			console.log(`Linked existing user to ${providerName} SSO: ${email}`);
-		} else if (user.ssoProvider !== providerName || user.ssoProviderId !== userInfo.sub) {
+		} else if (user.ssoProvider !== providerName || user.ssoProviderId !== ssoProviderId) {
 			// User exists but with different SSO provider/ID
 			console.error(
 				`User ${email} tried to login with ${providerName} but is linked to ${user.ssoProvider}`

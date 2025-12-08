@@ -206,7 +206,23 @@ export function isValidProviderName(name: string): name is ProviderName {
 export async function getTeamByEmailDomain(
 	email: string
 ): Promise<{ teamId: string; provider: ProviderName } | null> {
-	const domain = email.split('@')[1];
+	// Validate email format before processing (prevent crashes on malformed input)
+	if (!email || typeof email !== 'string') {
+		return null;
+	}
+
+	// Basic email format validation
+	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+	if (!emailRegex.test(email)) {
+		return null;
+	}
+
+	const parts = email.split('@');
+	if (parts.length !== 2) {
+		return null;
+	}
+
+	const domain = parts[1];
 	if (!domain) {
 		return null;
 	}
