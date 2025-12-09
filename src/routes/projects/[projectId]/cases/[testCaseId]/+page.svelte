@@ -20,11 +20,12 @@
 		Play,
 		Bug
 	} from 'lucide-svelte';
-	import { Avatar, Accordion } from '@skeletonlabs/skeleton-svelte';
+	import { Avatar, Accordion, useAccordion } from '@skeletonlabs/skeleton-svelte';
 	import AttachmentViewer from '$lib/components/AttachmentViewer.svelte';
 	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
 	import JiraIssueModal from '$lib/components/JiraIssueModal.svelte';
 	import TestStepsViewer from '$lib/components/TestStepsViewer.svelte';
+	import { removeAnsiCodes } from '$lib/utils/error-formatter';
 	import { invalidateAll } from '$app/navigation';
 
 	let { data } = $props();
@@ -88,13 +89,6 @@
 		}
 	}
 
-	// Strip ANSI escape codes from text (color codes, formatting, etc.)
-	function stripAnsi(text: string | null): string {
-		if (!text) return '';
-		// Remove ANSI escape codes: \x1b[...m or \u001b[...m
-		return text.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '').replace(/\u001b\[[0-9;]*[a-zA-Z]/g, '');
-	}
-
 	// Pagination state for execution history
 	let allResults = $state(testCase.results);
 	let resultsPage = $state(1);
@@ -106,6 +100,18 @@
 		Map<string, { diagnosis: string; generatedAt?: Date; cached?: boolean }>
 	>(new Map());
 	let loadingDiagnosis = $state<Set<string>>(new Set());
+
+	// Create accordion provider for managing execution history state
+	const accordion = useAccordion({
+		id: 'execution-history-accordion',
+		multiple: true
+	});
+
+	// Create accordion provider for nested error/stack trace accordions
+	const errorAccordion = useAccordion({
+		id: 'error-accordion',
+		multiple: true
+	});
 
 	// Jira integration
 	let showJiraModal = $state(false);
@@ -271,11 +277,11 @@ ${testCase.expectedResult || 'See test case for details'}`;
 			</div>
 
 			<div class="flex gap-2">
-				<button onclick={openJiraModal} class="preset-tonal-warning-500 btn">
+				<button onclick={openJiraModal} class="btn preset-tonal-warning">
 					<Bug class="mr-2 h-4 w-4" />
 					Create Jira Issue
 				</button>
-				<button onclick={openEditDialog} class="btn preset-filled-primary-500">
+				<button onclick={openEditDialog} class="preset-filled-primary btn">
 					<Edit class="mr-2 h-4 w-4" />
 					Edit
 				</button>
@@ -331,206 +337,261 @@ ${testCase.expectedResult || 'See test case for details'}`;
 				<h2 class="mb-4 text-lg font-bold">Execution History</h2>
 
 				{#if allResults.length > 0}
-					<Accordion>
-						{#each allResults as result}
-							{@const StatusIcon = getStatusIcon(result.status)}
-							<Accordion.Item value={result.id}>
-								<Accordion.ItemTrigger
-									class="border-surface-200-700 w-full rounded-container border p-4 transition-colors hover:border-primary-500"
+					<Accordion.Provider value={accordion}>
+						<Accordion multiple class="space-y-3">
+							{#each allResults as result}
+								{@const StatusIcon = getStatusIcon(result.status)}
+								<Accordion.Item
+									value={result.id}
+									class="border-surface-200-700 overflow-hidden rounded-lg border"
 								>
-									<div class="flex w-full items-start justify-between">
-										<div class="flex items-center gap-3">
-											<ChevronRight
-												class="h-4 w-4 transition-transform group-data-[state=open]:rotate-90"
-											/>
-											<span class="badge {getStatusColor(result.status)}">
-												<StatusIcon class="mr-1 h-3 w-3" />
-												{result.status}
-											</span>
-											<span class="text-sm font-medium"
-												>{result.testRun.name}</span
-											>
-										</div>
-										<div class="flex items-center gap-4">
-											{#if result.duration}
-												<span class="text-surface-600-300 text-sm">
-													{Math.round(result.duration / 1000)}s
+									<Accordion.ItemTrigger
+										class="w-full p-3 transition-colors hover:bg-surface-100-900"
+									>
+										<div class="flex w-full items-start justify-between">
+											<div class="flex items-center gap-3">
+												<Accordion.ItemIndicator
+													class="group flex-shrink-0"
+												>
+													<ChevronDown
+														class="hidden h-4 w-4 text-surface-500 group-data-[state=open]:block"
+													/>
+													<ChevronRight
+														class="block h-4 w-4 text-surface-500 group-data-[state=open]:hidden"
+													/>
+												</Accordion.ItemIndicator>
+												<span class="badge {getStatusColor(result.status)}">
+													<StatusIcon class="mr-1 h-3 w-3" />
+													{result.status}
 												</span>
-											{/if}
-											<span class="text-surface-600-300 text-sm"
-												>{formatDate(result.executedAt)}</span
-											>
+												<span class="text-sm font-medium"
+													>{result.testRun.name}</span
+												>
+											</div>
+											<div class="flex items-center gap-4">
+												{#if result.duration}
+													<span class="text-surface-600-300 text-sm">
+														{Math.round(result.duration / 1000)}s
+													</span>
+												{/if}
+												<span class="text-surface-600-300 text-sm"
+													>{formatDate(result.executedAt)}</span
+												>
+											</div>
 										</div>
-									</div>
-								</Accordion.ItemTrigger>
+									</Accordion.ItemTrigger>
 
-								<Accordion.ItemContent class="px-4 pb-4">
-									<div class="mb-3 flex items-center justify-between gap-4">
-										<div class="text-surface-600-300 text-sm">
-											Executed by: {result.executor.firstName ||
-												result.executor.email}
-										</div>
-										<a
-											href="/projects/{testCase.project.id}/runs/{result
-												.testRun.id}"
-											class="preset-tonal-primary-500 btn btn-sm"
+									<Accordion.ItemContent>
+										<div
+											class="border-surface-200-700 border-t bg-primary-50 p-3 dark:bg-primary-950/30"
 										>
-											<Play class="h-3 w-3" />
-											View Test Run
-										</a>
-									</div>
-
-									{#if result.comment}
-										<p class="text-surface-600-300 mt-2 text-sm">
-											{result.comment}
-										</p>
-									{/if}
-
-									<!-- Error/Stack Trace in nested accordion -->
-									{#if result.errorMessage || result.stackTrace}
-										<div class="mt-3">
-											<Accordion>
-												{#if result.errorMessage}
-													<Accordion.Item value="error">
-														<Accordion.ItemTrigger
-															class="w-full rounded-base bg-error-500/10 p-2 transition-colors hover:bg-error-500/20"
-														>
-															<div
-																class="flex items-center gap-2 text-sm font-medium text-error-500"
-															>
-																<ChevronRight
-																	class="h-3 w-3 transition-transform group-data-[state=open]:rotate-90"
-																/>
-																Error Message
-															</div>
-														</Accordion.ItemTrigger>
-														<Accordion.ItemContent class="px-2 pb-2">
-															<div
-																class="mt-2 rounded-base bg-error-500/5 p-3"
-															>
-																<p
-																	class="font-mono text-sm break-words whitespace-pre-wrap text-error-500"
-																>
-																	{stripAnsi(result.errorMessage)}
-																</p>
-															</div>
-														</Accordion.ItemContent>
-													</Accordion.Item>
-												{/if}
-
-												{#if result.stackTrace}
-													<Accordion.Item value="stack">
-														<Accordion.ItemTrigger
-															class="mt-2 w-full rounded-base bg-surface-200-800 p-2 transition-colors hover:bg-surface-300-700"
-														>
-															<div
-																class="flex items-center gap-2 text-sm font-medium"
-															>
-																<ChevronRight
-																	class="h-3 w-3 transition-transform group-data-[state=open]:rotate-90"
-																/>
-																Stack Trace
-															</div>
-														</Accordion.ItemTrigger>
-														<Accordion.ItemContent class="px-2 pb-2">
-															<div
-																class="mt-2 rounded-base bg-surface-100-900 p-3"
-															>
-																<pre
-																	class="font-mono text-xs break-words whitespace-pre-wrap">{stripAnsi(
-																		result.stackTrace
-																	)}</pre>
-															</div>
-														</Accordion.ItemContent>
-													</Accordion.Item>
-												{/if}
-											</Accordion>
-										</div>
-									{/if}
-
-									<!-- Test Steps -->
-									{#if result.steps && result.steps.length > 0}
-										<div class="mt-3">
-											<TestStepsViewer
-												steps={result.steps as any}
-												compact={true}
-											/>
-										</div>
-									{/if}
-
-									<!-- AI Diagnosis for Failed Tests -->
-									{#if result.status === 'FAILED'}
-										<div class="border-surface-200-700 mt-3 border-t pt-3">
-											{#if !aiDiagnoses.has(result.id) && !loadingDiagnosis.has(result.id)}
-												<button
-													onclick={() => getDiagnosis(result.id)}
+											<div
+												class="mb-2 flex items-center justify-between gap-4"
+											>
+												<div class="text-surface-600-300 text-sm">
+													Executed by: {result.executor.firstName ||
+														result.executor.email}
+												</div>
+												<a
+													href="/projects/{testCase.project
+														.id}/runs/{result.testRun.id}"
 													class="preset-tonal-primary-500 btn btn-sm"
 												>
-													<Sparkles class="h-4 w-4" />
-													Get AI Diagnosis
-												</button>
-											{:else if loadingDiagnosis.has(result.id)}
-												<div
-													class="flex items-center gap-2 text-sm text-primary-500"
-												>
-													<Loader2 class="h-4 w-4 animate-spin" />
-													<span>Analyzing failure with AI...</span>
-												</div>
-											{:else if aiDiagnoses.has(result.id)}
-												<div
-													class="rounded-container border-2 border-primary-500 bg-primary-50-950 p-3"
-												>
-													<div
-														class="mb-2 flex items-center justify-between gap-2"
-													>
-														<div class="flex items-center gap-2">
-															<Sparkles
-																class="h-4 w-4 text-primary-500"
-															/>
-															<h5
-																class="text-sm font-semibold text-primary-500"
-															>
-																AI Diagnosis
-															</h5>
-															{#if aiDiagnoses.get(result.id)?.cached}
-																<span
-																	class="text-xs text-surface-500"
-																	>(cached)</span
+													<Play class="h-3 w-3" />
+													View Test Run
+												</a>
+											</div>
+
+											{#if result.comment}
+												<p class="text-surface-600-300 mt-2 text-sm">
+													{result.comment}
+												</p>
+											{/if}
+
+											<!-- Error/Stack Trace in nested accordion -->
+											{#if result.errorMessage || result.stackTrace}
+												<div class="mt-2">
+													<Accordion.Provider value={errorAccordion}>
+														<Accordion multiple class="space-y-2">
+															{#if result.errorMessage}
+																<Accordion.Item
+																	value="error-{result.id}"
+																	class="overflow-hidden rounded-lg"
 																>
+																	<Accordion.ItemTrigger
+																		class="w-full rounded-base bg-error-500/10 p-2 transition-colors hover:bg-error-500/20"
+																	>
+																		<div
+																			class="flex items-center gap-2 text-sm font-medium text-error-500"
+																		>
+																			<Accordion.ItemIndicator
+																				class="group flex-shrink-0"
+																			>
+																				<ChevronDown
+																					class="hidden h-3 w-3 group-data-[state=open]:block"
+																				/>
+																				<ChevronRight
+																					class="block h-3 w-3 group-data-[state=open]:hidden"
+																				/>
+																			</Accordion.ItemIndicator>
+																			Error Message
+																		</div>
+																	</Accordion.ItemTrigger>
+																	<Accordion.ItemContent>
+																		<div
+																			class="mt-2 rounded-base bg-error-500/5 p-2"
+																		>
+																			<p
+																				class="font-mono text-sm break-words whitespace-pre-wrap text-error-500"
+																			>
+																				{removeAnsiCodes(
+																					result.errorMessage
+																				)}
+																			</p>
+																		</div>
+																	</Accordion.ItemContent>
+																</Accordion.Item>
 															{/if}
-														</div>
+
+															{#if result.stackTrace}
+																<Accordion.Item
+																	value="stack-{result.id}"
+																	class="overflow-hidden rounded-lg"
+																>
+																	<Accordion.ItemTrigger
+																		class="w-full rounded-base bg-surface-200-800 p-2 transition-colors hover:bg-surface-300-700"
+																	>
+																		<div
+																			class="flex items-center gap-2 text-sm font-medium"
+																		>
+																			<Accordion.ItemIndicator
+																				class="group flex-shrink-0"
+																			>
+																				<ChevronDown
+																					class="hidden h-3 w-3 group-data-[state=open]:block"
+																				/>
+																				<ChevronRight
+																					class="block h-3 w-3 group-data-[state=open]:hidden"
+																				/>
+																			</Accordion.ItemIndicator>
+																			Stack Trace
+																		</div>
+																	</Accordion.ItemTrigger>
+																	<Accordion.ItemContent>
+																		<div
+																			class="mt-2 rounded-base bg-surface-100-900 p-2"
+																		>
+																			<pre
+																				class="font-mono text-xs break-words whitespace-pre-wrap">{removeAnsiCodes(
+																					result.stackTrace
+																				)}</pre>
+																		</div>
+																	</Accordion.ItemContent>
+																</Accordion.Item>
+															{/if}
+														</Accordion>
+													</Accordion.Provider>
+												</div>
+											{/if}
+
+											<!-- Test Steps -->
+											{#if result.steps && result.steps.length > 0}
+												<div class="mt-2">
+													<TestStepsViewer
+														steps={result.steps as any}
+														compact={true}
+													/>
+												</div>
+											{/if}
+
+											<!-- AI Diagnosis for Failed Tests -->
+											{#if result.status === 'FAILED'}
+												<div
+													class="border-surface-200-700 mt-2 border-t pt-2"
+												>
+													{#if !aiDiagnoses.has(result.id) && !loadingDiagnosis.has(result.id)}
 														<button
-															onclick={() =>
-																getDiagnosis(result.id, true)}
-															class="preset-tonal-primary-500 btn btn-sm"
-															title="Regenerate diagnosis"
-															disabled={loadingDiagnosis.has(
-																result.id
-															)}
+															onclick={() => getDiagnosis(result.id)}
+															class="btn preset-tonal-success btn-sm"
 														>
-															<Sparkles class="h-3 w-3" />
-															Regenerate
+															<Sparkles class="h-4 w-4" />
+															Get AI Diagnosis
 														</button>
-													</div>
-													<div
-														class="prose prose-sm max-w-none text-xs whitespace-pre-wrap text-surface-900 dark:text-surface-50"
-													>
-														{aiDiagnoses.get(result.id)?.diagnosis}
-													</div>
+													{:else if loadingDiagnosis.has(result.id)}
+														<div
+															class="flex items-center gap-2 text-sm text-primary-500"
+														>
+															<Loader2 class="h-4 w-4 animate-spin" />
+															<span>Analyzing failure with AI...</span
+															>
+														</div>
+													{:else if aiDiagnoses.has(result.id)}
+														<div
+															class="rounded-container border-2 border-primary-500 bg-primary-50-950 p-2"
+														>
+															<div
+																class="mb-2 flex items-center justify-between gap-2"
+															>
+																<div
+																	class="flex items-center gap-2"
+																>
+																	<Sparkles
+																		class="h-4 w-4 text-primary-500"
+																	/>
+																	<h5
+																		class="text-sm font-semibold text-primary-500"
+																	>
+																		AI Diagnosis
+																	</h5>
+																	{#if aiDiagnoses.get(result.id)?.cached}
+																		<span
+																			class="text-xs text-surface-500"
+																			>(cached)</span
+																		>
+																	{/if}
+																</div>
+																<button
+																	onclick={() =>
+																		getDiagnosis(
+																			result.id,
+																			true
+																		)}
+																	class="btn preset-tonal-success btn-sm"
+																	title="Regenerate diagnosis"
+																	disabled={loadingDiagnosis.has(
+																		result.id
+																	)}
+																>
+																	<Sparkles class="h-3 w-3" />
+																	Regenerate
+																</button>
+															</div>
+															<div
+																class="prose prose-sm max-w-none text-xs whitespace-pre-wrap text-surface-900 dark:text-surface-50"
+															>
+																{aiDiagnoses.get(result.id)
+																	?.diagnosis}
+															</div>
+														</div>
+													{/if}
+												</div>
+											{/if}
+
+											{#if result.attachments && result.attachments.length > 0}
+												<div
+													class="border-surface-200-700 mt-2 border-t pt-2"
+												>
+													<AttachmentViewer
+														attachments={result.attachments}
+													/>
 												</div>
 											{/if}
 										</div>
-									{/if}
-
-									{#if result.attachments && result.attachments.length > 0}
-										<div class="border-surface-200-700 mt-3 border-t pt-3">
-											<AttachmentViewer attachments={result.attachments} />
-										</div>
-									{/if}
-								</Accordion.ItemContent>
-							</Accordion.Item>
-						{/each}
-					</Accordion>
+									</Accordion.ItemContent>
+								</Accordion.Item>
+							{/each}
+						</Accordion>
+					</Accordion.Provider>
 
 					<!-- Load More Button -->
 					<div class="mt-4">

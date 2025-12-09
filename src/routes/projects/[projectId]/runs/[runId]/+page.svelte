@@ -795,7 +795,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 									<!-- Expanded Details -->
 									{#if expandedResults.has(result.id)}
 										<div
-											class="bg-surface-50-900 border-surface-200-700 border-t p-4"
+											class="border-surface-200-700 border-t bg-primary-50 p-4 dark:bg-primary-950/30"
 										>
 											<div class="space-y-4">
 												<!-- Test Case Details -->
@@ -812,28 +812,33 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 
 												<!-- Action Buttons Row (for failed tests) -->
 												{#if result.status === 'FAILED'}
+													{@const hasTraceFile = result.attachments?.some(
+														(att: any) =>
+															att.mimeType === 'application/zip' &&
+															att.originalName.includes('trace')
+													)}
 													<div class="flex flex-wrap gap-2">
-														{#if !aiDiagnoses.has(result.id) && !loadingDiagnosis.has(result.id)}
-															<button
-																onclick={() =>
-																	getDiagnosis(result.id)}
-																class="btn flex-1 preset-tonal-primary"
-															>
-																<Sparkles class="h-4 w-4" />
-																Get AI Diagnosis
-															</button>
-														{/if}
-														{#if result.attachments?.some((att: any) => att.mimeType === 'application/zip' && att.originalName.includes('trace'))}
+														<!-- Show Analyze Trace if available, otherwise show AI Diagnosis -->
+														{#if hasTraceFile}
 															{#if !traceAnalyses.has(result.id) && !loadingTraceAnalysis.has(result.id)}
 																<button
 																	onclick={() =>
 																		analyzeTrace(result.id)}
-																	class="preset-filled-primary btn flex-1"
+																	class="btn flex-1 preset-tonal-success"
 																>
 																	<Sparkles class="h-4 w-4" />
 																	Analyze Trace
 																</button>
 															{/if}
+														{:else if !aiDiagnoses.has(result.id) && !loadingDiagnosis.has(result.id)}
+															<button
+																onclick={() =>
+																	getDiagnosis(result.id)}
+																class="btn flex-1 preset-tonal-success"
+															>
+																<Sparkles class="h-4 w-4" />
+																Get AI Diagnosis
+															</button>
 														{/if}
 														<button
 															onclick={() => openJiraModal(result)}

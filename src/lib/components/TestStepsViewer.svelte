@@ -13,7 +13,8 @@
 		FileCode,
 		AlertTriangle
 	} from 'lucide-svelte';
-	import { Accordion } from '@skeletonlabs/skeleton-svelte';
+	import { Accordion, useAccordion } from '@skeletonlabs/skeleton-svelte';
+	import { removeAnsiCodes } from '$lib/utils/error-formatter';
 
 	type TestStep = {
 		id: string;
@@ -110,8 +111,12 @@
 		return result;
 	});
 
-	// Track expanded sections - convert to array of section titles for Accordion
-	let expandedSections = $state<string[]>(['Test']);
+	// Create accordion provider for managing state
+	const accordion = useAccordion({
+		id: 'test-steps-accordion',
+		multiple: true,
+		defaultValue: ['Test']
+	});
 
 	// Track expanded steps for nested hierarchy
 	let expandedSteps = $state<Set<string>>(new Set());
@@ -125,11 +130,17 @@
 		expandedSteps = new Set(expandedSteps);
 	}
 
+	// Check if there's any failed step
+	let hasFailedStep = $derived.by(() => {
+		return steps.some((step) => step.status === 'FAILED');
+	});
+
 	// Find the step where timeout likely occurred
 	// For timeouts, we want to find the last step before teardown/cleanup hooks
 	// since teardown runs even after timeout
+	// Only show timeout indicator if there's no explicit failed step
 	let lastStepId = $derived.by(() => {
-		if (!isTimeout || steps.length === 0) return null;
+		if (!isTimeout || steps.length === 0 || hasFailedStep) return null;
 
 		// Find the last non-teardown step (last step in Test section, or Setup if no Test steps)
 		let lastNonTeardownStep: TestStep | null = null;
@@ -211,7 +222,8 @@
 			}
 		});
 
-		expandedSections = sectionsToExpand;
+		// Update accordion state programmatically
+		accordion().setValue(sectionsToExpand);
 	});
 
 	function getStatusIcon(status: string) {
@@ -269,223 +281,238 @@
 			</div>
 		</div>
 
-		<Accordion multiple value={expandedSections} class="space-y-3">
-			{#each sections as section}
-				<Accordion.Item
-					value={section.title}
-					class="border-surface-200-700 overflow-hidden rounded-lg border"
-				>
-					<h3>
-						<Accordion.ItemTrigger
-							class="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-100-900"
-						>
-							<Accordion.ItemIndicator class="group flex-shrink-0">
-								<ChevronDown
-									class="hidden h-4 w-4 text-surface-500 group-data-[state=open]:block"
-								/>
-								<ChevronRight
-									class="block h-4 w-4 text-surface-500 group-data-[state=open]:hidden"
-								/>
-							</Accordion.ItemIndicator>
-							<span class="text-sm font-semibold">{section.title}</span>
-							<span class="text-surface-600-300 ml-auto text-sm">
-								{section.steps.length} step{section.steps.length !== 1 ? 's' : ''}
-							</span>
-						</Accordion.ItemTrigger>
-					</h3>
+		<Accordion.Provider value={accordion}>
+			<Accordion multiple class="space-y-3">
+				{#each sections as section}
+					<Accordion.Item
+						value={section.title}
+						class="border-surface-200-700 overflow-hidden rounded-lg border"
+					>
+						<h3>
+							<Accordion.ItemTrigger
+								class="flex w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-surface-100-900"
+							>
+								<Accordion.ItemIndicator class="group flex-shrink-0">
+									<ChevronDown
+										class="hidden h-4 w-4 text-surface-500 group-data-[state=open]:block"
+									/>
+									<ChevronRight
+										class="block h-4 w-4 text-surface-500 group-data-[state=open]:hidden"
+									/>
+								</Accordion.ItemIndicator>
+								<span class="text-sm font-semibold">{section.title}</span>
+								<span class="text-surface-600-300 ml-auto text-sm">
+									{section.steps.length} step{section.steps.length !== 1
+										? 's'
+										: ''}
+								</span>
+							</Accordion.ItemTrigger>
+						</h3>
 
-					<Accordion.ItemContent>
-						<div class="divide-surface-200-700 divide-y bg-surface-50-950">
-							{#each section.steps as step}
-								{@const StatusIcon = getStatusIcon(step.status)}
-								{@const CategoryIcon = getCategoryIcon(step.category)}
-								{@const hasChildren = step.childSteps && step.childSteps.length > 0}
-								{@const isStepExpanded = expandedSteps.has(step.id)}
+						<Accordion.ItemContent>
+							<div class="divide-surface-200-700 divide-y bg-surface-50-950">
+								{#each section.steps as step}
+									{@const StatusIcon = getStatusIcon(step.status)}
+									{@const CategoryIcon = getCategoryIcon(step.category)}
+									{@const hasChildren =
+										step.childSteps && step.childSteps.length > 0}
+									{@const isStepExpanded = expandedSteps.has(step.id)}
 
-								<div>
-									<!-- Step Row -->
-									<button
-										class="hover:bg-surface-100-800 flex w-full items-center gap-3 px-4 py-3 text-left transition-colors {step.status ===
-										'FAILED'
-											? 'border-l-4 border-error-500 bg-error-500/5'
-											: isTimeout && step.id === lastStepId
-												? 'border-l-4 border-orange-500 bg-orange-500/5'
-												: ''}"
-										onclick={() => hasChildren && toggleStep(step.id)}
-										disabled={!hasChildren}
-									>
-										<!-- Expand indicator -->
-										<div
-											class="flex h-5 w-4 flex-shrink-0 items-center justify-center"
+									<div>
+										<!-- Step Row -->
+										<button
+											class="hover:bg-surface-100-800 flex w-full items-center gap-2 px-3 py-2 text-left transition-colors {step.status ===
+											'FAILED'
+												? 'border-l-4 border-error-500 bg-error-500/5'
+												: isTimeout && step.id === lastStepId
+													? 'border-l-4 border-orange-500 bg-orange-500/5'
+													: ''}"
+											onclick={() => hasChildren && toggleStep(step.id)}
+											disabled={!hasChildren}
 										>
-											{#if hasChildren}
-												{#if isStepExpanded}
-													<ChevronDown class="h-4 w-4 text-surface-500" />
-												{:else}
-													<ChevronRight
-														class="h-4 w-4 text-surface-500"
-													/>
-												{/if}
-											{/if}
-										</div>
-
-										<!-- Status Icon -->
-										<StatusIcon
-											class="h-4 w-4 flex-shrink-0 {getStatusColor(
-												step.status
-											)}"
-										/>
-
-										<!-- Step Content -->
-										<div class="min-w-0 flex-1">
-											<div class="flex flex-wrap items-center gap-2">
-												<span
-													class="text-surface-900-50 text-sm {step.status ===
-													'FAILED'
-														? 'font-medium'
-														: isTimeout && step.id === lastStepId
-															? 'font-medium'
-															: ''}"
-												>
-													{step.title}
-												</span>
-												{#if isTimeout && step.id === lastStepId}
-													<span
-														class="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800 dark:bg-orange-950 dark:text-orange-200"
-														title="Timeout occurred during or after this step"
-													>
-														<Clock class="h-3 w-3" />
-														Likely Timeout Point
-													</span>
-												{/if}
-												{#if step.category}
-													<span
-														class="badge-sm badge flex-shrink-0 preset-outlined-surface-500"
-													>
-														<CategoryIcon class="mr-1 h-3 w-3" />
-														{step.category}
-													</span>
+											<!-- Expand indicator -->
+											<div
+												class="flex h-5 w-4 flex-shrink-0 items-center justify-center"
+											>
+												{#if hasChildren}
+													{#if isStepExpanded}
+														<ChevronDown
+															class="h-4 w-4 text-surface-500"
+														/>
+													{:else}
+														<ChevronRight
+															class="h-4 w-4 text-surface-500"
+														/>
+													{/if}
 												{/if}
 											</div>
 
-											<!-- Error Message -->
-											{#if step.error}
-												<div class="mt-1 rounded-base bg-error-500/10 p-2">
-													<p
-														class="font-mono text-xs break-words text-error-500"
+											<!-- Status Icon -->
+											<StatusIcon
+												class="h-4 w-4 flex-shrink-0 {getStatusColor(
+													step.status
+												)}"
+											/>
+
+											<!-- Step Content -->
+											<div class="min-w-0 flex-1">
+												<div class="flex flex-wrap items-center gap-2">
+													<span
+														class="text-surface-900-50 text-sm {step.status ===
+														'FAILED'
+															? 'font-medium'
+															: isTimeout && step.id === lastStepId
+																? 'font-medium'
+																: ''}"
 													>
-														{step.error}
-													</p>
+														{removeAnsiCodes(step.title)}
+													</span>
+													{#if isTimeout && step.id === lastStepId}
+														<span
+															class="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800 dark:bg-orange-950 dark:text-orange-200"
+															title="Timeout occurred during or after this step"
+														>
+															<Clock class="h-3 w-3" />
+															Likely Timeout Point
+														</span>
+													{/if}
+													{#if step.category}
+														<span
+															class="badge-sm badge flex-shrink-0 preset-outlined-surface-500"
+														>
+															<CategoryIcon class="mr-1 h-3 w-3" />
+															{step.category}
+														</span>
+													{/if}
 												</div>
-											{/if}
 
-											<!-- Stack Trace (collapsed by default) -->
-											{#if step.stackTrace && !compact}
-												<details class="mt-1">
-													<summary
-														class="text-surface-600-300 hover:text-surface-700-200 cursor-pointer text-xs"
+												<!-- Error Message -->
+												{#if step.error}
+													<div
+														class="mt-0.5 rounded-base bg-error-500/10 p-1.5"
 													>
-														Stack Trace
-													</summary>
-													<pre
-														class="mt-1 rounded-base bg-surface-100-900 p-2 font-mono text-xs break-words whitespace-pre-wrap">{step.stackTrace}</pre>
-												</details>
-											{/if}
-										</div>
+														<p
+															class="font-mono text-xs break-words text-error-500"
+														>
+															{removeAnsiCodes(step.error)}
+														</p>
+													</div>
+												{/if}
 
-										<!-- Duration & Location -->
-										<div
-											class="text-surface-600-300 flex flex-shrink-0 flex-col items-end gap-0.5 text-xs"
-										>
-											{#if step.duration}
-												<div class="flex items-center gap-1">
-													<Clock class="h-3 w-3" />
-													<span>{formatDuration(step.duration)}</span>
-												</div>
-											{/if}
-											{#if step.location && !compact}
-												<code class="text-xs"
-													>{formatLocation(step.location)}</code
-												>
-											{/if}
-										</div>
-									</button>
+												<!-- Stack Trace (collapsed by default) -->
+												{#if step.stackTrace && !compact}
+													<details class="mt-0.5">
+														<summary
+															class="text-surface-600-300 hover:text-surface-700-200 cursor-pointer text-xs"
+														>
+															Stack Trace
+														</summary>
+														<pre
+															class="mt-0.5 rounded-base bg-surface-100-900 p-1.5 font-mono text-xs break-words whitespace-pre-wrap">{removeAnsiCodes(
+																step.stackTrace
+															)}</pre>
+													</details>
+												{/if}
+											</div>
 
-									<!-- Nested Child Steps -->
-									{#if hasChildren && isStepExpanded && step.childSteps}
-										<div class="border-surface-200-700 border-l-2 pl-6">
-											{#each step.childSteps as childStep}
-												{@const ChildStatusIcon = getStatusIcon(
-													childStep.status
-												)}
-												{@const ChildCategoryIcon = getCategoryIcon(
-													childStep.category
-												)}
+											<!-- Duration & Location -->
+											<div
+												class="text-surface-600-300 flex flex-shrink-0 flex-col items-end gap-0.5 text-xs"
+											>
+												{#if step.duration}
+													<div class="flex items-center gap-1">
+														<Clock class="h-3 w-3" />
+														<span>{formatDuration(step.duration)}</span>
+													</div>
+												{/if}
+												{#if step.location && !compact}
+													<code class="text-xs"
+														>{formatLocation(step.location)}</code
+													>
+												{/if}
+											</div>
+										</button>
 
-												<div
-													class="border-surface-200-700 flex items-start gap-2 border-b px-3 py-2 last:border-b-0 hover:bg-surface-100-900 {childStep.status ===
-													'FAILED'
-														? 'bg-error-500/5'
-														: ''}"
-												>
-													<ChildStatusIcon
-														class="mt-0.5 h-3.5 w-3.5 flex-shrink-0 {getStatusColor(
-															childStep.status
-														)}"
-													/>
+										<!-- Nested Child Steps -->
+										{#if hasChildren && isStepExpanded && step.childSteps}
+											<div class="border-surface-200-700 border-l-2 pl-6">
+												{#each step.childSteps as childStep}
+													{@const ChildStatusIcon = getStatusIcon(
+														childStep.status
+													)}
+													{@const ChildCategoryIcon = getCategoryIcon(
+														childStep.category
+													)}
 
-													<div class="min-w-0 flex-1">
-														<div class="flex items-start gap-2">
-															<span
-																class="text-surface-900-50 text-xs {childStep.status ===
-																'FAILED'
-																	? 'font-medium'
-																	: ''}"
-															>
-																{childStep.title}
-															</span>
-															{#if childStep.category}
+													<div
+														class="border-surface-200-700 flex items-start gap-2 border-b px-3 py-1.5 last:border-b-0 hover:bg-surface-100-900 {childStep.status ===
+														'FAILED'
+															? 'bg-error-500/5'
+															: ''}"
+													>
+														<ChildStatusIcon
+															class="mt-0.5 h-3.5 w-3.5 flex-shrink-0 {getStatusColor(
+																childStep.status
+															)}"
+														/>
+
+														<div class="min-w-0 flex-1">
+															<div class="flex items-start gap-2">
 																<span
-																	class="badge-sm badge flex-shrink-0 preset-outlined-surface-500"
+																	class="text-surface-900-50 text-xs {childStep.status ===
+																	'FAILED'
+																		? 'font-medium'
+																		: ''}"
 																>
-																	<ChildCategoryIcon
-																		class="mr-1 h-2.5 w-2.5"
-																	/>
-																	{childStep.category}
+																	{removeAnsiCodes(
+																		childStep.title
+																	)}
 																</span>
+																{#if childStep.category}
+																	<span
+																		class="badge-sm badge flex-shrink-0 preset-outlined-surface-500"
+																	>
+																		<ChildCategoryIcon
+																			class="mr-1 h-2.5 w-2.5"
+																		/>
+																		{childStep.category}
+																	</span>
+																{/if}
+															</div>
+
+															{#if childStep.error}
+																<div
+																	class="mt-0.5 rounded-base bg-error-500/10 p-1.5"
+																>
+																	<p
+																		class="font-mono text-xs break-words text-error-500"
+																	>
+																		{removeAnsiCodes(
+																			childStep.error
+																		)}
+																	</p>
+																</div>
 															{/if}
 														</div>
 
-														{#if childStep.error}
+														{#if childStep.duration}
 															<div
-																class="mt-1 rounded-base bg-error-500/10 p-2"
+																class="text-surface-600-300 flex-shrink-0 text-xs"
 															>
-																<p
-																	class="font-mono text-xs break-words text-error-500"
-																>
-																	{childStep.error}
-																</p>
+																{formatDuration(childStep.duration)}
 															</div>
 														{/if}
 													</div>
-
-													{#if childStep.duration}
-														<div
-															class="text-surface-600-300 flex-shrink-0 text-xs"
-														>
-															{formatDuration(childStep.duration)}
-														</div>
-													{/if}
-												</div>
-											{/each}
-										</div>
-									{/if}
-								</div>
-							{/each}
-						</div>
-					</Accordion.ItemContent>
-				</Accordion.Item>
-			{/each}
-		</Accordion>
+												{/each}
+											</div>
+										{/if}
+									</div>
+								{/each}
+							</div>
+						</Accordion.ItemContent>
+					</Accordion.Item>
+				{/each}
+			</Accordion>
+		</Accordion.Provider>
 	</div>
 {/if}
