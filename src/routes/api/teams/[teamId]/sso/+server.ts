@@ -213,6 +213,14 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 		throw error(403, 'Only team admins can configure SSO');
 	}
 
+	// Get current SSO provider before disabling (needed for targeted session revocation)
+	const team = await db.team.findUnique({
+		where: { id: teamId },
+		select: { ssoProvider: true }
+	});
+
+	const previousProvider = team?.ssoProvider;
+
 	// Disable SSO
 	await db.team.update({
 		where: { id: teamId },
@@ -229,13 +237,13 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 	// Clear cached provider instance
 	clearTeamProviderCache(teamId);
 
-	// Revoke all SSO sessions for this team
-	// When SSO is disabled, existing SSO sessions should be invalidated for security
+	// Revoke SSO sessions for users who authenticated with the disabled provider
+	// This prevents users in multiple teams from being logged out when one team disables SSO
 	const deletedSessions = await db.session.deleteMany({
 		where: {
 			user: {
 				teamId,
-				ssoProvider: { not: null } // Only delete SSO sessions, not password-based sessions
+				ssoProvider: previousProvider || undefined // Only delete sessions for the specific provider being disabled
 			}
 		}
 	});

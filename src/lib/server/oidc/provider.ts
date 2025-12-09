@@ -156,15 +156,19 @@ export class OIDCProvider {
 	/**
 	 * Fetch and cache JWKS (JSON Web Key Set)
 	 * Uses global cache keyed by issuer to avoid duplicate fetches across provider instances
+	 *
+	 * @param forceRefresh - Force fetch fresh JWKS even if cached (used when signature verification fails)
 	 */
-	private async getJWKS(): Promise<any[]> {
+	private async getJWKS(forceRefresh = false): Promise<any[]> {
 		const now = Date.now();
 		const cacheKey = this.config.issuer;
 
-		// Check global cache for this issuer
-		const cached = globalJWKSCache.get(cacheKey);
-		if (cached && now - cached.timestamp < this.JWKS_CACHE_TTL) {
-			return cached.keys;
+		// Check global cache for this issuer (skip if force refresh)
+		if (!forceRefresh) {
+			const cached = globalJWKSCache.get(cacheKey);
+			if (cached && now - cached.timestamp < this.JWKS_CACHE_TTL) {
+				return cached.keys;
+			}
 		}
 
 		// Fetch fresh JWKS
@@ -180,18 +184,40 @@ export class OIDCProvider {
 	/**
 	 * Verify and decode ID token
 	 *
+	 * Implements automatic JWKS cache refresh on signature verification failure.
+	 * This handles the case where the provider rotates keys while cached keys are still valid.
+	 *
 	 * @param idToken - ID token from token response
 	 * @param nonce - Nonce used in authorization request
 	 * @returns Decoded and verified JWT payload with user info
 	 */
 	async verifyIdToken(idToken: string, nonce: string): Promise<JWTPayload> {
-		const jwks = await this.getJWKS();
+		// Try with cached JWKS first
+		let jwks = await this.getJWKS();
 
-		return verifyJWT(idToken, jwks, {
-			issuer: this.config.issuer,
-			audience: this.config.clientId,
-			nonce
-		});
+		try {
+			return verifyJWT(idToken, jwks, {
+				issuer: this.config.issuer,
+				audience: this.config.clientId,
+				nonce
+			});
+		} catch (error) {
+			// If signature verification fails, retry once with fresh JWKS
+			// This handles key rotation scenarios where cached keys are stale
+			if (error instanceof Error && error.message.includes('Invalid JWT signature')) {
+				console.log('JWT signature verification failed, retrying with fresh JWKS');
+				jwks = await this.getJWKS(true); // Force refresh
+
+				return verifyJWT(idToken, jwks, {
+					issuer: this.config.issuer,
+					audience: this.config.clientId,
+					nonce
+				});
+			}
+
+			// Re-throw other errors (expired token, invalid nonce, etc.)
+			throw error;
+		}
 	}
 
 	/**

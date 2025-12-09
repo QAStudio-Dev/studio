@@ -15,7 +15,7 @@ CREATE INDEX "Team_ssoProvider_idx" ON "Team"("ssoProvider");
 -- Add comments for documentation
 COMMENT ON COLUMN "Team"."ssoEnabled" IS 'Enable SSO authentication for this team';
 COMMENT ON COLUMN "Team"."ssoProvider" IS 'SSO provider type: okta, google, azure, etc.';
-COMMENT ON COLUMN "Team"."ssoClientId" IS 'OAuth Client ID (should be encrypted in application)';
-COMMENT ON COLUMN "Team"."ssoClientSecret" IS 'OAuth Client Secret (should be encrypted in application)';
+COMMENT ON COLUMN "Team"."ssoClientId" IS 'OAuth Client ID (public, not encrypted)';
+COMMENT ON COLUMN "Team"."ssoClientSecret" IS 'OAuth Client Secret (encrypted with AES-256-GCM before storage)';
 COMMENT ON COLUMN "Team"."ssoIssuer" IS 'OIDC Issuer URL (e.g., https://company.okta.com/oauth2/default)';
 COMMENT ON COLUMN "Team"."ssoDomains" IS 'Email domains that trigger SSO for this team (e.g., [acme.com, acme.co])';
