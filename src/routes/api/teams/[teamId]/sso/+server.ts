@@ -104,6 +104,39 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 			}
 			throw error(400, 'Invalid issuer URL format');
 		}
+
+		// Validate SSO domains
+		if (ssoDomains && Array.isArray(ssoDomains)) {
+			// Prevent overly broad top-level domains
+			const broadTLDs = ['com', 'org', 'net', 'io', 'co', 'edu', 'gov', 'mil'];
+
+			for (const domain of ssoDomains) {
+				// Check for empty or non-string values
+				if (!domain || typeof domain !== 'string') {
+					throw error(400, 'All SSO domains must be non-empty strings');
+				}
+
+				// Validate domain format (basic check for valid domain structure)
+				// Must have at least one dot and valid characters
+				if (!/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(domain)) {
+					throw error(400, `Invalid domain format: ${domain}`);
+				}
+
+				// Prevent use of overly broad TLDs
+				if (broadTLDs.includes(domain.toLowerCase())) {
+					throw error(
+						400,
+						`Cannot use top-level domain as SSO domain: ${domain}. Use a specific domain like example.${domain}`
+					);
+				}
+
+				// Prevent domains with too few parts (e.g., just ".com")
+				const parts = domain.split('.');
+				if (parts.length < 2 || parts.some((part) => part.length === 0)) {
+					throw error(400, `Invalid domain format: ${domain}`);
+				}
+			}
+		}
 	}
 
 	// Encrypt client secret before storing
@@ -140,6 +173,8 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 			action: 'SSO_CONFIG_UPDATED',
 			userId,
 			teamId,
+			resourceType: 'Team',
+			resourceId: teamId,
 			metadata: {
 				provider: ssoProvider,
 				enabled: ssoEnabled,
@@ -194,17 +229,35 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 	// Clear cached provider instance
 	clearTeamProviderCache(teamId);
 
+	// Revoke all SSO sessions for this team
+	// When SSO is disabled, existing SSO sessions should be invalidated for security
+	const deletedSessions = await db.session.deleteMany({
+		where: {
+			user: {
+				teamId,
+				ssoProvider: { not: null } // Only delete SSO sessions, not password-based sessions
+			}
+		}
+	});
+
 	// Create audit log for SSO disablement
 	await db.auditLog.create({
 		data: {
 			action: 'SSO_CONFIG_DISABLED',
 			userId,
 			teamId,
+			resourceType: 'Team',
+			resourceId: teamId,
 			metadata: {
-				message: 'SSO has been disabled for this team'
+				message: 'SSO has been disabled for this team',
+				sessionsRevoked: deletedSessions.count
 			}
 		}
 	});
 
-	return json({ success: true, message: 'SSO disabled for team' });
+	return json({
+		success: true,
+		message: 'SSO disabled for team',
+		sessionsRevoked: deletedSessions.count
+	});
 };

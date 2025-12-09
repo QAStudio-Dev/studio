@@ -42,6 +42,21 @@ interface TokenResponse {
 }
 
 /**
+ * Shared JWKS cache entry
+ */
+interface JWKSCacheEntry {
+	keys: any[];
+	timestamp: number;
+}
+
+/**
+ * Global JWKS cache shared across all provider instances
+ * Keyed by issuer URL to avoid duplicate fetches for same provider
+ * This is particularly important for multi-tenant SSO where multiple teams may use the same provider
+ */
+const globalJWKSCache = new Map<string, JWKSCacheEntry>();
+
+/**
  * OIDC Provider Client
  *
  * Handles the full OIDC Authorization Code Flow:
@@ -53,8 +68,6 @@ interface TokenResponse {
 export class OIDCProvider {
 	private config: OIDCConfig;
 	private discoveryCache: OIDCDiscovery | null = null;
-	private jwksCache: any[] | null = null;
-	private jwksCacheTime = 0;
 	private readonly JWKS_CACHE_TTL = 3600000; // 1 hour in milliseconds
 
 	constructor(config: OIDCConfig) {
@@ -142,21 +155,26 @@ export class OIDCProvider {
 
 	/**
 	 * Fetch and cache JWKS (JSON Web Key Set)
+	 * Uses global cache keyed by issuer to avoid duplicate fetches across provider instances
 	 */
 	private async getJWKS(): Promise<any[]> {
 		const now = Date.now();
+		const cacheKey = this.config.issuer;
 
-		// Return cached JWKS if still valid
-		if (this.jwksCache && now - this.jwksCacheTime < this.JWKS_CACHE_TTL) {
-			return this.jwksCache;
+		// Check global cache for this issuer
+		const cached = globalJWKSCache.get(cacheKey);
+		if (cached && now - cached.timestamp < this.JWKS_CACHE_TTL) {
+			return cached.keys;
 		}
 
 		// Fetch fresh JWKS
 		const discovery = await this.discover();
-		this.jwksCache = await fetchJWKS(discovery.jwks_uri);
-		this.jwksCacheTime = now;
+		const keys = await fetchJWKS(discovery.jwks_uri);
 
-		return this.jwksCache;
+		// Store in global cache
+		globalJWKSCache.set(cacheKey, { keys, timestamp: now });
+
+		return keys;
 	}
 
 	/**
