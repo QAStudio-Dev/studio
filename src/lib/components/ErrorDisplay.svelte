@@ -1,6 +1,11 @@
 <script lang="ts">
-	import { AlertCircle, ChevronDown, ChevronUp, Copy, Check } from 'lucide-svelte';
-	import { cleanErrorMessage, cleanStackTrace } from '$lib/utils/error-formatter';
+	import { AlertCircle, ChevronDown, ChevronUp, Copy, Check, Clock } from 'lucide-svelte';
+	import {
+		cleanErrorMessage,
+		cleanStackTrace,
+		isTimeoutError,
+		extractTimeoutDuration
+	} from '$lib/utils/error-formatter';
 
 	interface Props {
 		errorMessage?: string | null;
@@ -16,6 +21,10 @@
 	// Clean the error message and stack trace
 	let cleanedErrorMessage = $derived(cleanErrorMessage(errorMessage));
 	let cleanedStackTrace = $derived(cleanStackTrace(stackTrace));
+
+	// Check if this is a timeout error
+	let isTimeout = $derived(isTimeoutError(errorMessage));
+	let timeoutDuration = $derived(extractTimeoutDuration(errorMessage));
 
 	function copyToClipboard(text: string, type: 'error' | 'stack') {
 		navigator.clipboard.writeText(text);
@@ -54,6 +63,35 @@
 
 {#if errorMessage || stackTrace}
 	<div class="space-y-3">
+		<!-- Timeout Warning Banner (prominent) -->
+		{#if isTimeout}
+			<div
+				class="rounded-container border-2 border-orange-600 bg-orange-50 p-4 shadow-lg dark:border-orange-500 dark:bg-orange-950/30"
+			>
+				<div class="flex items-start gap-3">
+					<Clock
+						class="mt-0.5 h-6 w-6 flex-shrink-0 text-orange-600 dark:text-orange-500"
+					/>
+					<div class="flex-1">
+						<h4 class="mb-1 font-semibold text-orange-900 dark:text-orange-200">
+							Test Timeout
+						</h4>
+						<p class="text-sm text-orange-800 dark:text-orange-300">
+							{#if timeoutDuration}
+								This test exceeded the {(timeoutDuration / 1000).toFixed(0)}s
+								timeout limit. The test was likely waiting for an operation that
+								never completed. Check the last step in the test execution below to
+								see where the timeout occurred.
+							{:else}
+								This test timed out before completion. Check the last step in the
+								test execution below to see where the timeout occurred.
+							{/if}
+						</p>
+					</div>
+				</div>
+			</div>
+		{/if}
+
 		<!-- Toggle Header (if compact mode) -->
 		{#if compact}
 			<button

@@ -131,3 +131,34 @@ export function truncateError(
 		isTruncated: true
 	};
 }
+
+/**
+ * Detect if an error is a timeout error
+ */
+export function isTimeoutError(errorMessage: string | null | undefined): boolean {
+	if (!errorMessage) return false;
+
+	const message = errorMessage.toLowerCase();
+	return (
+		message.includes('timeout') &&
+		(message.includes('exceeded') ||
+			message.includes('ms') ||
+			message.includes('timed out') ||
+			message.includes('test timeout'))
+	);
+}
+
+/**
+ * Extract timeout duration from error message if available
+ */
+export function extractTimeoutDuration(errorMessage: string | null | undefined): number | null {
+	if (!errorMessage) return null;
+
+	// Match patterns like "Test timeout of 30000ms exceeded" or "Timeout of 5000ms"
+	const match = errorMessage.match(/timeout\s+of\s+(\d+)\s*ms/i);
+	if (match && match[1]) {
+		return parseInt(match[1], 10);
+	}
+
+	return null;
+}

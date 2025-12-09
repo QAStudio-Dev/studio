@@ -10,8 +10,10 @@
 		Zap,
 		Box,
 		FlaskConical,
-		FileCode
+		FileCode,
+		AlertTriangle
 	} from 'lucide-svelte';
+	import { Accordion } from '@skeletonlabs/skeleton-svelte';
 
 	type TestStep = {
 		id: string;
@@ -30,9 +32,10 @@
 	type Props = {
 		steps: TestStep[];
 		compact?: boolean;
+		isTimeout?: boolean; // Indicates if the test failed due to timeout
 	};
 
-	let { steps, compact = false }: Props = $props();
+	let { steps, compact = false, isTimeout = false }: Props = $props();
 
 	// Group steps by category into Setup, Test, Teardown sections
 	type StepSection = {
@@ -59,7 +62,11 @@
 					title.includes('fixture')
 				) {
 					setupSteps.push(step);
-				} else if (title.includes('after') || title.includes('teardown')) {
+				} else if (
+					title.includes('after') ||
+					title.includes('teardown') ||
+					title.includes('cleanup')
+				) {
 					teardownSteps.push(step);
 				} else {
 					setupSteps.push(step); // Default hooks to setup
@@ -103,17 +110,8 @@
 		return result;
 	});
 
-	// Track expanded sections
-	let expandedSections = $state<Set<string>>(new Set(['Test']));
-
-	function toggleSection(title: string) {
-		if (expandedSections.has(title)) {
-			expandedSections.delete(title);
-		} else {
-			expandedSections.add(title);
-		}
-		expandedSections = new Set(expandedSections);
-	}
+	// Track expanded sections - convert to array of section titles for Accordion
+	let expandedSections = $state<string[]>(['Test']);
 
 	// Track expanded steps for nested hierarchy
 	let expandedSteps = $state<Set<string>>(new Set());
@@ -127,8 +125,57 @@
 		expandedSteps = new Set(expandedSteps);
 	}
 
-	// Auto-expand to first failure
+	// Find the step where timeout likely occurred
+	// For timeouts, we want to find the last step before teardown/cleanup hooks
+	// since teardown runs even after timeout
+	let lastStepId = $derived.by(() => {
+		if (!isTimeout || steps.length === 0) return null;
+
+		// Find the last non-teardown step (last step in Test section, or Setup if no Test steps)
+		let lastNonTeardownStep: TestStep | null = null;
+
+		for (const step of steps) {
+			const category = step.category?.toLowerCase();
+			const title = step.title.toLowerCase();
+
+			// Skip teardown/cleanup hooks
+			const isTeardown =
+				category === 'hook' &&
+				(title.includes('after') ||
+					title.includes('teardown') ||
+					title.includes('cleanup'));
+
+			if (!isTeardown) {
+				if (!lastNonTeardownStep || step.stepNumber > lastNonTeardownStep.stepNumber) {
+					lastNonTeardownStep = step;
+				}
+			}
+		}
+
+		return lastNonTeardownStep?.id || null;
+	});
+
+	// Determine which section contains the timeout (the section with the last step)
+	let timeoutSectionTitle = $derived.by(() => {
+		if (!isTimeout || !lastStepId) return null;
+
+		for (const section of sections) {
+			if (section.steps.some((step) => step.id === lastStepId)) {
+				return section.title;
+			}
+		}
+		return null;
+	});
+
+	// Auto-expand to first failure or last step if timeout
+	// Initialize expanded sections on mount
+	let initialized = $state(false);
+
 	$effect(() => {
+		// Only run once on mount to set initial state
+		if (initialized) return;
+		initialized = true;
+
 		function findFirstFailure(steps: TestStep[]): string | null {
 			for (const step of steps) {
 				if (step.status === 'FAILED') {
@@ -145,12 +192,26 @@
 			return null;
 		}
 
+		const sectionsToExpand: string[] = ['Test']; // Always expand Test section
+
 		sections.forEach((section) => {
 			const failureId = findFirstFailure(section.steps);
-			if (failureId) {
-				expandedSections.add(section.title);
+			if (failureId && !sectionsToExpand.includes(section.title)) {
+				sectionsToExpand.push(section.title);
+			}
+
+			// If timeout, expand the section containing the timeout
+			if (
+				isTimeout &&
+				timeoutSectionTitle &&
+				section.title === timeoutSectionTitle &&
+				!sectionsToExpand.includes(section.title)
+			) {
+				sectionsToExpand.push(section.title);
 			}
 		});
+
+		expandedSections = sectionsToExpand;
 	});
 
 	function getStatusIcon(status: string) {
@@ -208,43 +269,48 @@
 			</div>
 		</div>
 
-		<div class="space-y-2">
+		<Accordion multiple value={expandedSections} class="space-y-3">
 			{#each sections as section}
-				{@const isExpanded = expandedSections.has(section.title)}
+				<Accordion.Item
+					value={section.title}
+					class="border-surface-200-700 overflow-hidden rounded-lg border"
+				>
+					<h3>
+						<Accordion.ItemTrigger
+							class="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-100-900"
+						>
+							<Accordion.ItemIndicator class="group flex-shrink-0">
+								<ChevronDown
+									class="hidden h-4 w-4 text-surface-500 group-data-[state=open]:block"
+								/>
+								<ChevronRight
+									class="block h-4 w-4 text-surface-500 group-data-[state=open]:hidden"
+								/>
+							</Accordion.ItemIndicator>
+							<span class="text-sm font-semibold">{section.title}</span>
+							<span class="text-surface-600-300 ml-auto text-sm">
+								{section.steps.length} step{section.steps.length !== 1 ? 's' : ''}
+							</span>
+						</Accordion.ItemTrigger>
+					</h3>
 
-				<!-- Section Header -->
-				<div class="border-surface-200-700 overflow-hidden rounded-container border">
-					<button
-						class="bg-surface-50-900 flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-surface-100-900"
-						onclick={() => toggleSection(section.title)}
-					>
-						{#if isExpanded}
-							<ChevronDown class="h-4 w-4 text-surface-500" />
-						{:else}
-							<ChevronRight class="h-4 w-4 text-surface-500" />
-						{/if}
-						<span class="text-sm font-medium">{section.title}</span>
-						<span class="text-surface-600-300 ml-auto text-xs">
-							{section.steps.length} step{section.steps.length !== 1 ? 's' : ''}
-						</span>
-					</button>
-
-					<!-- Section Steps -->
-					{#if isExpanded}
-						<div class="divide-surface-200-700 divide-y">
+					<Accordion.ItemContent>
+						<div class="divide-surface-200-700 divide-y bg-surface-50-950">
 							{#each section.steps as step}
 								{@const StatusIcon = getStatusIcon(step.status)}
 								{@const CategoryIcon = getCategoryIcon(step.category)}
 								{@const hasChildren = step.childSteps && step.childSteps.length > 0}
 								{@const isStepExpanded = expandedSteps.has(step.id)}
 
-								<div class="bg-surface-50-950">
+								<div>
 									<!-- Step Row -->
 									<button
-										class="flex w-full items-start gap-2 px-3 py-2 text-left transition-colors hover:bg-surface-100-900 {step.status ===
+										class="hover:bg-surface-100-800 flex w-full items-center gap-3 px-4 py-3 text-left transition-colors {step.status ===
 										'FAILED'
-											? 'border-l-2 border-error-500 bg-error-500/5'
-											: ''}"
+											? 'border-l-4 border-error-500 bg-error-500/5'
+											: isTimeout && step.id === lastStepId
+												? 'border-l-4 border-orange-500 bg-orange-500/5'
+												: ''}"
 										onclick={() => hasChildren && toggleStep(step.id)}
 										disabled={!hasChildren}
 									>
@@ -254,10 +320,10 @@
 										>
 											{#if hasChildren}
 												{#if isStepExpanded}
-													<ChevronDown class="h-3 w-3 text-surface-500" />
+													<ChevronDown class="h-4 w-4 text-surface-500" />
 												{:else}
 													<ChevronRight
-														class="h-3 w-3 text-surface-500"
+														class="h-4 w-4 text-surface-500"
 													/>
 												{/if}
 											{/if}
@@ -265,22 +331,33 @@
 
 										<!-- Status Icon -->
 										<StatusIcon
-											class="mt-0.5 h-4 w-4 flex-shrink-0 {getStatusColor(
+											class="h-4 w-4 flex-shrink-0 {getStatusColor(
 												step.status
 											)}"
 										/>
 
 										<!-- Step Content -->
 										<div class="min-w-0 flex-1">
-											<div class="flex items-start gap-2">
+											<div class="flex flex-wrap items-center gap-2">
 												<span
 													class="text-surface-900-50 text-sm {step.status ===
 													'FAILED'
 														? 'font-medium'
-														: ''}"
+														: isTimeout && step.id === lastStepId
+															? 'font-medium'
+															: ''}"
 												>
 													{step.title}
 												</span>
+												{#if isTimeout && step.id === lastStepId}
+													<span
+														class="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800 dark:bg-orange-950 dark:text-orange-200"
+														title="Timeout occurred during or after this step"
+													>
+														<Clock class="h-3 w-3" />
+														Likely Timeout Point
+													</span>
+												{/if}
 												{#if step.category}
 													<span
 														class="badge-sm badge flex-shrink-0 preset-outlined-surface-500"
@@ -406,9 +483,9 @@
 								</div>
 							{/each}
 						</div>
-					{/if}
-				</div>
+					</Accordion.ItemContent>
+				</Accordion.Item>
 			{/each}
-		</div>
+		</Accordion>
 	</div>
 {/if}

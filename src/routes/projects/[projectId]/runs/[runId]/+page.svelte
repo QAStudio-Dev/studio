@@ -31,6 +31,7 @@
 	import JiraIssueModal from '$lib/components/JiraIssueModal.svelte';
 	import TestStepsViewer from '$lib/components/TestStepsViewer.svelte';
 	import TestAnalysisDisplay from '$lib/components/TestAnalysisDisplay.svelte';
+	import { isTimeoutError } from '$lib/utils/error-formatter';
 
 	let { data } = $props();
 	let { testRun, stats } = $derived(data);
@@ -968,7 +969,12 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 
 												<!-- Test Steps -->
 												{#if result.steps && result.steps.length > 0}
-													<TestStepsViewer steps={result.steps} />
+													<TestStepsViewer
+														steps={result.steps}
+														isTimeout={isTimeoutError(
+															result.errorMessage
+														)}
+													/>
 												{/if}
 
 												<!-- Comment -->
