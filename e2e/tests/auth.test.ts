@@ -13,10 +13,18 @@ test.describe('Authentication', () => {
 			await authPage.navigateToLogin();
 		});
 
-		test('should display login form', async () => {
+		test('should display login form with email input', async () => {
 			await authPage.assertVisible(authPage.emailInput);
-			await authPage.assertVisible(authPage.passwordInput);
 			await authPage.assertVisible(authPage.submitButton);
+			// Note: Password field only appears after email submission (3-step flow)
+		});
+
+		test('should show password field after email submission (no SSO)', async () => {
+			// Step 1: Enter email
+			await authPage.submitEmail('nonexistent@example.com');
+
+			// Step 2: Password field should now be visible
+			await authPage.assertVisible(authPage.passwordInput);
 		});
 
 		test('should show error for empty email', async () => {
@@ -27,7 +35,6 @@ test.describe('Authentication', () => {
 
 		test('should show error for invalid email format', async () => {
 			await authPage.fill(authPage.emailInput, 'not-an-email');
-			await authPage.fill(authPage.passwordInput, 'Password123');
 			await authPage.click(authPage.submitButton);
 			// HTML5 validation or custom validation should catch this
 			await authPage.assertUrl('/login');
@@ -147,10 +154,10 @@ test.describe('Authentication', () => {
 				await authPage.navigateToLogin();
 
 				// Make 6 rapid login attempts (limit is 5)
+				// Note: Uses the updated login() method that handles 3-step flow
 				for (let i = 0; i < 6; i++) {
-					await authPage.fill(authPage.emailInput, 'test@example.com');
-					await authPage.fill(authPage.passwordInput, 'WrongPassword123');
-					await authPage.click(authPage.submitButton);
+					await authPage.navigateToLogin(); // Reset to email step
+					await authPage.login('test@example.com', 'WrongPassword123');
 					await page.waitForTimeout(500);
 				}
 
@@ -193,9 +200,17 @@ test.describe('Authentication', () => {
 			test('login form should be keyboard navigable', async ({ page }) => {
 				await authPage.navigateToLogin();
 
-				// Tab through form elements
+				// Tab through form elements - Step 1: Email
 				await page.keyboard.press('Tab'); // Email input
 				await page.keyboard.type('test@example.com');
+				await page.keyboard.press('Tab'); // Submit button
+				await page.keyboard.press('Enter'); // Submit email
+
+				// Wait for password field to appear
+				await page.waitForTimeout(1000);
+
+				// Step 2: Password
+				await page.keyboard.press('Tab'); // Password input (now visible)
 
 				await page.keyboard.press('Tab'); // Password input
 				await page.keyboard.type('Password123');

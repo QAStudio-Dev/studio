@@ -85,12 +85,42 @@ export class AuthPage extends BasePage {
 	}
 
 	/**
-	 * Login with email and password
+	 * Login with email and password (supports 3-step flow with SSO detection)
+	 * Step 1: Enter email and click Continue
+	 * Step 2a: If SSO detected, test will fail (use loginWithSSO instead)
+	 * Step 2b: If no SSO, enter password and submit
 	 */
 	async login(email: string, password: string) {
+		// Step 1: Enter email
 		await this.fill(this.emailInput, email);
+		await this.click(this.submitButton);
+
+		// Wait for either password field or SSO button to appear
+		await this.page.waitForTimeout(1000);
+
+		// Step 2: Enter password (assumes no SSO for this email domain)
 		await this.fill(this.passwordInput, password);
 		await this.click(this.submitButton);
+	}
+
+	/**
+	 * Enter email and proceed to next step (SSO detection or password)
+	 * Use this for testing the 3-step flow
+	 */
+	async submitEmail(email: string) {
+		await this.fill(this.emailInput, email);
+		await this.click(this.submitButton);
+		await this.page.waitForTimeout(1000); // Wait for SSO detection
+	}
+
+	/**
+	 * Check if SSO button is visible for a specific provider
+	 */
+	async hasSSOButton(provider: 'okta' | 'google'): Promise<boolean> {
+		const ssoButton = this.page.locator(
+			`button:has-text("Continue with ${provider === 'okta' ? 'Okta' : 'Google'}")`
+		);
+		return await this.isVisible(ssoButton);
 	}
 
 	/**
