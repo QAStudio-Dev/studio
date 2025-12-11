@@ -47,10 +47,24 @@
 			return;
 		}
 
+		// Validate Account SID format
+		if (!/^AC[a-fA-F0-9]{32}$/.test(accountSid)) {
+			error =
+				'Invalid Account SID format. Should start with AC followed by 32 hexadecimal characters.';
+			return;
+		}
+
 		// Validate phone number format (E.164)
 		if (!/^\+[1-9]\d{1,14}$/.test(phoneNumber)) {
 			error =
 				'Invalid phone number format. Must start with + and country code (e.g., +15551234567)';
+			return;
+		}
+
+		// Validate messagingUrl if provided
+		if (messagingUrl && !messagingUrl.startsWith('MG') && !messagingUrl.startsWith('http')) {
+			error =
+				'Invalid Messaging URL. Must be a Messaging Service SID (starts with MG) or webhook URL (starts with http).';
 			return;
 		}
 

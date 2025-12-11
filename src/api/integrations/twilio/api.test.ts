@@ -64,7 +64,8 @@ describe('Twilio Integration API', () => {
 				const validAccountSids = [
 					'ACfade1234567890abcdef1234567890ab',
 					'ACfade567890abcdef1234567890abcdef',
-					'ACfade0000000000000000000000000000'
+					'ACfade0000000000000000000000000000',
+					'ACFADE1234567890ABCDEF1234567890AB' // uppercase allowed
 				];
 
 				const invalidAccountSids = [
@@ -72,11 +73,10 @@ describe('Twilio Integration API', () => {
 					'AC123', // too short
 					'ACfade1234567890abcdef1234567890abcdefff', // too long
 					'ABtest1234567890abcdef1234567890ab', // wrong prefix
-					'ACTEST1234567890ABCDEF1234567890AB', // uppercase not allowed
 					'ACfade1234567890abcdef1234567890gg' // 'g' is not hex
 				];
 
-				const accountSidRegex = /^AC[a-f0-9]{32}$/;
+				const accountSidRegex = /^AC[a-fA-F0-9]{32}$/;
 
 				validAccountSids.forEach((sid) => {
 					expect(sid).toMatch(accountSidRegex);
@@ -456,7 +456,7 @@ describe('Twilio Integration API', () => {
 				phoneNumber: '+15551234567'
 			};
 
-			expect(credentials.accountSid).toMatch(/^AC[a-f0-9]{32}$/);
+			expect(credentials.accountSid).toMatch(/^AC[a-fA-F0-9]{32}$/);
 			expect(credentials.authToken).toHaveLength(32);
 			expect(credentials.phoneNumber).toMatch(/^\+\d{11}$/);
 		});

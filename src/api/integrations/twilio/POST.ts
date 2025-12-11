@@ -7,14 +7,21 @@ export const Input = z.object({
 	accountSid: z
 		.string()
 		.min(1)
-		.regex(/^AC[a-f0-9]{32}$/)
+		.regex(/^AC[a-fA-F0-9]{32}$/)
 		.describe('Twilio Account SID (starts with AC followed by 32 hex characters)'),
 	authToken: z.string().min(1).describe('Twilio Auth Token (will be encrypted)'),
 	phoneNumber: z
 		.string()
 		.regex(/^\+[1-9]\d{1,14}$/)
 		.describe('Phone number in E.164 format (e.g., +15551234567)'),
-	messagingUrl: z.string().optional().describe('Optional Messaging Service SID or webhook URL')
+	messagingUrl: z
+		.string()
+		.optional()
+		.refine(
+			(val) => !val || val.startsWith('MG') || val.startsWith('http'),
+			'Must be a Messaging Service SID (starts with MG) or webhook URL (starts with http)'
+		)
+		.describe('Optional Messaging Service SID or webhook URL')
 });
 
 export const Output = z.object({

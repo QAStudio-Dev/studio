@@ -203,7 +203,7 @@ describe('Twilio Webhook Signature Verification', () => {
 			};
 
 			expect(payload.AccountSid).toBeDefined();
-			expect(payload.AccountSid).toMatch(/^AC[a-f0-9]{32}$/);
+			expect(payload.AccountSid).toMatch(/^AC[a-fA-F0-9]{32}$/);
 		});
 
 		it('should handle optional Body field', () => {

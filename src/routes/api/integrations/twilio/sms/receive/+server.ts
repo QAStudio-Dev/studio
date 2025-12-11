@@ -22,19 +22,20 @@ import { createHmac } from 'crypto';
  */
 export const POST: RequestHandler = async (event) => {
 	try {
+		// Get signature header first
+		const signature = event.request.headers.get('X-Twilio-Signature');
+		const url = event.url.toString();
+
 		// Parse form data from Twilio
 		const formData = await event.request.formData();
 
-		const messageSid = formData.get('MessageSid') as string;
-		const from = formData.get('From') as string;
+		// Extract only the minimal fields needed for team lookup and signature verification
 		const to = formData.get('To') as string;
-		const body = formData.get('Body') as string;
-		const numMedia = parseInt((formData.get('NumMedia') as string) || '0');
 		const accountSid = formData.get('AccountSid') as string;
 
-		// Validate required fields
-		if (!messageSid || !from || !to || !accountSid) {
-			console.error('Missing required Twilio webhook fields');
+		// Validate minimal required fields for team lookup
+		if (!to || !accountSid) {
+			console.error('Missing To or AccountSid fields');
 			return text('Missing required fields', { status: 400 });
 		}
 
@@ -57,15 +58,13 @@ export const POST: RequestHandler = async (event) => {
 			return text('Phone number not configured', { status: 404 });
 		}
 
-		// Verify Twilio signature for security
-		const signature = event.request.headers.get('X-Twilio-Signature');
-		const url = event.url.toString();
-
-		if (!team.twilioAuthToken) {
-			console.error('Team has no Twilio auth token configured');
+		// Verify auth token is configured
+		if (!team.twilioAuthToken || !team.twilioAccountSid) {
+			console.error('Team Twilio configuration incomplete');
 			return text('Configuration error', { status: 500 });
 		}
 
+		// Verify Twilio signature BEFORE processing any other data
 		const authToken = decrypt(team.twilioAuthToken);
 		if (!verifyTwilioSignature(signature, url, formData, authToken)) {
 			console.error('Invalid Twilio signature');
@@ -73,17 +72,22 @@ export const POST: RequestHandler = async (event) => {
 		}
 
 		// Verify Twilio account ownership
-		if (!team.twilioAccountSid) {
-			console.error('Team has no Twilio account SID configured');
-			return text('Configuration error', { status: 500 });
-		}
-
 		const storedAccountSid = decrypt(team.twilioAccountSid);
 		if (accountSid !== storedAccountSid) {
-			console.error(
-				`Account SID mismatch: webhook=${accountSid}, stored=${storedAccountSid.substring(0, 8)}...`
-			);
+			console.error('Account SID mismatch');
 			return text('Account verification failed', { status: 403 });
+		}
+
+		// NOW safely parse the rest of the payload after verification
+		const messageSid = formData.get('MessageSid') as string;
+		const from = formData.get('From') as string;
+		const body = formData.get('Body') as string;
+		const numMedia = parseInt((formData.get('NumMedia') as string) || '0');
+
+		// Validate all required fields
+		if (!messageSid || !from) {
+			console.error('Missing required Twilio webhook fields');
+			return text('Missing required fields', { status: 400 });
 		}
 
 		// Log the received message

@@ -2,6 +2,7 @@ import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
 import { decrypt } from '$lib/server/encryption';
+import { checkRateLimit } from '$lib/server/rate-limit';
 
 export const Input = z.object({
 	to: z
@@ -25,6 +26,7 @@ export const Error = {
 	400: error(400, 'Invalid request or Twilio not configured'),
 	403: error(403, 'Twilio integration requires Pro or Enterprise plan'),
 	404: error(404, 'Team not found'),
+	429: error(429, 'Rate limit exceeded. Too many SMS messages sent.'),
 	500: error(500, 'Failed to send SMS')
 };
 
@@ -60,6 +62,14 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 		if (!user?.teamId || !user.team) {
 			throw Error[404];
 		}
+
+		// Rate limiting: 100 SMS per hour per team
+		await checkRateLimit({
+			key: `twilio_sms:${user.teamId}`,
+			limit: 100,
+			window: 3600, // 1 hour
+			prefix: 'ratelimit:twilio'
+		});
 
 		// Check if team has Pro or Enterprise plan
 		if (user.team.plan === 'FREE') {
@@ -120,6 +130,7 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 			};
 		} catch (err: any) {
 			if (err.status) throw err; // Re-throw errors we created
+			console.error('Twilio SMS send failed:', err);
 			throw Error[500];
 		}
 	}
