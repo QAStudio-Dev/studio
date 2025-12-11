@@ -2,7 +2,8 @@ import { text } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { decrypt } from '$lib/server/encryption';
-import { createHmac } from 'crypto';
+import { createHmac, timingSafeEqual } from 'crypto';
+import { sanitizeForLog } from '$lib/validation/twilio';
 
 /**
  * POST /api/integrations/twilio/sms/receive
@@ -36,7 +37,16 @@ export const POST: RequestHandler = async (event) => {
 		// Validate minimal required fields for team lookup
 		if (!to || !accountSid) {
 			console.error('Missing To or AccountSid fields');
-			return text('Missing required fields', { status: 400 });
+			return text(
+				`<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+	<Message>Missing required fields</Message>
+</Response>`,
+				{
+					status: 400,
+					headers: { 'Content-Type': 'text/xml' }
+				}
+			);
 		}
 
 		// Find the team with this Twilio phone number
@@ -55,27 +65,63 @@ export const POST: RequestHandler = async (event) => {
 
 		if (!team) {
 			console.error(`No team found with Twilio phone number: ${to}`);
-			return text('Phone number not configured', { status: 404 });
+			return text(
+				`<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+	<Message>Phone number not configured</Message>
+</Response>`,
+				{
+					status: 404,
+					headers: { 'Content-Type': 'text/xml' }
+				}
+			);
 		}
 
 		// Verify auth token is configured
 		if (!team.twilioAuthToken || !team.twilioAccountSid) {
 			console.error('Team Twilio configuration incomplete');
-			return text('Configuration error', { status: 500 });
+			return text(
+				`<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+	<Message>Configuration error</Message>
+</Response>`,
+				{
+					status: 500,
+					headers: { 'Content-Type': 'text/xml' }
+				}
+			);
 		}
 
 		// Verify Twilio signature BEFORE processing any other data
 		const authToken = decrypt(team.twilioAuthToken);
 		if (!verifyTwilioSignature(signature, url, formData, authToken)) {
 			console.error('Invalid Twilio signature');
-			return text('Invalid signature', { status: 403 });
+			return text(
+				`<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+	<Message>Invalid signature</Message>
+</Response>`,
+				{
+					status: 403,
+					headers: { 'Content-Type': 'text/xml' }
+				}
+			);
 		}
 
 		// Verify Twilio account ownership
 		const storedAccountSid = decrypt(team.twilioAccountSid);
 		if (accountSid !== storedAccountSid) {
 			console.error('Account SID mismatch');
-			return text('Account verification failed', { status: 403 });
+			return text(
+				`<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+	<Message>Account verification failed</Message>
+</Response>`,
+				{
+					status: 403,
+					headers: { 'Content-Type': 'text/xml' }
+				}
+			);
 		}
 
 		// NOW safely parse the rest of the payload after verification
@@ -87,21 +133,62 @@ export const POST: RequestHandler = async (event) => {
 		// Validate all required fields
 		if (!messageSid || !from) {
 			console.error('Missing required Twilio webhook fields');
-			return text('Missing required fields', { status: 400 });
+			return text(
+				`<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+	<Message>Missing required fields</Message>
+</Response>`,
+				{
+					status: 400,
+					headers: { 'Content-Type': 'text/xml' }
+				}
+			);
 		}
 
-		// Log the received message
-		console.log(`[Twilio SMS] Received message for team ${team.name}:`, {
+		// Log the received message (sanitized to prevent log injection)
+		console.log(`[Twilio SMS] Received message for team ${sanitizeForLog(team.name)}:`, {
 			messageSid,
-			from,
-			to,
-			body: body?.substring(0, 50) + (body?.length > 50 ? '...' : ''),
+			from: sanitizeForLog(from),
+			to: sanitizeForLog(to),
+			body: body
+				? sanitizeForLog(body.substring(0, 50)) + (body.length > 50 ? '...' : '')
+				: null,
 			numMedia
 		});
 
-		// TODO: Store the message in your database or trigger an event
-		// Example: Create a TestResult with the SMS verification code
-		// Example: Trigger a webhook or notification to your test automation
+		// Store the message in the database
+		try {
+			// Convert FormData to a plain object for JSON storage
+			const formDataObj: Record<string, string> = {};
+			for (const [key, value] of formData.entries()) {
+				formDataObj[key] = typeof value === 'string' ? value : value.name;
+			}
+
+			await db.smsMessage.create({
+				data: {
+					teamId: team.id,
+					direction: 'INBOUND',
+					messageSid,
+					from,
+					to,
+					body: body || null,
+					accountSid,
+					numMedia,
+					metadata: {
+						// Store any additional webhook data that might be useful
+						rawFormData: formDataObj
+					}
+				}
+			});
+		} catch (dbError: any) {
+			// If duplicate messageSid, it's a replay - log but continue
+			if (dbError.code === 'P2002') {
+				console.warn(`[Twilio SMS] Duplicate message ignored: ${messageSid}`);
+			} else {
+				// Log database error but don't fail the webhook
+				console.error('[Twilio SMS] Failed to store message:', dbError);
+			}
+		}
 
 		// Return TwiML response (empty response acknowledges receipt)
 		return text(
@@ -164,5 +251,13 @@ function verifyTwilioSignature(
 	hmac.update(data, 'utf8');
 	const expectedSignature = hmac.digest('base64');
 
-	return signature === expectedSignature;
+	// Use constant-time comparison to prevent timing attacks
+	const expectedBuffer = Buffer.from(expectedSignature);
+	const actualBuffer = Buffer.from(signature);
+
+	if (expectedBuffer.length !== actualBuffer.length) {
+		return false;
+	}
+
+	return timingSafeEqual(expectedBuffer, actualBuffer);
 }

@@ -2,26 +2,31 @@ import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
 import { encrypt } from '$lib/server/encryption';
+import {
+	TWILIO_ACCOUNT_SID_REGEX,
+	E164_PHONE_REGEX,
+	isValidMessagingUrl
+} from '$lib/validation/twilio';
 
 export const Input = z.object({
 	accountSid: z
 		.string()
 		.min(1)
-		.regex(/^AC[a-fA-F0-9]{32}$/)
+		.regex(TWILIO_ACCOUNT_SID_REGEX)
 		.describe('Twilio Account SID (starts with AC followed by 32 hex characters)'),
 	authToken: z.string().min(1).describe('Twilio Auth Token (will be encrypted)'),
 	phoneNumber: z
 		.string()
-		.regex(/^\+[1-9]\d{1,14}$/)
+		.regex(E164_PHONE_REGEX)
 		.describe('Phone number in E.164 format (e.g., +15551234567)'),
 	messagingUrl: z
 		.string()
 		.optional()
 		.refine(
-			(val) => !val || val.startsWith('MG') || val.startsWith('http'),
-			'Must be a Messaging Service SID (starts with MG) or webhook URL (starts with http)'
+			(val) => !val || isValidMessagingUrl(val),
+			'Must be a Messaging Service SID (starts with MG) or HTTPS webhook URL'
 		)
-		.describe('Optional Messaging Service SID or webhook URL')
+		.describe('Optional Messaging Service SID or HTTPS webhook URL')
 });
 
 export const Output = z.object({

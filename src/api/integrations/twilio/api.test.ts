@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { randomBytes } from 'crypto';
+import {
+	TWILIO_ACCOUNT_SID_REGEX,
+	E164_PHONE_REGEX,
+	isValidMessagingUrl
+} from '$lib/validation/twilio';
 
 /**
  * Tests for Twilio integration configuration endpoints
@@ -76,14 +81,12 @@ describe('Twilio Integration API', () => {
 					'ACfade1234567890abcdef1234567890gg' // 'g' is not hex
 				];
 
-				const accountSidRegex = /^AC[a-fA-F0-9]{32}$/;
-
 				validAccountSids.forEach((sid) => {
-					expect(sid).toMatch(accountSidRegex);
+					expect(sid).toMatch(TWILIO_ACCOUNT_SID_REGEX);
 				});
 
 				invalidAccountSids.forEach((sid) => {
-					expect(sid).not.toMatch(accountSidRegex);
+					expect(sid).not.toMatch(TWILIO_ACCOUNT_SID_REGEX);
 				});
 			});
 
@@ -105,14 +108,12 @@ describe('Twilio Integration API', () => {
 					'+1234567890123456' // too long (>15 digits)
 				];
 
-				const e164Regex = /^\+[1-9]\d{1,14}$/;
-
 				validPhoneNumbers.forEach((phone) => {
-					expect(phone).toMatch(e164Regex);
+					expect(phone).toMatch(E164_PHONE_REGEX);
 				});
 
 				invalidPhoneNumbers.forEach((phone) => {
-					expect(phone).not.toMatch(e164Regex);
+					expect(phone).not.toMatch(E164_PHONE_REGEX);
 				});
 			});
 

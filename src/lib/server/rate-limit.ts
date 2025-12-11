@@ -18,6 +18,14 @@ export interface RateLimitConfig {
 
 /**
  * In-memory fallback for development when Redis is not available
+ *
+ * ⚠️ WARNING: This in-memory implementation is NOT suitable for production use:
+ * - Not atomic: Race conditions can occur under concurrent requests
+ * - Not distributed: Doesn't work across multiple server instances
+ * - Not persistent: Resets on server restart
+ *
+ * For production, ensure Redis is configured (via UPSTASH_REDIS_REST_URL env var).
+ * Redis provides atomic operations via Lua scripts and distributed state management.
  */
 const rateLimitMemory = new Map<string, { count: number; resetAt: number }>();
 
@@ -39,7 +47,7 @@ export async function checkRateLimit(config: RateLimitConfig): Promise<void> {
 			prefix
 		});
 
-		const { success, remaining, reset } = await ratelimit.limit(key);
+		const { success, reset } = await ratelimit.limit(key);
 
 		if (!success) {
 			const resetDate = new Date(reset);

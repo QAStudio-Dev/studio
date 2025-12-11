@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createHmac, randomBytes } from 'crypto';
+import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
+import { TWILIO_ACCOUNT_SID_REGEX, sanitizeForLog } from '$lib/validation/twilio';
 
 /**
  * Tests for Twilio SMS webhook signature verification
@@ -379,6 +380,86 @@ describe('Twilio Webhook Signature Verification', () => {
 
 			expect(logMessage).not.toContain(authToken);
 			expect(logMessage).not.toContain('secret');
+		});
+	});
+
+	describe('timing-safe comparison', () => {
+		it('should use constant-time comparison for signatures', () => {
+			const signature1 = 'abc123';
+			const signature2 = 'abc123';
+			const signature3 = 'xyz789';
+
+			const buf1 = Buffer.from(signature1);
+			const buf2 = Buffer.from(signature2);
+			const buf3 = Buffer.from(signature3);
+
+			expect(timingSafeEqual(buf1, buf2)).toBe(true);
+			expect(timingSafeEqual(buf1, buf3)).toBe(false);
+		});
+
+		it('should handle different length signatures', () => {
+			const short = Buffer.from('abc');
+			const long = Buffer.from('abcdef');
+
+			// Different lengths should return false without comparison
+			expect(short.length).not.toBe(long.length);
+		});
+	});
+
+	describe('log sanitization', () => {
+		it('should remove newlines from log output', () => {
+			const input = 'Team\nName\nWith\nNewlines';
+			const sanitized = sanitizeForLog(input);
+
+			expect(sanitized).not.toContain('\n');
+			expect(sanitized).toBe('Team Name With Newlines');
+		});
+
+		it('should remove carriage returns from log output', () => {
+			const input = 'Team\rName\rWith\rReturns';
+			const sanitized = sanitizeForLog(input);
+
+			expect(sanitized).not.toContain('\r');
+			expect(sanitized).toBe('Team Name With Returns');
+		});
+
+		it('should remove tabs from log output', () => {
+			const input = 'Team\tName\tWith\tTabs';
+			const sanitized = sanitizeForLog(input);
+
+			expect(sanitized).not.toContain('\t');
+			expect(sanitized).toBe('Team Name With Tabs');
+		});
+
+		it('should handle mixed control characters', () => {
+			const input = 'Evil\r\nLog\tInjection\nAttempt';
+			const sanitized = sanitizeForLog(input);
+
+			expect(sanitized).not.toContain('\r');
+			expect(sanitized).not.toContain('\n');
+			expect(sanitized).not.toContain('\t');
+			// Note: \r\n becomes two spaces because each control character is replaced independently
+			expect(sanitized).toBe('Evil  Log Injection Attempt');
+		});
+	});
+
+	describe('shared validation constants', () => {
+		it('should validate Account SID with shared regex', () => {
+			const validSid = 'ACfade1234567890abcdef1234567890ab';
+			const invalidSid = 'INVALID';
+
+			expect(TWILIO_ACCOUNT_SID_REGEX.test(validSid)).toBe(true);
+			expect(TWILIO_ACCOUNT_SID_REGEX.test(invalidSid)).toBe(false);
+		});
+
+		it('should accept both uppercase and lowercase hex in Account SID', () => {
+			const lowercase = 'ACfade1234567890abcdef1234567890ab';
+			const uppercase = 'ACFADE1234567890ABCDEF1234567890AB';
+			const mixed = 'ACfAdE1234567890AbCdEf1234567890Ab';
+
+			expect(TWILIO_ACCOUNT_SID_REGEX.test(lowercase)).toBe(true);
+			expect(TWILIO_ACCOUNT_SID_REGEX.test(uppercase)).toBe(true);
+			expect(TWILIO_ACCOUNT_SID_REGEX.test(mixed)).toBe(true);
 		});
 	});
 });

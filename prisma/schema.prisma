@@ -126,13 +126,13 @@ model Team {
   ssoDomains      String[] // Email domains that trigger SSO (e.g., ['acme.com'])
 
   // Twilio Configuration (Pro/Enterprise feature)
-  twilioEnabled       Boolean  @default(false) // Enable Twilio integration
-  twilioAccountSid    String? // Twilio Account SID (encrypted with AES-256-GCM)
-  twilioAuthToken     String? // Twilio Auth Token (encrypted with AES-256-GCM)
-  twilioPhoneNumber   String? // Twilio phone number (E.164 format, e.g., +15551234567)
-  twilioMessagingUrl  String? // Messaging Service SID or Webhook URL (optional)
-  twilioConfiguredAt  DateTime? // When Twilio was last configured
-  twilioConfiguredBy  String? // User ID who configured Twilio
+  twilioEnabled      Boolean   @default(false) // Enable Twilio integration
+  twilioAccountSid   String? // Twilio Account SID (encrypted with AES-256-GCM)
+  twilioAuthToken    String? // Twilio Auth Token (encrypted with AES-256-GCM)
+  twilioPhoneNumber  String? // Twilio phone number (E.164 format, e.g., +15551234567)
+  twilioMessagingUrl String? // Messaging Service SID or Webhook URL (optional)
+  twilioConfiguredAt DateTime? // When Twilio was last configured
+  twilioConfiguredBy String? // User ID who configured Twilio
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -146,6 +146,7 @@ model Team {
   authenticatorTokens AuthenticatorToken[]
   auditLogs           AuditLog[]           @relation("AuditLogTeam")
   enterpriseInquiries EnterpriseInquiry[]
+  smsMessages         SmsMessage[]
 
   @@index([name])
   @@index([plan])
@@ -723,6 +724,48 @@ enum NotificationStatus {
   SENT
   FAILED
   RETRYING
+}
+
+// Twilio SMS Messages
+enum SmsDirection {
+  INBOUND // Received from external phone number
+  OUTBOUND // Sent via Twilio API
+}
+
+model SmsMessage {
+  id         String       @id @default(cuid())
+  teamId     String
+  direction  SmsDirection // INBOUND or OUTBOUND
+  messageSid String       @unique // Twilio message SID (prevents duplicate processing)
+  from       String // Sender's phone number (E.164 format)
+  to         String // Recipient's phone number (E.164 format)
+  body       String? // Message body text (nullable for MMS-only messages)
+  accountSid String // Twilio Account SID for verification
+
+  // Outbound-specific fields (nullable for inbound messages)
+  status       String? // Twilio message status (queued, sent, delivered, failed, etc.)
+  sentBy       String? // User ID who sent the message (null for inbound)
+  errorCode    String? // Twilio error code if failed
+  errorMessage String? // Twilio error message if failed
+
+  // Inbound-specific fields (nullable for outbound messages)
+  numMedia Int? // Number of media attachments (null for outbound)
+  metadata Json? // Additional Twilio webhook data (null for outbound)
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+  @@index([direction])
+  @@index([messageSid])
+  @@index([from])
+  @@index([to])
+  @@index([sentBy])
+  @@index([status])
+  @@index([createdAt])
+  @@index([teamId, direction, createdAt]) // For querying team messages by direction and date
 }
 
 // ============================================

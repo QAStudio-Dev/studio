@@ -3,12 +3,10 @@ import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
 import { decrypt } from '$lib/server/encryption';
 import { checkRateLimit } from '$lib/server/rate-limit';
+import { E164_PHONE_REGEX } from '$lib/validation/twilio';
 
 export const Input = z.object({
-	to: z
-		.string()
-		.regex(/^\+[1-9]\d{1,14}$/)
-		.describe('Recipient phone number in E.164 format'),
+	to: z.string().regex(E164_PHONE_REGEX).describe('Recipient phone number in E.164 format'),
 	body: z.string().min(1).max(1600).describe('SMS message body (max 1600 characters)')
 });
 
@@ -119,6 +117,27 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 
 			const twilioData = await twilioResponse.json();
 
+			// Store sent message in database for audit trail
+			try {
+				await db.smsMessage.create({
+					data: {
+						teamId: user.teamId,
+						direction: 'OUTBOUND',
+						messageSid: twilioData.sid,
+						from: twilioData.from,
+						to: twilioData.to,
+						body: twilioData.body,
+						accountSid: accountSid,
+						status: twilioData.status,
+						sentBy: userId
+					}
+				});
+			} catch (dbError: any) {
+				// Log database error but don't fail the API request
+				// The SMS was already sent successfully
+				console.error('[Twilio SMS] Failed to store sent message:', dbError);
+			}
+
 			return {
 				success: true,
 				messageSid: twilioData.sid,
@@ -131,6 +150,28 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 		} catch (err: any) {
 			if (err.status) throw err; // Re-throw errors we created
 			console.error('Twilio SMS send failed:', err);
+
+			// Store failed message attempt
+			try {
+				await db.smsMessage.create({
+					data: {
+						teamId: user.teamId,
+						direction: 'OUTBOUND',
+						messageSid: `FAILED_${Date.now()}`, // Generate unique ID for failed messages
+						from: from,
+						to: input.to,
+						body: input.body,
+						accountSid: accountSid,
+						status: 'failed',
+						sentBy: userId,
+						errorCode: err.code?.toString(),
+						errorMessage: err.message
+					}
+				});
+			} catch (dbError: any) {
+				console.error('[Twilio SMS] Failed to store error message:', dbError);
+			}
+
 			throw Error[500];
 		}
 	}
