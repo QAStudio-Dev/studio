@@ -114,6 +114,134 @@ const tooltip = useTooltip({id});
 </Tooltip.Provider>
 ```
 
+## Buttons & Interactive Elements
+
+Skeleton UI provides preset button styles that work seamlessly with Tailwind CSS.
+
+### Basic Button Usage
+
+All buttons use the base `btn` class combined with preset modifiers:
+
+```svelte
+<!-- Filled button (solid background) -->
+<button class="btn preset-filled-primary-500">Primary Action</button>
+<button class="btn preset-filled-secondary-500">Secondary Action</button>
+<button class="btn preset-filled-success-500">Success</button>
+<button class="btn preset-filled-warning-500">Warning</button>
+<button class="btn preset-filled-error-500">Delete</button>
+
+<!-- Outlined button (border only) -->
+<button class="btn preset-outlined-primary-500">Primary Outline</button>
+<button class="btn preset-outlined-error-500">Delete Outline</button>
+<button class="btn preset-outlined-surface-500">Cancel</button>
+
+<!-- Tonal button (subtle background) -->
+<button class="preset-tonal-primary-500 btn">Primary Tonal</button>
+<button class="preset-tonal-error-500 btn">Delete Tonal</button>
+
+<!-- Ghost button (transparent, shows on hover) -->
+<button class="preset-ghost btn">Ghost Button</button>
+```
+
+### Button Sizes
+
+Combine with size utilities:
+
+```svelte
+<button class="btn preset-filled-primary-500 btn-sm">Small</button>
+<button class="btn preset-filled-primary-500">Default</button>
+<button class="btn preset-filled-primary-500 btn-lg">Large</button>
+```
+
+### Button States
+
+```svelte
+<!-- Disabled state -->
+<button class="btn preset-filled-primary-500" disabled>Disabled</button>
+
+<!-- Loading state (add your own spinner) -->
+<button class="btn preset-filled-primary-500" disabled>
+	<Spinner class="mr-2" />
+	Loading...
+</button>
+
+<!-- With icons -->
+<button class="btn preset-filled-primary-500">
+	<Plus class="mr-2 h-4 w-4" />
+	Add Item
+</button>
+```
+
+### Common Button Patterns
+
+**Primary Actions:**
+
+```svelte
+<button class="btn preset-filled-primary-500">Save</button>
+<button class="btn preset-filled-primary-500">Submit</button>
+<button class="btn preset-filled-primary-500">Create</button>
+```
+
+**Destructive Actions:**
+
+```svelte
+<button class="btn preset-filled-error-500">Delete</button>
+<button class="btn preset-outlined-error-500">Remove</button>
+```
+
+**Cancel/Secondary Actions:**
+
+```svelte
+<button class="btn preset-outlined-surface-500">Cancel</button>
+<button class="preset-ghost btn">Dismiss</button>
+```
+
+**Link Buttons:**
+
+```svelte
+<a href="/settings" class="btn preset-filled-primary-500"> Go to Settings </a>
+```
+
+### Button Groups
+
+```svelte
+<div class="flex gap-3">
+	<button class="btn preset-filled-primary-500">Save</button>
+	<button class="btn preset-outlined-surface-500">Cancel</button>
+</div>
+```
+
+### Responsive Buttons
+
+```svelte
+<!-- Full width on mobile, auto on desktop -->
+<button class="btn w-full preset-filled-primary-500 md:w-auto"> Responsive Button </button>
+```
+
+### Custom Styling
+
+You can combine presets with Tailwind utilities:
+
+```svelte
+<!-- Add custom width -->
+<button class="btn w-48 preset-filled-primary-500">Fixed Width</button>
+
+<!-- Add custom padding -->
+<button class="btn preset-filled-primary-500 px-8 py-4">Large Padding</button>
+
+<!-- Add hover effects -->
+<button class="btn preset-filled-primary-500 transition-shadow hover:shadow-lg">
+	Hover Shadow
+</button>
+```
+
+### Important Notes
+
+- Always use the **full preset name** including the color suffix (e.g., `preset-filled-primary-500`, not `preset-filled-primary`)
+- The `btn` class must always come first, followed by the preset
+- Presets handle all color, padding, border-radius, and hover states automatically
+- Use Tailwind utilities for spacing, sizing, and layout adjustments
+
 ## Tailwind Integration
 
 ### Core Utilities
@@ -466,3 +594,191 @@ The system supports both auto-generated and manual docs simultaneously:
 4. Remove from manual docs once migrated
 
 See `src/lib/api/README.md` for detailed examples and best practices.
+
+## Public API Development with sveltekit-api
+
+QA Studio uses **sveltekit-api** for building type-safe, auto-documented public APIs. This system uses Zod schemas for validation and automatically generates OpenAPI documentation.
+
+### Directory Structure
+
+```
+src/
+├── api/                          # Business logic with Zod schemas (auto-documented)
+│   └── integrations/
+│       └── twilio/
+│           ├── GET.ts           # Get configuration
+│           ├── POST.ts          # Configure integration
+│           ├── DELETE.ts        # Remove configuration
+│           └── sms/
+│               └── send/
+│                   └── POST.ts  # Send SMS
+└── routes/
+    └── api/                      # Route handlers (simple delegation)
+        └── integrations/
+            └── twilio/
+                ├── +server.ts   # Delegates to src/api
+                └── sms/
+                    └── send/
+                        └── +server.ts
+```
+
+### Creating a New Public API Endpoint
+
+**Step 1: Create Business Logic in `src/api`**
+
+Example: `src/api/integrations/twilio/POST.ts`
+
+```typescript
+import { Endpoint, z, error } from 'sveltekit-api';
+import { db } from '$lib/server/db';
+import { requireApiAuth } from '$lib/server/api-auth';
+import { encrypt } from '$lib/server/encryption';
+
+// Define input schema with Zod
+export const Input = z.object({
+	accountSid: z.string().min(1).describe('Twilio Account SID'),
+	authToken: z.string().min(1).describe('Twilio Auth Token (will be encrypted)'),
+	phoneNumber: z
+		.string()
+		.regex(/^\+[1-9]\d{1,14}$/)
+		.describe('Phone number in E.164 format (e.g., +15551234567)')
+});
+
+// Define output schema
+export const Output = z.object({
+	message: z.string(),
+	twilioEnabled: z.boolean(),
+	twilioPhoneNumber: z.string(),
+	twilioConfiguredAt: z.coerce.string()
+});
+
+// Define possible errors
+export const Error = {
+	400: error(400, 'Invalid request - check required fields'),
+	403: error(403, 'Insufficient permissions'),
+	404: error(404, 'Team not found')
+};
+
+// Add OpenAPI metadata
+export const Modifier = (r: any) => {
+	r.tags = ['Twilio Integration'];
+	r.summary = 'Configure Twilio integration';
+	r.description = 'Configure or update Twilio integration. Requires OWNER/ADMIN role.';
+	return r;
+};
+
+// Implement handler
+export default new Endpoint({ Input, Output, Error, Modifier }).handle(
+	async (input, evt): Promise<any> => {
+		const userId = await requireApiAuth(evt);
+
+		// Business logic here
+		const encryptedSid = encrypt(input.accountSid);
+		const encryptedToken = encrypt(input.authToken);
+
+		const team = await db.team.update({
+			where: { id: userTeamId },
+			data: {
+				twilioAccountSid: encryptedSid,
+				twilioAuthToken: encryptedToken,
+				twilioPhoneNumber: input.phoneNumber
+			}
+		});
+
+		return {
+			message: 'Configuration saved',
+			twilioEnabled: true,
+			twilioPhoneNumber: input.phoneNumber,
+			twilioConfiguredAt: new Date().toISOString()
+		};
+	}
+);
+```
+
+**Step 2: Create Route Handler in `src/routes/api`**
+
+Example: `src/routes/api/integrations/twilio/+server.ts`
+
+```typescript
+import api from '$api';
+import type { RequestHandler } from './$types';
+
+export const GET: RequestHandler = async (evt) => api.handle(evt);
+export const POST: RequestHandler = async (evt) => api.handle(evt);
+export const DELETE: RequestHandler = async (evt) => api.handle(evt);
+export const OPTIONS: RequestHandler = async (evt) => api.handle(evt);
+```
+
+**That's it!** The endpoint is now:
+
+- ✅ Type-safe with Zod validation
+- ✅ Auto-documented in OpenAPI/Swagger
+- ✅ Accessible at `/api/integrations/twilio`
+
+### Key Components
+
+**Input Schema (`Input`)**: Zod schema for request body/query parameters
+
+- Use `.describe()` for field descriptions in OpenAPI docs
+- Use `.regex()`, `.min()`, `.max()` for validation
+- All fields are required by default, use `.optional()` for optional fields
+
+**Output Schema (`Output`)**: Zod schema for response
+
+- Define the exact shape of successful responses
+- Use `z.coerce.string()` for dates to ensure ISO string format
+
+**Error Definitions (`Error`)**: HTTP error responses
+
+- Define all possible error codes and messages
+- Use `error(statusCode, message)` helper
+
+**Modifier (`Modifier`)**: OpenAPI metadata
+
+- `tags`: Group endpoints in docs (e.g., ['Twilio Integration'])
+- `summary`: Short description (appears in endpoint list)
+- `description`: Detailed description with usage notes
+
+**Query Parameters**: Use `Query` export instead of `Input`
+
+```typescript
+export const Query = z.object({
+	limit: z.coerce.number().min(1).max(100).optional(),
+	direction: z.enum(['inbound', 'outbound']).optional()
+});
+```
+
+**Path Parameters**: Use `Param` export
+
+```typescript
+export const Param = z.object({
+	projectId: z.string(),
+	id: z.string()
+});
+```
+
+### Authentication
+
+Use `requireApiAuth` for API key authentication:
+
+```typescript
+import { requireApiAuth } from '$lib/server/api-auth';
+
+export default new Endpoint({ Input, Output }).handle(async (input, evt) => {
+	const userId = await requireApiAuth(evt); // Throws 401 if not authenticated
+	// ... business logic
+});
+```
+
+### Best Practices
+
+1. **Separation of Concerns**: Business logic in `src/api`, routing in `src/routes/api`
+2. **Descriptive Schemas**: Use `.describe()` on all Zod fields for better documentation
+3. **Proper Error Codes**: Define all possible errors with appropriate HTTP status codes
+4. **Type Safety**: Export and reuse Zod schemas as TypeScript types if needed
+5. **Validation**: Let Zod handle all input validation automatically
+6. **Documentation**: Use `Modifier` to provide helpful context in OpenAPI docs
+
+### Viewing Documentation
+
+All public APIs are automatically documented at `/docs` with interactive examples, request/response schemas, and error codes.

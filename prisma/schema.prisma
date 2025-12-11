@@ -125,6 +125,15 @@ model Team {
   ssoIssuer       String? // OIDC Issuer URL
   ssoDomains      String[] // Email domains that trigger SSO (e.g., ['acme.com'])
 
+  // Twilio Configuration (Pro/Enterprise feature)
+  twilioEnabled       Boolean  @default(false) // Enable Twilio integration
+  twilioAccountSid    String? // Twilio Account SID (encrypted with AES-256-GCM)
+  twilioAuthToken     String? // Twilio Auth Token (encrypted with AES-256-GCM)
+  twilioPhoneNumber   String? // Twilio phone number (E.164 format, e.g., +15551234567)
+  twilioMessagingUrl  String? // Messaging Service SID or Webhook URL (optional)
+  twilioConfiguredAt  DateTime? // When Twilio was last configured
+  twilioConfiguredBy  String? // User ID who configured Twilio
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
