@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
+	import { page } from '$app/stores';
 	import { AlertCircle, ArrowLeft, Check, ExternalLink, Phone } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 
@@ -339,7 +340,7 @@
 					<code
 						class="block rounded-container bg-surface-200-800 px-3 py-2 font-mono text-sm"
 					>
-						{window.location.origin}/api/integrations/twilio/sms/receive
+						{$page.url.origin}/api/integrations/twilio/sms/receive
 					</code>
 				</div>
 

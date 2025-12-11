@@ -72,6 +72,20 @@ export const POST: RequestHandler = async (event) => {
 			return text('Invalid signature', { status: 403 });
 		}
 
+		// Verify Twilio account ownership
+		if (!team.twilioAccountSid) {
+			console.error('Team has no Twilio account SID configured');
+			return text('Configuration error', { status: 500 });
+		}
+
+		const storedAccountSid = decrypt(team.twilioAccountSid);
+		if (accountSid !== storedAccountSid) {
+			console.error(
+				`Account SID mismatch: webhook=${accountSid}, stored=${storedAccountSid.substring(0, 8)}...`
+			);
+			return text('Account verification failed', { status: 403 });
+		}
+
 		// Log the received message
 		console.log(`[Twilio SMS] Received message for team ${team.name}:`, {
 			messageSid,

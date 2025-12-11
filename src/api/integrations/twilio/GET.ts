@@ -1,7 +1,6 @@
 import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
-import { decrypt } from '$lib/server/encryption';
 
 export const Output = z.object({
 	twilioEnabled: z.boolean().describe('Whether Twilio integration is enabled'),
