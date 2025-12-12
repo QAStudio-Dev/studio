@@ -22,6 +22,7 @@ Implemented on-demand SMS delivery status refresh functionality for the QA Studi
 **Performance Optimizations**:
 
 - Batch processing with `Promise.allSettled()` for parallel Twilio API calls
+- Parallel database updates within each batch using `Promise.all()`
 - Configurable constants for easy tuning
 - Database query optimization with composite index
 - Enhanced error logging with response bodies
@@ -41,8 +42,9 @@ Implemented on-demand SMS delivery status refresh functionality for the QA Studi
 **Memory Management**:
 
 - Automatic cleanup of stale refresh states (1-hour retention)
+- Periodic cleanup interval (runs every hour independent of message loading)
 - Proper timeout tracking and cleanup on component destruction
-- No memory leaks from orphaned timeouts
+- No memory leaks from orphaned timeouts or intervals
 
 ### 3. Database Optimizations
 

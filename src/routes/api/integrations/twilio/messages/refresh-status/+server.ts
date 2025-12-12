@@ -171,7 +171,14 @@ export const POST: RequestHandler = async (event) => {
 				})
 			);
 
-			// Process results from this batch
+			// Process results from this batch - collect updates to run in parallel
+			const updatePromises = [];
+			const updateRecords: Array<{
+				messageSid: string;
+				oldStatus: string | null;
+				newStatus: string;
+			}> = [];
+
 			for (const result of batchResults) {
 				if (result.status === 'rejected') {
 					console.error('Twilio API error:', result.reason);
@@ -184,22 +191,30 @@ export const POST: RequestHandler = async (event) => {
 
 				// Only update if status has changed
 				if (newStatus !== message.status) {
-					await db.smsMessage.update({
-						where: { id: message.id },
-						data: {
-							status: newStatus,
-							// Explicitly clear or set error fields
-							errorCode: twilioData.error_code?.toString() || null,
-							errorMessage: twilioData.error_message || null
-						}
-					});
+					updatePromises.push(
+						db.smsMessage.update({
+							where: { id: message.id },
+							data: {
+								status: newStatus,
+								// Explicitly clear or set error fields
+								errorCode: twilioData.error_code?.toString() || null,
+								errorMessage: twilioData.error_message || null
+							}
+						})
+					);
 
-					updates.push({
+					updateRecords.push({
 						messageSid: message.messageSid,
 						oldStatus: message.status,
 						newStatus
 					});
 				}
+			}
+
+			// Execute all database updates in parallel
+			if (updatePromises.length > 0) {
+				await Promise.all(updatePromises);
+				updates.push(...updateRecords);
 			}
 		}
 

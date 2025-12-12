@@ -71,10 +71,16 @@
 			loadMessages();
 		});
 
+		// Set up periodic cleanup of old refresh states (every hour)
+		const cleanupInterval = setInterval(cleanupOldRefreshStates, 3600000);
+
 		return () => {
 			// Clean up auto-refresh interval on unmount
 			autoRefresh = false;
 			stopAutoRefresh();
+
+			// Clean up periodic cleanup interval
+			clearInterval(cleanupInterval);
 		};
 	});
 
