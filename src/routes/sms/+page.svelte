@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import {
 		MessageSquare,
 		Send,
@@ -62,6 +62,9 @@
 	// Refresh state for individual messages
 	let refreshState = $state<RefreshState>({});
 
+	// Track timeouts for cleanup
+	const errorTimeouts = new Map<string, NodeJS.Timeout>();
+
 	onMount(() => {
 		// Load config first, then messages (sequential to avoid race condition)
 		loadConfig().then(() => {
@@ -73,6 +76,15 @@
 			autoRefresh = false;
 			stopAutoRefresh();
 		};
+	});
+
+	onDestroy(() => {
+		// Clean up all pending error message timeouts
+		errorTimeouts.forEach((timeout) => clearTimeout(timeout));
+		errorTimeouts.clear();
+
+		// Clean up auto-refresh interval
+		stopAutoRefresh();
 	});
 
 	async function loadConfig() {
@@ -109,6 +121,8 @@
 			loadError = 'Failed to load messages. Please try again.';
 		} finally {
 			loadingMessages = false;
+			// Clean up old refresh states after loading messages
+			cleanupOldRefreshStates();
 		}
 	}
 
@@ -241,6 +255,45 @@
 		}
 	}
 
+	// Helper to schedule error message cleanup with proper timeout tracking
+	function scheduleErrorCleanup(messageSid: string, delayMs: number = 3000) {
+		// Clear any existing timeout for this message
+		const existingTimeout = errorTimeouts.get(messageSid);
+		if (existingTimeout) {
+			clearTimeout(existingTimeout);
+		}
+
+		// Schedule new timeout
+		const timeoutId = setTimeout(() => {
+			if (refreshState[messageSid]) {
+				refreshState[messageSid].error = undefined;
+			}
+			errorTimeouts.delete(messageSid);
+		}, delayMs);
+
+		errorTimeouts.set(messageSid, timeoutId);
+	}
+
+	// Clean up old refresh states to prevent unbounded memory growth
+	function cleanupOldRefreshStates() {
+		const now = Date.now();
+		const ONE_HOUR = 3600000; // 1 hour in milliseconds
+
+		Object.keys(refreshState).forEach((messageSid) => {
+			const state = refreshState[messageSid];
+			// Remove entries that haven't been refreshed in over an hour
+			if (state.lastRefreshed && now - state.lastRefreshed > ONE_HOUR) {
+				delete refreshState[messageSid];
+				// Also clean up any associated timeout
+				const timeout = errorTimeouts.get(messageSid);
+				if (timeout) {
+					clearTimeout(timeout);
+					errorTimeouts.delete(messageSid);
+				}
+			}
+		});
+	}
+
 	async function refreshMessageStatus(messageSid: string) {
 		// Check rate limit (1 minute cooldown)
 		const now = Date.now();
@@ -253,11 +306,7 @@
 				loading: false,
 				error: `Please wait ${remainingSeconds}s before refreshing again`
 			};
-			setTimeout(() => {
-				if (refreshState[messageSid]) {
-					refreshState[messageSid].error = undefined;
-				}
-			}, 3000);
+			scheduleErrorCleanup(messageSid);
 			return;
 		}
 
@@ -284,11 +333,7 @@
 						error: data.message || 'Failed to refresh status'
 					};
 				}
-				setTimeout(() => {
-					if (refreshState[messageSid]) {
-						refreshState[messageSid].error = undefined;
-					}
-				}, 3000);
+				scheduleErrorCleanup(messageSid);
 				return;
 			}
 
@@ -311,11 +356,7 @@
 				loading: false,
 				error: err instanceof Error ? err.message : 'An error occurred'
 			};
-			setTimeout(() => {
-				if (refreshState[messageSid]) {
-					refreshState[messageSid].error = undefined;
-				}
-			}, 3000);
+			scheduleErrorCleanup(messageSid);
 		}
 	}
 
