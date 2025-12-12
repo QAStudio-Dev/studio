@@ -215,8 +215,7 @@ export const POST: RequestHandler = async (event) => {
 		const message = error instanceof Error ? error.message : 'Failed to refresh statuses';
 		return json(
 			{
-				message,
-				...(process.env.NODE_ENV === 'development' && { details: error })
+				message
 			},
 			{ status: 500 }
 		);
