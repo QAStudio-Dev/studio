@@ -297,6 +297,72 @@
 			</div>
 		</div>
 
+		<!-- NEW Feature - TOTP Authenticator Tokens -->
+		<div
+			class="group relative overflow-hidden card p-6 transition-all hover:-translate-y-1 hover:shadow-xl"
+		>
+			<div
+				class="absolute top-0 right-0 h-24 w-24 rounded-full bg-tertiary-500/10 blur-2xl"
+			></div>
+			<div class="relative">
+				<div
+					class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-tertiary-500/10"
+				>
+					<svg
+						class="h-6 w-6 text-tertiary-500"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+						/>
+					</svg>
+				</div>
+				<h3 class="mb-2 text-lg font-bold">2FA Testing</h3>
+				<p class="text-sm text-surface-600 dark:text-surface-400">
+					Team-shared TOTP tokens for testing 2FA flows. Generate codes via API for
+					Playwright tests.
+				</p>
+			</div>
+		</div>
+
+		<!-- NEW Feature - SMS Integration -->
+		<div
+			class="group relative overflow-hidden card p-6 transition-all hover:-translate-y-1 hover:shadow-xl"
+		>
+			<div
+				class="absolute top-0 right-0 h-24 w-24 rounded-full bg-success-500/10 blur-2xl"
+			></div>
+			<div class="relative">
+				<div
+					class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-success-500/10"
+				>
+					<svg
+						class="h-6 w-6 text-success-500"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+						/>
+					</svg>
+				</div>
+				<h3 class="mb-2 text-lg font-bold">SMS Testing</h3>
+				<p class="text-sm text-surface-600 dark:text-surface-400">
+					Send and receive SMS via Twilio integration. Test verification codes and
+					notifications end-to-end.
+				</p>
+			</div>
+		</div>
+
 		<!-- Feature 2 - Performance -->
 		<div
 			class="group relative overflow-hidden card p-6 transition-all hover:-translate-y-1 hover:shadow-xl"
