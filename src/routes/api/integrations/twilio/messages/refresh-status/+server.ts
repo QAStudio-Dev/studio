@@ -37,7 +37,8 @@ export const POST: RequestHandler = async (event) => {
 		prefix: 'ratelimit:sms_refresh'
 	});
 	const hoursParam = url.searchParams.get('hours');
-	const hours = Math.min(Math.max(1, parseInt(hoursParam || '24') || 24), 168);
+	const parsedHours = hoursParam ? parseInt(hoursParam) : 24;
+	const hours = Math.min(Math.max(1, isNaN(parsedHours) ? 24 : parsedHours), 168);
 
 	// Get user's team with Twilio configuration
 	const user = await db.user.findUnique({
@@ -143,20 +144,28 @@ export const POST: RequestHandler = async (event) => {
 				}
 
 				const twilioData = await response.json();
+
+				// Validate response structure
+				if (!twilioData || typeof twilioData.status !== 'string') {
+					console.error(
+						`Invalid status from Twilio for ${message.messageSid}:`,
+						twilioData
+					);
+					errorCount++;
+					continue;
+				}
+
 				const newStatus = twilioData.status;
 
 				// Only update if status has changed
-				if (newStatus && newStatus !== message.status) {
+				if (newStatus !== message.status) {
 					await db.smsMessage.update({
 						where: { id: message.id },
 						data: {
 							status: newStatus,
-							...(twilioData.error_code && {
-								errorCode: twilioData.error_code.toString()
-							}),
-							...(twilioData.error_message && {
-								errorMessage: twilioData.error_message
-							})
+							// Explicitly clear or set error fields
+							errorCode: twilioData.error_code?.toString() || null,
+							errorMessage: twilioData.error_message || null
 						}
 					});
 

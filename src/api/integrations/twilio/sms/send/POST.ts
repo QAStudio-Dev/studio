@@ -136,7 +136,7 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 						from: twilioData.from,
 						to: twilioData.to,
 						body: twilioData.body,
-						accountSid: user.team.twilioAccountSid, // Already encrypted in team settings
+						accountSid, // Store plaintext for verification (already decrypted above)
 						status: twilioData.status,
 						sentBy: userId
 					}
@@ -170,7 +170,7 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 						from: from,
 						to: input.to,
 						body: input.body,
-						accountSid: user.team.twilioAccountSid, // Already encrypted in team settings
+						accountSid, // Store plaintext for verification (already decrypted above)
 						status: 'failed',
 						sentBy: userId,
 						errorCode: err.code?.toString(),
