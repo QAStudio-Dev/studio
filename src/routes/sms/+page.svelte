@@ -13,8 +13,11 @@
 	} from 'lucide-svelte';
 	import { E164_PHONE_REGEX } from '$lib/validation/twilio';
 
-	const AUTO_REFRESH_INTERVAL_MS = 5000;
-	const MESSAGE_DISMISS_TIMEOUT_MS = 10000;
+	// Constants
+	const AUTO_REFRESH_INTERVAL_MS = 5000; // Poll for new messages every 5 seconds
+	const SUCCESS_DISMISS_MS = 3000; // Success messages disappear after 3 seconds
+	const ERROR_DISMISS_MS = 10000; // Error messages stay visible for 10 seconds
+	const MAX_SMS_LENGTH = 1600; // Twilio max for concatenated SMS
 
 	type SmsMessage = {
 		id: string;
@@ -55,10 +58,7 @@
 		return () => {
 			// Clean up auto-refresh interval on unmount
 			autoRefresh = false;
-			if (refreshInterval) {
-				clearInterval(refreshInterval);
-				refreshInterval = null;
-			}
+			stopAutoRefresh();
 		};
 	});
 
@@ -107,7 +107,7 @@
 		// Validation
 		if (!recipientNumber || !messageBody) {
 			sendError = 'Recipient number and message are required';
-			setTimeout(() => (sendError = null), MESSAGE_DISMISS_TIMEOUT_MS);
+			setTimeout(() => (sendError = null), ERROR_DISMISS_MS);
 			return;
 		}
 
@@ -116,13 +116,13 @@
 
 		if (!E164_PHONE_REGEX.test(sanitizedNumber)) {
 			sendError = 'Invalid phone number format. Must be E.164 format (e.g., +15551234567)';
-			setTimeout(() => (sendError = null), MESSAGE_DISMISS_TIMEOUT_MS);
+			setTimeout(() => (sendError = null), ERROR_DISMISS_MS);
 			return;
 		}
 
-		if (messageBody.length > 1600) {
-			sendError = 'Message body must be 1600 characters or less';
-			setTimeout(() => (sendError = null), MESSAGE_DISMISS_TIMEOUT_MS);
+		if (messageBody.length > MAX_SMS_LENGTH) {
+			sendError = `Message must be ${MAX_SMS_LENGTH} characters or less`;
+			setTimeout(() => (sendError = null), ERROR_DISMISS_MS);
 			return;
 		}
 
@@ -142,12 +142,12 @@
 
 			if (!res.ok) {
 				sendError = data.message || 'Failed to send SMS';
-				setTimeout(() => (sendError = null), MESSAGE_DISMISS_TIMEOUT_MS);
+				setTimeout(() => (sendError = null), ERROR_DISMISS_MS);
 				return;
 			}
 
 			sendSuccess = `Message sent successfully! (${data.messageSid})`;
-			setTimeout(() => (sendSuccess = null), MESSAGE_DISMISS_TIMEOUT_MS);
+			setTimeout(() => (sendSuccess = null), SUCCESS_DISMISS_MS);
 			recipientNumber = '';
 			messageBody = '';
 
@@ -161,31 +161,34 @@
 			}
 		} catch (err) {
 			sendError = err instanceof Error ? err.message : 'An unexpected error occurred';
-			setTimeout(() => (sendError = null), MESSAGE_DISMISS_TIMEOUT_MS);
+			setTimeout(() => (sendError = null), ERROR_DISMISS_MS);
 		} finally {
 			sending = false;
 		}
 	}
 
-	function toggleAutoRefresh() {
-		autoRefresh = !autoRefresh;
+	function startAutoRefresh() {
+		stopAutoRefresh();
+		refreshInterval = setInterval(async () => {
+			try {
+				await loadMessages();
+			} catch (err) {
+				console.error('Auto-refresh failed:', err);
+				// Don't stop auto-refresh on error, just log it
+			}
+		}, AUTO_REFRESH_INTERVAL_MS);
+	}
 
-		// Always clear existing interval first
+	function stopAutoRefresh() {
 		if (refreshInterval) {
 			clearInterval(refreshInterval);
 			refreshInterval = null;
 		}
+	}
 
-		if (autoRefresh) {
-			refreshInterval = setInterval(async () => {
-				try {
-					await loadMessages();
-				} catch (err) {
-					console.error('Auto-refresh failed:', err);
-					// Don't stop auto-refresh on error, just log it
-				}
-			}, AUTO_REFRESH_INTERVAL_MS);
-		}
+	function toggleAutoRefresh() {
+		autoRefresh = !autoRefresh;
+		autoRefresh ? startAutoRefresh() : stopAutoRefresh();
 	}
 
 	function formatDate(date: string) {
@@ -249,6 +252,8 @@
 					onclick={toggleAutoRefresh}
 					class:preset-filled-primary-500={autoRefresh}
 					class:preset-outlined-surface-500={!autoRefresh}
+					aria-pressed={autoRefresh}
+					aria-label={autoRefresh ? 'Disable auto-refresh' : 'Enable auto-refresh'}
 				>
 					<RefreshCw class="h-4 w-4 {autoRefresh ? 'animate-spin' : ''}" />
 					{autoRefresh ? 'Auto-Refresh ON' : 'Auto-Refresh OFF'}

@@ -19,8 +19,8 @@ export const GET: RequestHandler = async (event) => {
 	const limitParam = url.searchParams.get('limit');
 	const offsetParam = url.searchParams.get('offset');
 
-	const limit = Math.min(Math.max(1, parseInt(limitParam || '100')), 1000);
-	const offset = Math.max(0, parseInt(offsetParam || '0'));
+	const limit = Math.min(Math.max(1, parseInt(limitParam || '100') || 100), 1000);
+	const offset = Math.max(0, parseInt(offsetParam || '0') || 0);
 
 	// Get user's team
 	const user = await db.user.findUnique({
@@ -84,6 +84,13 @@ export const GET: RequestHandler = async (event) => {
 		});
 	} catch (error) {
 		console.error('Error fetching SMS messages:', error);
-		return json({ message: 'Failed to fetch messages' }, { status: 500 });
+		const message = error instanceof Error ? error.message : 'Failed to fetch messages';
+		return json(
+			{
+				message,
+				...(process.env.NODE_ENV === 'development' && { details: error })
+			},
+			{ status: 500 }
+		);
 	}
 };
