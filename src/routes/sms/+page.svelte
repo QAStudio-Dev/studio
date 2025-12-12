@@ -77,20 +77,18 @@
 	}
 
 	async function loadMessages() {
+		if (!twilioEnabled) return;
 		loadingMessages = true;
 		loadError = null;
 		try {
 			const res = await fetch('/api/integrations/twilio/messages');
 			if (res.ok) {
 				const data = await res.json();
-				// Backend already sorts by createdAt DESC, but re-sort for safety
-				messages = data.sort(
-					(a: SmsMessage, b: SmsMessage) =>
-						new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-				);
+				// Backend already sorts by createdAt DESC
+				messages = data;
 			} else {
 				const error = await res.json();
-				loadError = error.error || 'Failed to load messages';
+				loadError = error.message || 'Failed to load messages';
 			}
 		} catch (err) {
 			console.error('Failed to load messages:', err);
@@ -151,8 +149,8 @@
 
 			// Reload messages
 			await loadMessages();
-		} catch (err: any) {
-			sendError = err.message || 'An unexpected error occurred';
+		} catch (err) {
+			sendError = err instanceof Error ? err.message : 'An unexpected error occurred';
 			setTimeout(() => (sendError = null), MESSAGE_DISMISS_TIMEOUT_MS);
 		} finally {
 			sending = false;
@@ -163,8 +161,13 @@
 		autoRefresh = !autoRefresh;
 
 		if (autoRefresh) {
-			refreshInterval = setInterval(() => {
-				loadMessages();
+			refreshInterval = setInterval(async () => {
+				try {
+					await loadMessages();
+				} catch (err) {
+					console.error('Auto-refresh failed:', err);
+					// Don't stop auto-refresh on error, just log it
+				}
 			}, AUTO_REFRESH_INTERVAL_MS);
 		} else {
 			if (refreshInterval) {

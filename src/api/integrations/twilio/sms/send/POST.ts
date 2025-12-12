@@ -136,7 +136,7 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 						from: twilioData.from,
 						to: twilioData.to,
 						body: twilioData.body,
-						accountSid: accountSid,
+						accountSid: user.team.twilioAccountSid, // Store encrypted version
 						status: twilioData.status,
 						sentBy: userId
 					}
@@ -170,7 +170,7 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 						from: from,
 						to: input.to,
 						body: input.body,
-						accountSid: accountSid,
+						accountSid: user.team.twilioAccountSid, // Store encrypted version
 						status: 'failed',
 						sentBy: userId,
 						errorCode: err.code?.toString(),

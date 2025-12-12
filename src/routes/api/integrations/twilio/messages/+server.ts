@@ -25,18 +25,18 @@ export const GET: RequestHandler = async (event) => {
 	});
 
 	if (!user?.teamId || !user.team) {
-		return json({ error: 'Team not found' }, { status: 404 });
+		return json({ message: 'Team not found' }, { status: 404 });
 	}
 
 	// Check if Twilio is enabled
 	if (!user.team.twilioEnabled) {
-		return json({ error: 'Twilio integration is not enabled' }, { status: 400 });
+		return json({ message: 'Twilio integration is not enabled' }, { status: 400 });
 	}
 
 	// Check plan (Pro/Enterprise only)
 	if (user.team.plan === 'FREE') {
 		return json(
-			{ error: 'Twilio integration requires Pro or Enterprise plan' },
+			{ message: 'Twilio integration requires Pro or Enterprise plan' },
 			{ status: 403 }
 		);
 	}
@@ -56,6 +56,6 @@ export const GET: RequestHandler = async (event) => {
 		return json(messages);
 	} catch (error) {
 		console.error('Error fetching SMS messages:', error);
-		return json({ error: 'Failed to fetch messages' }, { status: 500 });
+		return json({ message: 'Failed to fetch messages' }, { status: 500 });
 	}
 };
