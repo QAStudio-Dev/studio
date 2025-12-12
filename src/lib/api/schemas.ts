@@ -925,6 +925,302 @@ export const EnterpriseInquiryApi = {
 } as const;
 
 // ============================================
+// TWILIO INTEGRATION API
+// ============================================
+
+export type TwilioConfigResponse = {
+	twilioEnabled: boolean;
+	twilioPhoneNumber: string | null;
+	twilioMessagingUrl: string | null;
+	twilioConfiguredAt: Date | string | null;
+	twilioConfiguredBy: string | null;
+	hasAccountSid: boolean;
+	hasAuthToken: boolean;
+};
+
+export type ConfigureTwilioBody = {
+	accountSid: string;
+	authToken: string;
+	phoneNumber: string;
+	messagingUrl?: string;
+};
+
+export type SendSmsBody = {
+	to: string;
+	body: string;
+};
+
+export type SendSmsResponse = {
+	success: boolean;
+	messageSid: string;
+	status: string;
+	to: string;
+	from: string;
+	body: string;
+	dateCreated: string;
+};
+
+export type SmsMessage = {
+	sid: string;
+	from: string;
+	to: string;
+	body: string;
+	status: string;
+	direction: 'inbound' | 'outbound';
+	dateCreated: string;
+	dateSent: string | null;
+	dateUpdated: string;
+	numMedia: number;
+	errorCode: string | null;
+	errorMessage: string | null;
+};
+
+export type SmsMessagesResponse = {
+	messages: SmsMessage[];
+	total: number;
+	phoneNumber: string;
+};
+
+export const TwilioApi = {
+	getConfig: {
+		method: 'GET',
+		path: '/api/integrations/twilio',
+		description:
+			"Get Twilio configuration for the authenticated user's team. Pro/Enterprise plans only.",
+		tags: ['Twilio Integration'],
+		responses: {
+			200: {
+				description: 'Success',
+				example: {
+					twilioEnabled: true,
+					twilioPhoneNumber: '+15551234567',
+					twilioMessagingUrl: null,
+					twilioConfiguredAt: '2024-01-15T10:30:00Z',
+					twilioConfiguredBy: 'user_123',
+					hasAccountSid: true,
+					hasAuthToken: true
+				} as TwilioConfigResponse
+			},
+			403: {
+				description: 'Free plan - upgrade required',
+				example: {
+					error: 'Twilio integration requires Pro or Enterprise plan'
+				} as ErrorResponse
+			},
+			404: {
+				description: 'Team not found',
+				example: {
+					error: 'Team not found'
+				} as ErrorResponse
+			}
+		}
+	} satisfies ApiSchema,
+
+	configure: {
+		method: 'POST',
+		path: '/api/integrations/twilio',
+		description:
+			'Configure or update Twilio integration for the team. Requires OWNER, ADMIN, or MANAGER role. Pro/Enterprise plans only.',
+		tags: ['Twilio Integration'],
+		body: {
+			description: 'Twilio credentials and configuration',
+			example: {
+				accountSid: 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+				authToken: 'your_auth_token_here',
+				phoneNumber: '+15551234567',
+				messagingUrl: 'https://example.com/webhook'
+			} as ConfigureTwilioBody
+		},
+		responses: {
+			200: {
+				description: 'Configuration saved successfully',
+				example: {
+					message: 'Twilio configuration saved successfully',
+					twilioEnabled: true,
+					twilioPhoneNumber: '+15551234567',
+					twilioMessagingUrl: 'https://example.com/webhook',
+					twilioConfiguredAt: '2024-01-15T10:30:00Z',
+					twilioConfiguredBy: 'user_123'
+				}
+			},
+			400: {
+				description: 'Invalid request',
+				example: {
+					error: 'Phone number must be in E.164 format (e.g., +15551234567)'
+				} as ErrorResponse
+			},
+			403: {
+				description: 'Insufficient permissions or plan upgrade required',
+				example: {
+					error: 'Twilio integration requires Pro or Enterprise plan'
+				} as ErrorResponse
+			}
+		}
+	} satisfies ApiSchema,
+
+	remove: {
+		method: 'DELETE',
+		path: '/api/integrations/twilio',
+		description:
+			'Remove Twilio configuration from the team. Requires OWNER, ADMIN, or MANAGER role.',
+		tags: ['Twilio Integration'],
+		responses: {
+			200: {
+				description: 'Configuration removed successfully',
+				example: {
+					message: 'Twilio configuration removed successfully'
+				}
+			},
+			403: {
+				description: 'Insufficient permissions',
+				example: {
+					error: 'Insufficient permissions'
+				} as ErrorResponse
+			},
+			404: {
+				description: 'Team not found',
+				example: {
+					error: 'Team not found'
+				} as ErrorResponse
+			}
+		}
+	} satisfies ApiSchema,
+
+	sendSms: {
+		method: 'POST',
+		path: '/api/integrations/twilio/sms/send',
+		description: 'Send an SMS message via Twilio. Pro/Enterprise plans only.',
+		tags: ['Twilio Integration'],
+		body: {
+			description: 'SMS message details',
+			example: {
+				to: '+15559876543',
+				body: 'Your verification code is: 123456'
+			} as SendSmsBody
+		},
+		responses: {
+			200: {
+				description: 'SMS sent successfully',
+				example: {
+					success: true,
+					messageSid: 'SMxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+					status: 'queued',
+					to: '+15559876543',
+					from: '+15551234567',
+					body: 'Your verification code is: 123456',
+					dateCreated: '2024-01-15T10:30:00Z'
+				} as SendSmsResponse
+			},
+			400: {
+				description: 'Invalid request or Twilio not configured',
+				example: {
+					error: 'Recipient phone number must be in E.164 format (e.g., +15551234567)'
+				} as ErrorResponse
+			},
+			403: {
+				description: 'Free plan - upgrade required',
+				example: {
+					error: 'Twilio integration requires Pro or Enterprise plan'
+				} as ErrorResponse
+			}
+		}
+	} satisfies ApiSchema,
+
+	getMessages: {
+		method: 'GET',
+		path: '/api/integrations/twilio/sms/messages',
+		description: 'Get recent SMS messages from Twilio. Pro/Enterprise plans only.',
+		tags: ['Twilio Integration'],
+		query: {
+			limit: {
+				type: 'number',
+				description: 'Maximum number of messages to return (max 100)',
+				required: false,
+				example: '20'
+			},
+			direction: {
+				type: 'string',
+				description: 'Filter by message direction: inbound or outbound',
+				required: false,
+				example: 'inbound'
+			}
+		},
+		responses: {
+			200: {
+				description: 'Messages retrieved successfully',
+				example: {
+					messages: [
+						{
+							sid: 'SMxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+							from: '+15559876543',
+							to: '+15551234567',
+							body: 'Test message',
+							status: 'received',
+							direction: 'inbound',
+							dateCreated: '2024-01-15T10:30:00Z',
+							dateSent: '2024-01-15T10:30:01Z',
+							dateUpdated: '2024-01-15T10:30:01Z',
+							numMedia: 0,
+							errorCode: null,
+							errorMessage: null
+						}
+					],
+					total: 1,
+					phoneNumber: '+15551234567'
+				} as SmsMessagesResponse
+			},
+			400: {
+				description: 'Twilio not configured',
+				example: {
+					error: 'Twilio is not configured for this team'
+				} as ErrorResponse
+			},
+			403: {
+				description: 'Free plan - upgrade required',
+				example: {
+					error: 'Twilio integration requires Pro or Enterprise plan'
+				} as ErrorResponse
+			}
+		}
+	} satisfies ApiSchema,
+
+	receiveWebhook: {
+		method: 'POST',
+		path: '/api/integrations/twilio/sms/receive',
+		description:
+			'Webhook endpoint for receiving incoming SMS messages from Twilio. Configure this URL in your Twilio phone number settings.',
+		tags: ['Twilio Integration'],
+		body: {
+			description: 'Form data from Twilio (application/x-www-form-urlencoded)',
+			example: {
+				MessageSid: 'SMxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+				AccountSid: 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+				From: '+15559876543',
+				To: '+15551234567',
+				Body: 'Incoming message',
+				NumMedia: '0'
+			}
+		},
+		responses: {
+			200: {
+				description: 'Message received successfully (returns TwiML)',
+				example: '<?xml version="1.0" encoding="UTF-8"?><Response></Response>'
+			},
+			400: {
+				description: 'Missing required fields',
+				example:
+					'<?xml version="1.0" encoding="UTF-8"?><Response><Message>Missing required fields</Message></Response>'
+			},
+			404: {
+				description: 'Phone number not configured',
+				example:
+					'<?xml version="1.0" encoding="UTF-8"?><Response><Message>Phone number not configured</Message></Response>'
+			}
+		}
+	} satisfies ApiSchema
+} as const;
+
+// ============================================
 // ALL API SCHEMAS
 // ============================================
 
@@ -937,5 +1233,6 @@ export const ApiSchemas = {
 	environments: EnvironmentsApi,
 	testSuites: TestSuitesApi,
 	attachments: AttachmentsApi,
-	enterpriseInquiry: EnterpriseInquiryApi
+	enterpriseInquiry: EnterpriseInquiryApi,
+	twilio: TwilioApi
 } as const;

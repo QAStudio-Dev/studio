@@ -867,6 +867,59 @@
 							</div>
 						{/if}
 
+						<!-- Twilio Integration -->
+						<div class="border-surface-200-700 rounded-container border p-4">
+							<div class="mb-3 flex items-start gap-3">
+								<div
+									class="flex h-12 w-12 items-center justify-center rounded-container bg-[#F22F46]"
+								>
+									<svg
+										class="h-7 w-7 text-white"
+										viewBox="0 0 24 24"
+										fill="currentColor"
+									>
+										<path
+											d="M12 0C5.381 0 0 5.381 0 12s5.381 12 12 12 12-5.381 12-12S18.619 0 12 0zm0 22.5C6.21 22.5 1.5 17.79 1.5 12S6.21 1.5 12 1.5 22.5 6.21 22.5 12 17.79 22.5 12 22.5zm4.533-13.033c0 1.131-.918 2.05-2.05 2.05-1.131 0-2.049-.919-2.049-2.05 0-1.132.918-2.05 2.05-2.05 1.131 0 2.049.918 2.049 2.05zm-6.533 0c0 1.131-.918 2.05-2.05 2.05-1.131 0-2.05-.919-2.05-2.05 0-1.132.919-2.05 2.05-2.05 1.132 0 2.05.918 2.05 2.05zm0 6.533c0 1.131-.918 2.05-2.05 2.05-1.131 0-2.05-.919-2.05-2.05 0-1.132.919-2.05 2.05-2.05 1.132 0 2.05.918 2.05 2.05zm6.533 0c0 1.131-.918 2.05-2.05 2.05-1.131 0-2.049-.919-2.049-2.05 0-1.132.918-2.05 2.05-2.05 1.131 0 2.049.918 2.049 2.05z"
+										/>
+									</svg>
+								</div>
+								<div class="flex-1">
+									<h4 class="mb-1 font-bold">
+										Twilio SMS
+										<span
+											class="ml-2 rounded-base bg-primary-500 px-2 py-0.5 text-xs font-semibold text-white"
+										>
+											PRO
+										</span>
+									</h4>
+									<p class="text-surface-600-300 text-sm">
+										Send and receive SMS for testing workflows
+									</p>
+								</div>
+							</div>
+
+							{#if user.team}
+								{#if user.team.plan === 'FREE'}
+									<button class="btn w-full preset-outlined-surface-500" disabled>
+										<Crown class="mr-2 h-4 w-4" />
+										Requires Pro Plan
+									</button>
+								{:else}
+									<a
+										href="/settings/integrations/twilio"
+										class="btn w-full preset-filled-primary-500"
+									>
+										<ExternalLink class="mr-2 h-4 w-4" />
+										Configure Twilio
+									</a>
+								{/if}
+							{:else}
+								<button class="btn w-full preset-outlined-surface-500" disabled>
+									Requires Team
+								</button>
+							{/if}
+						</div>
+
 						<!-- More integrations coming soon -->
 						<div class="border-surface-200-700 rounded-container border p-4 opacity-50">
 							<div class="mb-3 flex items-start gap-3">
