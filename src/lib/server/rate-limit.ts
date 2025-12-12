@@ -58,6 +58,10 @@ export async function checkRateLimit(config: RateLimitConfig): Promise<void> {
 	}
 
 	// Fallback to in-memory rate limiting for development
+	console.warn(
+		'⚠️  [Rate Limit] Using in-memory fallback (NOT production-safe). Configure Redis via UPSTASH_REDIS_REST_URL for production.'
+	);
+
 	const now = Date.now();
 	const fullKey = `${prefix}:${key}`;
 	const attempt = rateLimitMemory.get(fullKey);

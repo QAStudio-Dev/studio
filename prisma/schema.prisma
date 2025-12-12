@@ -154,6 +154,7 @@ model Team {
   @@index([overSeatLimit, id]) // Composite index for middleware queries
   @@index([ssoEnabled])
   @@index([ssoProvider])
+  @@index([twilioPhoneNumber]) // For webhook lookups by phone number
 }
 
 model Subscription {

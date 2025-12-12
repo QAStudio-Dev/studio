@@ -4,6 +4,7 @@ import { requireApiAuth } from '$lib/server/api-auth';
 import { decrypt } from '$lib/server/encryption';
 import { checkRateLimit } from '$lib/server/rate-limit';
 import { E164_PHONE_REGEX } from '$lib/validation/twilio';
+import { randomBytes } from 'crypto';
 
 export const Input = z.object({
 	to: z.string().regex(E164_PHONE_REGEX).describe('Recipient phone number in E.164 format'),
@@ -61,10 +62,18 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 			throw Error[404];
 		}
 
-		// Rate limiting: 100 SMS per hour per team
+		// Rate limiting: Plan-based SMS limits per hour
+		const rateLimitByPlan = {
+			FREE: 0, // Not allowed
+			PRO: 100,
+			ENTERPRISE: 1000
+		};
+
+		const limit = rateLimitByPlan[user.team.plan];
+
 		await checkRateLimit({
 			key: `twilio_sms:${user.teamId}`,
-			limit: 100,
+			limit,
 			window: 3600, // 1 hour
 			prefix: 'ratelimit:twilio'
 		});
@@ -157,7 +166,7 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 					data: {
 						teamId: user.teamId,
 						direction: 'OUTBOUND',
-						messageSid: `FAILED_${Date.now()}`, // Generate unique ID for failed messages
+						messageSid: `FAILED_${Date.now()}_${randomBytes(4).toString('hex')}`, // Generate unique ID for failed messages
 						from: from,
 						to: input.to,
 						body: input.body,
