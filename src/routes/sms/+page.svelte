@@ -337,7 +337,7 @@
 							type="tel"
 							bind:value={recipientNumber}
 							placeholder="+15551234567"
-							class="w-full"
+							class="input w-full"
 							required
 							disabled={sending}
 						/>
@@ -357,7 +357,7 @@
 							bind:value={messageBody}
 							placeholder="Enter your message here..."
 							rows="5"
-							class="w-full"
+							class="textarea w-full"
 							maxlength="1600"
 							required
 							disabled={sending}

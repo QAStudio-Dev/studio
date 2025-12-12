@@ -237,7 +237,7 @@
 						type="text"
 						bind:value={accountSid}
 						placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-						class="w-full"
+						class="input w-full"
 						autocomplete="off"
 						required
 					/>
@@ -257,7 +257,7 @@
 						type="password"
 						bind:value={authToken}
 						placeholder="Enter your Twilio Auth Token"
-						class="w-full"
+						class="input w-full"
 						autocomplete="off"
 						required
 					/>
@@ -277,7 +277,7 @@
 						type="tel"
 						bind:value={phoneNumber}
 						placeholder="+15551234567"
-						class="w-full"
+						class="input w-full"
 						required
 					/>
 					<p class="text-surface-500-400 mt-1 text-xs">
@@ -297,7 +297,7 @@
 						type="text"
 						bind:value={messagingUrl}
 						placeholder="MGxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx or https://..."
-						class="w-full"
+						class="input w-full"
 					/>
 					<p class="text-surface-500-400 mt-1 text-xs">
 						Optional: Use a Messaging Service SID for advanced features
