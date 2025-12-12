@@ -52,8 +52,10 @@
 	let refreshInterval: NodeJS.Timeout | null = null;
 
 	onMount(() => {
-		loadConfig();
-		loadMessages();
+		// Load config first, then messages (sequential to avoid race condition)
+		loadConfig().then(() => {
+			loadMessages();
+		});
 
 		return () => {
 			// Clean up auto-refresh interval on unmount
