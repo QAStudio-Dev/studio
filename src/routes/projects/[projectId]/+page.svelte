@@ -140,7 +140,6 @@
 			if (!response.ok) {
 				const error = await response.json();
 				deleteError = error.message || 'Failed to delete project';
-				isDeleting = false;
 				return;
 			}
 
@@ -158,6 +157,7 @@
 		} catch (error) {
 			console.error('Error deleting project:', error);
 			deleteError = 'Failed to delete project';
+		} finally {
 			isDeleting = false;
 		}
 	}

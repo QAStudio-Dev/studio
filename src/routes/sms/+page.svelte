@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
 	import {
 		MessageSquare,
 		Send,
@@ -13,6 +12,9 @@
 		Settings
 	} from 'lucide-svelte';
 	import { E164_PHONE_REGEX } from '$lib/validation/twilio';
+
+	const AUTO_REFRESH_INTERVAL_MS = 5000;
+	const MESSAGE_DISMISS_TIMEOUT_MS = 10000;
 
 	type SmsMessage = {
 		id: string;
@@ -31,6 +33,7 @@
 	let messages = $state<SmsMessage[]>([]);
 	let loading = $state(true);
 	let loadingMessages = $state(false);
+	let loadError = $state<string | null>(null);
 	let twilioEnabled = $state(false);
 	let twilioPhoneNumber = $state<string | null>(null);
 
@@ -52,7 +55,9 @@
 		return () => {
 			if (refreshInterval) {
 				clearInterval(refreshInterval);
+				refreshInterval = null;
 			}
+			autoRefresh = false;
 		};
 	});
 
@@ -73,17 +78,23 @@
 
 	async function loadMessages() {
 		loadingMessages = true;
+		loadError = null;
 		try {
 			const res = await fetch('/api/integrations/twilio/messages');
 			if (res.ok) {
 				const data = await res.json();
+				// Backend already sorts by createdAt DESC, but re-sort for safety
 				messages = data.sort(
 					(a: SmsMessage, b: SmsMessage) =>
 						new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
 				);
+			} else {
+				const error = await res.json();
+				loadError = error.error || 'Failed to load messages';
 			}
 		} catch (err) {
 			console.error('Failed to load messages:', err);
+			loadError = 'Failed to load messages. Please try again.';
 		} finally {
 			loadingMessages = false;
 		}
@@ -97,16 +108,19 @@
 		// Validation
 		if (!recipientNumber || !messageBody) {
 			sendError = 'Recipient number and message are required';
+			setTimeout(() => (sendError = null), MESSAGE_DISMISS_TIMEOUT_MS);
 			return;
 		}
 
 		if (!E164_PHONE_REGEX.test(recipientNumber)) {
 			sendError = 'Invalid phone number format. Must be E.164 format (e.g., +15551234567)';
+			setTimeout(() => (sendError = null), MESSAGE_DISMISS_TIMEOUT_MS);
 			return;
 		}
 
 		if (messageBody.length > 1600) {
 			sendError = 'Message body must be 1600 characters or less';
+			setTimeout(() => (sendError = null), MESSAGE_DISMISS_TIMEOUT_MS);
 			return;
 		}
 
@@ -125,17 +139,21 @@
 			const data = await res.json();
 
 			if (!res.ok) {
-				throw new Error(data.message || 'Failed to send SMS');
+				sendError = data.message || 'Failed to send SMS';
+				setTimeout(() => (sendError = null), MESSAGE_DISMISS_TIMEOUT_MS);
+				return;
 			}
 
 			sendSuccess = `Message sent successfully! (${data.messageSid})`;
+			setTimeout(() => (sendSuccess = null), MESSAGE_DISMISS_TIMEOUT_MS);
 			recipientNumber = '';
 			messageBody = '';
 
 			// Reload messages
 			await loadMessages();
 		} catch (err: any) {
-			sendError = err.message;
+			sendError = err.message || 'An unexpected error occurred';
+			setTimeout(() => (sendError = null), MESSAGE_DISMISS_TIMEOUT_MS);
 		} finally {
 			sending = false;
 		}
@@ -145,10 +163,9 @@
 		autoRefresh = !autoRefresh;
 
 		if (autoRefresh) {
-			// Refresh every 5 seconds
 			refreshInterval = setInterval(() => {
 				loadMessages();
-			}, 5000);
+			}, AUTO_REFRESH_INTERVAL_MS);
 		} else {
 			if (refreshInterval) {
 				clearInterval(refreshInterval);
@@ -361,6 +378,17 @@
 						<RefreshCw class="h-4 w-4 {loadingMessages ? 'animate-spin' : ''}" />
 					</button>
 				</div>
+
+				{#if loadError}
+					<div class="mb-4 flex items-start gap-3 rounded-container bg-error-500/10 p-4">
+						<AlertCircle class="mt-0.5 h-5 w-5 text-error-500" />
+						<div class="flex-1">
+							<div class="text-sm text-error-600 dark:text-error-400">
+								{loadError}
+							</div>
+						</div>
+					</div>
+				{/if}
 
 				{#if loadingMessages && messages.length === 0}
 					<div class="text-surface-600-300 py-8 text-center">

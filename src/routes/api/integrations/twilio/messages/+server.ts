@@ -42,15 +42,20 @@ export const GET: RequestHandler = async (event) => {
 	}
 
 	// Fetch messages for this team
-	const messages = await db.smsMessage.findMany({
-		where: {
-			teamId: user.teamId
-		},
-		orderBy: {
-			createdAt: 'desc'
-		},
-		take: 100 // Limit to 100 most recent messages
-	});
+	try {
+		const messages = await db.smsMessage.findMany({
+			where: {
+				teamId: user.teamId
+			},
+			orderBy: {
+				createdAt: 'desc'
+			},
+			take: 100 // Limit to 100 most recent messages
+		});
 
-	return json(messages);
+		return json(messages);
+	} catch (error) {
+		console.error('Error fetching SMS messages:', error);
+		return json({ error: 'Failed to fetch messages' }, { status: 500 });
+	}
 };
