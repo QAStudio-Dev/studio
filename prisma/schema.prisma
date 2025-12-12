@@ -766,6 +766,7 @@ model SmsMessage {
   @@index([sentBy])
   @@index([status])
   @@index([createdAt])
+  @@index([teamId, createdAt]) // For querying all team messages sorted by date (primary use case)
   @@index([teamId, direction, createdAt]) // For querying team messages by direction and date
 }
 
