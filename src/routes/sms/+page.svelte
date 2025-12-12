@@ -53,11 +53,12 @@
 		loadMessages();
 
 		return () => {
+			// Clean up auto-refresh interval on unmount
+			autoRefresh = false;
 			if (refreshInterval) {
 				clearInterval(refreshInterval);
 				refreshInterval = null;
 			}
-			autoRefresh = false;
 		};
 	});
 
@@ -84,8 +85,8 @@
 			const res = await fetch('/api/integrations/twilio/messages');
 			if (res.ok) {
 				const data = await res.json();
-				// Backend already sorts by createdAt DESC
-				messages = data;
+				// Handle new pagination response format (backwards compatible)
+				messages = data.messages || data;
 			} else {
 				const error = await res.json();
 				loadError = error.message || 'Failed to load messages';
@@ -110,7 +111,10 @@
 			return;
 		}
 
-		if (!E164_PHONE_REGEX.test(recipientNumber)) {
+		// Sanitize phone number - remove spaces, dashes, parentheses for better UX
+		const sanitizedNumber = recipientNumber.replace(/[\s\-\(\)]/g, '');
+
+		if (!E164_PHONE_REGEX.test(sanitizedNumber)) {
 			sendError = 'Invalid phone number format. Must be E.164 format (e.g., +15551234567)';
 			setTimeout(() => (sendError = null), MESSAGE_DISMISS_TIMEOUT_MS);
 			return;
@@ -129,7 +133,7 @@
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					to: recipientNumber,
+					to: sanitizedNumber,
 					body: messageBody
 				})
 			});
@@ -147,8 +151,14 @@
 			recipientNumber = '';
 			messageBody = '';
 
-			// Reload messages
-			await loadMessages();
+			// Reload messages - with error recovery
+			try {
+				await loadMessages();
+			} catch (refreshErr) {
+				console.warn('Message sent successfully but failed to refresh list:', refreshErr);
+				// Don't overwrite the success message - user still sent the message successfully
+				sendSuccess = `Message sent! (Refresh the page to see it in the list)`;
+			}
 		} catch (err) {
 			sendError = err instanceof Error ? err.message : 'An unexpected error occurred';
 			setTimeout(() => (sendError = null), MESSAGE_DISMISS_TIMEOUT_MS);
@@ -160,6 +170,12 @@
 	function toggleAutoRefresh() {
 		autoRefresh = !autoRefresh;
 
+		// Always clear existing interval first
+		if (refreshInterval) {
+			clearInterval(refreshInterval);
+			refreshInterval = null;
+		}
+
 		if (autoRefresh) {
 			refreshInterval = setInterval(async () => {
 				try {
@@ -169,11 +185,6 @@
 					// Don't stop auto-refresh on error, just log it
 				}
 			}, AUTO_REFRESH_INTERVAL_MS);
-		} else {
-			if (refreshInterval) {
-				clearInterval(refreshInterval);
-				refreshInterval = null;
-			}
 		}
 	}
 
