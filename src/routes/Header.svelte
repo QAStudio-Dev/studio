@@ -284,6 +284,16 @@
 							Authenticators
 						</a>
 
+						<!-- SMS Messages -->
+						<a
+							href="/sms"
+							class="rounded-base px-4 py-2 transition-colors {isActive('/sms')
+								? 'bg-primary-500 text-white'
+								: 'hover:bg-surface-200-800'}"
+						>
+							SMS
+						</a>
+
 						<!-- Reports -->
 						<a
 							href="/reports"
@@ -503,6 +513,17 @@
 								: 'hover:bg-surface-200-800'}"
 						>
 							Authenticators
+						</a>
+
+						<!-- SMS Messages -->
+						<a
+							href="/sms"
+							onclick={closeMobileMenu}
+							class="rounded-base px-4 py-2 transition-colors {isActive('/sms')
+								? 'bg-primary-500 text-white'
+								: 'hover:bg-surface-200-800'}"
+						>
+							SMS
 						</a>
 
 						<!-- Reports -->

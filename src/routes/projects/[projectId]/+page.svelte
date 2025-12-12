@@ -140,8 +140,12 @@
 			if (!response.ok) {
 				const error = await response.json();
 				deleteError = error.message || 'Failed to delete project';
+				isDeleting = false;
 				return;
 			}
+
+			// Close modal immediately to prevent showing error state
+			showDeleteModal = false;
 
 			// Clear the selected project from the store
 			setSelectedProject(null);
@@ -149,12 +153,11 @@
 			// Trigger project list refresh in header
 			triggerProjectsRefresh();
 
-			// Redirect to projects list
-			await goto('/projects');
+			// Redirect to projects list (this will navigate away before any data refresh)
+			goto('/projects');
 		} catch (error) {
 			console.error('Error deleting project:', error);
 			deleteError = 'Failed to delete project';
-		} finally {
 			isDeleting = false;
 		}
 	}
