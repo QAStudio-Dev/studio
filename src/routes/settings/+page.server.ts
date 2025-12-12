@@ -12,10 +12,22 @@ export const load: PageServerLoad = async ({ locals }) => {
 	// Get user with team and subscription info
 	const user = await db.user.findUnique({
 		where: { id: userId },
-		include: {
+		select: {
+			id: true,
+			email: true,
+			firstName: true,
+			lastName: true,
+			role: true,
+			teamId: true,
+			imageUrl: true,
 			team: {
-				include: {
-					subscription: true,
+				select: {
+					id: true,
+					name: true,
+					description: true,
+					plan: true,
+					twilioEnabled: true,
+					twilioPhoneNumber: true,
 					members: {
 						select: {
 							id: true,
@@ -26,6 +38,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 							createdAt: true
 						}
 					},
+					subscription: true,
 					integrations: {
 						select: {
 							id: true,

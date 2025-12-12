@@ -44,7 +44,7 @@
 			confirmPassword = '';
 
 			setTimeout(() => {
-				goto('/profile');
+				goto('/settings');
 			}, 2000);
 		} catch (err) {
 			error = 'Failed to change password. Please try again.';
@@ -151,7 +151,7 @@
 						>
 							{loading ? 'Changing password...' : 'Change Password'}
 						</button>
-						<a href="/profile" class="btn preset-tonal-primary"> Cancel </a>
+						<a href="/settings" class="btn preset-tonal-primary"> Cancel </a>
 					</div>
 				</form>
 			{/if}

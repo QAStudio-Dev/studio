@@ -16,12 +16,31 @@
 		X,
 		Trash2
 	} from 'lucide-svelte';
+	import { Avatar } from '@skeletonlabs/skeleton-svelte';
 	import { Tabs } from '@skeletonlabs/skeleton-svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { env } from '$env/dynamic/public';
+	import { page } from '$app/state';
 
 	let { data } = $props();
 	let { user } = $derived(data);
+
+	// Get active tab from URL hash (e.g., #api-keys) or default to 'profile'
+	let activeTab = $state('profile');
+
+	// Sync active tab with URL hash
+	$effect(() => {
+		const hash = page.url.hash.slice(1); // Remove # character
+		if (hash && ['profile', 'api-keys', 'team', 'integrations'].includes(hash)) {
+			activeTab = hash;
+		}
+	});
+
+	// Update URL when tab changes
+	function handleTabChange(tabValue: string) {
+		activeTab = tabValue;
+		window.history.replaceState(null, '', `#${tabValue}`);
+	}
 
 	// Team state
 	let leavingTeam = $state(false);
@@ -357,7 +376,7 @@
 	</div>
 
 	<!-- Tabs -->
-	<Tabs defaultValue="profile">
+	<Tabs value={activeTab} onValueChange={(details) => handleTabChange(details.value)}>
 		<Tabs.List class="border-surface-200-700 mb-6 flex gap-2 border-b">
 			<Tabs.Trigger
 				value="profile"
@@ -397,7 +416,79 @@
 		<!-- Profile Tab -->
 		<Tabs.Content value="profile">
 			<div class="card p-6">
-				<h2 class="mb-6 text-2xl font-bold">Profile Settings</h2>
+				<div class="mb-6 flex items-center gap-6">
+					<Avatar class="h-24 w-24">
+						{#if user.imageUrl}
+							<Avatar.Image src={user.imageUrl} alt={user.email} />
+						{:else}
+							<Avatar.Fallback class="bg-primary-500 text-3xl text-white">
+								{user.firstName?.[0] || user.email[0].toUpperCase()}
+							</Avatar.Fallback>
+						{/if}
+					</Avatar>
+					<div>
+						<h2 class="text-2xl font-bold text-surface-900 dark:text-surface-50">
+							{user.firstName}
+							{user.lastName}
+						</h2>
+						<p class="text-surface-600 dark:text-surface-400">{user.email}</p>
+						<p
+							class="mt-1 inline-block rounded-base bg-primary-500/10 px-2 py-1 text-sm font-medium text-primary-700 dark:text-primary-300"
+						>
+							{user.role}
+						</p>
+					</div>
+				</div>
+
+				<div class="space-y-6">
+					<div>
+						<h3
+							class="mb-4 text-lg font-semibold text-surface-900 dark:text-surface-50"
+						>
+							Account Information
+						</h3>
+						<div class="space-y-3 text-sm">
+							<div class="flex justify-between border-b border-surface-300-700 pb-2">
+								<span class="text-surface-600 dark:text-surface-400">Email</span>
+								<span class="font-medium">{user.email}</span>
+							</div>
+							<div class="flex justify-between border-b border-surface-300-700 pb-2">
+								<span class="text-surface-600 dark:text-surface-400"
+									>First Name</span
+								>
+								<span class="font-medium">{user.firstName || 'Not set'}</span>
+							</div>
+							<div class="flex justify-between border-b border-surface-300-700 pb-2">
+								<span class="text-surface-600 dark:text-surface-400">Last Name</span
+								>
+								<span class="font-medium">{user.lastName || 'Not set'}</span>
+							</div>
+							<div class="flex justify-between border-b border-surface-300-700 pb-2">
+								<span class="text-surface-600 dark:text-surface-400">Role</span>
+								<span class="font-medium">{user.role}</span>
+							</div>
+							{#if user.teamId}
+								<div
+									class="flex justify-between border-b border-surface-300-700 pb-2"
+								>
+									<span class="text-surface-600 dark:text-surface-400">Team</span>
+									<a
+										href="/teams/{user.teamId}"
+										class="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400"
+									>
+										View Team
+									</a>
+								</div>
+							{/if}
+						</div>
+					</div>
+
+					<div class="flex gap-4 pt-4">
+						<a href="/change-password" class="btn preset-tonal-primary">
+							Change Password
+						</a>
+					</div>
+				</div>
 			</div>
 		</Tabs.Content>
 
@@ -868,57 +959,62 @@
 						{/if}
 
 						<!-- Twilio Integration -->
-						<div class="border-surface-200-700 rounded-container border p-4">
-							<div class="mb-3 flex items-start gap-3">
-								<div
-									class="flex h-12 w-12 items-center justify-center rounded-container bg-[#F22F46]"
-								>
-									<svg
-										class="h-7 w-7 text-white"
-										viewBox="0 0 24 24"
-										fill="currentColor"
+						{#if !user.team?.twilioEnabled}
+							<div class="border-surface-200-700 rounded-container border p-4">
+								<div class="mb-3 flex items-start gap-3">
+									<div
+										class="flex h-12 w-12 items-center justify-center rounded-container bg-[#F22F46]"
 									>
-										<path
-											d="M12 0C5.381 0 0 5.381 0 12s5.381 12 12 12 12-5.381 12-12S18.619 0 12 0zm0 22.5C6.21 22.5 1.5 17.79 1.5 12S6.21 1.5 12 1.5 22.5 6.21 22.5 12 17.79 22.5 12 22.5zm4.533-13.033c0 1.131-.918 2.05-2.05 2.05-1.131 0-2.049-.919-2.049-2.05 0-1.132.918-2.05 2.05-2.05 1.131 0 2.049.918 2.049 2.05zm-6.533 0c0 1.131-.918 2.05-2.05 2.05-1.131 0-2.05-.919-2.05-2.05 0-1.132.919-2.05 2.05-2.05 1.132 0 2.05.918 2.05 2.05zm0 6.533c0 1.131-.918 2.05-2.05 2.05-1.131 0-2.05-.919-2.05-2.05 0-1.132.919-2.05 2.05-2.05 1.132 0 2.05.918 2.05 2.05zm6.533 0c0 1.131-.918 2.05-2.05 2.05-1.131 0-2.049-.919-2.049-2.05 0-1.132.918-2.05 2.05-2.05 1.131 0 2.049.918 2.049 2.05z"
-										/>
-									</svg>
-								</div>
-								<div class="flex-1">
-									<h4 class="mb-1 font-bold">
-										Twilio SMS
-										<span
-											class="ml-2 rounded-base bg-primary-500 px-2 py-0.5 text-xs font-semibold text-white"
+										<svg
+											class="h-7 w-7 text-white"
+											viewBox="0 0 24 24"
+											fill="currentColor"
 										>
-											PRO
-										</span>
-									</h4>
-									<p class="text-surface-600-300 text-sm">
-										Send and receive SMS for testing workflows
-									</p>
+											<path
+												d="M12 0C5.381 0 0 5.381 0 12s5.381 12 12 12 12-5.381 12-12S18.619 0 12 0zm0 22.5C6.21 22.5 1.5 17.79 1.5 12S6.21 1.5 12 1.5 22.5 6.21 22.5 12 17.79 22.5 12 22.5zm4.533-13.033c0 1.131-.918 2.05-2.05 2.05-1.131 0-2.049-.919-2.049-2.05 0-1.132.918-2.05 2.05-2.05 1.131 0 2.049.918 2.049 2.05zm-6.533 0c0 1.131-.918 2.05-2.05 2.05-1.131 0-2.05-.919-2.05-2.05 0-1.132.919-2.05 2.05-2.05 1.132 0 2.05.918 2.05 2.05zm0 6.533c0 1.131-.918 2.05-2.05 2.05-1.131 0-2.05-.919-2.05-2.05 0-1.132.919-2.05 2.05-2.05 1.132 0 2.05.918 2.05 2.05zm6.533 0c0 1.131-.918 2.05-2.05 2.05-1.131 0-2.049-.919-2.049-2.05 0-1.132.918-2.05 2.05-2.05 1.131 0 2.049.918 2.049 2.05z"
+											/>
+										</svg>
+									</div>
+									<div class="flex-1">
+										<h4 class="mb-1 font-bold">
+											Twilio SMS
+											<span
+												class="ml-2 rounded-base bg-primary-500 px-2 py-0.5 text-xs font-semibold text-white"
+											>
+												PRO
+											</span>
+										</h4>
+										<p class="text-surface-600-300 text-sm">
+											Send and receive SMS for testing workflows
+										</p>
+									</div>
 								</div>
-							</div>
 
-							{#if user.team}
-								{#if user.team.plan === 'FREE'}
-									<button class="btn w-full preset-outlined-surface-500" disabled>
-										<Crown class="mr-2 h-4 w-4" />
-										Requires Pro Plan
-									</button>
+								{#if user.team}
+									{#if user.team.plan === 'FREE'}
+										<button
+											class="btn w-full preset-outlined-surface-500"
+											disabled
+										>
+											<Crown class="mr-2 h-4 w-4" />
+											Requires Pro Plan
+										</button>
+									{:else}
+										<a
+											href="/settings/integrations/twilio"
+											class="btn w-full preset-filled-primary-500"
+										>
+											<ExternalLink class="mr-2 h-4 w-4" />
+											Configure Twilio
+										</a>
+									{/if}
 								{:else}
-									<a
-										href="/settings/integrations/twilio"
-										class="btn w-full preset-filled-primary-500"
-									>
-										<ExternalLink class="mr-2 h-4 w-4" />
-										Configure Twilio
-									</a>
+									<button class="btn w-full preset-outlined-surface-500" disabled>
+										Requires Team
+									</button>
 								{/if}
-							{:else}
-								<button class="btn w-full preset-outlined-surface-500" disabled>
-									Requires Team
-								</button>
-							{/if}
-						</div>
+							</div>
+						{/if}
 
 						<!-- More integrations coming soon -->
 						<div class="border-surface-200-700 rounded-container border p-4 opacity-50">
@@ -943,12 +1039,62 @@
 				</div>
 
 				<!-- Active Integrations -->
-				{#if user.team?.integrations && user.team.integrations.length > 0}
+				{#if (user.team?.integrations && user.team.integrations.length > 0) || user.team?.twilioEnabled}
 					<div class="card p-6">
 						<h3 class="mb-4 text-xl font-bold">Active Integrations</h3>
 
 						<div class="space-y-3">
-							{#each user.team.integrations as integration}
+							<!-- Twilio Integration -->
+							{#if user.team?.twilioEnabled}
+								<div
+									class="border-surface-200-700 group relative rounded-container border p-4"
+								>
+									<!-- Action buttons -->
+									<div
+										class="absolute top-4 right-4 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100"
+									>
+										<!-- Configure button -->
+										<a
+											href="/settings/integrations/twilio"
+											class="text-surface-600-300 rounded-container p-2 transition-colors hover:bg-primary-500/10 hover:text-primary-500"
+											title="Configure Twilio"
+										>
+											<SettingsIcon class="h-4 w-4" />
+										</a>
+									</div>
+
+									<div class="pr-24">
+										<div class="mb-2 flex items-center gap-2">
+											<h4 class="font-bold">Twilio SMS</h4>
+											<CheckCircle class="h-4 w-4 text-success-500" />
+											<span
+												class="rounded-base bg-success-500/10 px-2 py-0.5 text-xs text-success-700 dark:text-success-400"
+											>
+												Active
+											</span>
+										</div>
+
+										<div class="text-surface-600-300 mb-2 text-sm">
+											Type: SMS Messaging
+										</div>
+
+										{#if user.team.twilioPhoneNumber}
+											<div class="text-surface-600-300 mb-2 text-sm">
+												Phone: {user.team.twilioPhoneNumber}
+											</div>
+										{/if}
+
+										<div
+											class="text-surface-600-300 flex items-center gap-4 text-xs"
+										>
+											<div>Connected</div>
+										</div>
+									</div>
+								</div>
+							{/if}
+
+							<!-- Other Integrations (Slack, etc.) -->
+							{#each user.team?.integrations || [] as integration}
 								{@const StatusIcon = getStatusIcon(integration.status)}
 								<div
 									class="border-surface-200-700 group relative rounded-container border p-4"

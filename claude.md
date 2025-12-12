@@ -418,7 +418,7 @@ The authentication system uses three main models:
 - [/setup-password](src/routes/setup-password/+page.svelte): One-time password setup for existing users
 - [/forgot-password](src/routes/forgot-password/+page.svelte): Password reset request
 - [/reset-password](src/routes/reset-password/+page.svelte): Password reset form
-- [/profile](src/routes/profile/+page.svelte): User profile page
+- [/settings](src/routes/settings/+page.svelte): Settings page with Profile, API Keys, Team, and Integrations tabs
 - [/change-password](src/routes/change-password/+page.svelte): Change password form
 
 ### Protecting API Routes

@@ -214,17 +214,17 @@
 				{/if}
 
 				<!-- Main Navigation -->
-				<nav class="hidden items-center gap-2 lg:flex">
+				<nav class="hidden items-center gap-1 lg:flex">
 					<!-- Only show these navigation items when signed in -->
 					{#if isAuthenticated}
 						{#if selectedProjectId}
 							<!-- Divider -->
-							<div class="mx-1 h-6 w-px bg-surface-300-700"></div>
+							<div class="mx-2 h-6 w-px bg-surface-300-700"></div>
 
-							<!-- Main Navigation Links -->
+							<!-- Project Navigation -->
 							<a
 								href="/projects/{selectedProjectId}"
-								class="rounded-base px-4 py-2 transition-colors {isActive(
+								class="rounded-base px-3 py-2 text-sm transition-colors {isActive(
 									`/projects/${selectedProjectId}`,
 									'exact'
 								)
@@ -233,11 +233,9 @@
 							>
 								Overview
 							</a>
-
-							<!-- Show Runs/Cases navigation when a project is selected -->
 							<a
 								href="/projects/{selectedProjectId}/runs"
-								class="rounded-base px-4 py-2 transition-colors {isActive(
+								class="rounded-base px-3 py-2 text-sm transition-colors {isActive(
 									`/projects/${selectedProjectId}/runs`,
 									'exact'
 								)
@@ -248,7 +246,7 @@
 							</a>
 							<a
 								href="/projects/{selectedProjectId}/cases"
-								class="rounded-base px-4 py-2 transition-colors {isActive(
+								class="rounded-base px-3 py-2 text-sm transition-colors {isActive(
 									`/projects/${selectedProjectId}/cases`,
 									'exact'
 								)
@@ -257,25 +255,25 @@
 							>
 								Cases
 							</a>
+							<a
+								href="/reports"
+								class="rounded-base px-3 py-2 text-sm transition-colors {isActive(
+									'/reports'
+								)
+									? 'bg-primary-500 text-white'
+									: 'hover:bg-surface-200-800'}"
+							>
+								Reports
+							</a>
 
 							<!-- Divider -->
-							<div class="mx-1 h-6 w-px bg-surface-300-700"></div>
+							<div class="mx-2 h-6 w-px bg-surface-300-700"></div>
 						{/if}
 
-						<!-- Settings -->
-						<a
-							href="/settings"
-							class="rounded-base px-4 py-2 transition-colors {isActive('/settings')
-								? 'bg-primary-500 text-white'
-								: 'hover:bg-surface-200-800'}"
-						>
-							Settings
-						</a>
-
-						<!-- Authenticators -->
+						<!-- Integrations & Tools -->
 						<a
 							href="/authenticators"
-							class="rounded-base px-4 py-2 transition-colors {isActive(
+							class="rounded-base px-3 py-2 text-sm transition-colors {isActive(
 								'/authenticators'
 							)
 								? 'bg-primary-500 text-white'
@@ -283,37 +281,31 @@
 						>
 							Authenticators
 						</a>
-
-						<!-- SMS Messages -->
 						<a
 							href="/sms"
-							class="rounded-base px-4 py-2 transition-colors {isActive('/sms')
+							class="rounded-base px-3 py-2 text-sm transition-colors {isActive(
+								'/sms'
+							)
 								? 'bg-primary-500 text-white'
 								: 'hover:bg-surface-200-800'}"
 						>
 							SMS
 						</a>
+					{/if}
 
-						<!-- Reports -->
+					<!-- API Docs (always visible) -->
+					{#if !isAuthenticated}
 						<a
-							href="/reports"
-							class="rounded-base px-4 py-2 transition-colors {isActive('/reports')
+							href="/docs"
+							class="rounded-base px-3 py-2 text-sm transition-colors {isActive(
+								'/docs'
+							)
 								? 'bg-primary-500 text-white'
 								: 'hover:bg-surface-200-800'}"
 						>
-							Reports
+							API Docs
 						</a>
 					{/if}
-
-					<!-- API Docs -->
-					<a
-						href="/docs"
-						class="rounded-base px-4 py-2 transition-colors {isActive('/docs')
-							? 'bg-primary-500 text-white'
-							: 'hover:bg-surface-200-800'}"
-					>
-						API Docs
-					</a>
 				</nav>
 			</div>
 
@@ -358,12 +350,30 @@
 									<p class="text-surface-500-400 text-xs">{user.email}</p>
 								</div>
 								<a
-									href="/profile"
+									href="/settings"
 									onclick={() => userMenuPopover().setOpen(false)}
 									class="flex items-center gap-2 rounded-base px-3 py-2 transition-colors hover:bg-surface-200-800"
 								>
-									<User class="h-4 w-4" />
-									<span>Profile</span>
+									<svg
+										class="h-4 w-4"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+										/>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+										/>
+									</svg>
+									<span>Settings</span>
 								</a>
 								<button
 									onclick={() => {
@@ -490,17 +500,6 @@
 							<!-- Divider -->
 							<div class="my-2 h-px bg-surface-300-700"></div>
 						{/if}
-
-						<!-- Settings -->
-						<a
-							href="/settings"
-							onclick={closeMobileMenu}
-							class="rounded-base px-4 py-2 transition-colors {isActive('/settings')
-								? 'bg-primary-500 text-white'
-								: 'hover:bg-surface-200-800'}"
-						>
-							Settings
-						</a>
 
 						<!-- Authenticators -->
 						<a
