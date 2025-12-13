@@ -65,6 +65,9 @@
 	// Track timeouts for cleanup
 	const errorTimeouts = new Map<string, NodeJS.Timeout>();
 
+	// Track AbortControllers for in-flight requests
+	const abortControllers = new Map<string, AbortController>();
+
 	onMount(() => {
 		// Load config first, then messages (sequential to avoid race condition)
 		loadConfig().then(() => {
@@ -85,6 +88,10 @@
 	});
 
 	onDestroy(() => {
+		// Cancel all in-flight refresh requests
+		abortControllers.forEach((controller) => controller.abort());
+		abortControllers.clear();
+
 		// Clean up all pending error message timeouts
 		errorTimeouts.forEach((timeout) => clearTimeout(timeout));
 		errorTimeouts.clear();
@@ -316,13 +323,23 @@
 			return;
 		}
 
+		// Cancel any existing request for this message
+		const existingController = abortControllers.get(messageSid);
+		if (existingController) {
+			existingController.abort();
+		}
+
+		// Create new AbortController for this request
+		const controller = new AbortController();
+		abortControllers.set(messageSid, controller);
+
 		// Set loading state
 		refreshState[messageSid] = { loading: true };
 
 		try {
 			const res = await fetch(
 				`/api/integrations/twilio/messages/refresh-status?messageSid=${messageSid}`,
-				{ method: 'POST' }
+				{ method: 'POST', signal: controller.signal }
 			);
 
 			const data = await res.json();
@@ -357,12 +374,23 @@
 				loading: false,
 				lastRefreshed: now
 			};
+
+			// Clean up the AbortController
+			abortControllers.delete(messageSid);
 		} catch (err) {
+			// Ignore AbortError (request was intentionally cancelled)
+			if (err instanceof Error && err.name === 'AbortError') {
+				return;
+			}
+
 			refreshState[messageSid] = {
 				loading: false,
 				error: err instanceof Error ? err.message : 'An error occurred'
 			};
 			scheduleErrorCleanup(messageSid);
+
+			// Clean up the AbortController
+			abortControllers.delete(messageSid);
 		}
 	}
 
@@ -600,6 +628,12 @@
 												title={canRefreshMessage(message.messageSid)
 													? 'Refresh status'
 													: 'Please wait before refreshing'}
+												aria-label={refreshState[message.messageSid]
+													?.loading
+													? 'Refreshing message status'
+													: canRefreshMessage(message.messageSid)
+														? 'Refresh message status from Twilio'
+														: 'Cannot refresh yet, please wait'}
 											>
 												<RefreshCw
 													class="h-3 w-3 {refreshState[message.messageSid]
@@ -746,6 +780,12 @@
 													title={canRefreshMessage(message.messageSid)
 														? 'Refresh status from Twilio'
 														: 'Please wait before refreshing again'}
+													aria-label={refreshState[message.messageSid]
+														?.loading
+														? 'Refreshing message status'
+														: canRefreshMessage(message.messageSid)
+															? 'Refresh message status from Twilio'
+															: 'Cannot refresh yet, please wait'}
 												>
 													<RefreshCw
 														class="h-3 w-3 {refreshState[

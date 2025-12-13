@@ -51,6 +51,56 @@ The database is organized into logical sections:
 
 - **Attachment**: Store screenshots, logs, videos linked to test cases or results
 
+### Database Access Patterns
+
+This project uses custom path aliases for Prisma imports:
+
+**Database Instance** (most common):
+
+```typescript
+import { db } from '$lib/server/db';
+```
+
+Use this to access the singleton Prisma client instance for database queries.
+
+**Prisma Client Class**:
+
+```typescript
+import { PrismaClient } from '$prisma/client';
+```
+
+Use this when you need to instantiate a new Prisma client (rare - usually only in setup/migration scripts).
+
+**Prisma Types**:
+
+```typescript
+import { Prisma } from '$prisma/client';
+```
+
+Use this to access Prisma-generated TypeScript types like `Prisma.SmsMessageWhereInput` for type-safe queries.
+
+**Important**: Do NOT use the standard `@prisma/client` import path - this project uses the `$prisma/client` alias.
+
+**Examples**:
+
+```typescript
+// ✅ Correct - Query with singleton instance
+import { db } from '$lib/server/db';
+const users = await db.user.findMany();
+
+// ✅ Correct - Type-safe where clause
+import { db } from '$lib/server/db';
+import { Prisma } from '$prisma/client';
+
+const where: Prisma.UserWhereInput = {
+	email: { contains: '@example.com' }
+};
+const users = await db.user.findMany({ where });
+
+// ❌ Wrong - Don't use @prisma/client
+import { PrismaClient } from '@prisma/client'; // Wrong path!
+```
+
 ## API Documentation
 
 The platform includes a comprehensive, public-facing API documentation page at `/docs`.

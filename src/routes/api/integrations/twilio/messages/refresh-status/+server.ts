@@ -4,6 +4,7 @@ import { db } from '$lib/server/db';
 import { requireAuth } from '$lib/server/auth';
 import { decrypt } from '$lib/server/encryption';
 import { checkRateLimit } from '$lib/server/rate-limit';
+import { Prisma } from '$prisma/client';
 
 // Configuration constants
 const BATCH_SIZE = 10; // Process 10 messages in parallel at a time
@@ -12,6 +13,10 @@ const MAX_HOURS = 168; // 7 days
 const MIN_HOURS = 1;
 const RATE_LIMIT_WINDOW = 60; // 1 minute in seconds
 const MAX_MESSAGES_TO_REFRESH = 100;
+
+// SMS status constants
+const PENDING_STATUSES = ['queued', 'sending', 'sent', 'accepted'] as const;
+const FINAL_STATUSES = ['delivered', 'undelivered', 'failed'] as const;
 
 /**
  * POST /api/integrations/twilio/messages/refresh-status
@@ -91,8 +96,7 @@ export const POST: RequestHandler = async (event) => {
 
 	try {
 		// Build query for messages to refresh
-		// Using Record type to allow dynamic property assignment
-		const where: Record<string, any> = {
+		const where: Prisma.SmsMessageWhereInput = {
 			teamId: user.teamId,
 			direction: 'OUTBOUND'
 		};
@@ -107,7 +111,7 @@ export const POST: RequestHandler = async (event) => {
 
 			where.createdAt = { gte: cutoffDate };
 			where.status = {
-				in: ['queued', 'sending', 'sent', 'accepted'] // Non-final states
+				in: [...PENDING_STATUSES] // Non-final states that may change
 			};
 		}
 
@@ -189,14 +193,20 @@ export const POST: RequestHandler = async (event) => {
 				const { message, twilioData } = result.value;
 				const newStatus = twilioData.status;
 
-				// Only update if status has changed
+				/**
+				 * Update message status and error fields.
+				 *
+				 * Error field behavior:
+				 * - If Twilio provides error_code/error_message, store them
+				 * - If no error fields in response (successful delivery), explicitly set to null
+				 * - This ensures old error data is cleared when status improves (e.g., retry succeeds)
+				 */
 				if (newStatus !== message.status) {
 					updatePromises.push(
 						db.smsMessage.update({
 							where: { id: message.id },
 							data: {
 								status: newStatus,
-								// Explicitly clear or set error fields
 								errorCode: twilioData.error_code?.toString() || null,
 								errorMessage: twilioData.error_message || null
 							}
@@ -227,7 +237,13 @@ export const POST: RequestHandler = async (event) => {
 		});
 	} catch (error) {
 		console.error('Error refreshing message statuses:', error);
-		const message = error instanceof Error ? error.message : 'Failed to refresh statuses';
+		// In production, return generic error message to avoid leaking internal details
+		const message =
+			process.env.NODE_ENV === 'production'
+				? 'Failed to refresh message statuses'
+				: error instanceof Error
+					? error.message
+					: 'Failed to refresh statuses';
 		return json(
 			{
 				message

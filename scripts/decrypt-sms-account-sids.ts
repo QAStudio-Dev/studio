@@ -5,13 +5,22 @@
  * The field should store plaintext for verification purposes (accountSid is a public identifier).
  * This script decrypts any encrypted values to ensure consistency.
  *
- * Usage: npx tsx scripts/decrypt-sms-account-sids.ts
+ * Usage:
+ *   npx tsx scripts/decrypt-sms-account-sids.ts           # Run migration
+ *   npx tsx scripts/decrypt-sms-account-sids.ts --dry-run # Preview changes without modifying database
  */
 
 import { db } from '../src/lib/server/db.js';
 import { decrypt, isEncrypted } from '../src/lib/server/encryption.js';
 
+// Check for --dry-run flag
+const isDryRun = process.argv.includes('--dry-run');
+
 async function migrateAccountSids() {
+	if (isDryRun) {
+		console.log('🔍 DRY RUN MODE - No changes will be made to the database\n');
+	}
+
 	console.log('Starting accountSid migration...');
 
 	// Get all SMS messages with direction OUTBOUND
@@ -43,15 +52,18 @@ async function migrateAccountSids() {
 			// Decrypt it (use non-strict mode for migration)
 			const decrypted = decrypt(message.accountSid, { strict: false });
 
-			// Update the message with decrypted value
-			await db.smsMessage.update({
-				where: { id: message.id },
-				data: { accountSid: decrypted }
-			});
+			// Update the message with decrypted value (unless in dry-run mode)
+			if (!isDryRun) {
+				await db.smsMessage.update({
+					where: { id: message.id },
+					data: { accountSid: decrypted }
+				});
+			}
 
 			updatedCount++;
+			const prefix = isDryRun ? '🔍 Would decrypt' : '✓ Decrypted';
 			console.log(
-				`✓ Decrypted ${message.messageSid}: ${message.accountSid.substring(0, 20)}... → ${decrypted}`
+				`${prefix} ${message.messageSid}: ${message.accountSid.substring(0, 20)}... → ${decrypted}`
 			);
 		} catch (error) {
 			console.error(`✗ Error processing ${message.messageSid}:`, error);
@@ -59,11 +71,15 @@ async function migrateAccountSids() {
 		}
 	}
 
-	console.log('\nMigration complete:');
+	console.log(`\n${isDryRun ? 'Dry run' : 'Migration'} complete:`);
 	console.log(`  Total messages: ${messages.length}`);
-	console.log(`  Updated: ${updatedCount}`);
+	console.log(`  ${isDryRun ? 'Would update' : 'Updated'}: ${updatedCount}`);
 	console.log(`  Already plaintext: ${alreadyPlaintext}`);
 	console.log(`  Errors: ${errors}`);
+
+	if (isDryRun && updatedCount > 0) {
+		console.log(`\n💡 Run without --dry-run flag to apply these ${updatedCount} changes`);
+	}
 }
 
 // Run the migration

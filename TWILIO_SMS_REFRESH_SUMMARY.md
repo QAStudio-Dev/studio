@@ -100,19 +100,36 @@ const MAX_HOURS = 168;
 const MIN_HOURS = 1;
 const RATE_LIMIT_WINDOW = 60;
 const MAX_MESSAGES_TO_REFRESH = 100;
+
+// SMS status constants
+const PENDING_STATUSES = ['queued', 'sending', 'sent', 'accepted'] as const;
+const FINAL_STATUSES = ['delivered', 'undelivered', 'failed'] as const;
 ```
+
+### Type Safety
+
+- Replaced `Record<string, any>` with `Prisma.SmsMessageWhereInput` for proper type checking
+- Full TypeScript type safety throughout the endpoint
 
 ### Error Handling
 
 - Enhanced Twilio API error messages with response bodies
 - Graceful handling of invalid responses
+- Production error sanitization (generic messages in production, detailed in development)
 - Proper TypeScript error typing
+- JSDoc documentation explaining error field update behavior
 
 ### Memory Management
 
 - Timeout tracking via `Map<string, NodeJS.Timeout>`
+- AbortController tracking for in-flight requests to prevent orphaned promises
 - Automatic cleanup on component destruction
 - Periodic cleanup of stale state (1-hour retention)
+
+### Accessibility
+
+- ARIA labels on all refresh buttons for screen reader support
+- Dynamic ARIA labels reflecting current button state (loading, ready, rate-limited)
 
 ## Files Modified
 
@@ -128,7 +145,7 @@ const MAX_MESSAGES_TO_REFRESH = 100;
 
 ### Scripts
 
-- ✅ `scripts/decrypt-sms-account-sids.ts` (migration script)
+- ✅ `scripts/decrypt-sms-account-sids.ts` (migration script with `--dry-run` support)
 
 ### Database
 
@@ -145,7 +162,10 @@ const MAX_MESSAGES_TO_REFRESH = 100;
 2. **Test Migration Script**:
 
     ```bash
-    # Dry run to see what would be updated
+    # Dry run to preview changes
+    npx tsx scripts/decrypt-sms-account-sids.ts --dry-run
+
+    # Run actual migration
     npx tsx scripts/decrypt-sms-account-sids.ts
     ```
 
