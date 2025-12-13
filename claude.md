@@ -81,14 +81,35 @@ Use this to access Prisma-generated TypeScript types like `Prisma.SmsMessageWher
 
 **Important**: Do NOT use the standard `@prisma/client` import path - this project uses the `$prisma/client` alias.
 
+**Standalone Scripts** (outside SvelteKit):
+
+For standalone scripts (like migration scripts) that run with `tsx` or `node`, you cannot use SvelteKit path aliases. Instead, use direct imports and initialize Prisma with the PostgreSQL adapter:
+
+```typescript
+import 'dotenv/config';
+import { PrismaClient } from '../src/generated/client/client.js';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const db = new PrismaClient({ adapter });
+
+// ... your script code ...
+
+// Always disconnect when done
+await db.$disconnect();
+await pool.end();
+```
+
 **Examples**:
 
 ```typescript
-// ✅ Correct - Query with singleton instance
+// ✅ Correct - Query with singleton instance (SvelteKit routes/endpoints)
 import { db } from '$lib/server/db';
 const users = await db.user.findMany();
 
-// ✅ Correct - Type-safe where clause
+// ✅ Correct - Type-safe where clause (SvelteKit routes/endpoints)
 import { db } from '$lib/server/db';
 import { Prisma } from '$prisma/client';
 
@@ -97,9 +118,182 @@ const where: Prisma.UserWhereInput = {
 };
 const users = await db.user.findMany({ where });
 
-// ❌ Wrong - Don't use @prisma/client
-import { PrismaClient } from '@prisma/client'; // Wrong path!
+// ✅ Correct - Standalone script (scripts/*)
+import { PrismaClient } from '../src/generated/client/client.js';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const db = new PrismaClient({ adapter });
+
+// ❌ Wrong - Don't use @prisma/client in SvelteKit code
+import { PrismaClient } from '@prisma/client'; // Wrong path for SvelteKit!
 ```
+
+## Writing Standalone Scripts
+
+When writing scripts in the `scripts/` directory that run outside of SvelteKit (using `tsx`, `ts-node`, or `node`), you **cannot** use SvelteKit path aliases or environment imports.
+
+### Why Scripts Fail with SvelteKit Imports
+
+SvelteKit path aliases like `$lib`, `$app`, `$env`, and `$prisma` are resolved by Vite during the build process. Standalone scripts run directly with Node.js/tsx and don't go through Vite, so these aliases are not available.
+
+**Common Errors:**
+
+```
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package '$app'
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package '$lib'
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package '$prisma/client'
+```
+
+### Script Structure Template
+
+Here's the correct pattern for standalone scripts:
+
+```typescript
+/**
+ * Script description here
+ *
+ * Usage:
+ *   npx tsx scripts/my-script.ts
+ *   npx tsx scripts/my-script.ts --dry-run
+ */
+
+import 'dotenv/config'; // Load environment variables
+import { PrismaClient } from '../src/generated/client/client.js';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
+
+// ✅ Environment variables from dotenv
+const DATABASE_URL = process.env.DATABASE_URL;
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
+
+if (!DATABASE_URL) {
+	console.error('ERROR: DATABASE_URL environment variable is not set');
+	process.exit(1);
+}
+
+// ✅ Initialize Prisma with PostgreSQL adapter (required for Prisma 7)
+const pool = new Pool({ connectionString: DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const db = new PrismaClient({ adapter });
+
+// ✅ Parse command-line arguments
+const isDryRun = process.argv.includes('--dry-run');
+
+async function main() {
+	if (isDryRun) {
+		console.log('🔍 DRY RUN MODE - No changes will be made\n');
+	}
+
+	// Your script logic here
+	const users = await db.user.findMany();
+	console.log(`Found ${users.length} users`);
+
+	// Example: Copy utility functions inline if needed
+	// Don't import from $lib - copy the function code instead
+}
+
+// ✅ Always cleanup database connections
+main()
+	.then(async () => {
+		console.log('\nScript finished successfully');
+		await db.$disconnect();
+		await pool.end();
+		process.exit(0);
+	})
+	.catch(async (error) => {
+		console.error('\nScript failed:', error);
+		await db.$disconnect();
+		await pool.end();
+		process.exit(1);
+	});
+```
+
+### Key Patterns for Scripts
+
+**1. Database Access:**
+
+```typescript
+// ❌ WRONG - Cannot use $lib in scripts
+import { db } from '$lib/server/db';
+
+// ✅ CORRECT - Use direct import with adapter
+import { PrismaClient } from '../src/generated/client/client.js';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const db = new PrismaClient({ adapter });
+```
+
+**2. Environment Variables:**
+
+```typescript
+// ❌ WRONG - Cannot use $env in scripts
+import { DATABASE_URL } from '$env/static/private';
+
+// ✅ CORRECT - Use dotenv and process.env
+import 'dotenv/config';
+const DATABASE_URL = process.env.DATABASE_URL;
+```
+
+**3. Utility Functions:**
+
+```typescript
+// ❌ WRONG - Cannot import from $lib
+import { encrypt, decrypt } from '$lib/server/encryption';
+
+// ✅ CORRECT - Copy the function inline or use relative path
+import { encrypt, decrypt } from '../src/lib/server/encryption.js';
+
+// OR copy the function code directly into the script
+function decrypt(encryptedText: string): string {
+	// Implementation copied from src/lib/server/encryption.ts
+	const [ivHex, authTagHex, encrypted] = encryptedText.split(':');
+	// ... rest of implementation
+}
+```
+
+**4. Prisma Types:**
+
+```typescript
+// ❌ WRONG - Cannot use $prisma alias
+import { Prisma } from '$prisma/client';
+
+// ✅ CORRECT - Import from generated client
+import { Prisma } from '../src/generated/client/index.js';
+```
+
+**5. Running the Script:**
+
+```bash
+# Development/testing
+npx tsx scripts/my-script.ts --dry-run
+
+# Production
+npx tsx scripts/my-script.ts
+```
+
+### Common Pitfalls
+
+1. **Forgetting to load dotenv**: Always import `'dotenv/config'` at the top
+2. **Not initializing Prisma adapter**: Prisma 7 requires the PG adapter for PostgreSQL
+3. **Not cleaning up connections**: Always call `db.$disconnect()` and `pool.end()`
+4. **Using SvelteKit imports**: Never use `$lib`, `$app`, `$env`, or `$prisma` in scripts
+5. **Wrong Prisma import path**: Use `../src/generated/client/client.js`, not `@prisma/client`
+
+### Real-World Example
+
+See [scripts/decrypt-sms-account-sids.ts](scripts/decrypt-sms-account-sids.ts) for a complete working example of a migration script that:
+
+- Loads environment variables with dotenv
+- Initializes Prisma with PostgreSQL adapter
+- Copies encryption utilities inline (avoiding `$lib` imports)
+- Supports `--dry-run` flag
+- Properly cleans up database connections
 
 ## API Documentation
 

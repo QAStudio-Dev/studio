@@ -10,8 +10,66 @@
  *   npx tsx scripts/decrypt-sms-account-sids.ts --dry-run # Preview changes without modifying database
  */
 
-import { db } from '../src/lib/server/db.js';
-import { decrypt, isEncrypted } from '../src/lib/server/encryption.js';
+import 'dotenv/config';
+import { PrismaClient } from '../src/generated/client/client.js';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
+import { createDecipheriv } from 'crypto';
+
+// Initialize Prisma client for standalone script (similar to src/lib/server/db.ts)
+const DATABASE_URL = process.env.DATABASE_URL;
+if (!DATABASE_URL) {
+	console.error('ERROR: DATABASE_URL environment variable is not set');
+	process.exit(1);
+}
+
+const pool = new Pool({ connectionString: DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const db = new PrismaClient({ adapter });
+
+// Encryption utilities (copied from src/lib/server/encryption.ts)
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
+
+if (!ENCRYPTION_KEY) {
+	console.error('ERROR: ENCRYPTION_KEY environment variable is not set');
+	process.exit(1);
+}
+
+const encryptionKey = Buffer.from(ENCRYPTION_KEY, 'hex');
+
+function isEncrypted(text: string): boolean {
+	const parts = text.split(':');
+	return parts.length === 3 && parts.every((part) => /^[0-9a-f]+$/i.test(part));
+}
+
+function decrypt(encryptedText: string): string {
+	const parts = encryptedText.split(':');
+	if (parts.length !== 3) {
+		// Not encrypted, return as-is
+		return encryptedText;
+	}
+
+	try {
+		const [ivHex, authTagHex, encrypted] = parts;
+
+		// Convert from hex
+		const iv = Buffer.from(ivHex, 'hex');
+		const authTag = Buffer.from(authTagHex, 'hex');
+
+		// Create decipher
+		const decipher = createDecipheriv('aes-256-gcm', encryptionKey, iv);
+		decipher.setAuthTag(authTag);
+
+		// Decrypt data
+		let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+		decrypted += decipher.final('utf8');
+
+		return decrypted;
+	} catch (error) {
+		console.error('Decryption failed:', error);
+		throw new Error('Failed to decrypt data');
+	}
+}
 
 // Check for --dry-run flag
 const isDryRun = process.argv.includes('--dry-run');
@@ -49,8 +107,8 @@ async function migrateAccountSids() {
 				continue;
 			}
 
-			// Decrypt it (use non-strict mode for migration)
-			const decrypted = decrypt(message.accountSid, { strict: false });
+			// Decrypt it
+			const decrypted = decrypt(message.accountSid);
 
 			// Update the message with decrypted value (unless in dry-run mode)
 			if (!isDryRun) {
@@ -84,11 +142,15 @@ async function migrateAccountSids() {
 
 // Run the migration
 migrateAccountSids()
-	.then(() => {
+	.then(async () => {
 		console.log('\nMigration finished successfully');
+		await db.$disconnect();
+		await pool.end();
 		process.exit(0);
 	})
-	.catch((error) => {
+	.catch(async (error) => {
 		console.error('\nMigration failed:', error);
+		await db.$disconnect();
+		await pool.end();
 		process.exit(1);
 	});
