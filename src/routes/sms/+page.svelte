@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import {
 		MessageSquare,
 		Send,
@@ -32,6 +32,14 @@
 		errorMessage?: string;
 	};
 
+	type RefreshState = {
+		[messageSid: string]: {
+			loading: boolean;
+			error?: string;
+			lastRefreshed?: number;
+		};
+	};
+
 	// State
 	let messages = $state<SmsMessage[]>([]);
 	let loading = $state(true);
@@ -51,17 +59,45 @@
 	let autoRefresh = $state(false);
 	let refreshInterval: NodeJS.Timeout | null = null;
 
+	// Refresh state for individual messages
+	let refreshState = $state<RefreshState>({});
+
+	// Track timeouts for cleanup
+	const errorTimeouts = new Map<string, NodeJS.Timeout>();
+
+	// Track AbortControllers for in-flight requests
+	const abortControllers = new Map<string, AbortController>();
+
 	onMount(() => {
 		// Load config first, then messages (sequential to avoid race condition)
 		loadConfig().then(() => {
 			loadMessages();
 		});
 
+		// Set up periodic cleanup of old refresh states (every hour)
+		const cleanupInterval = setInterval(cleanupOldRefreshStates, 3600000);
+
 		return () => {
 			// Clean up auto-refresh interval on unmount
 			autoRefresh = false;
 			stopAutoRefresh();
+
+			// Clean up periodic cleanup interval
+			clearInterval(cleanupInterval);
 		};
+	});
+
+	onDestroy(() => {
+		// Cancel all in-flight refresh requests
+		abortControllers.forEach((controller) => controller.abort());
+		abortControllers.clear();
+
+		// Clean up all pending error message timeouts
+		errorTimeouts.forEach((timeout) => clearTimeout(timeout));
+		errorTimeouts.clear();
+
+		// Clean up auto-refresh interval
+		stopAutoRefresh();
 	});
 
 	async function loadConfig() {
@@ -98,6 +134,8 @@
 			loadError = 'Failed to load messages. Please try again.';
 		} finally {
 			loadingMessages = false;
+			// Clean up old refresh states after loading messages
+			cleanupOldRefreshStates();
 		}
 	}
 
@@ -228,6 +266,139 @@
 			default:
 				return 'text-surface-500';
 		}
+	}
+
+	// Helper to schedule error message cleanup with proper timeout tracking
+	function scheduleErrorCleanup(messageSid: string, delayMs: number = 3000) {
+		// Clear any existing timeout for this message
+		const existingTimeout = errorTimeouts.get(messageSid);
+		if (existingTimeout) {
+			clearTimeout(existingTimeout);
+		}
+
+		// Schedule new timeout
+		const timeoutId = setTimeout(() => {
+			if (refreshState[messageSid]) {
+				refreshState[messageSid].error = undefined;
+			}
+			errorTimeouts.delete(messageSid);
+		}, delayMs);
+
+		errorTimeouts.set(messageSid, timeoutId);
+	}
+
+	// Clean up old refresh states to prevent unbounded memory growth
+	function cleanupOldRefreshStates() {
+		const now = Date.now();
+		const ONE_HOUR = 3600000; // 1 hour in milliseconds
+
+		Object.keys(refreshState).forEach((messageSid) => {
+			const state = refreshState[messageSid];
+			// Remove entries that haven't been refreshed in over an hour
+			if (state.lastRefreshed && now - state.lastRefreshed > ONE_HOUR) {
+				delete refreshState[messageSid];
+				// Also clean up any associated timeout
+				const timeout = errorTimeouts.get(messageSid);
+				if (timeout) {
+					clearTimeout(timeout);
+					errorTimeouts.delete(messageSid);
+				}
+			}
+		});
+	}
+
+	async function refreshMessageStatus(messageSid: string) {
+		// Check rate limit (1 minute cooldown)
+		const now = Date.now();
+		const lastRefresh = refreshState[messageSid]?.lastRefreshed || 0;
+		const cooldownMs = 60000; // 1 minute
+
+		if (now - lastRefresh < cooldownMs) {
+			const remainingSeconds = Math.ceil((cooldownMs - (now - lastRefresh)) / 1000);
+			refreshState[messageSid] = {
+				loading: false,
+				error: `Please wait ${remainingSeconds}s before refreshing again`
+			};
+			scheduleErrorCleanup(messageSid);
+			return;
+		}
+
+		// Cancel any existing request for this message
+		const existingController = abortControllers.get(messageSid);
+		if (existingController) {
+			existingController.abort();
+		}
+
+		// Create new AbortController for this request
+		const controller = new AbortController();
+		abortControllers.set(messageSid, controller);
+
+		// Set loading state
+		refreshState[messageSid] = { loading: true };
+
+		try {
+			const res = await fetch(
+				`/api/integrations/twilio/messages/refresh-status?messageSid=${messageSid}`,
+				{ method: 'POST', signal: controller.signal }
+			);
+
+			const data = await res.json();
+
+			if (!res.ok) {
+				if (res.status === 429) {
+					refreshState[messageSid] = {
+						loading: false,
+						error: 'Rate limit exceeded. Please wait before refreshing again.'
+					};
+				} else {
+					refreshState[messageSid] = {
+						loading: false,
+						error: data.message || 'Failed to refresh status'
+					};
+				}
+				scheduleErrorCleanup(messageSid);
+				return;
+			}
+
+			// Update the message in the list if status changed
+			if (data.updated > 0 && data.updates && data.updates.length > 0) {
+				const update = data.updates[0];
+				const messageIndex = messages.findIndex((m) => m.messageSid === messageSid);
+				if (messageIndex !== -1) {
+					messages[messageIndex].status = update.newStatus;
+				}
+			}
+
+			// Clear loading and set last refreshed time
+			refreshState[messageSid] = {
+				loading: false,
+				lastRefreshed: now
+			};
+
+			// Clean up the AbortController
+			abortControllers.delete(messageSid);
+		} catch (err) {
+			// Ignore AbortError (request was intentionally cancelled)
+			if (err instanceof Error && err.name === 'AbortError') {
+				return;
+			}
+
+			refreshState[messageSid] = {
+				loading: false,
+				error: err instanceof Error ? err.message : 'An error occurred'
+			};
+			scheduleErrorCleanup(messageSid);
+
+			// Clean up the AbortController
+			abortControllers.delete(messageSid);
+		}
+	}
+
+	function canRefreshMessage(messageSid: string): boolean {
+		const now = Date.now();
+		const lastRefresh = refreshState[messageSid]?.lastRefreshed || 0;
+		const cooldownMs = 60000; // 1 minute
+		return now - lastRefresh >= cooldownMs;
 	}
 </script>
 
@@ -446,6 +617,32 @@
 												({message.status})
 											</span>
 										{/if}
+										{#if message.direction === 'OUTBOUND'}
+											<button
+												class="preset-ghost btn p-1 btn-sm"
+												onclick={() =>
+													refreshMessageStatus(message.messageSid)}
+												disabled={refreshState[message.messageSid]
+													?.loading ||
+													!canRefreshMessage(message.messageSid)}
+												title={canRefreshMessage(message.messageSid)
+													? 'Refresh status'
+													: 'Please wait before refreshing'}
+												aria-label={refreshState[message.messageSid]
+													?.loading
+													? 'Refreshing message status'
+													: canRefreshMessage(message.messageSid)
+														? 'Refresh message status from Twilio'
+														: 'Cannot refresh yet, please wait'}
+											>
+												<RefreshCw
+													class="h-3 w-3 {refreshState[message.messageSid]
+														?.loading
+														? 'animate-spin'
+														: ''}"
+												/>
+											</button>
+										{/if}
 									</div>
 									<div
 										class="text-surface-500-400 flex items-center gap-1 text-xs"
@@ -454,6 +651,12 @@
 										{formatDate(message.createdAt)}
 									</div>
 								</div>
+
+								{#if refreshState[message.messageSid]?.error}
+									<p class="mb-2 text-xs text-error-500">
+										{refreshState[message.messageSid].error}
+									</p>
+								{/if}
 
 								<div class="mb-1 text-sm">
 									<span class="font-medium">
@@ -553,16 +756,52 @@
 										{/if}
 									</td>
 									<td class="py-3">
-										{#if message.status}
-											<span
-												class="inline-block rounded-full px-2 py-1 text-xs font-medium {getStatusColor(
-													message.status
-												)}"
-											>
-												{message.status}
-											</span>
-										{:else}
-											<span class="text-surface-500-400 text-sm">-</span>
+										<div class="flex items-center gap-2">
+											{#if message.status}
+												<span
+													class="inline-block rounded-full px-2 py-1 text-xs font-medium {getStatusColor(
+														message.status
+													)}"
+												>
+													{message.status}
+												</span>
+											{:else}
+												<span class="text-surface-500-400 text-sm">-</span>
+											{/if}
+
+											{#if message.direction === 'OUTBOUND'}
+												<button
+													class="preset-ghost btn btn-sm opacity-0 transition-opacity group-hover:opacity-100"
+													onclick={() =>
+														refreshMessageStatus(message.messageSid)}
+													disabled={refreshState[message.messageSid]
+														?.loading ||
+														!canRefreshMessage(message.messageSid)}
+													title={canRefreshMessage(message.messageSid)
+														? 'Refresh status from Twilio'
+														: 'Please wait before refreshing again'}
+													aria-label={refreshState[message.messageSid]
+														?.loading
+														? 'Refreshing message status'
+														: canRefreshMessage(message.messageSid)
+															? 'Refresh message status from Twilio'
+															: 'Cannot refresh yet, please wait'}
+												>
+													<RefreshCw
+														class="h-3 w-3 {refreshState[
+															message.messageSid
+														]?.loading
+															? 'animate-spin'
+															: ''}"
+													/>
+												</button>
+											{/if}
+										</div>
+
+										{#if refreshState[message.messageSid]?.error}
+											<p class="mt-1 text-xs text-error-500">
+												{refreshState[message.messageSid].error}
+											</p>
 										{/if}
 									</td>
 									<td class="py-3">

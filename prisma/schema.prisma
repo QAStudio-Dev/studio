@@ -768,6 +768,7 @@ model SmsMessage {
   @@index([createdAt])
   @@index([teamId, createdAt]) // For querying all team messages sorted by date (primary use case)
   @@index([teamId, direction, createdAt]) // For querying team messages by direction and date
+  @@index([teamId, direction, status, createdAt]) // For refresh-status endpoint queries (OUTBOUND + non-final statuses)
 }
 
 // ============================================
