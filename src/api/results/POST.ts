@@ -773,17 +773,21 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 						attachmentErrors
 					);
 
-					if (!isNew) duplicateCount++;
-
-					processedResults.push({
-						testCaseId: newTestCase.id,
-						testResultId: testResult.id,
-						title: result.title,
-						status,
-						duration: result.duration || null,
-						created: true,
-						attachmentCount
-					});
+					if (!isNew) {
+						duplicateCount++;
+					} else {
+						// Only count new results in processedResults
+						// Duplicates are reported separately in duplicatesSkipped
+						processedResults.push({
+							testCaseId: newTestCase.id,
+							testResultId: testResult.id,
+							title: result.title,
+							status,
+							duration: result.duration || null,
+							created: true,
+							attachmentCount
+						});
+					}
 				} else {
 					// Create test result with attachments and steps
 					const { testResult, attachmentCount, isNew } = await createTestResultWithSteps(
@@ -795,17 +799,21 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 						attachmentErrors
 					);
 
-					if (!isNew) duplicateCount++;
-
-					processedResults.push({
-						testCaseId: testCase.id,
-						testResultId: testResult.id,
-						title: result.title,
-						status,
-						duration: result.duration || null,
-						created: false,
-						attachmentCount
-					});
+					if (!isNew) {
+						duplicateCount++;
+					} else {
+						// Only count new results in processedResults
+						// Duplicates are reported separately in duplicatesSkipped
+						processedResults.push({
+							testCaseId: testCase.id,
+							testResultId: testResult.id,
+							title: result.title,
+							status,
+							duration: result.duration || null,
+							created: false,
+							attachmentCount
+						});
+					}
 				}
 			} catch (err: any) {
 				errors.push({
