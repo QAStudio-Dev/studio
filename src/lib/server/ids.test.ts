@@ -115,7 +115,7 @@ describe('ID Generators', () => {
 			expect(ids.size).toBe(iterations);
 		});
 
-		it('should generate unique test run IDs', () => {
+		it('should generate unique test run IDs (with allowance for rare collisions)', () => {
 			const ids = new Set();
 			const iterations = 1000;
 
@@ -123,7 +123,9 @@ describe('ID Generators', () => {
 				ids.add(generateTestRunId());
 			}
 
-			expect(ids.size).toBe(iterations);
+			// 4-char IDs have 14.7M combinations, collisions are very rare but possible
+			// Expect at least 99.9% uniqueness in 1000 generations
+			expect(ids.size).toBeGreaterThanOrEqual(iterations * 0.999);
 		});
 
 		it('should generate unique test case IDs (with allowance for rare collisions)', () => {
