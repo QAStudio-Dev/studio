@@ -47,11 +47,17 @@ export async function verifyApiKey(key: string): Promise<string | null> {
 		return null;
 	}
 
-	// Update last used timestamp
-	await db.apiKey.update({
-		where: { id: apiKey.id },
-		data: { lastUsedAt: new Date() }
-	});
+	// Update last used timestamp asynchronously without blocking
+	// Fire and forget - don't await to avoid blocking API requests
+	db.apiKey
+		.update({
+			where: { id: apiKey.id },
+			data: { lastUsedAt: new Date() }
+		})
+		.catch((err) => {
+			// Log error but don't fail the authentication
+			console.error('Failed to update API key lastUsedAt:', err);
+		});
 
 	return apiKey.userId;
 }
