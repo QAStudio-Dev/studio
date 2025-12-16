@@ -5,7 +5,7 @@
 
   <p><strong>Modern Test Management Without the BS</strong></p>
 
-[![License: Elastic-2.0](https://img.shields.io/badge/License-Elastic--2.0-blue.svg)](LICENSE)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
 [![Discord](https://img.shields.io/discord/DISCORD_ID?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/rw3UfdB9pN)
 
 [Website](https://qastudio.dev) • [Documentation](https://qastudio.dev/docs) • [Discord](https://discord.gg/rw3UfdB9pN) • [Blog](https://qastudio.dev/blog)
@@ -175,17 +175,19 @@ See our [deployment guide](docs/DEPLOYMENT.md) for detailed instructions.
 
 ## Pricing & Licensing
 
-QA Studio uses the **Elastic License 2.0** - you're free to:
+QA Studio uses the **GNU Affero General Public License v3.0 (AGPL-3.0)** - you're free to:
 
 - ✅ Use QA Studio for free
 - ✅ Self-host on your own infrastructure
 - ✅ Modify and fork the code
-- ✅ Use it commercially (internally)
+- ✅ Use it commercially
+- ✅ Distribute modified versions
 
-You **cannot**:
+You **must**:
 
-- ❌ Offer QA Studio as a hosted/managed service to others
-- ❌ Remove license notices or circumvent license checks
+- ✅ Share source code of any modifications when you run it as a service
+- ✅ Keep the same AGPL-3.0 license for derivative works
+- ✅ Provide access to source code to network users
 
 ### Pricing Plans
 
@@ -195,15 +197,21 @@ You **cannot**:
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+We welcome contributions from everyone! Whether you're fixing bugs, adding features, improving documentation, or helping others in the community - every contribution matters.
 
-### Development Workflow
+**Quick start:**
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+1. Read our [Contributing Guide](CONTRIBUTING.md)
+2. Check out [good first issues](https://github.com/QAStudio-Dev/studio/labels/good%20first%20issue)
+3. Join our [Discord community](https://discord.gg/rw3UfdB9pN)
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on:
+
+- Setting up your development environment
+- Coding standards and best practices
+- Testing requirements
+- Pull request process
+- How to get help
 
 ## Privacy & Compliance
 
@@ -234,7 +242,7 @@ For detailed compliance information, see:
 
 ## License
 
-QA Studio is licensed under the [Elastic License 2.0](LICENSE).
+QA Studio is licensed under the [GNU Affero General Public License v3.0](LICENSE).
 
 Copyright © 2025 QA Studio
 

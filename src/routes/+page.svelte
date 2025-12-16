@@ -270,20 +270,21 @@
 						/>
 					</svg>
 				</div>
-				<h3 class="mb-3 text-2xl font-bold">Fully Open Source</h3>
+				<h3 class="mb-3 text-2xl font-bold">Truly Open Source</h3>
 				<p class="mb-6 text-surface-600 dark:text-surface-400">
 					<strong class="text-surface-900 dark:text-surface-100"
 						>No vendor lock-in. No proprietary formats. No artificial limits.</strong
 					>
 					<br /><br />
-					QA Studio is completely open source and free to use. Fork it, customize it, self-host
-					it. The code belongs to the community, and you have full control over your testing
-					data and infrastructure.
+					Licensed under AGPL-3.0, QA Studio is completely open source and free to use. Fork
+					it, customize it, self-host it. If you run a modified version as a service, you share
+					your improvements back. The code belongs to the community, and you have full control
+					over your testing data and infrastructure.
 				</p>
 				<div class="flex flex-wrap gap-2">
 					<span
 						class="rounded-full bg-success-500/10 px-3 py-1 text-xs font-medium text-success-600 dark:text-success-400"
-						>Elastic 2.0 License</span
+						>AGPL-3.0 License</span
 					>
 					<span
 						class="rounded-full bg-success-500/10 px-3 py-1 text-xs font-medium text-success-600 dark:text-success-400"

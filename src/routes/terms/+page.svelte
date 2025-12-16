@@ -397,15 +397,20 @@
 		>
 			<h2 class="mt-0">Open Source License</h2>
 			<p>
-				QA Studio is open-source software. These Terms of Service apply to our hosted
-				service at qastudio.dev.
+				QA Studio is open-source software licensed under the <strong
+					>GNU Affero General Public License v3.0 (AGPL-3.0)</strong
+				>. These Terms of Service apply to our hosted service at qastudio.dev.
 			</p>
 			<p>
-				For self-hosted deployments, please refer to our open-source license at <a
-					href="https://github.com/qastudio/qastudio"
+				For self-hosted deployments, the AGPL-3.0 license applies. This means if you modify
+				QA Studio and run it as a network service, you must provide users access to the
+				source code. Please refer to our
+				<a
+					href="https://github.com/QAStudio-Dev/studio"
 					target="_blank"
-					rel="noopener noreferrer">GitHub</a
-				>.
+					rel="noopener noreferrer">GitHub repository</a
+				>
+				for the full license text.
 			</p>
 		</section>
 
