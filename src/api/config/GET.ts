@@ -1,5 +1,6 @@
 import { Endpoint, z } from 'sveltekit-api';
 import { DEPLOYMENT_CONFIG } from '$lib/config';
+import { checkRateLimit } from '$lib/server/rate-limit';
 
 /**
  * Public configuration endpoint
@@ -12,6 +13,8 @@ import { DEPLOYMENT_CONFIG } from '$lib/config';
  *
  * Security note: Only returns non-sensitive deployment configuration.
  * Does NOT expose secrets, internal URLs, or detailed infrastructure info.
+ *
+ * Rate limiting: 100 requests per minute per IP address to prevent fingerprinting attacks.
  */
 
 // Define output schema
@@ -29,12 +32,27 @@ export const Modifier = (r: any) => {
 	r.tags = ['Configuration'];
 	r.summary = 'Get public deployment configuration';
 	r.description =
-		'Returns minimal deployment mode information (self-hosted vs SaaS) to help frontends conditionally render billing/pricing UI. This endpoint is public and does not require authentication.';
+		'Returns minimal deployment mode information (self-hosted vs SaaS) to help frontends conditionally render billing/pricing UI. This endpoint is public and does not require authentication. Rate limited to 100 requests per minute per IP.';
 	return r;
 };
 
 // Implement handler
-export default new Endpoint({ Output, Modifier }).handle(async (): Promise<any> => {
+export default new Endpoint({ Output, Modifier }).handle(async (_input, evt): Promise<any> => {
+	// Extract client IP for rate limiting
+	const clientIP =
+		evt.getClientAddress() ||
+		evt.request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+		evt.request.headers.get('x-real-ip') ||
+		'unknown';
+
+	// Rate limit: 100 requests per minute per IP
+	await checkRateLimit({
+		key: `config:${clientIP}`,
+		limit: 100,
+		window: 60, // 60 seconds
+		prefix: 'api'
+	});
+
 	const isSelfHosted = DEPLOYMENT_CONFIG.IS_SELF_HOSTED;
 
 	return {

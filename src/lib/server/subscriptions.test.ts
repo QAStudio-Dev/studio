@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
 	hasActiveSubscription,
 	requireActiveSubscription,
@@ -9,7 +9,6 @@ import {
 	getTeamLimits,
 	type TeamLimits
 } from './subscriptions';
-import { DEPLOYMENT_CONFIG } from '$lib/config';
 
 // Mock the database
 vi.mock('./db', () => ({
@@ -23,47 +22,41 @@ vi.mock('./db', () => ({
 	}
 }));
 
+// Mock the config module - we'll dynamically change IS_SELF_HOSTED in tests
+vi.mock('$lib/config', () => ({
+	DEPLOYMENT_CONFIG: {
+		IS_SELF_HOSTED: false
+	}
+}));
+
 import { db } from './db';
+import { DEPLOYMENT_CONFIG } from '$lib/config';
 
 describe('subscriptions - Self-Hosted Mode', () => {
 	const mockTeamId = 'team_test123';
-	let originalSelfHosted: boolean;
 
 	beforeEach(() => {
-		// Save original value
-		originalSelfHosted = DEPLOYMENT_CONFIG.IS_SELF_HOSTED;
 		vi.clearAllMocks();
-	});
-
-	afterEach(() => {
-		// Restore original value
-		Object.defineProperty(DEPLOYMENT_CONFIG, 'IS_SELF_HOSTED', {
-			value: originalSelfHosted,
-			writable: true
-		});
 	});
 
 	describe('hasActiveSubscription', () => {
 		it('should return true in self-hosted mode without DB call', async () => {
-			// Mock self-hosted mode
-			Object.defineProperty(DEPLOYMENT_CONFIG, 'IS_SELF_HOSTED', {
-				value: true,
-				writable: true
-			});
+			// Mock self-hosted mode by re-assigning the mocked value
+			(DEPLOYMENT_CONFIG as any).IS_SELF_HOSTED = true;
 
 			const result = await hasActiveSubscription(mockTeamId);
 
 			expect(result).toBe(true);
 			// Verify no database call was made
 			expect(db.subscription.findUnique).not.toHaveBeenCalled();
+
+			// Reset for other tests
+			(DEPLOYMENT_CONFIG as any).IS_SELF_HOSTED = false;
 		});
 
 		it('should check database in SaaS mode', async () => {
-			// Mock SaaS mode
-			Object.defineProperty(DEPLOYMENT_CONFIG, 'IS_SELF_HOSTED', {
-				value: false,
-				writable: true
-			});
+			// Ensure SaaS mode
+			(DEPLOYMENT_CONFIG as any).IS_SELF_HOSTED = false;
 
 			// Mock active subscription
 			vi.mocked(db.subscription.findUnique).mockResolvedValue({
@@ -89,10 +82,7 @@ describe('subscriptions - Self-Hosted Mode', () => {
 		});
 
 		it('should return false for no subscription in SaaS mode', async () => {
-			Object.defineProperty(DEPLOYMENT_CONFIG, 'IS_SELF_HOSTED', {
-				value: false,
-				writable: true
-			});
+			(DEPLOYMENT_CONFIG as any).IS_SELF_HOSTED = false;
 
 			vi.mocked(db.subscription.findUnique).mockResolvedValue(null);
 
@@ -104,20 +94,16 @@ describe('subscriptions - Self-Hosted Mode', () => {
 
 	describe('requireActiveSubscription', () => {
 		it('should not throw in self-hosted mode', async () => {
-			Object.defineProperty(DEPLOYMENT_CONFIG, 'IS_SELF_HOSTED', {
-				value: true,
-				writable: true
-			});
+			(DEPLOYMENT_CONFIG as any).IS_SELF_HOSTED = true;
 
 			await expect(requireActiveSubscription(mockTeamId)).resolves.not.toThrow();
 			expect(db.subscription.findUnique).not.toHaveBeenCalled();
+
+			(DEPLOYMENT_CONFIG as any).IS_SELF_HOSTED = false;
 		});
 
 		it('should throw error when no subscription in SaaS mode', async () => {
-			Object.defineProperty(DEPLOYMENT_CONFIG, 'IS_SELF_HOSTED', {
-				value: false,
-				writable: true
-			});
+			(DEPLOYMENT_CONFIG as any).IS_SELF_HOSTED = false;
 
 			vi.mocked(db.subscription.findUnique).mockResolvedValue(null);
 
@@ -127,22 +113,18 @@ describe('subscriptions - Self-Hosted Mode', () => {
 
 	describe('hasAvailableSeats', () => {
 		it('should return true in self-hosted mode without DB call', async () => {
-			Object.defineProperty(DEPLOYMENT_CONFIG, 'IS_SELF_HOSTED', {
-				value: true,
-				writable: true
-			});
+			(DEPLOYMENT_CONFIG as any).IS_SELF_HOSTED = true;
 
 			const result = await hasAvailableSeats(mockTeamId);
 
 			expect(result).toBe(true);
 			expect(db.team.findUnique).not.toHaveBeenCalled();
+
+			(DEPLOYMENT_CONFIG as any).IS_SELF_HOSTED = false;
 		});
 
 		it('should check seat limits in SaaS mode', async () => {
-			Object.defineProperty(DEPLOYMENT_CONFIG, 'IS_SELF_HOSTED', {
-				value: false,
-				writable: true
-			});
+			(DEPLOYMENT_CONFIG as any).IS_SELF_HOSTED = false;
 
 			vi.mocked(db.team.findUnique).mockResolvedValue({
 				id: mockTeamId,
@@ -190,22 +172,18 @@ describe('subscriptions - Self-Hosted Mode', () => {
 
 	describe('requireAvailableSeats', () => {
 		it('should not throw in self-hosted mode', async () => {
-			Object.defineProperty(DEPLOYMENT_CONFIG, 'IS_SELF_HOSTED', {
-				value: true,
-				writable: true
-			});
+			(DEPLOYMENT_CONFIG as any).IS_SELF_HOSTED = true;
 
 			await expect(requireAvailableSeats(mockTeamId)).resolves.not.toThrow();
 			expect(db.team.findUnique).not.toHaveBeenCalled();
+
+			(DEPLOYMENT_CONFIG as any).IS_SELF_HOSTED = false;
 		});
 	});
 
 	describe('isFeatureAvailable', () => {
 		it('should return true for all features in self-hosted mode', async () => {
-			Object.defineProperty(DEPLOYMENT_CONFIG, 'IS_SELF_HOSTED', {
-				value: true,
-				writable: true
-			});
+			(DEPLOYMENT_CONFIG as any).IS_SELF_HOSTED = true;
 
 			const aiAnalysis = await isFeatureAvailable(mockTeamId, 'ai_analysis');
 			const advancedReports = await isFeatureAvailable(mockTeamId, 'advanced_reports');
@@ -215,13 +193,12 @@ describe('subscriptions - Self-Hosted Mode', () => {
 			expect(advancedReports).toBe(true);
 			expect(integrations).toBe(true);
 			expect(db.subscription.findUnique).not.toHaveBeenCalled();
+
+			(DEPLOYMENT_CONFIG as any).IS_SELF_HOSTED = false;
 		});
 
 		it('should check subscription for features in SaaS mode', async () => {
-			Object.defineProperty(DEPLOYMENT_CONFIG, 'IS_SELF_HOSTED', {
-				value: false,
-				writable: true
-			});
+			(DEPLOYMENT_CONFIG as any).IS_SELF_HOSTED = false;
 
 			vi.mocked(db.subscription.findUnique).mockResolvedValue({
 				id: 'sub_123',
@@ -244,10 +221,7 @@ describe('subscriptions - Self-Hosted Mode', () => {
 		});
 
 		it('should return false for features without subscription in SaaS mode', async () => {
-			Object.defineProperty(DEPLOYMENT_CONFIG, 'IS_SELF_HOSTED', {
-				value: false,
-				writable: true
-			});
+			(DEPLOYMENT_CONFIG as any).IS_SELF_HOSTED = false;
 
 			vi.mocked(db.subscription.findUnique).mockResolvedValue(null);
 
@@ -259,22 +233,18 @@ describe('subscriptions - Self-Hosted Mode', () => {
 
 	describe('requireFeature', () => {
 		it('should not throw for any feature in self-hosted mode', async () => {
-			Object.defineProperty(DEPLOYMENT_CONFIG, 'IS_SELF_HOSTED', {
-				value: true,
-				writable: true
-			});
+			(DEPLOYMENT_CONFIG as any).IS_SELF_HOSTED = true;
 
 			await expect(requireFeature(mockTeamId, 'ai_analysis')).resolves.not.toThrow();
 			await expect(requireFeature(mockTeamId, 'advanced_reports')).resolves.not.toThrow();
 			await expect(requireFeature(mockTeamId, 'integrations')).resolves.not.toThrow();
 			expect(db.subscription.findUnique).not.toHaveBeenCalled();
+
+			(DEPLOYMENT_CONFIG as any).IS_SELF_HOSTED = false;
 		});
 
 		it('should throw error for features without subscription in SaaS mode', async () => {
-			Object.defineProperty(DEPLOYMENT_CONFIG, 'IS_SELF_HOSTED', {
-				value: false,
-				writable: true
-			});
+			(DEPLOYMENT_CONFIG as any).IS_SELF_HOSTED = false;
 
 			vi.mocked(db.subscription.findUnique).mockResolvedValue(null);
 
@@ -329,10 +299,7 @@ describe('subscriptions - Self-Hosted Mode', () => {
 		};
 
 		it('should return unlimited limits in self-hosted mode', async () => {
-			Object.defineProperty(DEPLOYMENT_CONFIG, 'IS_SELF_HOSTED', {
-				value: true,
-				writable: true
-			});
+			(DEPLOYMENT_CONFIG as any).IS_SELF_HOSTED = true;
 
 			vi.mocked(db.team.findUnique).mockResolvedValue(mockTeam);
 
@@ -354,13 +321,12 @@ describe('subscriptions - Self-Hosted Mode', () => {
 				subscription: null,
 				selfHosted: true
 			});
+
+			(DEPLOYMENT_CONFIG as any).IS_SELF_HOSTED = false;
 		});
 
 		it('should return actual limits in SaaS mode', async () => {
-			Object.defineProperty(DEPLOYMENT_CONFIG, 'IS_SELF_HOSTED', {
-				value: false,
-				writable: true
-			});
+			(DEPLOYMENT_CONFIG as any).IS_SELF_HOSTED = false;
 
 			vi.mocked(db.team.findUnique).mockResolvedValue(mockTeam);
 
@@ -376,10 +342,7 @@ describe('subscriptions - Self-Hosted Mode', () => {
 		});
 
 		it('should throw error for non-existent team', async () => {
-			Object.defineProperty(DEPLOYMENT_CONFIG, 'IS_SELF_HOSTED', {
-				value: false,
-				writable: true
-			});
+			(DEPLOYMENT_CONFIG as any).IS_SELF_HOSTED = false;
 
 			vi.mocked(db.team.findUnique).mockResolvedValue(null);
 

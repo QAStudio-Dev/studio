@@ -62,7 +62,29 @@ export function validateEnvironment(): void {
 
 	// Log deployment mode for security audit trail
 	const selfHosted = process.env.SELF_HOSTED;
-	if (selfHosted === 'true' || selfHosted === '1') {
+	const validTruthyValues = ['true', '1', 'yes', 'on'];
+	const validFalsyValues = ['false', '0', 'no', 'off', ''];
+
+	if (
+		selfHosted &&
+		!validTruthyValues.includes(selfHosted.toLowerCase()) &&
+		!validFalsyValues.includes(selfHosted.toLowerCase())
+	) {
+		console.warn(`⚠️  [WARNING] Invalid SELF_HOSTED value: "${selfHosted}"`);
+		console.warn(
+			'    Valid values: true, 1, yes, on (for self-hosted) or false, 0, no, off (for SaaS)'
+		);
+		console.warn(
+			'    Defaulting to SaaS mode (false). Set SELF_HOSTED=true explicitly for self-hosted mode.'
+		);
+	}
+
+	if (
+		selfHosted === 'true' ||
+		selfHosted === '1' ||
+		selfHosted?.toLowerCase() === 'yes' ||
+		selfHosted?.toLowerCase() === 'on'
+	) {
 		console.log(
 			'⚠️  [SECURITY] Running in SELF_HOSTED mode - all subscription and payment checks bypassed'
 		);

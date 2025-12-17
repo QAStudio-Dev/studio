@@ -58,16 +58,25 @@ When `SELF_HOSTED=true` is set, the following changes take effect:
 
 ### Docker (Recommended)
 
+**Note**: Docker Compose defaults to `SELF_HOSTED=true` automatically. You don't need to explicitly set it unless you want to run the SaaS version.
+
 ```bash
 git clone https://github.com/QAStudio-Dev/studio.git
 cd studio
 cp .env.example .env
 
-# Edit .env and add:
-echo "SELF_HOSTED=true" >> .env
-
+# Docker defaults to self-hosted mode - just start it!
 docker-compose up -d
+
+# To run as SaaS instead (with payment processing):
+# SELF_HOSTED=false docker-compose up -d
 ```
+
+The Docker Compose files default to self-hosted mode because:
+
+- Most Docker users are deploying to their own infrastructure
+- Self-hosted is the simpler, more common use case for Docker
+- It eliminates the need for Stripe configuration during initial setup
 
 ### Manual Installation
 

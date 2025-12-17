@@ -50,16 +50,21 @@ function parseBooleanEnv(value: string | undefined, defaultValue = false): boole
  * Changing environment variables requires a server restart to take effect.
  * This is intentional for security and performance - deployment mode should
  * not change during runtime.
+ *
+ * SECURITY: Object is frozen to prevent runtime modification. Any attempt to
+ * change IS_SELF_HOSTED after module load will fail, preventing malicious code
+ * from bypassing payment checks.
  */
-export const DEPLOYMENT_CONFIG = {
+export const DEPLOYMENT_CONFIG = Object.freeze({
 	/**
 	 * Set SELF_HOSTED=true to disable Stripe and unlock all features
 	 * Accepts: true, 1, yes, on (case-insensitive, whitespace trimmed)
 	 *
 	 * Note: Evaluated once at server startup. Changes require server restart.
+	 * This value is frozen and cannot be changed at runtime.
 	 */
 	IS_SELF_HOSTED: parseBooleanEnv(process.env.SELF_HOSTED, false)
-} as const;
+});
 
 /**
  * Rate limiting configuration
