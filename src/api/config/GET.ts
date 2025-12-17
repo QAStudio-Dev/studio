@@ -1,6 +1,6 @@
 import { Endpoint, z } from 'sveltekit-api';
 import { DEPLOYMENT_CONFIG } from '$lib/config';
-import { checkRateLimit } from '$lib/server/rate-limit';
+import { checkRateLimitWithInfo } from '$lib/server/rate-limit';
 
 /**
  * Public configuration endpoint
@@ -37,28 +37,43 @@ export const Modifier = (r: any) => {
 };
 
 // Implement handler
-export default new Endpoint({ Output, Modifier }).handle(async (_input, evt): Promise<any> => {
-	// Extract client IP for rate limiting
-	const clientIP =
-		evt.getClientAddress() ||
-		evt.request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
-		evt.request.headers.get('x-real-ip') ||
-		'unknown';
+export default new Endpoint({ Output, Modifier }).handle(
+	async (_input, evt): Promise<z.infer<typeof Output>> => {
+		// Extract client IP for rate limiting
+		const clientIP =
+			evt.getClientAddress() ||
+			evt.request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+			evt.request.headers.get('x-real-ip') ||
+			'unknown';
 
-	// Rate limit: 100 requests per minute per IP
-	await checkRateLimit({
-		key: `config:${clientIP}`,
-		limit: 100,
-		window: 60, // 60 seconds
-		prefix: 'api'
-	});
+		// Rate limit: 100 requests per minute per IP
+		const rateLimitResult = await checkRateLimitWithInfo({
+			key: `config:${clientIP}`,
+			limit: 100,
+			window: 60, // 60 seconds
+			prefix: 'api'
+		});
 
-	const isSelfHosted = DEPLOYMENT_CONFIG.IS_SELF_HOSTED;
+		// Add rate limit headers
+		evt.setHeaders({
+			'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+			'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+			'X-RateLimit-Reset': new Date(rateLimitResult.reset).toISOString()
+		});
 
-	return {
-		selfHosted: isSelfHosted,
-		billing: {
-			enabled: !isSelfHosted // Billing only enabled in SaaS mode
+		// Check if rate limit exceeded
+		if (!rateLimitResult.success) {
+			const resetDate = new Date(rateLimitResult.reset);
+			throw new Error(`Rate limit exceeded. Try again after ${resetDate.toISOString()}`);
 		}
-	};
-});
+
+		const isSelfHosted = DEPLOYMENT_CONFIG.IS_SELF_HOSTED;
+
+		return {
+			selfHosted: isSelfHosted,
+			billing: {
+				enabled: !isSelfHosted // Billing only enabled in SaaS mode
+			}
+		};
+	}
+);

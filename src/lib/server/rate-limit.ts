@@ -17,6 +17,20 @@ export interface RateLimitConfig {
 }
 
 /**
+ * Rate limit result with metadata for headers
+ */
+export interface RateLimitResult {
+	/** Whether the request is allowed */
+	success: boolean;
+	/** Maximum requests allowed in window */
+	limit: number;
+	/** Remaining requests in current window */
+	remaining: number;
+	/** Timestamp when the rate limit resets (Unix timestamp in ms) */
+	reset: number;
+}
+
+/**
  * In-memory fallback for development when Redis is not available
  *
  * ⚠️ WARNING: This in-memory implementation is NOT suitable for production use:
@@ -30,12 +44,27 @@ export interface RateLimitConfig {
 const rateLimitMemory = new Map<string, { count: number; resetAt: number }>();
 
 /**
- * Check rate limit for a given key
+ * Check rate limit for a given key (throws on exceeded)
  * Uses Redis in production, falls back to in-memory for development
  *
  * @throws error(429) if rate limit exceeded
  */
 export async function checkRateLimit(config: RateLimitConfig): Promise<void> {
+	const result = await checkRateLimitWithInfo(config);
+
+	if (!result.success) {
+		const resetDate = new Date(result.reset);
+		throw error(429, `Rate limit exceeded. Try again after ${resetDate.toISOString()}`);
+	}
+}
+
+/**
+ * Check rate limit and return detailed information for headers
+ * Uses Redis in production, falls back to in-memory for development
+ *
+ * @returns RateLimitResult with success status and metadata
+ */
+export async function checkRateLimitWithInfo(config: RateLimitConfig): Promise<RateLimitResult> {
 	const { key, limit, window, prefix = 'ratelimit' } = config;
 
 	// Use Redis rate limiting if available
@@ -47,14 +76,14 @@ export async function checkRateLimit(config: RateLimitConfig): Promise<void> {
 			prefix
 		});
 
-		const { success, reset } = await ratelimit.limit(key);
+		const { success, remaining, reset } = await ratelimit.limit(key);
 
-		if (!success) {
-			const resetDate = new Date(reset);
-			throw error(429, `Rate limit exceeded. Try again after ${resetDate.toISOString()}`);
-		}
-
-		return;
+		return {
+			success,
+			limit,
+			remaining,
+			reset
+		};
 	}
 
 	// Fallback to in-memory rate limiting for development
@@ -69,17 +98,34 @@ export async function checkRateLimit(config: RateLimitConfig): Promise<void> {
 
 	if (!attempt || now > attempt.resetAt) {
 		// Reset or create new entry
-		rateLimitMemory.set(fullKey, { count: 1, resetAt: now + windowMs });
-		return;
+		const resetAt = now + windowMs;
+		rateLimitMemory.set(fullKey, { count: 1, resetAt });
+		return {
+			success: true,
+			limit,
+			remaining: limit - 1,
+			reset: resetAt
+		};
 	}
 
 	if (attempt.count >= limit) {
 		// Too many attempts
-		const resetDate = new Date(attempt.resetAt);
-		throw error(429, `Rate limit exceeded. Try again after ${resetDate.toISOString()}`);
+		return {
+			success: false,
+			limit,
+			remaining: 0,
+			reset: attempt.resetAt
+		};
 	}
 
 	// Increment count
 	attempt.count++;
 	rateLimitMemory.set(fullKey, attempt);
+
+	return {
+		success: true,
+		limit,
+		remaining: limit - attempt.count,
+		reset: attempt.resetAt
+	};
 }

@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { requireAuth } from '$lib/server/auth';
+import { hasActiveSubscription } from '$lib/server/subscriptions';
 
 /**
  * GET /api/dashboard/stats
@@ -152,9 +153,9 @@ export const GET: RequestHandler = async (event) => {
 	const executedTests = passedTests + failedTests;
 	const passRate = executedTests > 0 ? Math.round((passedTests / executedTests) * 100) : 0;
 
-	// Check project limit
-	const hasActiveSubscription = user.team?.subscription?.status === ('ACTIVE' as any);
-	const projectLimit = hasActiveSubscription ? null : 1; // null = unlimited
+	// Check project limit using centralized subscription check
+	const hasSubscription = user.teamId ? await hasActiveSubscription(user.teamId) : false;
+	const projectLimit = hasSubscription ? null : 1; // null = unlimited
 	const canCreateProject = projectLimit === null || projects.length < projectLimit;
 
 	return json({
@@ -168,7 +169,7 @@ export const GET: RequestHandler = async (event) => {
 			recentResults
 		},
 		subscription: {
-			hasActiveSubscription,
+			hasActiveSubscription: hasSubscription,
 			projectLimit,
 			canCreateProject
 		}
