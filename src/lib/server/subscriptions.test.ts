@@ -301,7 +301,12 @@ describe('subscriptions - Self-Hosted Mode', () => {
 		it('should return unlimited limits in self-hosted mode', async () => {
 			(DEPLOYMENT_CONFIG as any).IS_SELF_HOSTED = true;
 
-			vi.mocked(db.team.findUnique).mockResolvedValue(mockTeam);
+			// Mock the optimized query that only returns _count
+			vi.mocked(db.team.findUnique).mockResolvedValue({
+				_count: {
+					members: 2
+				}
+			} as any);
 
 			const limits: TeamLimits = await getTeamLimits(mockTeamId);
 

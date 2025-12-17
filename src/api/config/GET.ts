@@ -1,4 +1,4 @@
-import { Endpoint, z } from 'sveltekit-api';
+import { Endpoint, z, error } from 'sveltekit-api';
 import { DEPLOYMENT_CONFIG } from '$lib/config';
 import { checkRateLimitWithInfo } from '$lib/server/rate-limit';
 
@@ -54,18 +54,24 @@ export default new Endpoint({ Output, Modifier }).handle(
 			prefix: 'api'
 		});
 
-		// Add rate limit headers
+		// Check if rate limit exceeded (set headers even on error)
+		if (!rateLimitResult.success) {
+			evt.setHeaders({
+				'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+				'X-RateLimit-Remaining': '0',
+				'X-RateLimit-Reset': new Date(rateLimitResult.reset).toISOString()
+			});
+
+			const resetDate = new Date(rateLimitResult.reset);
+			throw error(429, `Rate limit exceeded. Try again after ${resetDate.toISOString()}`);
+		}
+
+		// Add rate limit headers for successful requests
 		evt.setHeaders({
 			'X-RateLimit-Limit': rateLimitResult.limit.toString(),
 			'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
 			'X-RateLimit-Reset': new Date(rateLimitResult.reset).toISOString()
 		});
-
-		// Check if rate limit exceeded
-		if (!rateLimitResult.success) {
-			const resetDate = new Date(rateLimitResult.reset);
-			throw new Error(`Rate limit exceeded. Try again after ${resetDate.toISOString()}`);
-		}
 
 		const isSelfHosted = DEPLOYMENT_CONFIG.IS_SELF_HOSTED;
 

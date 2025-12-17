@@ -203,26 +203,27 @@ export type TeamLimits = {
  * In self-hosted mode, returns unlimited limits for all features
  */
 export async function getTeamLimits(teamId: string): Promise<TeamLimits> {
-	const team = await db.team.findUnique({
-		where: { id: teamId },
-		include: {
-			members: true,
-			subscription: true,
-			projects: true
-		}
-	});
-
-	if (!team) {
-		throw error(404, { message: 'Team not found' });
-	}
-
 	// Self-hosted deployments have unlimited everything
+	// Query only what we need to avoid unnecessary DB load
 	if (DEPLOYMENT_CONFIG.IS_SELF_HOSTED) {
+		const team = await db.team.findUnique({
+			where: { id: teamId },
+			select: {
+				_count: {
+					select: { members: true }
+				}
+			}
+		});
+
+		if (!team) {
+			throw error(404, { message: 'Team not found' });
+		}
+
 		return {
 			plan: 'enterprise' as const,
 			seats: {
 				max: UNLIMITED,
-				used: team.members.length,
+				used: team._count.members,
 				available: UNLIMITED
 			},
 			features: {
@@ -234,6 +235,20 @@ export async function getTeamLimits(teamId: string): Promise<TeamLimits> {
 			subscription: null,
 			selfHosted: true
 		};
+	}
+
+	// SaaS mode: load full team data for subscription checks
+	const team = await db.team.findUnique({
+		where: { id: teamId },
+		include: {
+			members: true,
+			subscription: true,
+			projects: true
+		}
+	});
+
+	if (!team) {
+		throw error(404, { message: 'Team not found' });
 	}
 
 	const isFree = !team.subscription || team.subscription.status === 'CANCELED';
