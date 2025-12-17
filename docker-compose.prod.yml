@@ -37,7 +37,13 @@ services:
       S3_ACCESS_KEY: ${MINIO_USER}
       S3_SECRET_KEY: ${MINIO_PASSWORD}
       SESSION_SECRET: ${SESSION_SECRET:?Session secret required in production}
-      # Self-hosted mode (defaults to true, set to false for SaaS deployment)
+      # Deployment Mode
+      # Defaults to 'true' for production Docker deployments (self-hosted mode)
+      # - All features unlocked (AI analysis, advanced reports, integrations)
+      # - Unlimited users and projects
+      # - No Stripe/payment infrastructure required
+      # Set to 'false' ONLY if running as hosted SaaS with payment processing
+      # See SELF_HOSTED.md for details
       SELF_HOSTED: ${SELF_HOSTED:-true}
     command: sh -c "npx prisma migrate deploy && node build"
     # Remove volume mounts for production

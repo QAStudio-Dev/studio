@@ -60,6 +60,18 @@ export function validateEnvironment(): void {
 	getResetSecret();
 	getTOTPEncryptionKey();
 
+	// Log deployment mode for security audit trail
+	const selfHosted = process.env.SELF_HOSTED;
+	if (selfHosted === 'true' || selfHosted === '1') {
+		console.log(
+			'⚠️  [SECURITY] Running in SELF_HOSTED mode - all subscription and payment checks bypassed'
+		);
+		console.log('    This mode should ONLY be used on deployments you fully control.');
+		console.log('    Never enable SELF_HOSTED=true on multi-tenant SaaS deployments.');
+	} else {
+		console.log('✓ Running in SaaS mode - subscription checks enabled');
+	}
+
 	console.log('✓ Environment variables validated successfully');
 }
 

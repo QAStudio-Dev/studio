@@ -5,6 +5,11 @@ import { FREE_TIER_LIMITS } from '$lib/constants';
 import { DEPLOYMENT_CONFIG } from '$lib/config';
 
 /**
+ * Constant representing unlimited seats/resources in self-hosted mode
+ */
+const UNLIMITED = -1;
+
+/**
  * Check if a team has an active subscription
  * In self-hosted mode, always returns true (all features unlocked)
  */
@@ -167,10 +172,37 @@ export async function requireFeature(
 }
 
 /**
+ * Team limits return type
+ */
+export type TeamLimits = {
+	plan: 'free' | 'pro' | 'enterprise';
+	seats: {
+		/** Maximum seats allowed (-1 for unlimited in self-hosted mode) */
+		max: number;
+		/** Current number of seats used */
+		used: number;
+		/** Remaining available seats (-1 for unlimited in self-hosted mode) */
+		available: number;
+	};
+	features: {
+		ai_analysis: boolean;
+		advanced_reports: boolean;
+		integrations: boolean;
+		unlimited_projects: boolean;
+	};
+	subscription: {
+		status: SubscriptionStatus;
+		currentPeriodEnd: Date | null;
+		cancelAtPeriodEnd: boolean;
+	} | null;
+	selfHosted: boolean;
+};
+
+/**
  * Get team subscription limits
  * In self-hosted mode, returns unlimited limits for all features
  */
-export async function getTeamLimits(teamId: string) {
+export async function getTeamLimits(teamId: string): Promise<TeamLimits> {
 	const team = await db.team.findUnique({
 		where: { id: teamId },
 		include: {
@@ -189,9 +221,9 @@ export async function getTeamLimits(teamId: string) {
 		return {
 			plan: 'enterprise' as const,
 			seats: {
-				max: -1, // Unlimited
+				max: UNLIMITED,
 				used: team.members.length,
-				available: -1 // Unlimited
+				available: UNLIMITED
 			},
 			features: {
 				ai_analysis: true,

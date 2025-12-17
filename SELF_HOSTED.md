@@ -2,6 +2,21 @@
 
 QA Studio is open source (AGPL-3.0) and can be self-hosted on your own infrastructure with all features unlocked - no payment required.
 
+## ⚠️ Security Warning
+
+**IMPORTANT**: Self-hosted mode bypasses all payment and subscription checks. Only enable this on deployments you fully control.
+
+- ✅ **Safe**: Single-organization deployments, internal tools, private infrastructure
+- ❌ **NEVER**: Multi-tenant SaaS deployments, shared hosting, customer-facing services
+
+When `SELF_HOSTED=true` is set, the application will:
+
+- Skip all subscription and payment validations
+- Grant unlimited access to all premium features
+- Allow unlimited users and projects without any checks
+
+This is intended for organizations running their own private instance, not for hosting a service for multiple customers.
+
 ## Enabling Self-Hosted Mode
 
 To run QA Studio in self-hosted mode with all features unlocked, set the `SELF_HOSTED` environment variable:
