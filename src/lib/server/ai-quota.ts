@@ -4,9 +4,11 @@
  * Handles quota checking and usage tracking for AI trace analysis feature.
  * - Free tier: 10 analyses per month
  * - Pro tier: Unlimited analyses
+ * - Self-hosted: Unlimited analyses
  */
 
 import { db } from './db';
+import { DEPLOYMENT_CONFIG } from '$lib/config';
 
 export interface QuotaCheckResult {
 	allowed: boolean;
@@ -24,6 +26,15 @@ export async function checkAIAnalysisQuota(
 	teamId: string,
 	subscription: any
 ): Promise<QuotaCheckResult> {
+	// Self-hosted deployments have unlimited AI analysis
+	if (DEPLOYMENT_CONFIG.IS_SELF_HOSTED) {
+		return {
+			allowed: true,
+			limit: -1, // -1 = unlimited
+			used: 0
+		};
+	}
+
 	// Check if team has active subscription
 	const hasActiveSubscription =
 		subscription && (subscription.status === 'ACTIVE' || subscription.status === 'PAST_DUE');
@@ -115,6 +126,11 @@ export async function checkAIAnalysisQuota(
  * Increment AI analysis usage counter
  */
 export async function incrementAIAnalysisUsage(teamId: string, subscription: any): Promise<void> {
+	// Self-hosted deployments don't track usage
+	if (DEPLOYMENT_CONFIG.IS_SELF_HOSTED) {
+		return;
+	}
+
 	if (!subscription) {
 		// Create subscription record if it doesn't exist (for free teams)
 		// This shouldn't normally happen but handle it gracefully

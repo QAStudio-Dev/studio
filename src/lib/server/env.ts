@@ -60,6 +60,40 @@ export function validateEnvironment(): void {
 	getResetSecret();
 	getTOTPEncryptionKey();
 
+	// Log deployment mode for security audit trail
+	const selfHosted = process.env.SELF_HOSTED;
+	const validTruthyValues = ['true', '1', 'yes', 'on'];
+	const validFalsyValues = ['false', '0', 'no', 'off', ''];
+
+	if (
+		selfHosted &&
+		!validTruthyValues.includes(selfHosted.toLowerCase()) &&
+		!validFalsyValues.includes(selfHosted.toLowerCase())
+	) {
+		console.warn(`⚠️  [WARNING] Invalid SELF_HOSTED value: "${selfHosted}"`);
+		console.warn(
+			'    Valid values: true, 1, yes, on (for self-hosted) or false, 0, no, off (for SaaS)'
+		);
+		console.warn(
+			'    Defaulting to SaaS mode (false). Set SELF_HOSTED=true explicitly for self-hosted mode.'
+		);
+	}
+
+	if (
+		selfHosted === 'true' ||
+		selfHosted === '1' ||
+		selfHosted?.toLowerCase() === 'yes' ||
+		selfHosted?.toLowerCase() === 'on'
+	) {
+		console.log(
+			'⚠️  [SECURITY] Running in SELF_HOSTED mode - all subscription and payment checks bypassed'
+		);
+		console.log('    This mode should ONLY be used on deployments you fully control.');
+		console.log('    Never enable SELF_HOSTED=true on multi-tenant SaaS deployments.');
+	} else {
+		console.log('✓ Running in SaaS mode - subscription checks enabled');
+	}
+
 	console.log('✓ Environment variables validated successfully');
 }
 

@@ -119,6 +119,15 @@ services:
       ORIGIN: http://localhost:3000
       NODE_ENV: development
 
+      # Deployment Mode
+      # Defaults to 'true' for Docker deployments (self-hosted mode)
+      # - All features unlocked (AI analysis, advanced reports, integrations)
+      # - Unlimited users and projects
+      # - No Stripe/payment infrastructure required
+      # Set to 'false' if running as hosted SaaS with payment processing
+      # See SELF_HOSTED.md for details
+      SELF_HOSTED: ${SELF_HOSTED:-true}
+
       # Session Secret (change in production!)
       SESSION_SECRET: ${SESSION_SECRET:-dev_secret_change_me_in_production}
     volumes:
