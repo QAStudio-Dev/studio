@@ -35,22 +35,28 @@ export const PASSWORD_RESET_CONFIG = {
 
 /**
  * Parse boolean environment variable with support for common truthy values
- * Accepts: 'true', '1', 'yes', 'on' (case-insensitive)
+ * Accepts: 'true', '1', 'yes', 'on' (case-insensitive, whitespace trimmed)
  */
 function parseBooleanEnv(value: string | undefined, defaultValue = false): boolean {
 	if (!value) return defaultValue;
-	return ['true', '1', 'yes', 'on'].includes(value.toLowerCase());
+	return ['true', '1', 'yes', 'on'].includes(value.trim().toLowerCase());
 }
 
 /**
  * Deployment mode configuration
  * Self-hosted deployments bypass all payment/subscription checks
+ *
+ * IMPORTANT: Configuration is evaluated at module load time (server startup).
+ * Changing environment variables requires a server restart to take effect.
+ * This is intentional for security and performance - deployment mode should
+ * not change during runtime.
  */
 export const DEPLOYMENT_CONFIG = {
 	/**
 	 * Set SELF_HOSTED=true to disable Stripe and unlock all features
-	 * Accepts: true, 1, yes, on (case-insensitive)
-	 * Note: This is evaluated at module load time
+	 * Accepts: true, 1, yes, on (case-insensitive, whitespace trimmed)
+	 *
+	 * Note: Evaluated once at server startup. Changes require server restart.
 	 */
 	IS_SELF_HOSTED: parseBooleanEnv(process.env.SELF_HOSTED, false)
 } as const;

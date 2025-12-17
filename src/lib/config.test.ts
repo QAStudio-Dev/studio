@@ -4,7 +4,7 @@ import { describe, it, expect } from 'vitest';
 // This matches the implementation in src/lib/config.ts
 function parseBooleanEnv(value: string | undefined, defaultValue = false): boolean {
 	if (!value) return defaultValue;
-	return ['true', '1', 'yes', 'on'].includes(value.toLowerCase());
+	return ['true', '1', 'yes', 'on'].includes(value.trim().toLowerCase());
 }
 
 describe('parseBooleanEnv - Boolean Parsing Logic', () => {
@@ -81,7 +81,14 @@ describe('parseBooleanEnv - Boolean Parsing Logic', () => {
 		expect(parseBooleanEnv('random-value')).toBe(false);
 	});
 
-	it('should parse whitespace string as false', () => {
+	it('should parse whitespace-only string as false', () => {
 		expect(parseBooleanEnv('   ')).toBe(false);
+	});
+
+	it('should trim whitespace before parsing', () => {
+		expect(parseBooleanEnv(' true ')).toBe(true);
+		expect(parseBooleanEnv('  1  ')).toBe(true);
+		expect(parseBooleanEnv('\tyes\t')).toBe(true);
+		expect(parseBooleanEnv('\non\n')).toBe(true);
 	});
 });
