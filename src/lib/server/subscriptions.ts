@@ -2,11 +2,18 @@ import { error } from '@sveltejs/kit';
 import { db } from './db';
 import type { SubscriptionStatus, Subscription } from '$prisma/client';
 import { FREE_TIER_LIMITS } from '$lib/constants';
+import { DEPLOYMENT_CONFIG } from '$lib/config';
 
 /**
  * Check if a team has an active subscription
+ * In self-hosted mode, always returns true (all features unlocked)
  */
 export async function hasActiveSubscription(teamId: string): Promise<boolean> {
+	// Self-hosted deployments have all features unlocked
+	if (DEPLOYMENT_CONFIG.IS_SELF_HOSTED) {
+		return true;
+	}
+
 	const subscription = await db.subscription.findUnique({
 		where: { teamId }
 	});
@@ -20,8 +27,14 @@ export async function hasActiveSubscription(teamId: string): Promise<boolean> {
 
 /**
  * Require active subscription or throw error
+ * In self-hosted mode, this check is bypassed
  */
 export async function requireActiveSubscription(teamId: string) {
+	// Self-hosted deployments bypass subscription checks
+	if (DEPLOYMENT_CONFIG.IS_SELF_HOSTED) {
+		return;
+	}
+
 	const hasActive = await hasActiveSubscription(teamId);
 
 	if (!hasActive) {
@@ -33,8 +46,14 @@ export async function requireActiveSubscription(teamId: string) {
 
 /**
  * Check if team has available seats
+ * In self-hosted mode, unlimited seats are available
  */
 export async function hasAvailableSeats(teamId: string): Promise<boolean> {
+	// Self-hosted deployments have unlimited seats
+	if (DEPLOYMENT_CONFIG.IS_SELF_HOSTED) {
+		return true;
+	}
+
 	const team = await db.team.findUnique({
 		where: { id: teamId },
 		include: {
@@ -63,8 +82,14 @@ export async function hasAvailableSeats(teamId: string): Promise<boolean> {
 
 /**
  * Require available seats or throw error
+ * In self-hosted mode, this check is bypassed
  */
 export async function requireAvailableSeats(teamId: string) {
+	// Self-hosted deployments bypass seat limits
+	if (DEPLOYMENT_CONFIG.IS_SELF_HOSTED) {
+		return;
+	}
+
 	const hasSeats = await hasAvailableSeats(teamId);
 
 	if (!hasSeats) {
@@ -89,11 +114,17 @@ export async function getSubscriptionStatus(teamId: string): Promise<Subscriptio
 
 /**
  * Check if a feature is available for the team
+ * In self-hosted mode, all features are always available
  */
 export async function isFeatureAvailable(
 	teamId: string,
 	feature: 'ai_analysis' | 'advanced_reports' | 'integrations'
 ): Promise<boolean> {
+	// Self-hosted deployments have all features unlocked
+	if (DEPLOYMENT_CONFIG.IS_SELF_HOSTED) {
+		return true;
+	}
+
 	const subscription = await db.subscription.findUnique({
 		where: { teamId }
 	});
@@ -109,11 +140,17 @@ export async function isFeatureAvailable(
 
 /**
  * Require feature access or throw error
+ * In self-hosted mode, this check is bypassed
  */
 export async function requireFeature(
 	teamId: string,
 	feature: 'ai_analysis' | 'advanced_reports' | 'integrations'
 ) {
+	// Self-hosted deployments bypass feature checks
+	if (DEPLOYMENT_CONFIG.IS_SELF_HOSTED) {
+		return;
+	}
+
 	const available = await isFeatureAvailable(teamId, feature);
 
 	if (!available) {
@@ -131,6 +168,7 @@ export async function requireFeature(
 
 /**
  * Get team subscription limits
+ * In self-hosted mode, returns unlimited limits for all features
  */
 export async function getTeamLimits(teamId: string) {
 	const team = await db.team.findUnique({
@@ -144,6 +182,26 @@ export async function getTeamLimits(teamId: string) {
 
 	if (!team) {
 		throw error(404, { message: 'Team not found' });
+	}
+
+	// Self-hosted deployments have unlimited everything
+	if (DEPLOYMENT_CONFIG.IS_SELF_HOSTED) {
+		return {
+			plan: 'enterprise' as const,
+			seats: {
+				max: -1, // Unlimited
+				used: team.members.length,
+				available: -1 // Unlimited
+			},
+			features: {
+				ai_analysis: true,
+				advanced_reports: true,
+				integrations: true,
+				unlimited_projects: true
+			},
+			subscription: null,
+			selfHosted: true
+		};
 	}
 
 	const isFree = !team.subscription || team.subscription.status === 'CANCELED';
@@ -180,7 +238,8 @@ export async function getTeamLimits(teamId: string) {
 					currentPeriodEnd: team.subscription.currentPeriodEnd,
 					cancelAtPeriodEnd: team.subscription.cancelAtPeriodEnd
 				}
-			: null
+			: null,
+		selfHosted: false
 	};
 }
 

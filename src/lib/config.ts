@@ -34,6 +34,15 @@ export const PASSWORD_RESET_CONFIG = {
 } as const;
 
 /**
+ * Deployment mode configuration
+ * Self-hosted deployments bypass all payment/subscription checks
+ */
+export const DEPLOYMENT_CONFIG = {
+	// Set SELF_HOSTED=true to disable Stripe and unlock all features
+	IS_SELF_HOSTED: process.env.SELF_HOSTED === 'true' || process.env.SELF_HOSTED === '1'
+} as const;
+
+/**
  * Rate limiting configuration
  * Can be overridden via environment variables
  */

@@ -37,6 +37,8 @@ services:
       S3_ACCESS_KEY: ${MINIO_USER}
       S3_SECRET_KEY: ${MINIO_PASSWORD}
       SESSION_SECRET: ${SESSION_SECRET:?Session secret required in production}
+      # Self-hosted mode (defaults to true, set to false for SaaS deployment)
+      SELF_HOSTED: ${SELF_HOSTED:-true}
     command: sh -c "npx prisma migrate deploy && node build"
     # Remove volume mounts for production
     volumes: []
