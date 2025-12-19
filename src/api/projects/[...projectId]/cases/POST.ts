@@ -193,6 +193,7 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 			}
 
 			// Calculate the next order value for proper ordering
+			// If no existing test cases, start at order 0: (null ?? -1) + 1 = 0
 			const maxOrder = await db.testCase.aggregate({
 				where: {
 					projectId: input.projectId,
@@ -253,9 +254,9 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 			});
 
 			// serializeDates converts Date fields to ISO strings, which matches our Output schema
-			// Using 'unknown' intermediate type since serializeDates doesn't update TypeScript types
+			// Use Zod's parse() to validate the serialized data and ensure type safety
 			const serialized = serializeDates(testCase);
-			return { testCase: serialized } as unknown as z.infer<typeof Output>;
+			return Output.parse({ testCase: serialized });
 		} catch (err) {
 			// Re-throw known API errors
 			if (err && typeof err === 'object' && 'status' in err) {

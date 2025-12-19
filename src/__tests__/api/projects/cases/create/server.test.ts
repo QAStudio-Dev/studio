@@ -199,31 +199,6 @@ describe('POST /api/projects/[projectId]/cases', () => {
 
 			vi.mocked(db.testCase.create).mockResolvedValue(mockTestCase as any);
 
-			const input = {
-				projectId: 'proj_123',
-				title: 'Test User Registration',
-				description: 'Verify user can register with valid data',
-				preconditions: 'Database is clean',
-				steps: [
-					{
-						action: 'Navigate to registration page',
-						expectedResult: 'Page loads',
-						order: 0
-					},
-					{
-						action: 'Fill in form with valid data',
-						expectedResult: 'Fields accept input',
-						order: 1
-					},
-					{ action: 'Click submit', expectedResult: 'User is created', order: 2 }
-				],
-				expectedResult: 'User is successfully registered and logged in',
-				priority: 'CRITICAL' as const,
-				type: 'FUNCTIONAL' as const,
-				automationStatus: 'AUTOMATED' as const,
-				tags: ['auth', 'registration', 'critical']
-			};
-
 			const result = await POST(mockEvent);
 
 			expect(result.testCase.title).toBe('Test User Registration');
@@ -293,66 +268,129 @@ describe('POST /api/projects/[projectId]/cases', () => {
 
 	describe('Input validation', () => {
 		it('should reject empty title', async () => {
-			await expect(async () => {
-				const response = await POST(mockEvent);
-				await response.json();
-			}).rejects.toThrow();
+			const invalidEvent = {
+				...mockEvent,
+				request: new Request('http://localhost/api/projects/proj_123/cases', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ title: '' })
+				})
+			};
+			await expect(POST(invalidEvent)).rejects.toThrow();
 		});
 
 		it('should reject whitespace-only title', async () => {
-			await expect(async () => {
-				const response = await POST(mockEvent);
-				await response.json();
-			}).rejects.toThrow();
+			const invalidEvent = {
+				...mockEvent,
+				request: new Request('http://localhost/api/projects/proj_123/cases', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ title: '   ' })
+				})
+			};
+			await expect(POST(invalidEvent)).rejects.toThrow();
 		});
 
 		it('should reject invalid priority', async () => {
-			await expect(async () => {
-				const response = await POST(mockEvent);
-				await response.json();
-			}).rejects.toThrow();
+			const invalidEvent = {
+				...mockEvent,
+				request: new Request('http://localhost/api/projects/proj_123/cases', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ title: 'Test', priority: 'INVALID' })
+				})
+			};
+			await expect(POST(invalidEvent)).rejects.toThrow();
 		});
 
 		it('should reject invalid type', async () => {
-			await expect(async () => {
-				const response = await POST(mockEvent);
-				await response.json();
-			}).rejects.toThrow();
+			const invalidEvent = {
+				...mockEvent,
+				request: new Request('http://localhost/api/projects/proj_123/cases', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ title: 'Test', type: 'INVALID' })
+				})
+			};
+			await expect(POST(invalidEvent)).rejects.toThrow();
 		});
 
 		it('should reject invalid automation status', async () => {
-			await expect(async () => {
-				const response = await POST(mockEvent);
-				await response.json();
-			}).rejects.toThrow();
+			const invalidEvent = {
+				...mockEvent,
+				request: new Request('http://localhost/api/projects/proj_123/cases', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ title: 'Test', automationStatus: 'INVALID' })
+				})
+			};
+			await expect(POST(invalidEvent)).rejects.toThrow();
 		});
 
 		it('should reject more than 10 tags', async () => {
-			await expect(async () => {
-				const response = await POST(mockEvent);
-				await response.json();
-			}).rejects.toThrow();
+			const invalidEvent = {
+				...mockEvent,
+				request: new Request('http://localhost/api/projects/proj_123/cases', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						title: 'Test',
+						tags: [
+							'tag1',
+							'tag2',
+							'tag3',
+							'tag4',
+							'tag5',
+							'tag6',
+							'tag7',
+							'tag8',
+							'tag9',
+							'tag10',
+							'tag11'
+						]
+					})
+				})
+			};
+			await expect(POST(invalidEvent)).rejects.toThrow();
 		});
 
 		it('should reject tag longer than 50 characters', async () => {
-			await expect(async () => {
-				const response = await POST(mockEvent);
-				await response.json();
-			}).rejects.toThrow();
+			const invalidEvent = {
+				...mockEvent,
+				request: new Request('http://localhost/api/projects/proj_123/cases', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						title: 'Test',
+						tags: ['a'.repeat(51)]
+					})
+				})
+			};
+			await expect(POST(invalidEvent)).rejects.toThrow();
 		});
 
 		it('should reject tag with special characters', async () => {
-			await expect(async () => {
-				const response = await POST(mockEvent);
-				await response.json();
-			}).rejects.toThrow();
+			const invalidEvent = {
+				...mockEvent,
+				request: new Request('http://localhost/api/projects/proj_123/cases', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ title: 'Test', tags: ['tag@special'] })
+				})
+			};
+			await expect(POST(invalidEvent)).rejects.toThrow();
 		});
 
 		it('should reject tag with spaces', async () => {
-			await expect(async () => {
-				const response = await POST(mockEvent);
-				await response.json();
-			}).rejects.toThrow();
+			const invalidEvent = {
+				...mockEvent,
+				request: new Request('http://localhost/api/projects/proj_123/cases', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ title: 'Test', tags: ['tag with spaces'] })
+				})
+			};
+			await expect(POST(invalidEvent)).rejects.toThrow();
 		});
 
 		it('should accept tags with dashes and underscores', async () => {
@@ -388,55 +426,63 @@ describe('POST /api/projects/[projectId]/cases', () => {
 		});
 
 		it('should reject steps array with empty action', async () => {
-			const input = {
-				projectId: 'proj_123',
-				title: 'Test',
-				steps: [{ action: '', expectedResult: 'Result' }]
+			const invalidEvent = {
+				...mockEvent,
+				request: new Request('http://localhost/api/projects/proj_123/cases', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						title: 'Test',
+						steps: [{ action: '', expectedResult: 'Result' }]
+					})
+				})
 			};
-
-			await expect(async () => {
-				const response = await POST(mockEvent);
-				await response.json();
-			}).rejects.toThrow();
+			await expect(POST(invalidEvent)).rejects.toThrow();
 		});
 
 		it('should reject steps array with more than 100 steps', async () => {
-			const input = {
-				projectId: 'proj_123',
-				title: 'Test',
-				steps: Array(101).fill({ action: 'Step', expectedResult: 'Result' })
+			const invalidEvent = {
+				...mockEvent,
+				request: new Request('http://localhost/api/projects/proj_123/cases', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						title: 'Test',
+						steps: Array(101).fill({ action: 'Step', expectedResult: 'Result' })
+					})
+				})
 			};
-
-			await expect(async () => {
-				const response = await POST(mockEvent);
-				await response.json();
-			}).rejects.toThrow();
+			await expect(POST(invalidEvent)).rejects.toThrow();
 		});
 
 		it('should reject steps array with negative order', async () => {
-			const input = {
-				projectId: 'proj_123',
-				title: 'Test',
-				steps: [{ action: 'Step 1', expectedResult: 'Result', order: -1 }]
+			const invalidEvent = {
+				...mockEvent,
+				request: new Request('http://localhost/api/projects/proj_123/cases', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						title: 'Test',
+						steps: [{ action: 'Step 1', expectedResult: 'Result', order: -1 }]
+					})
+				})
 			};
-
-			await expect(async () => {
-				const response = await POST(mockEvent);
-				await response.json();
-			}).rejects.toThrow();
+			await expect(POST(invalidEvent)).rejects.toThrow();
 		});
 
 		it('should reject steps array with non-integer order', async () => {
-			const input = {
-				projectId: 'proj_123',
-				title: 'Test',
-				steps: [{ action: 'Step 1', expectedResult: 'Result', order: 1.5 }]
+			const invalidEvent = {
+				...mockEvent,
+				request: new Request('http://localhost/api/projects/proj_123/cases', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						title: 'Test',
+						steps: [{ action: 'Step 1', expectedResult: 'Result', order: 1.5 }]
+					})
+				})
 			};
-
-			await expect(async () => {
-				const response = await POST(mockEvent);
-				await response.json();
-			}).rejects.toThrow();
+			await expect(POST(invalidEvent)).rejects.toThrow();
 		});
 	});
 
