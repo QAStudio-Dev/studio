@@ -3,6 +3,7 @@ import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
 import { generateTestCaseId } from '$lib/server/ids';
 import { serializeDates } from '$lib/utils/date';
+import { createAuditLog } from '$lib/server/audit';
 
 export const Param = z.object({
 	projectId: z.string()
@@ -173,6 +174,24 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 					}
 				}
 			}
+		});
+
+		// Create audit log for tracking
+		await createAuditLog({
+			userId,
+			teamId: project.teamId ?? undefined,
+			action: 'TEST_CASE_CREATED',
+			resourceType: 'TestCase',
+			resourceId: testCase.id,
+			metadata: {
+				testCaseTitle: testCase.title,
+				projectId: input.projectId,
+				suiteId: input.suiteId,
+				priority: testCase.priority,
+				type: testCase.type,
+				automationStatus: testCase.automationStatus
+			},
+			event: evt
 		});
 
 		return { testCase: serializeDates(testCase) };
