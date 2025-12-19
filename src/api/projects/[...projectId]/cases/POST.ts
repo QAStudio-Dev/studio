@@ -79,7 +79,8 @@ export const Output = z.object({
 });
 
 export const Error = {
-	400: error(400, 'Test case title is required'),
+	400: error(400, 'Invalid test suite'),
+	401: error(401, 'User not found'),
 	403: error(403, 'You do not have access to this project'),
 	404: error(404, 'Project not found')
 };
@@ -96,21 +97,26 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 	async (input, evt): Promise<any> => {
 		const userId = await requireApiAuth(evt);
 
-		// Verify project exists and user has access
-		const project = await db.project.findUnique({
-			where: { id: input.projectId }
-		});
+		// Fetch project and user in parallel for better performance
+		const [project, user] = await Promise.all([
+			db.project.findUnique({
+				where: { id: input.projectId }
+			}),
+			db.user.findUnique({
+				where: { id: userId }
+			})
+		]);
 
 		if (!project) {
 			throw Error[404];
 		}
 
-		const user = await db.user.findUnique({
-			where: { id: userId }
-		});
+		if (!user) {
+			throw Error[401];
+		}
 
 		const hasAccess =
-			project.createdBy === userId || (project.teamId && user?.teamId === project.teamId);
+			project.createdBy === userId || (project.teamId && user.teamId === project.teamId);
 
 		if (!hasAccess) {
 			throw Error[403];
@@ -123,9 +129,21 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 			});
 
 			if (!suite || suite.projectId !== input.projectId) {
-				throw error(400, 'Invalid test suite');
+				throw Error[400];
 			}
 		}
+
+		// Calculate the next order value for proper ordering
+		const maxOrder = await db.testCase.aggregate({
+			where: {
+				projectId: input.projectId,
+				suiteId: input.suiteId ?? null
+			},
+			_max: {
+				order: true
+			}
+		});
+		const nextOrder = (maxOrder._max.order ?? -1) + 1;
 
 		// Create the test case
 		const testCase = await db.testCase.create({
@@ -142,7 +160,8 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 				tags: input.tags || [],
 				projectId: input.projectId,
 				suiteId: input.suiteId,
-				createdBy: userId
+				createdBy: userId,
+				order: nextOrder
 			},
 			include: {
 				creator: {
