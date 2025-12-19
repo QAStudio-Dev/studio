@@ -10,11 +10,27 @@ export const Param = z.object({
 });
 
 export const Input = z.object({
-	title: z.string().min(1).describe('Test case title'),
-	description: z.string().optional().describe('Detailed test case description'),
-	preconditions: z.string().optional().describe('Pre-requisites before executing the test'),
-	steps: z.string().optional().describe('Test execution steps'),
-	expectedResult: z.string().optional().describe('Expected test outcome'),
+	title: z.string().trim().min(1).describe('Test case title'),
+	description: z.string().trim().optional().describe('Detailed test case description'),
+	preconditions: z
+		.string()
+		.trim()
+		.optional()
+		.describe('Pre-requisites before executing the test'),
+	steps: z
+		.array(
+			z.object({
+				action: z.string().describe('Step action/description'),
+				expectedResult: z.string().optional().describe('Expected result for this step'),
+				order: z
+					.number()
+					.optional()
+					.describe('Step order (auto-calculated if not provided)')
+			})
+		)
+		.optional()
+		.describe('Test execution steps'),
+	expectedResult: z.string().trim().optional().describe('Overall expected test outcome'),
 	priority: z
 		.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'])
 		.optional()
@@ -38,7 +54,11 @@ export const Input = z.object({
 		.enum(['AUTOMATED', 'NOT_AUTOMATED', 'CANDIDATE'])
 		.optional()
 		.describe('Automation status'),
-	tags: z.array(z.string()).optional().describe('Tags for categorization'),
+	tags: z
+		.array(z.string().max(50))
+		.max(10)
+		.optional()
+		.describe('Tags for categorization (max 10 tags, 50 chars each)'),
 	suiteId: z.string().optional().describe('Parent test suite ID')
 });
 
@@ -48,7 +68,15 @@ export const Output = z.object({
 		title: z.string(),
 		description: z.string().nullable(),
 		preconditions: z.string().nullable(),
-		steps: z.any().nullable(), // Json type from Prisma - array of test steps
+		steps: z
+			.array(
+				z.object({
+					action: z.string(),
+					expectedResult: z.string().optional(),
+					order: z.number().optional()
+				})
+			)
+			.nullable(), // Json type from Prisma - array of test steps
 		expectedResult: z.string().nullable(),
 		priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']),
 		type: z.enum([
@@ -68,6 +96,7 @@ export const Output = z.object({
 		projectId: z.string(),
 		suiteId: z.string().nullable(),
 		createdBy: z.string(),
+		order: z.number(),
 		createdAt: z.coerce.string(),
 		updatedAt: z.coerce.string(),
 		creator: z.object({
@@ -80,9 +109,9 @@ export const Output = z.object({
 });
 
 export const Error = {
-	400: error(400, 'Invalid test suite'),
-	401: error(401, 'User not found'),
-	403: error(403, 'You do not have access to this project'),
+	400: error(400, 'Invalid test suite or suite does not belong to project'),
+	401: error(401, 'Authentication required'),
+	403: error(403, 'You do not have permission to create test cases in this project'),
 	404: error(404, 'Project not found')
 };
 
@@ -205,7 +234,8 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 				event: evt
 			});
 
-			return { testCase: serializeDates(testCase) } as unknown as z.infer<typeof Output>;
+			// serializeDates converts Date fields to ISO strings, which matches our Output schema
+			return { testCase: serializeDates(testCase) as any };
 		} catch (err) {
 			// Re-throw known API errors
 			if (err && typeof err === 'object' && 'status' in err) {
