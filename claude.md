@@ -29,6 +29,7 @@ QA Studio is a comprehensive test management and reporting platform inspired by 
 **IMPORTANT**: Avoid using `as any` type assertions in TypeScript code. Using `as any` defeats the purpose of TypeScript's type system by disabling all type checking.
 
 **Why to avoid `as any`:**
+
 - Loses all type safety benefits
 - Hides type errors that could catch bugs
 - Makes refactoring dangerous (no compiler errors when types change)
@@ -37,59 +38,65 @@ QA Studio is a comprehensive test management and reporting platform inspired by 
 **Better alternatives:**
 
 1. **Use proper types from Prisma/Zod schemas:**
+
 ```typescript
 // ❌ Bad - loses type safety
 vi.mocked(db.project.findUnique).mockResolvedValue({
-  id: 'proj_123',
-  name: 'Test'
+	id: 'proj_123',
+	name: 'Test'
 } as any);
 
 // ✅ Good - use Prisma types
 import type { Project } from '$prisma/client';
 vi.mocked(db.project.findUnique).mockResolvedValue({
-  id: 'proj_123',
-  name: 'Test',
-  key: 'TEST',
-  createdBy: 'user_123',
-  teamId: null,
-  createdAt: new Date(),
-  updatedAt: new Date()
+	id: 'proj_123',
+	name: 'Test',
+	key: 'TEST',
+	createdBy: 'user_123',
+	teamId: null,
+	createdAt: new Date(),
+	updatedAt: new Date()
 } satisfies Project);
 ```
 
 2. **Use `satisfies` operator for partial mocks:**
+
 ```typescript
 // ✅ Good - type-safe partial mock
 const mockUser = {
-  id: 'user_123',
-  email: 'test@example.com',
-  teamId: 'team_123'
+	id: 'user_123',
+	email: 'test@example.com',
+	teamId: 'team_123'
 } satisfies Partial<User>;
 ```
 
 3. **Create proper type definitions:**
+
 ```typescript
 // ✅ Good - define the exact type you need
 type MockProject = Pick<Project, 'id' | 'name' | 'key' | 'createdBy' | 'teamId'> & {
-  createdAt: Date;
-  updatedAt: Date;
+	createdAt: Date;
+	updatedAt: Date;
 };
 ```
 
 4. **Use `unknown` for truly unknown types, then narrow:**
+
 ```typescript
 // ✅ Good - safer than 'any'
-const result = await someFunction() as unknown;
+const result = (await someFunction()) as unknown;
 if (isValidType(result)) {
-  // Now result is properly typed
+	// Now result is properly typed
 }
 ```
 
 **When `as any` might be acceptable:**
+
 - Only as a last resort when dealing with complex third-party library types
 - Even then, add a comment explaining why it's necessary and create a task to fix it properly
 
 **In tests specifically:**
+
 - Use Vitest's type utilities: `vi.mocked()` handles most typing needs
 - Mock with full object shapes that match the actual types
 - Use `satisfies` to ensure partial mocks are type-safe
