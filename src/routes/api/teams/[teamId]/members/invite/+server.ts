@@ -71,16 +71,16 @@ export const POST: RequestHandler = async (event) => {
 		});
 	}
 
-	// Check if there's already a pending invitation
+	// Check if there's already an invitation (any status)
 	const existingInvitation = await db.teamInvitation.findFirst({
 		where: {
 			teamId,
-			email: email.toLowerCase(),
-			status: 'PENDING'
+			email: email.toLowerCase()
 		}
 	});
 
-	if (existingInvitation) {
+	// If there's a pending invitation, don't allow resending
+	if (existingInvitation && existingInvitation.status === 'PENDING') {
 		throw error(400, {
 			message: 'An invitation has already been sent to this email address'
 		});
@@ -93,23 +93,49 @@ export const POST: RequestHandler = async (event) => {
 	const expiresAt = new Date();
 	expiresAt.setDate(expiresAt.getDate() + 7);
 
-	const invitation = await db.teamInvitation.create({
-		data: {
-			teamId,
-			email: email.toLowerCase(),
-			role: inviteRole,
-			invitedBy: user.id,
-			token,
-			expiresAt
-		},
-		include: {
-			team: {
-				select: {
-					name: true
+	let invitation;
+
+	if (existingInvitation) {
+		// Update existing invitation to PENDING with new token
+		invitation = await db.teamInvitation.update({
+			where: { id: existingInvitation.id },
+			data: {
+				status: 'PENDING',
+				role: inviteRole,
+				invitedBy: user.id,
+				token,
+				expiresAt,
+				acceptedAt: null,
+				declinedAt: null
+			},
+			include: {
+				team: {
+					select: {
+						name: true
+					}
 				}
 			}
-		}
-	});
+		});
+	} else {
+		// Create new invitation
+		invitation = await db.teamInvitation.create({
+			data: {
+				teamId,
+				email: email.toLowerCase(),
+				role: inviteRole,
+				invitedBy: user.id,
+				token,
+				expiresAt
+			},
+			include: {
+				team: {
+					select: {
+						name: true
+					}
+				}
+			}
+		});
+	}
 
 	const inviteUrl = `${event.url.origin}/invitations/${token}`;
 
