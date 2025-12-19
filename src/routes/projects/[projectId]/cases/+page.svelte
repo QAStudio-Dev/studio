@@ -153,7 +153,7 @@
 
 		// Make API call in background
 		try {
-			const res = await fetch(`/api/projects/${project.id}/test-cases`, {
+			const res = await fetch(`/api/projects/${project.id}/cases`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
