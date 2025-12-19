@@ -48,7 +48,7 @@ export const Output = z.object({
 		title: z.string(),
 		description: z.string().nullable(),
 		preconditions: z.string().nullable(),
-		steps: z.string().nullable(),
+		steps: z.any().nullable(), // Json type from Prisma - array of test steps
 		expectedResult: z.string().nullable(),
 		priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']),
 		type: z.enum([
@@ -95,105 +95,125 @@ export const Modifier = (r: any) => {
 };
 
 export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
-	async (input, evt): Promise<any> => {
-		const userId = await requireApiAuth(evt);
+	async (input, evt): Promise<z.infer<typeof Output>> => {
+		try {
+			const userId = await requireApiAuth(evt);
 
-		// Fetch project and user in parallel for better performance
-		const [project, user] = await Promise.all([
-			db.project.findUnique({
-				where: { id: input.projectId }
-			}),
-			db.user.findUnique({
-				where: { id: userId }
-			})
-		]);
+			// Fetch project and user in parallel for better performance
+			const [project, user] = await Promise.all([
+				db.project.findUnique({
+					where: { id: input.projectId }
+				}),
+				db.user.findUnique({
+					where: { id: userId }
+				})
+			]);
 
-		if (!project) {
-			throw Error[404];
-		}
-
-		if (!user) {
-			throw Error[401];
-		}
-
-		const hasAccess =
-			project.createdBy === userId || (project.teamId && user.teamId === project.teamId);
-
-		if (!hasAccess) {
-			throw Error[403];
-		}
-
-		// If suiteId is provided, verify it exists and belongs to this project
-		if (input.suiteId) {
-			const suite = await db.testSuite.findUnique({
-				where: { id: input.suiteId }
-			});
-
-			if (!suite || suite.projectId !== input.projectId) {
-				throw Error[400];
+			if (!project) {
+				throw Error[404];
 			}
-		}
 
-		// Calculate the next order value for proper ordering
-		const maxOrder = await db.testCase.aggregate({
-			where: {
-				projectId: input.projectId,
-				suiteId: input.suiteId ?? null
-			},
-			_max: {
-				order: true
+			if (!user) {
+				throw Error[401];
 			}
-		});
-		const nextOrder = (maxOrder._max.order ?? -1) + 1;
 
-		// Create the test case
-		const testCase = await db.testCase.create({
-			data: {
-				id: generateTestCaseId(),
-				title: input.title,
-				description: input.description,
-				preconditions: input.preconditions,
-				steps: input.steps,
-				expectedResult: input.expectedResult,
-				priority: input.priority || 'MEDIUM',
-				type: input.type || 'FUNCTIONAL',
-				automationStatus: input.automationStatus || 'NOT_AUTOMATED',
-				tags: input.tags || [],
-				projectId: input.projectId,
-				suiteId: input.suiteId,
-				createdBy: userId,
-				order: nextOrder
-			},
-			include: {
-				creator: {
-					select: {
-						id: true,
-						email: true,
-						firstName: true,
-						lastName: true
-					}
+			/**
+			 * Authorization Strategy:
+			 * We use explicit access checks rather than relying solely on foreign key constraints
+			 * because test case creation requires both:
+			 * 1. Verifying the user has permission to create cases in this project (owner or team member)
+			 * 2. Ensuring the user record exists for audit logging and creator relation
+			 *
+			 * This dual check provides better error messages (403 vs generic DB error) and
+			 * prevents orphaned records if a user is deleted while their session is still valid.
+			 */
+			const hasAccess =
+				project.createdBy === userId || (project.teamId && user.teamId === project.teamId);
+
+			if (!hasAccess) {
+				throw Error[403];
+			}
+
+			// If suiteId is provided, verify it exists and belongs to this project
+			if (input.suiteId) {
+				const suite = await db.testSuite.findUnique({
+					where: { id: input.suiteId }
+				});
+
+				if (!suite || suite.projectId !== input.projectId) {
+					throw Error[400];
 				}
 			}
-		});
 
-		// Create audit log for tracking
-		await createAuditLog({
-			userId,
-			teamId: project.teamId ?? undefined,
-			action: 'TEST_CASE_CREATED',
-			resourceType: 'TestCase',
-			resourceId: testCase.id,
-			metadata: {
-				testCaseTitle: testCase.title,
-				projectId: input.projectId,
-				suiteId: input.suiteId,
-				priority: testCase.priority,
-				type: testCase.type,
-				automationStatus: testCase.automationStatus
-			},
-			event: evt
-		});
+			// Calculate the next order value for proper ordering
+			const maxOrder = await db.testCase.aggregate({
+				where: {
+					projectId: input.projectId,
+					suiteId: input.suiteId ?? null
+				},
+				_max: {
+					order: true
+				}
+			});
+			const nextOrder = (maxOrder._max.order ?? -1) + 1;
 
-		return { testCase: serializeDates(testCase) };
+			// Create the test case
+			const testCase = await db.testCase.create({
+				data: {
+					id: generateTestCaseId(),
+					title: input.title,
+					description: input.description,
+					preconditions: input.preconditions,
+					steps: input.steps,
+					expectedResult: input.expectedResult,
+					priority: input.priority || 'MEDIUM',
+					type: input.type || 'FUNCTIONAL',
+					automationStatus: input.automationStatus || 'NOT_AUTOMATED',
+					tags: input.tags || [],
+					projectId: input.projectId,
+					suiteId: input.suiteId,
+					createdBy: userId,
+					order: nextOrder
+				},
+				include: {
+					creator: {
+						select: {
+							id: true,
+							email: true,
+							firstName: true,
+							lastName: true
+						}
+					}
+				}
+			});
+
+			// Create audit log for tracking
+			await createAuditLog({
+				userId,
+				teamId: project.teamId ?? undefined,
+				action: 'TEST_CASE_CREATED',
+				resourceType: 'TestCase',
+				resourceId: testCase.id,
+				metadata: {
+					testCaseTitle: testCase.title,
+					projectId: input.projectId,
+					suiteId: input.suiteId,
+					priority: testCase.priority,
+					type: testCase.type,
+					automationStatus: testCase.automationStatus
+				},
+				event: evt
+			});
+
+			return { testCase: serializeDates(testCase) } as unknown as z.infer<typeof Output>;
+		} catch (err) {
+			// Re-throw known API errors
+			if (err && typeof err === 'object' && 'status' in err) {
+				throw err;
+			}
+			// Log unexpected errors and throw generic error
+			console.error('Error creating test case:', err);
+			throw error(500, 'Failed to create test case');
+		}
 	}
 );
