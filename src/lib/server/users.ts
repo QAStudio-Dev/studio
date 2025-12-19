@@ -49,3 +49,23 @@ export async function getUsers(userIds: string[]) {
 		return {};
 	}
 }
+
+/**
+ * Get display name for a user
+ * Returns full name if available, otherwise email
+ */
+export function getUserDisplayName(user: {
+	firstName?: string | null;
+	lastName?: string | null;
+	email: string;
+}): string {
+	if (!user.firstName && !user.lastName) {
+		return user.email;
+	}
+
+	const parts: string[] = [];
+	if (user.firstName) parts.push(user.firstName);
+	if (user.lastName) parts.push(user.lastName);
+
+	return parts.join(' ');
+}

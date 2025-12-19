@@ -9,7 +9,8 @@ vi.mock('$lib/server/db', () => ({
 			update: vi.fn()
 		},
 		user: {
-			update: vi.fn()
+			update: vi.fn(),
+			findUnique: vi.fn()
 		},
 		$transaction: vi.fn((operations) => Promise.all(operations))
 	}
@@ -20,7 +21,14 @@ vi.mock('$lib/server/auth', () => ({
 }));
 
 vi.mock('$lib/server/users', () => ({
-	ensureUser: vi.fn()
+	ensureUser: vi.fn(),
+	getUserDisplayName: vi.fn((user) => {
+		if (!user.firstName && !user.lastName) return user.email;
+		const parts = [];
+		if (user.firstName) parts.push(user.firstName);
+		if (user.lastName) parts.push(user.lastName);
+		return parts.join(' ');
+	})
 }));
 
 vi.mock('$lib/server/redis', () => ({
@@ -35,11 +43,18 @@ vi.mock('$lib/server/audit', () => ({
 	createAuditLog: vi.fn()
 }));
 
+vi.mock('$lib/server/email', () => {
+	return {
+		sendInvitationAcceptedEmail: vi.fn(() => Promise.resolve({ success: true }))
+	};
+});
+
 import { db } from '$lib/server/db';
 import { requireAuth } from '$lib/server/auth';
 import { ensureUser } from '$lib/server/users';
 import { deleteCache, CacheKeys } from '$lib/server/redis';
 import { createAuditLog } from '$lib/server/audit';
+import { sendInvitationAcceptedEmail } from '$lib/server/email';
 
 describe('POST /api/invitations/[token]/accept', () => {
 	let mockEvent: any;
@@ -68,6 +83,8 @@ describe('POST /api/invitations/[token]/accept', () => {
 			const mockUser = {
 				id: 'user123',
 				email: 'invitee@example.com',
+				firstName: 'John',
+				lastName: 'Doe',
 				teamId: null
 			};
 			vi.mocked(ensureUser).mockResolvedValue(mockUser as any);
@@ -80,6 +97,7 @@ describe('POST /api/invitations/[token]/accept', () => {
 				email: 'invitee@example.com',
 				role: 'TESTER',
 				status: 'PENDING',
+				invitedBy: 'owner123',
 				expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 1 day from now
 				team: {
 					name: 'Test Team',
@@ -90,6 +108,14 @@ describe('POST /api/invitations/[token]/accept', () => {
 				}
 			};
 			vi.mocked(db.teamInvitation.findUnique).mockResolvedValue(mockInvitation as any);
+
+			// Mock inviter lookup for email notification
+			vi.mocked(db.user.findUnique).mockResolvedValue({
+				id: 'owner123',
+				email: 'owner@example.com',
+				firstName: 'Team',
+				lastName: 'Owner'
+			} as any);
 
 			// Mock transaction operations
 			vi.mocked(db.$transaction).mockResolvedValue([
@@ -147,6 +173,8 @@ describe('POST /api/invitations/[token]/accept', () => {
 			const mockUser = {
 				id: 'user123',
 				email: 'invitee@example.com',
+				firstName: 'John',
+				lastName: 'Doe',
 				teamId: null
 			};
 			vi.mocked(ensureUser).mockResolvedValue(mockUser as any);
@@ -158,6 +186,7 @@ describe('POST /api/invitations/[token]/accept', () => {
 				email: 'invitee@example.com',
 				role: 'ADMIN',
 				status: 'PENDING',
+				invitedBy: 'owner123',
 				expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
 				team: {
 					name: 'Test Team',
@@ -166,6 +195,14 @@ describe('POST /api/invitations/[token]/accept', () => {
 				}
 			};
 			vi.mocked(db.teamInvitation.findUnique).mockResolvedValue(mockInvitation as any);
+
+			// Mock inviter lookup for email notification
+			vi.mocked(db.user.findUnique).mockResolvedValue({
+				id: 'owner123',
+				email: 'owner@example.com',
+				firstName: 'Team',
+				lastName: 'Owner'
+			} as any);
 
 			vi.mocked(db.$transaction).mockResolvedValue([
 				{ id: 'user123', teamId: 'team123', role: 'ADMIN' },
@@ -220,6 +257,8 @@ describe('POST /api/invitations/[token]/accept', () => {
 			const mockUser = {
 				id: 'user123',
 				email: 'invitee@example.com',
+				firstName: 'John',
+				lastName: 'Doe',
 				teamId: null
 			};
 			vi.mocked(ensureUser).mockResolvedValue(mockUser as any);
@@ -242,6 +281,8 @@ describe('POST /api/invitations/[token]/accept', () => {
 			const mockUser = {
 				id: 'user123',
 				email: 'invitee@example.com',
+				firstName: 'John',
+				lastName: 'Doe',
 				teamId: null
 			};
 			vi.mocked(ensureUser).mockResolvedValue(mockUser as any);
@@ -288,6 +329,8 @@ describe('POST /api/invitations/[token]/accept', () => {
 			const mockUser = {
 				id: 'user123',
 				email: 'invitee@example.com',
+				firstName: 'John',
+				lastName: 'Doe',
 				teamId: null
 			};
 			vi.mocked(ensureUser).mockResolvedValue(mockUser as any);
@@ -313,6 +356,8 @@ describe('POST /api/invitations/[token]/accept', () => {
 			const mockUser = {
 				id: 'user123',
 				email: 'invitee@example.com',
+				firstName: 'John',
+				lastName: 'Doe',
 				teamId: null
 			};
 			vi.mocked(ensureUser).mockResolvedValue(mockUser as any);

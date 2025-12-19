@@ -2,9 +2,10 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { requireAuth } from '$lib/server/auth';
-import { ensureUser } from '$lib/server/users';
+import { ensureUser, getUserDisplayName } from '$lib/server/users';
 import { deleteCache, CacheKeys } from '$lib/server/redis';
 import { createAuditLog } from '$lib/server/audit';
+import { sendInvitationAcceptedEmail } from '$lib/server/email';
 
 /**
  * Accept an invitation
@@ -143,6 +144,27 @@ export const POST: RequestHandler = async (event) => {
 		},
 		event
 	});
+
+	// Send notification to the inviter (async, don't wait)
+	// Note: Email sending is fire-and-forget to avoid blocking the response
+	const inviter = await db.user.findUnique({
+		where: { id: invitation.invitedBy },
+		select: { email: true, firstName: true, lastName: true }
+	});
+
+	if (inviter) {
+		const memberName = getUserDisplayName(user);
+
+		sendInvitationAcceptedEmail(
+			inviter.email,
+			invitation.team.name,
+			memberName,
+			user.email
+		).catch((error) => {
+			console.error('Failed to send invitation acceptance notification:', error);
+			// Don't fail the acceptance if email fails
+		});
+	}
 
 	return json({
 		success: true,

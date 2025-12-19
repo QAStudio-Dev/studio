@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { UserPlus, Mail, Clock, XCircle, AlertCircle, CheckCircle, Copy } from 'lucide-svelte';
+	import { browser } from '$app/environment';
 
 	let { data } = $props();
 	let { team, availableSeats, maxSeats, currentUser } = $derived(data);
@@ -14,6 +15,9 @@
 	let success = $state('');
 	let copiedId = $state<string | null>(null);
 	let lastInviteUrl = $state<string | null>(null);
+
+	// Get origin for invite links (only in browser)
+	let origin = $derived(browser ? window.location.origin : 'https://qastudio.dev');
 
 	const roles = [
 		{ value: 'VIEWER', label: 'Viewer', description: 'Read-only access' },
@@ -84,7 +88,7 @@
 	}
 
 	function copyInviteLink(token: string) {
-		const link = `${window.location.origin}/invitations/${token}`;
+		const link = `${origin}/invitations/${token}`;
 		navigator.clipboard.writeText(link);
 		copiedId = token;
 		setTimeout(() => {
@@ -290,8 +294,7 @@
 										<input
 											type="text"
 											readonly
-											value="{window.location
-												.origin}/invitations/{invitation.token}"
+											value="{origin}/invitations/{invitation.token}"
 											class="input flex-1 font-mono text-xs"
 											onclick={(e) => e.currentTarget.select()}
 										/>
