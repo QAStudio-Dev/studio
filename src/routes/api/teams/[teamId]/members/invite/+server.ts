@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { requireAuth, requireRole, requireCurrentSubscription } from '$lib/server/auth';
 import { requireAvailableSeats } from '$lib/server/subscriptions';
+import { getUserDisplayName } from '$lib/server/users';
 import crypto from 'crypto';
 import { createAuditLog } from '$lib/server/audit';
 import { sendInvitationEmail } from '$lib/server/email';
@@ -113,10 +114,8 @@ export const POST: RequestHandler = async (event) => {
 	const inviteUrl = `${event.url.origin}/invitations/${token}`;
 
 	// Send invitation email (async, don't wait)
-	const inviterName =
-		user.firstName || user.lastName
-			? `${user.firstName || ''} ${user.lastName || ''}`.trim()
-			: user.email;
+	// Note: Email sending is fire-and-forget to avoid blocking the response
+	const inviterName = getUserDisplayName(user);
 
 	sendInvitationEmail({
 		to: invitation.email,
