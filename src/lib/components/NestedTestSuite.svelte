@@ -4,7 +4,7 @@
 	interface Props {
 		suite: any;
 		expandedSuites: Set<string>;
-		toggleSuite: (suiteId: string) => void;
+		toggleSuite: (suiteId: string, forceToggle?: boolean) => void;
 		onDragStart?: (e: DragEvent, suite: any) => void;
 		onDragEnd?: () => void;
 		onDropOnSuite?: (draggedSuiteId: string, targetSuiteId: string) => void;
@@ -105,27 +105,45 @@
 		>
 			<GripVertical class="h-3.5 w-3.5" />
 		</div>
-		<button
-			onclick={() => toggleSuite(suite.id)}
-			class="flex flex-1 items-center gap-2 text-left"
-		>
-			{#if isExpanded}
-				<ChevronDown class="h-4 w-4 flex-shrink-0" />
-			{:else}
-				<ChevronRight class="h-4 w-4 flex-shrink-0" />
-			{/if}
-			<FolderOpen class="h-4 w-4 flex-shrink-0 text-primary-500" />
-			<span class="flex-1 truncate">{suite.name}</span>
-			<span class="badge flex-shrink-0 preset-filled-surface-500 text-xs">
-				{suite.testCases?.length || 0}
-			</span>
-			{#if childSuites.length > 0}
-				<span class="text-surface-600-300 flex-shrink-0 text-xs">
-					({childSuites.length}
-					{childSuites.length === 1 ? 'suite' : 'suites'})
+		<div class="flex min-w-0 flex-1 items-center gap-2">
+			<!-- Chevron button - toggles expand/collapse -->
+			<!-- svelte-ignore a11y_no_static_element_interactions -->
+			<button
+				onclick={(e) => {
+					e.stopPropagation();
+					toggleSuite(suite.id, true);
+				}}
+				class="hover:bg-surface-100-800 flex items-center rounded p-0.5"
+				title={isExpanded ? 'Collapse' : 'Expand'}
+			>
+				{#if isExpanded}
+					<ChevronDown class="h-4 w-4 flex-shrink-0" />
+				{:else}
+					<ChevronRight class="h-4 w-4 flex-shrink-0" />
+				{/if}
+			</button>
+
+			<!-- Suite name button - scrolls to suite -->
+			<button
+				onclick={() => toggleSuite(suite.id, false)}
+				class="hover:bg-surface-100-800 py-0.1 flex min-w-0 flex-1 items-center gap-2 rounded px-1 text-left"
+				title={suite.name}
+			>
+				<FolderOpen class="h-4 w-4 flex-shrink-0 text-primary-500" />
+				<span class="min-w-0 flex-1 truncate">{suite.name}</span>
+				<span
+					class="flex-shrink-0 rounded-full bg-gray-200 px-1.5 py-0.5 text-[10px] font-medium dark:bg-gray-700"
+				>
+					{suite.testCases?.length || 0}
 				</span>
-			{/if}
-		</button>
+				<!-- {#if childSuites.length > 0}
+					<span class="text-surface-600-300 flex-shrink-0 text-xs">
+						({childSuites.length}
+						{childSuites.length === 1 ? 'suite' : 'suites'})
+					</span>
+				{/if} -->
+			</button>
+		</div>
 	</div>
 </div>
 

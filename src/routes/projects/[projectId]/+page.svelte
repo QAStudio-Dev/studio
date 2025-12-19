@@ -163,23 +163,28 @@
 	}
 </script>
 
-<div class="container mx-auto max-w-7xl px-4 py-8">
+<div class="container mx-auto max-w-7xl px-4 py-8" data-testid="project-detail-page">
 	<!-- Header -->
-	<div class="mb-8">
+	<div class="mb-8" data-testid="project-header">
 		<div class="flex items-start justify-between">
 			<div class="flex-1">
 				<div class="mb-2 flex items-center gap-3">
-					<h1 class="text-4xl font-bold">{project.name}</h1>
-					<span class="badge preset-filled-surface-500">{project.key}</span>
+					<h1 class="text-4xl font-bold" data-testid="project-name">{project.name}</h1>
+					<span class="badge preset-filled-surface-500" data-testid="project-key"
+						>{project.key}</span
+					>
 				</div>
 				{#if project.description}
-					<p class="text-surface-600-300 text-lg">{project.description}</p>
+					<p class="text-surface-600-300 text-lg" data-testid="project-description">
+						{project.description}
+					</p>
 				{/if}
 			</div>
 			<div class="flex gap-2">
 				<button
 					onclick={openDeleteModal}
 					class="btn flex items-center gap-2 preset-filled-error-500"
+					data-testid="delete-project-button"
 				>
 					<Trash2 class="h-4 w-4" />
 					Delete
@@ -187,6 +192,7 @@
 				<button
 					onclick={openEditModal}
 					class="btn flex items-center gap-2 preset-filled-surface-500"
+					data-testid="edit-project-button"
 				>
 					<Edit class="h-4 w-4" />
 					Edit
@@ -195,10 +201,14 @@
 		</div>
 
 		<!-- Stats Cards -->
-		<div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+		<div
+			class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4"
+			data-testid="project-stats"
+		>
 			<a
 				href="/projects/{project.id}/cases"
 				class="card p-4 transition-shadow hover:shadow-lg"
+				data-testid="stat-card-test-cases"
 			>
 				<div class="flex items-center gap-3">
 					<div class="rounded-container bg-primary-500/10 p-2">
@@ -206,7 +216,9 @@
 					</div>
 					<div>
 						<p class="text-surface-600-300 text-sm">Test Cases</p>
-						<p class="text-2xl font-bold">{stats.totalTestCases}</p>
+						<p class="text-2xl font-bold" data-testid="total-test-cases">
+							{stats.totalTestCases}
+						</p>
 					</div>
 				</div>
 			</a>
@@ -214,6 +226,7 @@
 			<a
 				href="/projects/{project.id}/cases"
 				class="card p-4 transition-shadow hover:shadow-lg"
+				data-testid="stat-card-test-suites"
 			>
 				<div class="flex items-center gap-3">
 					<div class="rounded-container bg-secondary-500/10 p-2">
@@ -221,7 +234,9 @@
 					</div>
 					<div>
 						<p class="text-surface-600-300 text-sm">Test Suites</p>
-						<p class="text-2xl font-bold">{stats.totalSuites}</p>
+						<p class="text-2xl font-bold" data-testid="total-suites">
+							{stats.totalSuites}
+						</p>
 					</div>
 				</div>
 			</a>
@@ -229,6 +244,7 @@
 			<a
 				href="/projects/{project.id}/runs"
 				class="card p-4 transition-shadow hover:shadow-lg"
+				data-testid="stat-card-test-runs"
 			>
 				<div class="flex items-center gap-3">
 					<div class="rounded-container bg-tertiary-500/10 p-2">
@@ -236,12 +252,14 @@
 					</div>
 					<div>
 						<p class="text-surface-600-300 text-sm">Test Runs</p>
-						<p class="text-2xl font-bold">{stats.totalTestRuns}</p>
+						<p class="text-2xl font-bold" data-testid="total-test-runs">
+							{stats.totalTestRuns}
+						</p>
 					</div>
 				</div>
 			</a>
 
-			<div class="card p-4">
+			<div class="card p-4" data-testid="stat-card-pass-rate">
 				<div class="flex items-center gap-3">
 					<div class="rounded-container bg-success-500/10 p-2">
 						<TrendingUp class="h-5 w-5 text-success-500" />
@@ -261,24 +279,29 @@
 
 	<div class="grid gap-6 lg:grid-cols-2">
 		<!-- Recent Test Runs -->
-		<div class="card p-6">
+		<div class="card p-6" data-testid="recent-test-runs">
 			<div class="mb-4 flex items-center justify-between">
 				<h2 class="text-xl font-bold">Recent Test Runs</h2>
 				<a
 					href="/projects/{project.id}/runs"
 					class="text-sm text-primary-500 hover:underline"
+					data-testid="view-all-runs-link"
 				>
 					View All
 				</a>
 			</div>
 
 			{#if recentRuns.length === 0}
-				<div class="text-surface-600-300 py-8 text-center">
+				<div
+					class="text-surface-600-300 py-8 text-center"
+					data-testid="no-runs-empty-state"
+				>
 					<PlayCircle class="mx-auto mb-4 h-12 w-12 opacity-50" />
 					<p>No test runs yet</p>
 					<a
 						href="/projects/{project.id}/runs"
 						class="mt-2 inline-block text-primary-500 hover:underline"
+						data-testid="create-first-run-link"
 					>
 						Create your first test run
 					</a>
@@ -289,35 +312,46 @@
 						<a
 							href="/projects/{project.id}/runs/{run.id}"
 							class="hover:bg-surface-100-800 block rounded-container border border-surface-300-700 p-4 transition-colors"
+							data-testid="recent-run-item"
 						>
 							<div class="mb-2 flex items-center justify-between">
-								<h3 class="font-medium">{run.name}</h3>
+								<h3 class="font-medium" data-testid="run-name">{run.name}</h3>
 								<span
 									class="badge {getStatusBgColor(run.status)} {getStatusColor(
 										run.status
 									)}"
+									data-testid="run-status"
 								>
 									{run.status}
 								</span>
 							</div>
-							<div class="text-surface-600-300 flex items-center gap-4 text-sm">
+							<div
+								class="text-surface-600-300 flex items-center gap-4 text-sm"
+								data-testid="run-metadata"
+							>
 								{#if run.environment}
-									<span>{run.environment.name}</span>
+									<span data-testid="run-environment">{run.environment.name}</span
+									>
 								{/if}
 								{#if run.milestone}
-									<span>{run.milestone.name}</span>
+									<span data-testid="run-milestone">{run.milestone.name}</span>
 								{/if}
-								<span>{new Date(run.createdAt).toLocaleDateString()}</span>
+								<span data-testid="run-created-date"
+									>{new Date(run.createdAt).toLocaleDateString()}</span
+								>
 							</div>
 							{#if run._count}
-								<div class="mt-2 flex items-center gap-3 text-sm">
-									<span class="text-success-500"
+								<div
+									class="mt-2 flex items-center gap-3 text-sm"
+									data-testid="run-results-summary"
+								>
+									<span class="text-success-500" data-testid="run-passed-count"
 										>{run._count.passedResults || 0} passed</span
 									>
-									<span class="text-error-500"
+									<span class="text-error-500" data-testid="run-failed-count"
 										>{run._count.failedResults || 0} failed</span
 									>
-									<span class="text-surface-600-300"
+									<span class="text-surface-600-300" data-testid="run-total-count"
 										>{run._count.totalResults || 0} total</span
 									>
 								</div>
@@ -329,12 +363,13 @@
 		</div>
 
 		<!-- Quick Links -->
-		<div class="card p-6">
+		<div class="card p-6" data-testid="quick-actions">
 			<h2 class="mb-4 text-xl font-bold">Quick Actions</h2>
 			<div class="grid gap-3">
 				<a
 					href="/projects/{project.id}/cases"
 					class="hover:bg-surface-100-800 flex items-center gap-3 rounded-container border border-surface-300-700 p-4 transition-colors"
+					data-testid="quick-action-manage-cases"
 				>
 					<TestTube2 class="h-5 w-5 text-primary-500" />
 					<div>
@@ -346,6 +381,7 @@
 				<a
 					href="/projects/{project.id}/runs"
 					class="hover:bg-surface-100-800 flex items-center gap-3 rounded-container border border-surface-300-700 p-4 transition-colors"
+					data-testid="quick-action-view-runs"
 				>
 					<PlayCircle class="h-5 w-5 text-tertiary-500" />
 					<div>
@@ -357,6 +393,7 @@
 				<a
 					href="/docs"
 					class="hover:bg-surface-100-800 flex items-center gap-3 rounded-container border border-surface-300-700 p-4 transition-colors"
+					data-testid="quick-action-api-docs"
 				>
 					<FileText class="h-5 w-5 text-secondary-500" />
 					<div>
@@ -371,28 +408,32 @@
 	</div>
 
 	<!-- Project Details -->
-	<div class="mt-6 card p-6">
+	<div class="mt-6 card p-6" data-testid="project-details">
 		<h2 class="mb-4 text-xl font-bold">Project Details</h2>
 		<div class="grid gap-4 md:grid-cols-2">
 			<div>
 				<p class="text-surface-600-300 mb-1 text-sm">Created by</p>
-				<p class="font-medium">
+				<p class="font-medium" data-testid="project-creator">
 					{project.creator.firstName || project.creator.email}
 				</p>
 			</div>
 			{#if project.team}
 				<div>
 					<p class="text-surface-600-300 mb-1 text-sm">Team</p>
-					<p class="font-medium">{project.team.name}</p>
+					<p class="font-medium" data-testid="project-team">{project.team.name}</p>
 				</div>
 			{/if}
 			<div>
 				<p class="text-surface-600-300 mb-1 text-sm">Created on</p>
-				<p class="font-medium">{new Date(project.createdAt).toLocaleDateString()}</p>
+				<p class="font-medium" data-testid="project-created-date">
+					{new Date(project.createdAt).toLocaleDateString()}
+				</p>
 			</div>
 			<div>
 				<p class="text-surface-600-300 mb-1 text-sm">Last updated</p>
-				<p class="font-medium">{new Date(project.updatedAt).toLocaleDateString()}</p>
+				<p class="font-medium" data-testid="project-updated-date">
+					{new Date(project.updatedAt).toLocaleDateString()}
+				</p>
 			</div>
 		</div>
 	</div>
@@ -402,17 +443,23 @@
 <Dialog open={showEditModal} onOpenChange={(e) => (showEditModal = e.open)}>
 	<Dialog.Backdrop class="fixed inset-0 z-40 bg-black/50" />
 	<Dialog.Positioner class="fixed inset-0 z-50 flex items-center justify-center p-4">
-		<Dialog.Content class="w-full max-w-lg">
+		<Dialog.Content class="w-full max-w-lg" data-testid="edit-project-dialog">
 			<div class="card rounded-container bg-surface-50-950 p-6 shadow-xl">
 				<div class="mb-6 flex items-center justify-between">
 					<h2 class="text-2xl font-bold">Edit Project</h2>
-					<Dialog.CloseTrigger class="btn-icon preset-tonal">
+					<Dialog.CloseTrigger
+						class="btn-icon preset-tonal"
+						data-testid="close-edit-dialog"
+					>
 						<span class="text-xl">&times;</span>
 					</Dialog.CloseTrigger>
 				</div>
 
 				{#if errorMessage}
-					<div class="mb-4 rounded-container bg-error-500/10 p-3 text-sm text-error-500">
+					<div
+						class="mb-4 rounded-container bg-error-500/10 p-3 text-sm text-error-500"
+						data-testid="edit-error-message"
+					>
 						{errorMessage}
 					</div>
 				{/if}
@@ -423,6 +470,7 @@
 						saveProject();
 					}}
 					class="space-y-4"
+					data-testid="edit-project-form"
 				>
 					<!-- Project Name -->
 					<div>
@@ -436,6 +484,7 @@
 							required
 							class="input"
 							placeholder="My Project"
+							data-testid="edit-name-input"
 						/>
 					</div>
 
@@ -453,6 +502,7 @@
 							pattern="[A-Z0-9]+"
 							class="input uppercase"
 							placeholder="PROJ"
+							data-testid="edit-key-input"
 							oninput={(e) => {
 								const target = e.target as HTMLInputElement;
 								target.value = target.value.toUpperCase();
@@ -474,6 +524,7 @@
 							rows="3"
 							class="input"
 							placeholder="Optional description"
+							data-testid="edit-description-input"
 						></textarea>
 					</div>
 
@@ -484,6 +535,7 @@
 							onclick={() => (showEditModal = false)}
 							class="btn preset-outlined"
 							disabled={isSaving}
+							data-testid="cancel-edit-button"
 						>
 							Cancel
 						</button>
@@ -491,6 +543,7 @@
 							type="submit"
 							class="btn preset-filled-primary-500"
 							disabled={isSaving}
+							data-testid="save-project-button"
 						>
 							{isSaving ? 'Saving...' : 'Save Changes'}
 						</button>
@@ -505,18 +558,24 @@
 <Dialog open={showDeleteModal} onOpenChange={(e) => (showDeleteModal = e.open)}>
 	<Dialog.Backdrop class="fixed inset-0 z-40 bg-black/50" />
 	<Dialog.Positioner class="fixed inset-0 z-50 flex items-center justify-center p-4">
-		<Dialog.Content class="w-full max-w-lg">
+		<Dialog.Content class="w-full max-w-lg" data-testid="delete-project-dialog">
 			<div class="card rounded-container bg-surface-50-950 p-6 shadow-xl">
 				<div class="mb-6 flex items-center justify-between">
 					<h2 class="text-2xl font-bold text-error-500">Delete Project</h2>
-					<Dialog.CloseTrigger class="btn-icon preset-tonal">
+					<Dialog.CloseTrigger
+						class="btn-icon preset-tonal"
+						data-testid="close-delete-dialog"
+					>
 						<span class="text-xl">&times;</span>
 					</Dialog.CloseTrigger>
 				</div>
 
 				<div class="mb-6 space-y-4">
 					<!-- Warning -->
-					<div class="rounded-container border border-error-500/20 bg-error-500/10 p-4">
+					<div
+						class="rounded-container border border-error-500/20 bg-error-500/10 p-4"
+						data-testid="delete-warning"
+					>
 						<div class="flex items-start gap-3">
 							<Trash2 class="mt-0.5 h-5 w-5 flex-shrink-0 text-error-500" />
 							<div class="flex-1">
@@ -541,6 +600,7 @@
 					<!-- Project Info -->
 					<div
 						class="rounded-container border border-surface-300-700 bg-surface-100-900 p-4"
+						data-testid="delete-project-info"
 					>
 						<p class="text-surface-600-300 mb-2 text-sm">You are about to delete:</p>
 						<p class="text-lg font-semibold">{project.name}</p>
@@ -548,7 +608,10 @@
 					</div>
 
 					{#if deleteError}
-						<div class="rounded-container bg-error-500/10 p-3 text-sm text-error-500">
+						<div
+							class="rounded-container bg-error-500/10 p-3 text-sm text-error-500"
+							data-testid="delete-error-message"
+						>
 							{deleteError}
 						</div>
 					{/if}
@@ -569,6 +632,7 @@
 							placeholder={project.key}
 							autocomplete="off"
 							disabled={isDeleting}
+							data-testid="delete-confirmation-input"
 						/>
 					</div>
 				</div>
@@ -580,6 +644,7 @@
 						onclick={() => (showDeleteModal = false)}
 						class="btn preset-outlined"
 						disabled={isDeleting}
+						data-testid="cancel-delete-button"
 					>
 						Cancel
 					</button>
@@ -588,6 +653,7 @@
 						onclick={deleteProject}
 						class="btn preset-filled-error-500"
 						disabled={isDeleting || deleteConfirmation !== project.key}
+						data-testid="confirm-delete-button"
 					>
 						{isDeleting ? 'Deleting...' : 'Delete Project'}
 					</button>

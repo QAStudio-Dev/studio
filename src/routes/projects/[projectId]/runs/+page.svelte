@@ -177,15 +177,15 @@
 	}
 </script>
 
-<div class="container mx-auto max-w-7xl px-4 py-8">
+<div class="container mx-auto max-w-7xl px-4 py-8" data-testid="test-runs-page">
 	<!-- Header -->
-	<div class="mb-8">
+	<div class="mb-8" data-testid="test-runs-header">
 		<h1 class="mb-2 text-4xl font-bold">Test Runs</h1>
 		<p class="text-surface-600-300 text-lg">View and manage all test execution runs</p>
 	</div>
 
 	<!-- Search and Filters -->
-	<div class="mb-6 card p-6">
+	<div class="mb-6 card p-6" data-testid="search-and-filters">
 		<div class="mb-4 flex flex-col gap-4 lg:flex-row lg:items-center">
 			<!-- Search -->
 			<div class="relative flex-1">
@@ -196,11 +196,16 @@
 					class="input w-full pl-10"
 					bind:value={search}
 					oninput={handleSearch}
+					data-testid="search-input"
 				/>
 			</div>
 
 			<!-- Project Filter -->
-			<select class="select w-full lg:w-48" bind:value={selectedProject}>
+			<select
+				class="select w-full lg:w-48"
+				bind:value={selectedProject}
+				data-testid="project-filter"
+			>
 				<option value="">All Projects</option>
 				{#each projects as project}
 					<option value={project.id}>{project.name}</option>
@@ -208,7 +213,11 @@
 			</select>
 
 			<!-- Status Filter -->
-			<select class="select w-full lg:w-48" bind:value={selectedStatus}>
+			<select
+				class="select w-full lg:w-48"
+				bind:value={selectedStatus}
+				data-testid="status-filter"
+			>
 				<option value="">All Statuses</option>
 				<option value="PLANNED">Planned</option>
 				<option value="IN_PROGRESS">In Progress</option>
@@ -218,8 +227,11 @@
 		</div>
 
 		<!-- Stats -->
-		<div class="text-surface-600-300 flex items-center gap-4 text-sm">
-			<span>Showing {testRuns.length} of {total} test runs</span>
+		<div
+			class="text-surface-600-300 flex items-center gap-4 text-sm"
+			data-testid="filter-stats"
+		>
+			<span data-testid="results-count">Showing {testRuns.length} of {total} test runs</span>
 			{#if search || selectedProject || selectedStatus}
 				<button
 					class="text-primary-500 hover:underline"
@@ -232,6 +244,7 @@
 						page = 1;
 						fetchTestRuns();
 					}}
+					data-testid="clear-filters-button"
 				>
 					Clear filters
 				</button>
@@ -241,11 +254,11 @@
 
 	<!-- Test Runs List -->
 	{#if loading}
-		<div class="flex items-center justify-center py-20">
+		<div class="flex items-center justify-center py-20" data-testid="runs-loading">
 			<Loader2 class="h-8 w-8 animate-spin text-primary-500" />
 		</div>
 	{:else if testRuns.length === 0}
-		<div class="card p-12 text-center">
+		<div class="card p-12 text-center" data-testid="no-runs-empty-state">
 			<Play class="mx-auto mb-4 h-16 w-16 text-surface-400" />
 			<h2 class="mb-2 text-xl font-bold">No test runs found</h2>
 			<p class="text-surface-600-300">
@@ -257,34 +270,53 @@
 			</p>
 		</div>
 	{:else}
-		<div class="space-y-4">
+		<div class="space-y-4" data-testid="runs-list">
 			{#each testRuns as testRun (testRun.id)}
 				<button
 					class="block w-full card p-6 text-left transition-all hover:border-primary-500 hover:shadow-lg"
 					onclick={() => viewTestRun(testRun.id)}
+					data-testid="run-item"
+					data-run-id={testRun.id}
 				>
 					<div class="mb-4 flex items-start justify-between">
 						<div class="flex-1">
 							<div class="mb-2 flex items-center gap-3">
-								<h3 class="text-xl font-bold">{testRun.name}</h3>
-								<span class="badge {getStatusColor(testRun.status)}">
+								<h3 class="text-xl font-bold" data-testid="run-name">
+									{testRun.name}
+								</h3>
+								<span
+									class="badge {getStatusColor(testRun.status)}"
+									data-testid="run-status"
+								>
 									{testRun.status}
 								</span>
 								{#if testRun.environment}
-									<span class="badge preset-outlined-surface-500">
+									<span
+										class="badge preset-outlined-surface-500"
+										data-testid="run-environment"
+									>
 										{testRun.environment.name}
 									</span>
 								{/if}
 							</div>
 							{#if testRun.description}
-								<p class="text-surface-600-300 mb-2">{testRun.description}</p>
+								<p class="text-surface-600-300 mb-2" data-testid="run-description">
+									{testRun.description}
+								</p>
 							{/if}
-							<div class="text-surface-600-300 flex items-center gap-4 text-sm">
-								<span>{testRun.project.name} ({testRun.project.key})</span>
+							<div
+								class="text-surface-600-300 flex items-center gap-4 text-sm"
+								data-testid="run-metadata"
+							>
+								<span data-testid="run-project"
+									>{testRun.project.name} ({testRun.project.key})</span
+								>
 								{#if testRun.milestone}
-									<span>• {testRun.milestone.name}</span>
+									<span data-testid="run-milestone"
+										>• {testRun.milestone.name}</span
+									>
 								{/if}
-								<span
+								<span data-testid="run-creator"
 									>• Created by {testRun.creator.firstName ||
 										testRun.creator.email}</span
 								>
@@ -293,8 +325,11 @@
 
 						<!-- Pass Rate -->
 						{#if testRun.stats.total > 0}
-							<div class="ml-4 text-center">
-								<div class="mb-1 text-3xl font-bold text-primary-500">
+							<div class="ml-4 text-center" data-testid="run-pass-rate">
+								<div
+									class="mb-1 text-3xl font-bold text-primary-500"
+									data-testid="pass-rate-value"
+								>
 									{getPassRate(testRun.stats)}%
 								</div>
 								<div class="text-surface-600-300 text-xs">Pass Rate</div>
@@ -303,42 +338,62 @@
 					</div>
 
 					<!-- Test Results Stats -->
-					<div class="border-surface-200-700 mb-4 flex items-center gap-6 border-t pt-4">
+					<div
+						class="border-surface-200-700 mb-4 flex items-center gap-6 border-t pt-4"
+						data-testid="run-stats"
+					>
 						<div class="flex items-center gap-2">
 							<CheckCircle2 class="h-5 w-5 text-success-500" />
-							<span class="font-semibold">{testRun.stats.passed}</span>
+							<span class="font-semibold" data-testid="run-passed-count"
+								>{testRun.stats.passed}</span
+							>
 							<span class="text-surface-600-300 text-sm">Passed</span>
 						</div>
 						<div class="flex items-center gap-2">
 							<XCircle class="h-5 w-5 text-error-500" />
-							<span class="font-semibold">{testRun.stats.failed}</span>
+							<span class="font-semibold" data-testid="run-failed-count"
+								>{testRun.stats.failed}</span
+							>
 							<span class="text-surface-600-300 text-sm">Failed</span>
 						</div>
 						<div class="flex items-center gap-2">
 							<AlertCircle class="h-5 w-5 text-warning-500" />
-							<span class="font-semibold">{testRun.stats.blocked}</span>
+							<span class="font-semibold" data-testid="run-blocked-count"
+								>{testRun.stats.blocked}</span
+							>
 							<span class="text-surface-600-300 text-sm">Blocked</span>
 						</div>
 						<div class="flex items-center gap-2">
 							<Circle class="h-5 w-5 text-surface-500" />
-							<span class="font-semibold">{testRun.stats.skipped}</span>
+							<span class="font-semibold" data-testid="run-skipped-count"
+								>{testRun.stats.skipped}</span
+							>
 							<span class="text-surface-600-300 text-sm">Skipped</span>
 						</div>
 						<div class="ml-auto flex items-center gap-2">
 							<span class="text-surface-600-300 text-sm">Total:</span>
-							<span class="font-semibold">{testRun.stats.total}</span>
+							<span class="font-semibold" data-testid="run-total-count"
+								>{testRun.stats.total}</span
+							>
 						</div>
 					</div>
 
 					<!-- Timestamps -->
-					<div class="text-surface-600-300 flex items-center gap-6 text-xs">
+					<div
+						class="text-surface-600-300 flex items-center gap-6 text-xs"
+						data-testid="run-timestamps"
+					>
 						<div class="flex items-center gap-2">
 							<Clock class="h-4 w-4" />
-							<span>Started: {formatDate(testRun.startedAt)}</span>
+							<span data-testid="run-started-date"
+								>Started: {formatDate(testRun.startedAt)}</span
+							>
 						</div>
 						{#if testRun.completedAt}
-							<span>• Completed: {formatDate(testRun.completedAt)}</span>
-							<span
+							<span data-testid="run-completed-date"
+								>• Completed: {formatDate(testRun.completedAt)}</span
+							>
+							<span data-testid="run-duration"
 								>• Duration: {formatDuration(
 									testRun.startedAt,
 									testRun.completedAt
@@ -352,11 +407,12 @@
 
 		<!-- Pagination -->
 		{#if totalPages > 1}
-			<div class="mt-6 flex items-center justify-center gap-2">
+			<div class="mt-6 flex items-center justify-center gap-2" data-testid="pagination">
 				<button
 					class="btn preset-outlined-surface-500 btn-sm"
 					disabled={page === 1}
 					onclick={() => goToPage(page - 1)}
+					data-testid="pagination-prev"
 				>
 					<ChevronLeft class="h-4 w-4" />
 				</button>
@@ -365,6 +421,7 @@
 					<button
 						class="btn preset-outlined-surface-500 btn-sm"
 						onclick={() => goToPage(1)}
+						data-testid="pagination-first"
 					>
 						1
 					</button>
@@ -377,12 +434,17 @@
 					<button
 						class="btn preset-outlined-surface-500 btn-sm"
 						onclick={() => goToPage(page - 1)}
+						data-testid="pagination-prev-page"
 					>
 						{page - 1}
 					</button>
 				{/if}
 
-				<button class="btn preset-filled-primary-500 btn-sm" disabled>
+				<button
+					class="btn preset-filled-primary-500 btn-sm"
+					disabled
+					data-testid="pagination-current"
+				>
 					{page}
 				</button>
 
@@ -390,6 +452,7 @@
 					<button
 						class="btn preset-outlined-surface-500 btn-sm"
 						onclick={() => goToPage(page + 1)}
+						data-testid="pagination-next-page"
 					>
 						{page + 1}
 					</button>
@@ -402,6 +465,7 @@
 					<button
 						class="btn preset-outlined-surface-500 btn-sm"
 						onclick={() => goToPage(totalPages)}
+						data-testid="pagination-last"
 					>
 						{totalPages}
 					</button>
@@ -411,6 +475,7 @@
 					class="btn preset-outlined-surface-500 btn-sm"
 					disabled={page === totalPages}
 					onclick={() => goToPage(page + 1)}
+					data-testid="pagination-next"
 				>
 					<ChevronRight class="h-4 w-4" />
 				</button>

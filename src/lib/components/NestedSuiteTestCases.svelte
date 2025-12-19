@@ -64,7 +64,7 @@
 </script>
 
 {#if isExpanded}
-	<div class="mb-8" style={indentStyle}>
+	<div class="mb-8" style={indentStyle} id="suite-{suite.id}">
 		<h3 class="mb-4 flex items-center gap-2 text-lg font-bold">
 			<FolderOpen class="h-5 w-5 text-primary-500" />
 			{suite.name}

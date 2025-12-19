@@ -368,19 +368,23 @@
 	}
 </script>
 
-<div class="container mx-auto max-w-7xl px-4 py-8">
+<div class="container mx-auto max-w-7xl px-4 py-8" data-testid="settings-page">
 	<!-- Header -->
-	<div class="mb-8">
+	<div class="mb-8" data-testid="settings-header">
 		<h1 class="mb-2 text-4xl font-bold">Settings</h1>
 		<p class="text-surface-600-300 text-lg">Manage your account, API keys, and team settings</p>
 	</div>
 
 	<!-- Tabs -->
 	<Tabs value={activeTab} onValueChange={(details) => handleTabChange(details.value)}>
-		<Tabs.List class="border-surface-200-700 mb-6 flex gap-2 border-b">
+		<Tabs.List
+			class="border-surface-200-700 mb-6 flex gap-2 border-b"
+			data-testid="settings-tabs"
+		>
 			<Tabs.Trigger
 				value="profile"
 				class="hover:bg-surface-100-800 flex items-center gap-2 rounded-t-base px-4 py-3 transition-colors data-[state=active]:bg-primary-500 data-[state=active]:text-white"
+				data-testid="profile-tab"
 			>
 				<User class="h-4 w-4" />
 				<span>Profile</span>
@@ -389,6 +393,7 @@
 			<Tabs.Trigger
 				value="api-keys"
 				class="hover:bg-surface-100-800 flex items-center gap-2 rounded-t-base px-4 py-3 transition-colors data-[state=active]:bg-primary-500 data-[state=active]:text-white"
+				data-testid="api-keys-tab"
 			>
 				<Key class="h-4 w-4" />
 				<span>API Keys</span>
@@ -398,6 +403,7 @@
 				<Tabs.Trigger
 					value="team"
 					class="hover:bg-surface-100-800 flex items-center gap-2 rounded-t-base px-4 py-3 transition-colors data-[state=active]:bg-primary-500 data-[state=active]:text-white"
+					data-testid="team-tab"
 				>
 					<Users class="h-4 w-4" />
 					<span>Team</span>
@@ -407,6 +413,7 @@
 			<Tabs.Trigger
 				value="integrations"
 				class="hover:bg-surface-100-800 flex items-center gap-2 rounded-t-base px-4 py-3 transition-colors data-[state=active]:bg-primary-500 data-[state=active]:text-white"
+				data-testid="integrations-tab"
 			>
 				<Plug class="h-4 w-4" />
 				<span>Integrations</span>
@@ -414,10 +421,10 @@
 		</Tabs.List>
 
 		<!-- Profile Tab -->
-		<Tabs.Content value="profile">
+		<Tabs.Content value="profile" data-testid="profile-tab-content">
 			<div class="card p-6">
-				<div class="mb-6 flex items-center gap-6">
-					<Avatar class="h-24 w-24">
+				<div class="mb-6 flex items-center gap-6" data-testid="profile-header">
+					<Avatar class="h-24 w-24" data-testid="profile-avatar">
 						{#if user.imageUrl}
 							<Avatar.Image src={user.imageUrl} alt={user.email} />
 						{:else}
@@ -427,13 +434,22 @@
 						{/if}
 					</Avatar>
 					<div>
-						<h2 class="text-2xl font-bold text-surface-900 dark:text-surface-50">
+						<h2
+							class="text-2xl font-bold text-surface-900 dark:text-surface-50"
+							data-testid="profile-name"
+						>
 							{user.firstName}
 							{user.lastName}
 						</h2>
-						<p class="text-surface-600 dark:text-surface-400">{user.email}</p>
+						<p
+							class="text-surface-600 dark:text-surface-400"
+							data-testid="profile-email"
+						>
+							{user.email}
+						</p>
 						<p
 							class="mt-1 inline-block rounded-base bg-primary-500/10 px-2 py-1 text-sm font-medium text-primary-700 dark:text-primary-300"
+							data-testid="profile-role-badge"
 						>
 							{user.role}
 						</p>
@@ -441,7 +457,7 @@
 				</div>
 
 				<div class="space-y-6">
-					<div>
+					<div data-testid="account-information">
 						<h3
 							class="mb-4 text-lg font-semibold text-surface-900 dark:text-surface-50"
 						>
@@ -450,22 +466,30 @@
 						<div class="space-y-3 text-sm">
 							<div class="flex justify-between border-b border-surface-300-700 pb-2">
 								<span class="text-surface-600 dark:text-surface-400">Email</span>
-								<span class="font-medium">{user.email}</span>
+								<span class="font-medium" data-testid="account-email"
+									>{user.email}</span
+								>
 							</div>
 							<div class="flex justify-between border-b border-surface-300-700 pb-2">
 								<span class="text-surface-600 dark:text-surface-400"
 									>First Name</span
 								>
-								<span class="font-medium">{user.firstName || 'Not set'}</span>
+								<span class="font-medium" data-testid="account-first-name"
+									>{user.firstName || 'Not set'}</span
+								>
 							</div>
 							<div class="flex justify-between border-b border-surface-300-700 pb-2">
 								<span class="text-surface-600 dark:text-surface-400">Last Name</span
 								>
-								<span class="font-medium">{user.lastName || 'Not set'}</span>
+								<span class="font-medium" data-testid="account-last-name"
+									>{user.lastName || 'Not set'}</span
+								>
 							</div>
 							<div class="flex justify-between border-b border-surface-300-700 pb-2">
 								<span class="text-surface-600 dark:text-surface-400">Role</span>
-								<span class="font-medium">{user.role}</span>
+								<span class="font-medium" data-testid="account-role"
+									>{user.role}</span
+								>
 							</div>
 							{#if user.teamId}
 								<div

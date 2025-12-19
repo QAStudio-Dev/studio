@@ -53,21 +53,6 @@
 		}
 	});
 
-	// Expand/collapse all functionality
-	let allExpanded = $derived(
-		expandedSuites.has('root') && project.testSuites.every((s) => expandedSuites.has(s.id))
-	);
-
-	function toggleExpandCollapseAll() {
-		if (allExpanded) {
-			// Collapse all
-			expandedSuites = new Set();
-		} else {
-			// Expand all (including nested suites)
-			expandedSuites = new Set(['root', ...project.testSuites.map((s) => s.id)]);
-		}
-	}
-
 	// Drag and drop state
 	let draggedTestCase = $state<any | null>(null);
 	let dragOverSuite = $state<string | null>(null);
@@ -85,13 +70,30 @@
 	let newSuiteDescription = $state('');
 	let newSuiteParentId = $state<string | null>(null);
 
-	function toggleSuite(suiteId: string) {
-		if (expandedSuites.has(suiteId)) {
+	function toggleSuite(suiteId: string, forceToggle = false) {
+		if (expandedSuites.has(suiteId) && !forceToggle) {
+			// Suite is already expanded - scroll to it instead of collapsing
+			const element = document.getElementById(`suite-${suiteId}`);
+			if (element) {
+				element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			}
+		} else if (expandedSuites.has(suiteId) && forceToggle) {
+			// Force collapse
 			expandedSuites.delete(suiteId);
+			expandedSuites = new Set(expandedSuites);
 		} else {
+			// Suite is collapsed - expand it
 			expandedSuites.add(suiteId);
+			expandedSuites = new Set(expandedSuites);
+
+			// Wait for DOM to update, then scroll to it
+			setTimeout(() => {
+				const element = document.getElementById(`suite-${suiteId}`);
+				if (element) {
+					element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+				}
+			}, 100);
 		}
-		expandedSuites = new Set(expandedSuites);
 	}
 
 	function startCreatingTestCase(suiteId: string | null) {
@@ -511,31 +513,21 @@
 		</div>
 	</div>
 
-	<div class="grid gap-6 lg:grid-cols-[300px_1fr]">
+	<div class="grid gap-6 lg:grid-cols-[350px_1fr]">
 		<!-- Sidebar - Test Suites -->
-		<div class="card p-4">
+		<div
+			class="sticky top-4 h-fit max-h-[calc(100vh-2rem)] overflow-y-auto card p-4"
+			data-testid="test-suites-container"
+		>
 			<div class="mb-4 flex items-center justify-between">
 				<h2 class="font-bold">Test Suites</h2>
-				<div class="flex items-center gap-2">
-					<button
-						onclick={toggleExpandCollapseAll}
-						class="btn preset-outlined-surface-500 btn-sm"
-						title={allExpanded ? 'Collapse All' : 'Expand All'}
-					>
-						{#if allExpanded}
-							<ChevronRight class="h-4 w-4" />
-						{:else}
-							<ChevronDown class="h-4 w-4" />
-						{/if}
-					</button>
-					<button
-						onclick={() => startCreatingSuite(null)}
-						class="btn preset-filled-primary-500 btn-sm"
-						title="Create Suite"
-					>
-						<FolderPlus class="h-4 w-4" />
-					</button>
-				</div>
+				<button
+					onclick={() => startCreatingSuite(null)}
+					class="btn preset-filled-primary-500 btn-sm"
+					title="Create Suite"
+				>
+					<FolderPlus class="h-4 w-4" />
+				</button>
 			</div>
 
 			{#if creatingSuite}
@@ -607,16 +599,18 @@
 				<!-- Root test cases (no suite) - at the bottom -->
 				<button
 					onclick={() => toggleSuite('root')}
-					class="hover:bg-surface-100-800 flex w-full items-center gap-2 rounded-base px-3 py-2 text-left transition-colors"
+					class="hover:bg-surface-100-800 flex w-full min-w-0 items-center gap-2 rounded-base px-3 py-2 text-left transition-colors"
 				>
 					{#if expandedSuites.has('root')}
-						<ChevronDown class="h-4 w-4" />
+						<ChevronDown class="h-4 w-4 flex-shrink-0" />
 					{:else}
-						<ChevronRight class="h-4 w-4" />
+						<ChevronRight class="h-4 w-4 flex-shrink-0" />
 					{/if}
-					<FolderOpen class="h-4 w-4 text-surface-500" />
-					<span>Uncategorized</span>
-					<span class="ml-auto badge preset-filled-surface-500 text-xs">
+					<FolderOpen class="h-4 w-4 flex-shrink-0 text-surface-500" />
+					<span class="min-w-0 flex-1 truncate">Uncategorized</span>
+					<span
+						class="flex-shrink-0 rounded-full bg-gray-200 px-1.5 py-0.5 text-[10px] font-medium dark:bg-gray-700"
+					>
 						{project.testCases?.length || 0}
 					</span>
 				</button>
@@ -624,12 +618,13 @@
 		</div>
 
 		<!-- Main Content - Test Cases -->
-		<div class="card p-6">
+		<div class="card p-6" data-testid="test-cases-main">
 			<div class="mb-6 flex items-center justify-between">
 				<h2 class="text-2xl font-bold">Test Cases</h2>
 				<button
 					onclick={() => startCreatingTestCase(null)}
 					class="btn preset-filled-primary-500"
+					data-testid="new-test-case-button"
 				>
 					<Plus class="mr-2 h-4 w-4" />
 					New Test Case
