@@ -20,16 +20,24 @@ export const Input = z.object({
 	steps: z
 		.array(
 			z.object({
-				action: z.string().describe('Step action/description'),
-				expectedResult: z.string().optional().describe('Expected result for this step'),
+				action: z.string().trim().min(1).describe('Step action/description'),
+				expectedResult: z
+					.string()
+					.trim()
+					.optional()
+					.describe('Expected result for this step'),
 				order: z
 					.number()
+					.int()
+					.nonnegative()
 					.optional()
 					.describe('Step order (auto-calculated if not provided)')
 			})
 		)
+		.min(1)
+		.max(100)
 		.optional()
-		.describe('Test execution steps'),
+		.describe('Test execution steps (max 100 steps)'),
 	expectedResult: z.string().trim().optional().describe('Overall expected test outcome'),
 	priority: z
 		.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'])
@@ -55,10 +63,18 @@ export const Input = z.object({
 		.optional()
 		.describe('Automation status'),
 	tags: z
-		.array(z.string().max(50))
+		.array(
+			z
+				.string()
+				.regex(
+					/^[a-zA-Z0-9-_]+$/,
+					'Tags must be alphanumeric (dash and underscore allowed)'
+				)
+				.max(50)
+		)
 		.max(10)
 		.optional()
-		.describe('Tags for categorization (max 10 tags, 50 chars each)'),
+		.describe('Tags for categorization (max 10 tags, 50 chars each, alphanumeric only)'),
 	suiteId: z.string().optional().describe('Parent test suite ID')
 });
 
@@ -129,12 +145,14 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 			const userId = await requireApiAuth(evt);
 
 			// Fetch project and user in parallel for better performance
+			// Only fetch user fields needed for authorization and validation
 			const [project, user] = await Promise.all([
 				db.project.findUnique({
 					where: { id: input.projectId }
 				}),
 				db.user.findUnique({
-					where: { id: userId }
+					where: { id: userId },
+					select: { id: true, teamId: true }
 				})
 			]);
 
@@ -235,7 +253,9 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 			});
 
 			// serializeDates converts Date fields to ISO strings, which matches our Output schema
-			return { testCase: serializeDates(testCase) as any };
+			// Using 'unknown' intermediate type since serializeDates doesn't update TypeScript types
+			const serialized = serializeDates(testCase);
+			return { testCase: serialized } as unknown as z.infer<typeof Output>;
 		} catch (err) {
 			// Re-throw known API errors
 			if (err && typeof err === 'object' && 'status' in err) {
