@@ -5,6 +5,7 @@ import { requireAuth } from '$lib/server/auth';
 import { ensureUser } from '$lib/server/users';
 import { deleteCache, CacheKeys } from '$lib/server/redis';
 import { createAuditLog } from '$lib/server/audit';
+import { sendInvitationAcceptedEmail } from '$lib/server/email';
 
 /**
  * Accept an invitation
@@ -143,6 +144,29 @@ export const POST: RequestHandler = async (event) => {
 		},
 		event
 	});
+
+	// Send notification to the inviter (async, don't wait)
+	const inviter = await db.user.findUnique({
+		where: { id: invitation.invitedBy },
+		select: { email: true }
+	});
+
+	if (inviter) {
+		const memberName =
+			user.firstName || user.lastName
+				? `${user.firstName || ''} ${user.lastName || ''}`.trim()
+				: user.email;
+
+		sendInvitationAcceptedEmail(
+			inviter.email,
+			invitation.team.name,
+			memberName,
+			user.email
+		).catch((error) => {
+			console.error('Failed to send invitation acceptance notification:', error);
+			// Don't fail the acceptance if email fails
+		});
+	}
 
 	return json({
 		success: true,

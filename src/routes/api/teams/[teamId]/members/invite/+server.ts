@@ -5,6 +5,7 @@ import { requireAuth, requireRole, requireCurrentSubscription } from '$lib/serve
 import { requireAvailableSeats } from '$lib/server/subscriptions';
 import crypto from 'crypto';
 import { createAuditLog } from '$lib/server/audit';
+import { sendInvitationEmail } from '$lib/server/email';
 
 /**
  * Invite a user to the team by email
@@ -111,21 +112,23 @@ export const POST: RequestHandler = async (event) => {
 
 	const inviteUrl = `${event.url.origin}/invitations/${token}`;
 
-	// TODO: Send invitation email
-	// For now, log the invitation URL to console
-	console.log(`
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Team Invitation Created
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Team: ${invitation.team.name}
-Email: ${invitation.email}
-Role: ${invitation.role}
-Expires: ${invitation.expiresAt.toLocaleDateString()}
+	// Send invitation email (async, don't wait)
+	const inviterName =
+		user.firstName || user.lastName
+			? `${user.firstName || ''} ${user.lastName || ''}`.trim()
+			: user.email;
 
-Invitation Link:
-${inviteUrl}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-	`);
+	sendInvitationEmail({
+		to: invitation.email,
+		teamName: invitation.team.name,
+		inviterName,
+		role: invitation.role,
+		inviteUrl,
+		expiresAt: invitation.expiresAt
+	}).catch((error) => {
+		console.error('Failed to send invitation email:', error);
+		// Don't fail the invitation creation if email fails
+	});
 
 	// Audit log invitation sent
 	await createAuditLog({
