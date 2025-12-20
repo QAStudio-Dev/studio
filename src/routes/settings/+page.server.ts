@@ -65,6 +65,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 
 	return {
-		user
+		user,
+		pageMetaTags: {
+			title: 'Settings | QA Studio',
+			description: 'Manage your account settings, API keys, team members, and integrations'
+		}
 	};
 };

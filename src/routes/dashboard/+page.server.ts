@@ -8,5 +8,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 		throw redirect(302, '/login');
 	}
 
-	return {};
+	return {
+		pageMetaTags: {
+			title: 'Dashboard | QA Studio',
+			description:
+				'View your test management dashboard with project statistics and recent activity'
+		}
+	};
 };

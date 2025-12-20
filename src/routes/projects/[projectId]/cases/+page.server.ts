@@ -123,6 +123,10 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			testCases: testCasesWithoutSuite
 		},
 		stats,
-		currentUser: user
+		currentUser: user,
+		pageMetaTags: {
+			title: `Test Cases - ${project.name} | QA Studio`,
+			description: `Manage test cases and test suites for ${project.name} (${project.key})`
+		}
 	};
 };

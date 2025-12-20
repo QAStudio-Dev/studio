@@ -57,6 +57,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	return {
 		user,
-		projects
+		projects,
+		pageMetaTags: {
+			title: 'Projects | QA Studio',
+			description: 'Manage your test management projects and view project statistics'
+		}
 	};
 };

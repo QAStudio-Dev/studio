@@ -171,6 +171,10 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		project,
 		stats,
 		recentRuns,
-		currentUser: user
+		currentUser: user,
+		pageMetaTags: {
+			title: `${project.name} - Project Dashboard | QA Studio`,
+			description: `Project dashboard for ${project.name} (${project.key}) - view test cases, runs, and statistics`
+		}
 	};
 };

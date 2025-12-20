@@ -105,6 +105,12 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	}
 
 	return {
-		testCase
+		testCase,
+		pageMetaTags: {
+			title: `${testCase.title} - Test Case | QA Studio`,
+			description:
+				testCase.description ||
+				`View test case details for ${testCase.title} in ${testCase.project.name}`
+		}
 	};
 };

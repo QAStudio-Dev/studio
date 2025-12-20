@@ -97,6 +97,12 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			skipped: statusCounts.SKIPPED || 0,
 			retest: statusCounts.RETEST || 0,
 			untested: statusCounts.UNTESTED || 0
+		},
+		pageMetaTags: {
+			title: `${testRun.name} - Test Run | QA Studio`,
+			description:
+				testRun.description ||
+				`View test results for ${testRun.name} in ${testRun.project.name}`
 		}
 	};
 };
