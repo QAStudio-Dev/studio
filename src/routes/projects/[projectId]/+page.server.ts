@@ -1,6 +1,7 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
+import { generatePageMetaTags } from '$lib/utils/meta-tags';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const { userId } = locals.auth() || {};
@@ -172,9 +173,9 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		stats,
 		recentRuns,
 		currentUser: user,
-		pageMetaTags: {
-			title: `${project.name} - Project Dashboard | QA Studio`,
-			description: `Project dashboard for ${project.name} (${project.key}) - view test cases, runs, and statistics`
-		}
+		pageMetaTags: generatePageMetaTags(
+			`${project.name} - Project Dashboard`,
+			`Comprehensive project dashboard for ${project.name} (${project.key}). View test cases, test runs, execution statistics, recent activity, and quality metrics at a glance.`
+		)
 	};
 };

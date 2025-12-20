@@ -1,5 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
+import { generatePageMetaTags } from '$lib/utils/meta-tags';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const { userId } = locals.auth() || {};
@@ -9,10 +10,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 
 	return {
-		pageMetaTags: {
-			title: 'Dashboard | QA Studio',
-			description:
-				'View your test management dashboard with project statistics and recent activity'
-		}
+		pageMetaTags: generatePageMetaTags(
+			'Dashboard',
+			'Your personalized test management dashboard. Monitor project health, track test execution metrics, view recent activity, and analyze quality trends across all your projects.'
+		)
 	};
 };
