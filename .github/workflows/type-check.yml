@@ -36,6 +36,7 @@ jobs:
           OPENAI_SECRET_KEY=sk-dummy
           STRIPE_WEBHOOK_SECRET=whsec_dummy
           ENCRYPTION_KEY=dummy_key_32_characters_long!!
+          URL_SIGNING_SECRET=dummy_url_signing_secret_32chars
           PUBLIC_BASE_URL=http://localhost:5173
           EOF
 
@@ -44,6 +45,9 @@ jobs:
 
       - name: Generate Prisma Client
         run: npx prisma generate
+
+      - name: Generate Paraglide files
+        run: npx @inlang/paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide
 
       - name: Run type check
         run: npm run check
