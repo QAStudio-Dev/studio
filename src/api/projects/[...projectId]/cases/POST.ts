@@ -75,7 +75,7 @@ export const Input = z.object({
 		.max(10)
 		.optional()
 		.describe('Tags for categorization (max 10 tags, 50 chars each, alphanumeric only)'),
-	suiteId: z.string().optional().describe('Parent test suite ID')
+	suiteId: z.string().nullish().describe('Parent test suite ID')
 });
 
 export const Output = z.object({
