@@ -50,6 +50,8 @@ jobs:
           BASE_URL: https://qastudio.dev
           QA_STUDIO_API_KEY: ${{ secrets.QA_STUDIO_API_KEY }}
           QA_STUDIO_PROJECT_ID: ${{ secrets.QA_STUDIO_PROJECT_ID }}
+          PLAYWRIGHT_USER_EMAIL: ${{ secrets.PLAYWRIGHT_USER_EMAIL }}
+          PLAYWRIGHT_USER_PASSWORD: ${{ secrets.PLAYWRIGHT_USER_PASSWORD }}
           CI: true
         run: npm run test:e2e
 
