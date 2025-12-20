@@ -89,30 +89,27 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 			throw Error[403];
 		}
 
-		// If parentId is provided, verify it exists and belongs to this project
-		if (input.parentId) {
-			const parentSuite = await db.testSuite.findUnique({
-				where: { id: input.parentId }
-			});
+		try {
+			// If parentId is provided, verify it exists and belongs to this project
+			// Calculate next order value - both can be done in parallel for better performance
+			const [parentSuite, maxOrderSuite] = await Promise.all([
+				input.parentId
+					? db.testSuite.findUnique({ where: { id: input.parentId } })
+					: Promise.resolve(null),
+				db.testSuite.findFirst({
+					where: {
+						projectId: input.projectId,
+						parentId: input.parentId ?? null
+					},
+					orderBy: { order: 'desc' }
+				})
+			]);
 
-			if (!parentSuite || parentSuite.projectId !== input.projectId) {
+			if (input.parentId && (!parentSuite || parentSuite.projectId !== input.projectId)) {
 				throw error(400, 'Invalid parent suite - must belong to the same project');
 			}
-		}
 
-		// Calculate the next order value for proper ordering
-		// Get the max order for suites at the same level (same parentId)
-		const maxOrderSuite = await db.testSuite.findFirst({
-			where: {
-				projectId: input.projectId,
-				parentId: input.parentId ?? null
-			},
-			orderBy: { order: 'desc' }
-		});
-
-		const nextOrder = (maxOrderSuite?.order ?? -1) + 1;
-
-		try {
+			const nextOrder = (maxOrderSuite?.order ?? -1) + 1;
 			// Create the test suite
 			const testSuite = await db.testSuite.create({
 				data: {

@@ -341,8 +341,8 @@ model Environment {
 
 model TestSuite {
   id          String   @id @default(cuid())
-  name        String
-  description String?
+  name        String   @db.VarChar(255) // Matches API validation limit
+  description String?  @db.VarChar(1000) // Matches API validation limit
   projectId   String
   parentId    String? // For nested suites
   order       Int      @default(0) // For drag-and-drop ordering
@@ -361,8 +361,8 @@ model TestSuite {
 
 model TestCase {
   id               String           @id @default(cuid())
-  title            String
-  description      String?
+  title            String           @db.VarChar(500) // Matches API validation limit
+  description      String?          @db.VarChar(5000) // Matches API validation limit
   preconditions    String? // Setup requirements
   steps            Json? // Array of test steps
   expectedResult   String?
