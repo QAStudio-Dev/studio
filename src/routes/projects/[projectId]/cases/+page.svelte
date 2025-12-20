@@ -767,10 +767,7 @@
 <!-- Test Case Quick View Modal -->
 <Dialog open={showTestCaseModal} onOpenChange={(details) => (showTestCaseModal = details.open)}>
 	<Portal>
-		<Dialog.Backdrop
-			class="fixed inset-0 z-40 bg-black/50"
-			onclick={() => (showTestCaseModal = false)}
-		/>
+		<Dialog.Backdrop class="fixed inset-0 z-40 bg-black/50" />
 		<Dialog.Positioner class="fixed inset-0 z-50 flex items-center justify-center p-4">
 			<Dialog.Content
 				class="max-h-[90vh] w-full max-w-2xl overflow-y-auto card bg-surface-50-950 p-6 shadow-xl"
@@ -797,10 +794,7 @@
 									</span>
 								</div>
 							</div>
-							<Dialog.CloseTrigger
-								class="preset-ghost-surface-500 btn btn-sm"
-								onclick={() => (showTestCaseModal = false)}
-							>
+							<Dialog.CloseTrigger class="preset-ghost-surface-500 btn btn-sm">
 								✕
 							</Dialog.CloseTrigger>
 						</div>

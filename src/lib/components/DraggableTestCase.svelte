@@ -1,12 +1,19 @@
 <script lang="ts">
 	import { GripVertical, TestTube2, ExternalLink } from 'lucide-svelte';
+	import type { Priority } from '$prisma/client';
+
+	interface TestCase {
+		id: string;
+		title: string;
+		priority: Priority;
+	}
 
 	interface Props {
-		testCase: any;
+		testCase: TestCase;
 		projectId: string;
-		onDragStart: (event: DragEvent, testCase: any) => void;
+		onDragStart: (event: DragEvent, testCase: TestCase) => void;
 		onDragEnd: () => void;
-		onOpenModal: (testCase: any) => void;
+		onOpenModal: (testCase: TestCase) => void;
 		isDragging?: boolean;
 	}
 
