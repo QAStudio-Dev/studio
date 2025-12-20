@@ -43,6 +43,7 @@
 	draggable="true"
 	ondragstart={handleDragStart}
 	ondragend={handleDragEndLocal}
+	data-testcase-id={testCase.id}
 	class="group border-surface-200-700 rounded-base border p-2 transition-all hover:border-primary-500 {isDragging
 		? 'opacity-50'
 		: ''}"
@@ -60,6 +61,7 @@
 		<!-- Content -->
 		<button
 			onclick={() => onOpenModal(testCase)}
+			data-test="test-case-button"
 			class="flex min-w-0 flex-1 items-center gap-2 text-left"
 		>
 			<TestTube2 class="h-3.5 w-3.5 flex-shrink-0 text-primary-500" />

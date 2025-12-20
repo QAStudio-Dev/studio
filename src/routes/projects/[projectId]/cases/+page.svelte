@@ -765,92 +765,88 @@
 </div>
 
 <!-- Test Case Quick View Modal -->
-{#if showTestCaseModal}
-	<Dialog>
-		<Portal>
-			<Dialog.Backdrop
-				class="fixed inset-0 z-40 bg-black/50"
-				onclick={() => (showTestCaseModal = false)}
-			/>
-			<Dialog.Positioner class="fixed inset-0 z-50 flex items-center justify-center p-4">
-				<Dialog.Content
-					class="max-h-[90vh] w-full max-w-2xl overflow-y-auto card bg-surface-50-950 p-6 shadow-xl"
-				>
-					{#if selectedTestCase}
-						<div class="mb-6">
-							<div class="mb-4 flex items-start justify-between">
-								<div class="flex-1">
-									<Dialog.Title class="mb-2 flex items-center gap-3">
-										<TestTube2 class="h-6 w-6 text-primary-500" />
-										<h2 class="text-2xl font-bold">{selectedTestCase.title}</h2>
-									</Dialog.Title>
-									<div class="flex items-center gap-3">
-										<span
-											class="badge {getPriorityColor(
-												selectedTestCase.priority
-											)}"
-										>
-											{selectedTestCase.priority}
-										</span>
-										<span class="badge preset-filled-surface-500"
-											>{selectedTestCase.type}</span
-										>
-										<span class="badge preset-outlined-surface-500">
-											{selectedTestCase.automationStatus}
-										</span>
-									</div>
+<Dialog open={showTestCaseModal} onOpenChange={() => (showTestCaseModal = false)}>
+	<Portal>
+		<Dialog.Backdrop
+			class="fixed inset-0 z-40 bg-black/50"
+			onclick={() => (showTestCaseModal = false)}
+		/>
+		<Dialog.Positioner class="fixed inset-0 z-50 flex items-center justify-center p-4">
+			<Dialog.Content
+				class="max-h-[90vh] w-full max-w-2xl overflow-y-auto card bg-surface-50-950 p-6 shadow-xl"
+			>
+				{#if selectedTestCase}
+					<div class="mb-6">
+						<div class="mb-4 flex items-start justify-between">
+							<div class="flex-1">
+								<Dialog.Title class="mb-2 flex items-center gap-3">
+									<TestTube2 class="h-6 w-6 text-primary-500" />
+									<h2 class="text-2xl font-bold">{selectedTestCase.title}</h2>
+								</Dialog.Title>
+								<div class="flex items-center gap-3">
+									<span
+										class="badge {getPriorityColor(selectedTestCase.priority)}"
+									>
+										{selectedTestCase.priority}
+									</span>
+									<span class="badge preset-filled-surface-500"
+										>{selectedTestCase.type}</span
+									>
+									<span class="badge preset-outlined-surface-500">
+										{selectedTestCase.automationStatus}
+									</span>
 								</div>
-								<Dialog.CloseTrigger
-									class="preset-ghost-surface-500 btn btn-sm"
-									onclick={() => (showTestCaseModal = false)}
-								>
-									✕
-								</Dialog.CloseTrigger>
 							</div>
-
-							<Dialog.Description class="space-y-6">
-								{#if selectedTestCase.description}
-									<div>
-										<h3 class="mb-2 font-bold">Description</h3>
-										<p class="text-surface-600-300">
-											{selectedTestCase.description}
-										</p>
-									</div>
-								{/if}
-
-								{#if selectedTestCase.preconditions}
-									<div>
-										<h3 class="mb-2 font-bold">Preconditions</h3>
-										<p class="text-surface-600-300">
-											{selectedTestCase.preconditions}
-										</p>
-									</div>
-								{/if}
-
-								{#if selectedTestCase.expectedResult}
-									<div>
-										<h3 class="mb-2 font-bold">Expected Result</h3>
-										<p class="text-surface-600-300">
-											{selectedTestCase.expectedResult}
-										</p>
-									</div>
-								{/if}
-							</Dialog.Description>
-
-							<div class="border-surface-200-700 flex gap-3 border-t pt-4">
-								<a
-									href="/projects/{project.id}/cases/{selectedTestCase.id}"
-									class="btn flex-1 preset-filled-primary-500"
-								>
-									<ExternalLink class="mr-2 h-4 w-4" />
-									Open Full View
-								</a>
-								<button class="btn preset-outlined-surface-500">Edit</button>
-							</div>
+							<Dialog.CloseTrigger
+								class="preset-ghost-surface-500 btn btn-sm"
+								onclick={() => (showTestCaseModal = false)}
+							>
+								✕
+							</Dialog.CloseTrigger>
 						</div>
-					{/if}
-				</Dialog.Content>
-			</Dialog.Positioner>
-		</Portal>
-	</Dialog>
-{/if}
+
+						<Dialog.Description class="space-y-6">
+							{#if selectedTestCase.description}
+								<div>
+									<h3 class="mb-2 font-bold">Description</h3>
+									<p class="text-surface-600-300">
+										{selectedTestCase.description}
+									</p>
+								</div>
+							{/if}
+
+							{#if selectedTestCase.preconditions}
+								<div>
+									<h3 class="mb-2 font-bold">Preconditions</h3>
+									<p class="text-surface-600-300">
+										{selectedTestCase.preconditions}
+									</p>
+								</div>
+							{/if}
+
+							{#if selectedTestCase.expectedResult}
+								<div>
+									<h3 class="mb-2 font-bold">Expected Result</h3>
+									<p class="text-surface-600-300">
+										{selectedTestCase.expectedResult}
+									</p>
+								</div>
+							{/if}
+						</Dialog.Description>
+
+						<div class="border-surface-200-700 flex gap-3 border-t pt-4">
+							<a
+								href="/projects/{project.id}/cases/{selectedTestCase.id}"
+								class="btn flex-1 preset-filled-primary-500"
+							>
+								<ExternalLink class="mr-2 h-4 w-4" />
+								Open Full View
+							</a>
+							<button class="btn preset-outlined-surface-500">Edit</button>
+						</div>
+					</div>
+				{/if}
+			</Dialog.Content>
+		</Dialog.Positioner>
+	</Portal>
+</Dialog>

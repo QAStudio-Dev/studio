@@ -691,7 +691,7 @@ export type CreateTestSuiteBody = {
 export const TestSuitesApi = {
 	create: {
 		method: 'POST',
-		path: '/api/projects/:projectId/test-suites',
+		path: '/api/projects/:projectId/suites',
 		description: 'Create a new test suite to organize test cases hierarchically.',
 		tags: ['Test Suites'],
 		params: {
