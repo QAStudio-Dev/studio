@@ -15,10 +15,13 @@ export function sanitizeForMeta(text: string | null | undefined): string {
 	return (
 		text
 			// Remove any HTML tags (strip tags, don't escape)
-			.replace(/<[^>]*>/g, '')
-			// Remove control characters and zero-width characters
-			.replace(/[\x00-\x1F\x7F-\x9F\u200B-\u200D\uFEFF]/g, '')
-			// Remove newlines and normalize whitespace
+			// Only match actual HTML tags (letters after < and before >)
+			.replace(/<\/?[a-zA-Z][^>]*>/g, '')
+			// Remove control characters (but keep tab and newline for now)
+			.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, '')
+			// Remove zero-width characters
+			.replace(/[\u200B-\u200D\uFEFF]/g, '')
+			// Normalize whitespace (convert tabs, newlines, multiple spaces to single space)
 			.replace(/\s+/g, ' ')
 			.trim()
 	);

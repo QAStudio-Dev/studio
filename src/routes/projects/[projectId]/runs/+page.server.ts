@@ -5,7 +5,7 @@ import { sanitizeForMeta } from '$lib/utils/sanitize-meta';
 import { hasProjectAccess } from '$lib/server/access-control';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
-	const { userId } = locals.auth() || {};
+	const userId = locals.userId;
 
 	if (!userId) {
 		throw redirect(302, '/login');
@@ -41,7 +41,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	}
 
 	// Check access: user must be creator or team member
-	if (!hasProjectAccess(project, user, userId)) {
+	if (!hasProjectAccess(project, user)) {
 		throw error(403, { message: 'You do not have access to this project' });
 	}
 

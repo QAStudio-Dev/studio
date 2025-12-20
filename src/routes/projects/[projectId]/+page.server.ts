@@ -50,7 +50,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	}
 
 	// Check access: user must be creator or team member
-	if (!hasProjectAccess(project, user, userId)) {
+	if (!hasProjectAccess(project, user)) {
 		throw error(403, {
 			message: 'You do not have access to this project'
 		});
