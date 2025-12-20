@@ -32,10 +32,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
+        env:
+          DATABASE_URL: postgresql://user:pass@localhost:5432/db
         run: npm ci
 
       - name: Install Playwright Browsers

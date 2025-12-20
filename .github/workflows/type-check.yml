@@ -1,0 +1,53 @@
+name: Type Check
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  type-check:
+    name: TypeScript Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Create .env file for type generation
+        run: |
+          cat > .env << 'EOF'
+          DATABASE_URL=postgresql://user:pass@localhost:5432/db
+          KV_REST_API_URL=https://example.com
+          KV_REST_API_TOKEN=dummy
+          CRON_SECRET=dummy
+          BACKUP_RETENTION_DAYS=30
+          STRIPE_SECRET_KEY=sk_test_dummy
+          BLOB_READ_WRITE_TOKEN=dummy
+          OPENAI_SECRET_KEY=sk-dummy
+          STRIPE_WEBHOOK_SECRET=whsec_dummy
+          ENCRYPTION_KEY=dummy_key_32_characters_long!!
+          URL_SIGNING_SECRET=dummy_url_signing_secret_32chars
+          PUBLIC_BASE_URL=http://localhost:5173
+          EOF
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Generate Paraglide files
+        run: npx @inlang/paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide
+
+      - name: Run type check
+        run: npm run check

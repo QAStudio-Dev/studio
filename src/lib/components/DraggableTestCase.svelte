@@ -1,12 +1,19 @@
 <script lang="ts">
 	import { GripVertical, TestTube2, ExternalLink } from 'lucide-svelte';
+	import type { Priority } from '$prisma/client';
+
+	interface TestCase {
+		id: string;
+		title: string;
+		priority: Priority;
+	}
 
 	interface Props {
-		testCase: any;
+		testCase: TestCase;
 		projectId: string;
-		onDragStart: (event: DragEvent, testCase: any) => void;
+		onDragStart: (event: DragEvent, testCase: TestCase) => void;
 		onDragEnd: () => void;
-		onOpenModal: (testCase: any) => void;
+		onOpenModal: (testCase: TestCase) => void;
 		isDragging?: boolean;
 	}
 
@@ -43,6 +50,7 @@
 	draggable="true"
 	ondragstart={handleDragStart}
 	ondragend={handleDragEndLocal}
+	data-testcase-id={testCase.id}
 	class="group border-surface-200-700 rounded-base border p-2 transition-all hover:border-primary-500 {isDragging
 		? 'opacity-50'
 		: ''}"
@@ -60,6 +68,7 @@
 		<!-- Content -->
 		<button
 			onclick={() => onOpenModal(testCase)}
+			data-test="test-case-button"
 			class="flex min-w-0 flex-1 items-center gap-2 text-left"
 		>
 			<TestTube2 class="h-3.5 w-3.5 flex-shrink-0 text-primary-500" />

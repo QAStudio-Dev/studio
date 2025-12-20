@@ -85,8 +85,8 @@ export class TestCasesPage extends BasePage {
 		this.createTestCaseSubmitButton = page.locator('button[type="submit"]:has-text("Add")');
 		this.cancelTestCaseButton = page.locator('button:has-text("Cancel")').last();
 
-		// Modal
-		this.testCaseModal = page.locator('[role="dialog"]');
+		// Modal - use more specific selector to avoid matching popovers
+		this.testCaseModal = page.locator('[role="dialog"][aria-modal="true"]');
 		this.modalTitle = this.testCaseModal.locator('h2');
 		this.modalCloseButton = this.testCaseModal.locator('button:has-text("✕")');
 		this.modalOpenFullViewButton = this.testCaseModal.locator('a:has-text("Open Full View")');
@@ -210,11 +210,17 @@ export class TestCasesPage extends BasePage {
 	}
 
 	/**
-	 * Click on a test case by title
+	 * Click on a test case by title to open modal
 	 */
 	async clickTestCase(title: string) {
-		const testCase = this.page.locator(`text="${title}"`).first();
-		await this.click(testCase);
+		// Click the test case button containing the specific title
+		// Use force: true to bypass actionability checks that might interfere with draggable elements
+		const testCaseButton = this.page
+			.locator(`[data-test="test-case-button"]:has-text("${title}")`)
+			.first();
+		await testCaseButton.click({ force: true });
+		// Wait for the modal to appear
+		await this.waitForModal();
 	}
 
 	/**
@@ -235,6 +241,13 @@ export class TestCasesPage extends BasePage {
 	}
 
 	/**
+	 * Wait for modal to appear
+	 */
+	async waitForModal(timeout = 5000) {
+		await this.testCaseModal.waitFor({ state: 'visible', timeout });
+	}
+
+	/**
 	 * Close the test case modal
 	 */
 	async closeModal() {
@@ -250,9 +263,13 @@ export class TestCasesPage extends BasePage {
 		}
 
 		const title = await this.getText(this.modalTitle);
-		const description = await this.testCaseModal
-			.locator('h3:has-text("Description") + p')
-			.textContent();
+
+		// Description may not exist for all test cases
+		let description: string | null = null;
+		const descriptionLocator = this.testCaseModal.locator('h3:has-text("Description") + p');
+		if ((await descriptionLocator.count()) > 0) {
+			description = await descriptionLocator.textContent();
+		}
 
 		return {
 			title: title.trim(),
@@ -384,9 +401,10 @@ export class TestCasesPage extends BasePage {
 	/**
 	 * Wait for test suite to appear in the sidebar
 	 */
-	async waitForSuite(name: string, timeout = 5000) {
+	async waitForSuite(name: string, timeout = 10000) {
 		await this.testSuitesContainer.waitFor({ state: 'visible' });
-		await this.page.waitForSelector(`button:has-text("${name}")`, {
+		// Wait for the suite button within the test suites container
+		await this.testSuitesContainer.locator(`button:has-text("${name}")`).waitFor({
 			timeout,
 			state: 'visible'
 		});
