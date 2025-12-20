@@ -54,12 +54,22 @@ export const load: PageServerLoad = async () => {
 			.slice(0, 3);
 
 		return {
-			posts: latestPosts
+			posts: latestPosts,
+			pageMetaTags: {
+				title: 'QA Studio - Modern Test Management Platform',
+				description:
+					'Modern test management platform built by QA engineers. Open source, API-first, and designed for modern testing workflows. Track test cases, runs, and results with ease.'
+			}
 		};
 	} catch (error) {
 		console.error('Error loading blog posts:', error);
 		return {
-			posts: []
+			posts: [],
+			pageMetaTags: {
+				title: 'QA Studio - Modern Test Management Platform',
+				description:
+					'Modern test management platform built by QA engineers. Open source, API-first, and designed for modern testing workflows. Track test cases, runs, and results with ease.'
+			}
 		};
 	}
 };
