@@ -10,8 +10,18 @@ export const Param = z.object({
 });
 
 export const Input = z.object({
-	name: z.string().trim().min(1).max(255).describe('Suite name'),
-	description: z.string().trim().max(1000).optional().describe('Optional suite description'),
+	name: z
+		.string()
+		.trim()
+		.min(1)
+		.max(255) // Prevents database overflow and ensures readable UI display
+		.describe('Suite name'),
+	description: z
+		.string()
+		.trim()
+		.max(1000) // Reasonable limit for descriptions to prevent abuse
+		.optional()
+		.describe('Optional suite description'),
 	parentId: z.string().nullish().describe('Parent suite ID for nesting')
 });
 
@@ -115,21 +125,26 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 				}
 			});
 
-			// Create audit log for tracking
-			await createAuditLog({
-				userId,
-				teamId: project.teamId ?? undefined,
-				action: 'TEST_SUITE_CREATED',
-				resourceType: 'TestSuite',
-				resourceId: testSuite.id,
-				metadata: {
-					testSuiteName: testSuite.name,
-					projectId: input.projectId,
-					parentId: input.parentId,
-					order: nextOrder
-				},
-				event: evt
-			});
+			// Create audit log for tracking (non-blocking - don't fail the operation if audit logging fails)
+			try {
+				await createAuditLog({
+					userId,
+					teamId: project.teamId ?? undefined,
+					action: 'TEST_SUITE_CREATED',
+					resourceType: 'TestSuite',
+					resourceId: testSuite.id,
+					metadata: {
+						testSuiteName: testSuite.name,
+						projectId: input.projectId,
+						parentId: input.parentId,
+						order: nextOrder
+					},
+					event: evt
+				});
+			} catch (auditError) {
+				// Log the error but don't fail the entire operation
+				console.error('Failed to create audit log for test suite:', auditError);
+			}
 
 			// serializeDates converts Date fields to ISO strings
 			const serialized = serializeDates(testSuite);

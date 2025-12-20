@@ -10,8 +10,18 @@ export const Param = z.object({
 });
 
 export const Input = z.object({
-	title: z.string().trim().min(1).max(500).describe('Test case title'),
-	description: z.string().trim().max(5000).optional().describe('Detailed test case description'),
+	title: z
+		.string()
+		.trim()
+		.min(1)
+		.max(500) // Prevents database overflow and ensures readable UI display
+		.describe('Test case title'),
+	description: z
+		.string()
+		.trim()
+		.max(5000) // Allows detailed descriptions while preventing abuse
+		.optional()
+		.describe('Detailed test case description'),
 	preconditions: z
 		.string()
 		.trim()
@@ -241,23 +251,28 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 				}
 			});
 
-			// Create audit log for tracking
-			await createAuditLog({
-				userId,
-				teamId: project.teamId ?? undefined,
-				action: 'TEST_CASE_CREATED',
-				resourceType: 'TestCase',
-				resourceId: testCase.id,
-				metadata: {
-					testCaseTitle: testCase.title,
-					projectId: input.projectId,
-					suiteId: input.suiteId,
-					priority: testCase.priority,
-					type: testCase.type,
-					automationStatus: testCase.automationStatus
-				},
-				event: evt
-			});
+			// Create audit log for tracking (non-blocking - don't fail the operation if audit logging fails)
+			try {
+				await createAuditLog({
+					userId,
+					teamId: project.teamId ?? undefined,
+					action: 'TEST_CASE_CREATED',
+					resourceType: 'TestCase',
+					resourceId: testCase.id,
+					metadata: {
+						testCaseTitle: testCase.title,
+						projectId: input.projectId,
+						suiteId: input.suiteId,
+						priority: testCase.priority,
+						type: testCase.type,
+						automationStatus: testCase.automationStatus
+					},
+					event: evt
+				});
+			} catch (auditError) {
+				// Log the error but don't fail the entire operation
+				console.error('Failed to create audit log for test case:', auditError);
+			}
 
 			// serializeDates converts Date fields to ISO strings, which matches our Output schema
 			// Use Zod's parse() to validate the serialized data and ensure type safety
