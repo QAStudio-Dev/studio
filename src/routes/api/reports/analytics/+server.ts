@@ -276,7 +276,10 @@ export const GET: RequestHandler = async (event) => {
 	const totalTests = testResults.length;
 	const passedTests = testResults.filter((r) => r.status === 'PASSED').length;
 	const failedTests = testResults.filter((r) => r.status === 'FAILED').length;
-	const passRate = totalTests > 0 ? (passedTests / totalTests) * 100 : 0;
+	const blockedTests = testResults.filter((r) => r.status === 'BLOCKED').length;
+	// Pass rate excludes skipped tests (industry standard)
+	const executedTests = passedTests + failedTests + blockedTests;
+	const passRate = executedTests > 0 ? (passedTests / executedTests) * 100 : 0;
 
 	const totalDuration = testResults.reduce((sum, r) => sum + (r.duration || 0), 0);
 	const avgTestDuration = totalTests > 0 ? totalDuration / totalTests : 0;
