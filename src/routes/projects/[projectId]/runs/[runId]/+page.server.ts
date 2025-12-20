@@ -5,7 +5,7 @@ import { sanitizeForMeta } from '$lib/utils/sanitize-meta';
 import { hasProjectAccess } from '$lib/server/access-control';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
-	const { userId } = locals.auth() || {};
+	const userId = locals.userId;
 
 	if (!userId) {
 		throw redirect(302, '/login');
@@ -108,7 +108,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			title: `${sanitizeForMeta(testRun.name)} - Test Run`,
 			description:
 				sanitizeForMeta(testRun.description) ||
-				`View detailed test results and execution history for the ${sanitizeForMeta(testRun.name)} test run in ${sanitizeForMeta(testRun.project.name)}. Analyze failures, track progress, and export reports.`
+				`Test results for ${sanitizeForMeta(testRun.name)} in ${sanitizeForMeta(testRun.project.name)}. Analyze failures and track progress.`
 		}
 	};
 };

@@ -25,6 +25,7 @@ type UserAccess = {
  */
 export function hasProjectAccess(project: ProjectAccess, user: UserAccess): boolean {
 	return (
-		project.createdBy === user.id || (project.teamId !== null && user.teamId === project.teamId)
+		project.createdBy === user.id ||
+		(project.teamId !== null && user.teamId !== null && user.teamId === project.teamId)
 	);
 }

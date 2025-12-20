@@ -49,7 +49,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		project,
 		pageMetaTags: {
 			title: `Test Runs - ${sanitizeForMeta(project.name)}`,
-			description: `View and manage all test runs for the ${sanitizeForMeta(project.name)} project (${sanitizeForMeta(project.key)}). Track test execution progress, analyze results, and monitor quality metrics.`
+			description: `View test runs for ${sanitizeForMeta(project.name)} (${sanitizeForMeta(project.key)}). Track execution and analyze results.`
 		}
 	};
 };

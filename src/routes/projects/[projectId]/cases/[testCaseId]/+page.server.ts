@@ -111,7 +111,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			title: `${sanitizeForMeta(testCase.title)} - Test Case`,
 			description:
 				sanitizeForMeta(testCase.description) ||
-				`View complete test case details for ${sanitizeForMeta(testCase.title)} in ${sanitizeForMeta(testCase.project.name)}. Review test steps, execution history, results, and attachments.`
+				`Test case ${sanitizeForMeta(testCase.title)} in ${sanitizeForMeta(testCase.project.name)}. View steps, history, and results.`
 		}
 	};
 };

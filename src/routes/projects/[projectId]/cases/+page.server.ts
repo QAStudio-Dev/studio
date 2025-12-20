@@ -123,7 +123,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		currentUser: user,
 		pageMetaTags: {
 			title: `Test Cases - ${sanitizeForMeta(project.name)}`,
-			description: `Create, organize, and manage test cases and test suites for ${sanitizeForMeta(project.name)} (${sanitizeForMeta(project.key)}). Define test steps, set priorities, track automation status, and maintain test coverage.`
+			description: `Manage test cases for ${sanitizeForMeta(project.name)} (${sanitizeForMeta(project.key)}). Define steps, set priorities, and track coverage.`
 		}
 	};
 };

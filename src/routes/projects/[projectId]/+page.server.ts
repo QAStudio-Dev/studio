@@ -171,7 +171,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		currentUser: user,
 		pageMetaTags: {
 			title: `${sanitizeForMeta(project.name)} - Project Dashboard`,
-			description: `Comprehensive project dashboard for ${sanitizeForMeta(project.name)} (${sanitizeForMeta(project.key)}). View test cases, test runs, execution statistics, recent activity, and quality metrics.`
+			description: `Project dashboard for ${sanitizeForMeta(project.name)} (${sanitizeForMeta(project.key)}). View test cases, runs, and quality metrics.`
 		}
 	};
 };
