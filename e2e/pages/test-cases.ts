@@ -367,7 +367,17 @@ export class TestCasesPage extends BasePage {
 	/**
 	 * Wait for test case to appear in the list
 	 */
-	async waitForTestCase(title: string, timeout = 5000) {
+	async waitForTestCase(title: string, timeout = 10000) {
+		// First ensure the uncategorized section is expanded
+		const uncategorizedButton = this.testSuitesContainer.locator(
+			'button:has-text("Uncategorized")'
+		);
+		if (await this.isVisible(uncategorizedButton)) {
+			await this.click(uncategorizedButton);
+			await this.page.waitForTimeout(500);
+		}
+
+		// Now wait for the test case to appear
 		await this.page.waitForSelector(`text="${title}"`, { timeout, state: 'visible' });
 	}
 

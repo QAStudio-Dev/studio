@@ -10,8 +10,18 @@ export const Param = z.object({
 });
 
 export const Input = z.object({
-	title: z.string().trim().min(1).describe('Test case title'),
-	description: z.string().trim().optional().describe('Detailed test case description'),
+	title: z
+		.string()
+		.trim()
+		.min(1)
+		.max(500) // Prevents database overflow and ensures readable UI display
+		.describe('Test case title'),
+	description: z
+		.string()
+		.trim()
+		.max(5000) // Allows detailed descriptions while preventing abuse
+		.optional()
+		.describe('Detailed test case description'),
 	preconditions: z
 		.string()
 		.trim()
@@ -75,7 +85,7 @@ export const Input = z.object({
 		.max(10)
 		.optional()
 		.describe('Tags for categorization (max 10 tags, 50 chars each, alphanumeric only)'),
-	suiteId: z.string().optional().describe('Parent test suite ID')
+	suiteId: z.string().nullish().describe('Parent test suite ID')
 });
 
 export const Output = z.object({
@@ -205,6 +215,12 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 			});
 			const nextOrder = (maxOrder._max.order ?? -1) + 1;
 
+			// Auto-calculate step order if not provided
+			const stepsWithOrder = input.steps?.map((step, index) => ({
+				...step,
+				order: step.order ?? index
+			}));
+
 			// Create the test case
 			const testCase = await db.testCase.create({
 				data: {
@@ -212,7 +228,7 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 					title: input.title,
 					description: input.description,
 					preconditions: input.preconditions,
-					steps: input.steps,
+					steps: stepsWithOrder,
 					expectedResult: input.expectedResult,
 					priority: input.priority || 'MEDIUM',
 					type: input.type || 'FUNCTIONAL',
@@ -235,23 +251,28 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 				}
 			});
 
-			// Create audit log for tracking
-			await createAuditLog({
-				userId,
-				teamId: project.teamId ?? undefined,
-				action: 'TEST_CASE_CREATED',
-				resourceType: 'TestCase',
-				resourceId: testCase.id,
-				metadata: {
-					testCaseTitle: testCase.title,
-					projectId: input.projectId,
-					suiteId: input.suiteId,
-					priority: testCase.priority,
-					type: testCase.type,
-					automationStatus: testCase.automationStatus
-				},
-				event: evt
-			});
+			// Create audit log for tracking (non-blocking - don't fail the operation if audit logging fails)
+			try {
+				await createAuditLog({
+					userId,
+					teamId: project.teamId ?? undefined,
+					action: 'TEST_CASE_CREATED',
+					resourceType: 'TestCase',
+					resourceId: testCase.id,
+					metadata: {
+						testCaseTitle: testCase.title,
+						projectId: input.projectId,
+						suiteId: input.suiteId,
+						priority: testCase.priority,
+						type: testCase.type,
+						automationStatus: testCase.automationStatus
+					},
+					event: evt
+				});
+			} catch (auditError) {
+				// Log the error but don't fail the entire operation
+				console.error('Failed to create audit log for test case:', auditError);
+			}
 
 			// serializeDates converts Date fields to ISO strings, which matches our Output schema
 			// Use Zod's parse() to validate the serialized data and ensure type safety

@@ -1093,14 +1093,102 @@ export default new Endpoint({ Input, Output }).handle(async (input, evt) => {
 });
 ```
 
+### CRITICAL: Route Parameter Naming Convention
+
+**IMPORTANT:** The route directory structure in `src/routes/api` **MUST exactly match** the API directory structure in `src/api` for sveltekit-api to correctly resolve endpoints.
+
+**The Issue:**
+sveltekit-api uses the SvelteKit route ID to dynamically find the corresponding API implementation file. If the parameter names don't match exactly, the route lookup will fail with "Route not found" errors even though the route handler exists.
+
+**Correct Pattern:**
+
+```
+src/
+├── api/
+│   └── projects/
+│       └── [...projectId]/          # ✅ Use [...projectId] (rest parameter)
+│           └── cases/
+│               ├── GET.ts
+│               └── POST.ts
+└── routes/
+    └── api/
+        └── projects/
+            └── [...projectId]/      # ✅ MUST match API directory name exactly
+                └── cases/
+                    └── +server.ts
+```
+
+**Incorrect Pattern (causes 404 errors):**
+
+```
+src/
+├── api/
+│   └── projects/
+│       └── [...projectId]/          # Uses rest parameter
+│           └── cases/
+│               └── POST.ts
+└── routes/
+    └── api/
+        └── projects/
+            └── [projectId]/         # ❌ MISMATCH! Uses single parameter
+                └── cases/
+                    └── +server.ts
+```
+
+**Why This Matters:**
+
+- `[projectId]` matches a single path segment (e.g., `/projects/ABC123`)
+- `[...projectId]` matches one or more segments (rest/catch-all parameter)
+- sveltekit-api constructs the lookup key using the exact route parameter names
+- Mismatched names = route lookup fails = 404 errors in production
+
+**When Creating New Endpoints:**
+
+1. Choose parameter naming convention (`[id]` vs `[...id]`) in `src/api` first
+2. Use the **exact same naming** in `src/routes/api`
+3. Export all HTTP methods the API implements (GET, POST, PATCH, DELETE, etc.)
+
+**Example Route Handler:**
+
+```typescript
+// src/routes/api/projects/[...projectId]/cases/+server.ts
+import api from '$api';
+import type { RequestHandler } from './$types';
+
+// Export ALL methods that exist in src/api/projects/[...projectId]/cases/
+export const GET: RequestHandler = async (evt) => api.handle(evt);
+export const POST: RequestHandler = async (evt) => api.handle(evt);
+export const OPTIONS: RequestHandler = async (evt) => api.handle(evt);
+```
+
+### Handling Null Values in Schemas
+
+When a field can be `null`, `undefined`, or a value, use `.nullish()` instead of just `.optional()`:
+
+```typescript
+// ❌ Wrong - only accepts undefined or string, rejects null
+suiteId: z.string().optional();
+
+// ✅ Correct - accepts undefined, null, or string
+suiteId: z.string().nullish();
+
+// Alternative - more explicit
+suiteId: z.string().nullable().optional();
+```
+
+This is important for optional foreign keys where the frontend may send `null` to indicate "no relation".
+
 ### Best Practices
 
 1. **Separation of Concerns**: Business logic in `src/api`, routing in `src/routes/api`
-2. **Descriptive Schemas**: Use `.describe()` on all Zod fields for better documentation
-3. **Proper Error Codes**: Define all possible errors with appropriate HTTP status codes
-4. **Type Safety**: Export and reuse Zod schemas as TypeScript types if needed
-5. **Validation**: Let Zod handle all input validation automatically
-6. **Documentation**: Use `Modifier` to provide helpful context in OpenAPI docs
+2. **Exact Directory Matching**: Route directories MUST match API directories exactly (including parameter naming)
+3. **Export All Methods**: Route handlers must export all HTTP methods that the API implements
+4. **Descriptive Schemas**: Use `.describe()` on all Zod fields for better documentation
+5. **Proper Error Codes**: Define all possible errors with appropriate HTTP status codes
+6. **Type Safety**: Export and reuse Zod schemas as TypeScript types if needed
+7. **Validation**: Let Zod handle all input validation automatically
+8. **Null Handling**: Use `.nullish()` for fields that can be null, undefined, or a value
+9. **Documentation**: Use `Modifier` to provide helpful context in OpenAPI docs
 
 ### Viewing Documentation
 
