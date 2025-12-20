@@ -47,7 +47,26 @@ export const load: LayoutServerLoad = async (event) => {
 				'Modern test management platform built by QA engineers. Open source and API-first.',
 			image: 'https://qastudio.dev/og_image.png',
 			imageAlt: 'QA Studio - Modern Test Management'
-		}
+		},
+		additionalMetaTags: [
+			{
+				name: 'keywords',
+				content:
+					'test management, QA, quality assurance, playwright, testing, test automation, test reporting, open source'
+			},
+			{
+				name: 'author',
+				content: 'QA Studio'
+			},
+			{
+				name: 'viewport',
+				content: 'width=device-width, initial-scale=1'
+			},
+			{
+				httpEquiv: 'x-ua-compatible',
+				content: 'IE=edge'
+			}
+		]
 	});
 
 	// Fetch user data if authenticated
@@ -94,6 +113,6 @@ export const load: LayoutServerLoad = async (event) => {
 		user,
 		projects,
 		csrfToken,
-		...baseMetaTags
+		baseMetaTags
 	};
 };
