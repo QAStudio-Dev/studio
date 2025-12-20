@@ -135,19 +135,23 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 			const serialized = serializeDates(testSuite);
 			return Output.parse(serialized);
 		} catch (err) {
-			// Re-throw known API errors
+			// Re-throw known API errors (errors thrown explicitly by our code above)
 			if (err && typeof err === 'object' && 'status' in err) {
 				throw err;
 			}
 
-			// Handle specific Prisma errors
+			// Handle Prisma database errors
 			if (err && typeof err === 'object' && 'code' in err) {
-				if ((err as { code: string }).code === 'P2003') {
+				const prismaError = err as { code: string };
+				// P2003: Foreign key constraint failure (invalid projectId or parentId)
+				if (prismaError.code === 'P2003') {
 					throw Error[404];
 				}
+				// P2002: Unique constraint violation (duplicate suite at same level with same name)
+				// This is currently not a unique constraint in the schema, but could be added
 			}
 
-			// Log unexpected errors
+			// Log and throw 500 for any unexpected errors
 			console.error('Error creating test suite:', err);
 			throw Error[500];
 		}

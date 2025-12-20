@@ -205,6 +205,12 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 			});
 			const nextOrder = (maxOrder._max.order ?? -1) + 1;
 
+			// Auto-calculate step order if not provided
+			const stepsWithOrder = input.steps?.map((step, index) => ({
+				...step,
+				order: step.order ?? index
+			}));
+
 			// Create the test case
 			const testCase = await db.testCase.create({
 				data: {
@@ -212,7 +218,7 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 					title: input.title,
 					description: input.description,
 					preconditions: input.preconditions,
-					steps: input.steps,
+					steps: stepsWithOrder,
 					expectedResult: input.expectedResult,
 					priority: input.priority || 'MEDIUM',
 					type: input.type || 'FUNCTIONAL',
