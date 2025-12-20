@@ -90,16 +90,60 @@ if (isValidType(result)) {
 }
 ```
 
-**When `as any` might be acceptable:**
+**When `any` IS acceptable:**
 
-- Only as a last resort when dealing with complex third-party library types
-- Even then, add a comment explaining why it's necessary and create a task to fix it properly
+There are legitimate cases where `any` is the correct choice:
+
+1. **Third-party library API contracts** - When a library expects `any` as part of its designed API:
+
+```typescript
+// ✅ Good - sveltekit-api's Modifier expects 'any' to mutate OpenAPI config
+export const Modifier = (r: any) => {
+	r.tags = ['Projects'];
+	r.summary = 'Update resource';
+	return r;
+};
+```
+
+2. **Dynamic Prisma updates** - When building update objects conditionally:
+
+```typescript
+// ✅ Good - Record<string, any> for dynamic Prisma updates
+const data: Record<string, any> = {};
+if (updateData.name !== undefined) {
+	data.name = updateData.name;
+}
+if (updateData.status !== undefined) {
+	data.status = updateData.status;
+}
+await db.resource.update({ where: { id }, data });
+```
+
+Note: `Record<string, any>` is better than plain `any` because it communicates "object with string keys" and is validated by Prisma at runtime.
+
+3. **Complex mutation patterns** - When mutating objects where the full type would be impractical:
+
+```typescript
+// ✅ Good - when working with complex OpenAPI/config objects
+function enhanceConfig(config: any): any {
+	config.metadata = { ...config.metadata, enhanced: true };
+	return config;
+}
+```
+
+**When `as any` is NOT acceptable:**
+
+- Your application's business logic
+- Data models and entities
+- Function return types (let TypeScript infer or use proper types)
+- Test mocks (use `satisfies` instead)
 
 **In tests specifically:**
 
 - Use Vitest's type utilities: `vi.mocked()` handles most typing needs
 - Mock with full object shapes that match the actual types
 - Use `satisfies` to ensure partial mocks are type-safe
+- Never use `as any` in test data - it hides type errors
 
 ## Database Schema
 

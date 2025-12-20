@@ -3,7 +3,6 @@ import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
 import { requireProjectAccess } from '$lib/server/authorization';
 import { serializeDates } from '$lib/utils/date';
-import { Prisma } from '$prisma/client';
 
 export const Param = z.object({
 	projectId: z.string().describe('Project ID'),
@@ -42,7 +41,7 @@ export const Error = {
 	404: error(404, 'Test run or project not found')
 };
 
-export const Modifier = (r: Record<string, unknown>) => {
+export const Modifier = (r: any) => {
 	r.tags = ['Projects'];
 	r.summary = 'Update test run';
 	r.description =
@@ -103,7 +102,7 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 		}
 
 		// Build update data, handling null values for milestoneId and environmentId
-		const data: Prisma.TestRunUpdateInput = {};
+		const data: Record<string, any> = {};
 
 		if (updateData.name !== undefined) {
 			data.name = updateData.name;

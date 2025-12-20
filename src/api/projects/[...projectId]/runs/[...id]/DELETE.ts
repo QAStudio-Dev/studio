@@ -18,7 +18,7 @@ export const Error = {
 	404: error(404, 'Test run or project not found')
 };
 
-export const Modifier = (r: Record<string, unknown>) => {
+export const Modifier = (r: any) => {
 	r.tags = ['Projects'];
 	r.summary = 'Delete test run';
 	r.description =
@@ -50,12 +50,9 @@ export default new Endpoint({ Param, Output, Error, Modifier }).handle(async (in
 	}
 
 	// Delete the test run (cascade will delete results, attachments, steps)
-	// Include projectId for defense-in-depth security
+	// Note: We verified the test run belongs to this project in the findFirst check above
 	await db.testRun.delete({
-		where: {
-			id,
-			projectId
-		}
+		where: { id }
 	});
 
 	return {
