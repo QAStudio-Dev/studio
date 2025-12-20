@@ -1,4 +1,5 @@
 import type { PageServerLoad } from './$types';
+import type { PageMetaTags } from '$lib/types/meta';
 import { readdir, readFile } from 'fs/promises';
 import { join } from 'path';
 import matter from 'gray-matter';
@@ -53,23 +54,28 @@ export const load: PageServerLoad = async () => {
 			.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 			.slice(0, 3);
 
+		const pageMetaTags: PageMetaTags = {
+			title: 'QA Studio - Modern Test Management Platform',
+			description:
+				'Modern test management platform built by QA engineers. Open source, API-first, and designed for modern testing workflows. Track test cases, runs, and results with ease.'
+		};
+
 		return {
 			posts: latestPosts,
-			pageMetaTags: {
-				title: 'QA Studio - Modern Test Management Platform',
-				description:
-					'Modern test management platform built by QA engineers. Open source, API-first, and designed for modern testing workflows. Track test cases, runs, and results with ease.'
-			}
+			pageMetaTags
 		};
 	} catch (error) {
 		console.error('Error loading blog posts:', error);
+
+		const pageMetaTags: PageMetaTags = {
+			title: 'QA Studio - Modern Test Management Platform',
+			description:
+				'Modern test management platform built by QA engineers. Open source, API-first, and designed for modern testing workflows. Track test cases, runs, and results with ease.'
+		};
+
 		return {
 			posts: [],
-			pageMetaTags: {
-				title: 'QA Studio - Modern Test Management Platform',
-				description:
-					'Modern test management platform built by QA engineers. Open source, API-first, and designed for modern testing workflows. Track test cases, runs, and results with ease.'
-			}
+			pageMetaTags
 		};
 	}
 };

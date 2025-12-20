@@ -3,6 +3,7 @@ import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { sanitizeForMeta } from '$lib/utils/sanitize-meta';
 import { hasProjectAccess } from '$lib/server/access-control';
+import type { PageMetaTags } from '$lib/types/meta';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	const userId = locals.userId;
@@ -93,6 +94,13 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		where: { testRunId: runId }
 	});
 
+	const pageMetaTags: PageMetaTags = {
+		title: `${sanitizeForMeta(testRun.name)} - Test Run`,
+		description:
+			sanitizeForMeta(testRun.description) ||
+			`Test results for ${sanitizeForMeta(testRun.name)} in ${sanitizeForMeta(testRun.project.name)}. Analyze failures and track progress.`
+	};
+
 	return {
 		testRun,
 		stats: {
@@ -104,11 +112,6 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			retest: statusCounts.RETEST || 0,
 			untested: statusCounts.UNTESTED || 0
 		},
-		pageMetaTags: {
-			title: `${sanitizeForMeta(testRun.name)} - Test Run`,
-			description:
-				sanitizeForMeta(testRun.description) ||
-				`Test results for ${sanitizeForMeta(testRun.name)} in ${sanitizeForMeta(testRun.project.name)}. Analyze failures and track progress.`
-		}
+		pageMetaTags
 	};
 };

@@ -3,6 +3,7 @@ import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { sanitizeForMeta } from '$lib/utils/sanitize-meta';
 import { hasProjectAccess } from '$lib/server/access-control';
+import type { PageMetaTags } from '$lib/types/meta';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	const userId = locals.userId;
@@ -45,11 +46,13 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		throw error(403, { message: 'You do not have access to this project' });
 	}
 
+	const pageMetaTags: PageMetaTags = {
+		title: `Test Runs - ${sanitizeForMeta(project.name)}`,
+		description: `View test runs for ${sanitizeForMeta(project.name)} (${sanitizeForMeta(project.key)}). Track execution and analyze results.`
+	};
+
 	return {
 		project,
-		pageMetaTags: {
-			title: `Test Runs - ${sanitizeForMeta(project.name)}`,
-			description: `View test runs for ${sanitizeForMeta(project.name)} (${sanitizeForMeta(project.key)}). Track execution and analyze results.`
-		}
+		pageMetaTags
 	};
 };

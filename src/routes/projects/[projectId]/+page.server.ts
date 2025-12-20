@@ -3,9 +3,10 @@ import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { sanitizeForMeta } from '$lib/utils/sanitize-meta';
 import { hasProjectAccess } from '$lib/server/access-control';
+import type { PageMetaTags } from '$lib/types/meta';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
-	const { userId } = locals.auth() || {};
+	const userId = locals.userId;
 
 	if (!userId) {
 		throw redirect(302, '/login');
@@ -164,14 +165,16 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		}
 	}));
 
+	const pageMetaTags: PageMetaTags = {
+		title: `${sanitizeForMeta(project.name)} - Project Dashboard`,
+		description: `Project dashboard for ${sanitizeForMeta(project.name)} (${sanitizeForMeta(project.key)}). View test cases, runs, and quality metrics.`
+	};
+
 	return {
 		project,
 		stats,
 		recentRuns,
 		currentUser: user,
-		pageMetaTags: {
-			title: `${sanitizeForMeta(project.name)} - Project Dashboard`,
-			description: `Project dashboard for ${sanitizeForMeta(project.name)} (${sanitizeForMeta(project.key)}). View test cases, runs, and quality metrics.`
-		}
+		pageMetaTags
 	};
 };
