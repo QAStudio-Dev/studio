@@ -24,6 +24,8 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
+        env:
+          DATABASE_URL: postgresql://user:pass@localhost:5432/db
         run: npm ci
 
       - name: Run type check

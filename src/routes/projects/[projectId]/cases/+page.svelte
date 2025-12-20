@@ -765,7 +765,7 @@
 </div>
 
 <!-- Test Case Quick View Modal -->
-<Dialog open={showTestCaseModal} onOpenChange={() => (showTestCaseModal = false)}>
+<Dialog open={showTestCaseModal} onOpenChange={(details) => (showTestCaseModal = details.open)}>
 	<Portal>
 		<Dialog.Backdrop
 			class="fixed inset-0 z-40 bg-black/50"
