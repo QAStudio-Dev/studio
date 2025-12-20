@@ -37,22 +37,24 @@ export default new Endpoint({ Param, Output, Error, Modifier }).handle(async (in
 	// Verify project access using shared helper
 	await requireProjectAccess(userId, projectId);
 
-	// Verify test run exists in this project
-	const testRun = await db.testRun.findFirst({
-		where: {
-			id,
-			projectId
+	// Verify test run exists and delete in a transaction to prevent TOCTOU race conditions
+	await db.$transaction(async (tx) => {
+		// Verify test run exists in this project
+		const testRun = await tx.testRun.findFirst({
+			where: {
+				id,
+				projectId
+			}
+		});
+
+		if (!testRun) {
+			throw error(404, 'Test run not found');
 		}
-	});
 
-	if (!testRun) {
-		throw error(404, 'Test run not found');
-	}
-
-	// Delete the test run (cascade will delete results, attachments, steps)
-	// Note: We verified the test run belongs to this project in the findFirst check above
-	await db.testRun.delete({
-		where: { id }
+		// Delete the test run (cascade will delete results, attachments, steps)
+		await tx.testRun.delete({
+			where: { id }
+		});
 	});
 
 	return {
