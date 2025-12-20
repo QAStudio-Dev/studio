@@ -697,14 +697,24 @@ When creating modal dialogs, the `card` class alone is **not sufficient** as it 
 </div>
 ```
 
-### ✅ CORRECT - Proper Modal Styling
+### ✅ CORRECT - Proper Modal Styling with Accessibility
 
 ```svelte
 <!-- Modal overlay with semi-transparent backdrop -->
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+<div
+	class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+	role="dialog"
+	aria-modal="true"
+	aria-labelledby="modal-title"
+	onkeydown={(e) => {
+		if (e.key === 'Escape') {
+			showModal = false;
+		}
+	}}
+>
 	<!-- Modal content with proper background -->
 	<div class="rounded-container-token w-full max-w-2xl bg-surface-50-950 p-6 shadow-xl">
-		<h2 class="mb-4 text-2xl font-bold">Modal Title</h2>
+		<h2 id="modal-title" class="mb-4 text-2xl font-bold">Modal Title</h2>
 		<!-- Content -->
 	</div>
 </div>
@@ -727,7 +737,7 @@ When creating modal dialogs, the `card` class alone is **not sufficient** as it 
     - Add size classes: `w-full max-w-2xl` or `max-w-md`
     - For scrollable content: `max-h-[90vh] overflow-y-auto`
 
-### Complete Modal Example
+### Complete Accessible Modal Example
 
 ```svelte
 <script lang="ts">
@@ -735,11 +745,21 @@ When creating modal dialogs, the `card` class alone is **not sufficient** as it 
 </script>
 
 {#if showModal}
-	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="edit-modal-title"
+		onkeydown={(e) => {
+			if (e.key === 'Escape') {
+				showModal = false;
+			}
+		}}
+	>
 		<div
 			class="rounded-container-token max-h-[90vh] w-full max-w-2xl overflow-y-auto bg-surface-50-950 p-6 shadow-xl"
 		>
-			<h2 class="mb-4 text-2xl font-bold">Edit Item</h2>
+			<h2 id="edit-modal-title" class="mb-4 text-2xl font-bold">Edit Item</h2>
 
 			<form class="space-y-4">
 				<div>
@@ -763,13 +783,25 @@ When creating modal dialogs, the `card` class alone is **not sufficient** as it 
 {/if}
 ```
 
+### Accessibility Requirements
+
+Always include these accessibility features for modals:
+
+- **`role="dialog"`** - Identifies the element as a dialog
+- **`aria-modal="true"`** - Indicates modal behavior (background inert)
+- **`aria-labelledby="modal-title"`** - Links to modal heading for screen readers
+- **Escape key handler** - Close modal on Escape key press
+- **Unique ID on heading** - Match with `aria-labelledby` attribute
+
 ### Important Notes
 
 - **Always use `bg-surface-50-950`** for modal backgrounds - this ensures proper light/dark mode support
 - **Never use `card` class alone** for modals - it lacks the background color
 - **Use `rounded-container-token`** instead of `rounded-container` for Skeleton modals
 - **Add `shadow-xl`** for visual depth and separation from backdrop
+- **Include accessibility attributes** - `role`, `aria-modal`, `aria-labelledby`, and escape key handler
 - Consider **click-outside-to-close** for better UX (add `onclick` to overlay div)
+- **Disable escape during submission** - Prevent closing modal while saving/deleting
 
 ## Authentication
 

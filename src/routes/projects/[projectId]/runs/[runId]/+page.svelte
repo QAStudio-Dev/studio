@@ -26,7 +26,7 @@
 		Trash2
 	} from 'lucide-svelte';
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
 	import ErrorDisplay from '$lib/components/ErrorDisplay.svelte';
 	import AttachmentViewer from '$lib/components/AttachmentViewer.svelte';
@@ -456,8 +456,9 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 				throw new Error(error.message || 'Failed to update test run');
 			}
 
-			// Reload the page to get fresh data
-			window.location.reload();
+			// Invalidate all data to refresh the page with SvelteKit
+			await invalidateAll();
+			showEditModal = false;
 		} catch (err: any) {
 			console.error(err);
 			alert(err.message || 'Failed to update test run');
@@ -1221,11 +1222,21 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 
 <!-- Edit Test Run Modal -->
 {#if showEditModal}
-	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="edit-modal-title"
+		onkeydown={(e) => {
+			if (e.key === 'Escape' && !isSubmitting) {
+				showEditModal = false;
+			}
+		}}
+	>
 		<div
 			class="rounded-container-token max-h-[90vh] w-full max-w-2xl overflow-y-auto bg-surface-50-950 p-6 shadow-xl"
 		>
-			<h2 class="mb-4 text-2xl font-bold">Edit Test Run</h2>
+			<h2 id="edit-modal-title" class="mb-4 text-2xl font-bold">Edit Test Run</h2>
 
 			<form
 				onsubmit={(e) => {
@@ -1311,9 +1322,21 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 
 <!-- Delete Confirmation Modal -->
 {#if showDeleteConfirm}
-	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="delete-modal-title"
+		onkeydown={(e) => {
+			if (e.key === 'Escape' && !isSubmitting) {
+				showDeleteConfirm = false;
+			}
+		}}
+	>
 		<div class="rounded-container-token w-full max-w-md bg-surface-50-950 p-6 shadow-xl">
-			<h2 class="mb-4 text-2xl font-bold text-error-500">Delete Test Run</h2>
+			<h2 id="delete-modal-title" class="mb-4 text-2xl font-bold text-error-500">
+				Delete Test Run
+			</h2>
 			<p class="text-surface-600-300 mb-6">
 				Are you sure you want to delete <strong>{testRun.name}</strong>? This will
 				permanently delete all test results, attachments, and associated data. This action

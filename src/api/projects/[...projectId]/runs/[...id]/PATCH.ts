@@ -1,7 +1,9 @@
 import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
+import { requireProjectAccess } from '$lib/server/authorization';
 import { serializeDates } from '$lib/utils/date';
+import { Prisma } from '$prisma/client';
 
 export const Param = z.object({
 	projectId: z.string().describe('Project ID'),
@@ -40,7 +42,7 @@ export const Error = {
 	404: error(404, 'Test run or project not found')
 };
 
-export const Modifier = (r: any) => {
+export const Modifier = (r: Record<string, unknown>) => {
 	r.tags = ['Projects'];
 	r.summary = 'Update test run';
 	r.description =
@@ -53,32 +55,12 @@ export const Modifier = (r: any) => {
  * Update a test run
  */
 export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
-	async (input, event): Promise<any> => {
+	async (input, event) => {
 		const userId = await requireApiAuth(event);
 		const { projectId, id, ...updateData } = input;
 
-		// Verify project access
-		const project = await db.project.findUnique({
-			where: { id: projectId },
-			include: { team: true }
-		});
-
-		if (!project) {
-			throw error(404, 'Project not found');
-		}
-
-		// Get user with team info
-		const user = await db.user.findUnique({
-			where: { id: userId }
-		});
-
-		// Check access
-		const hasAccess =
-			project.createdBy === userId || (project.teamId && user?.teamId === project.teamId);
-
-		if (!hasAccess) {
-			throw error(403, 'You do not have access to this project');
-		}
+		// Verify project access using shared helper
+		await requireProjectAccess(userId, projectId);
 
 		// Verify test run exists in this project
 		const existingRun = await db.testRun.findFirst({
@@ -121,7 +103,7 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 		}
 
 		// Build update data, handling null values for milestoneId and environmentId
-		const data: any = {};
+		const data: Prisma.TestRunUpdateInput = {};
 
 		if (updateData.name !== undefined) {
 			data.name = updateData.name;

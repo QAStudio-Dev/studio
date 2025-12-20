@@ -1,6 +1,7 @@
 import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
+import { requireProjectAccess } from '$lib/server/authorization';
 
 export const Param = z.object({
 	projectId: z.string().describe('Project ID'),
@@ -17,7 +18,7 @@ export const Error = {
 	404: error(404, 'Test run or project not found')
 };
 
-export const Modifier = (r: any) => {
+export const Modifier = (r: Record<string, unknown>) => {
 	r.tags = ['Projects'];
 	r.summary = 'Delete test run';
 	r.description =
@@ -29,54 +30,36 @@ export const Modifier = (r: any) => {
  * DELETE /api/projects/[projectId]/runs/[id]
  * Delete a test run and all associated data
  */
-export default new Endpoint({ Param, Output, Error, Modifier }).handle(
-	async (input, event): Promise<any> => {
-		const userId = await requireApiAuth(event);
-		const { projectId, id } = input;
+export default new Endpoint({ Param, Output, Error, Modifier }).handle(async (input, event) => {
+	const userId = await requireApiAuth(event);
+	const { projectId, id } = input;
 
-		// Verify project access
-		const project = await db.project.findUnique({
-			where: { id: projectId },
-			include: { team: true }
-		});
+	// Verify project access using shared helper
+	await requireProjectAccess(userId, projectId);
 
-		if (!project) {
-			throw error(404, 'Project not found');
+	// Verify test run exists in this project
+	const testRun = await db.testRun.findFirst({
+		where: {
+			id,
+			projectId
 		}
+	});
 
-		// Get user with team info
-		const user = await db.user.findUnique({
-			where: { id: userId }
-		});
-
-		// Check access
-		const hasAccess =
-			project.createdBy === userId || (project.teamId && user?.teamId === project.teamId);
-
-		if (!hasAccess) {
-			throw error(403, 'You do not have access to this project');
-		}
-
-		// Verify test run exists in this project
-		const testRun = await db.testRun.findFirst({
-			where: {
-				id,
-				projectId
-			}
-		});
-
-		if (!testRun) {
-			throw error(404, 'Test run not found');
-		}
-
-		// Delete the test run (cascade will delete results, attachments, steps)
-		await db.testRun.delete({
-			where: { id }
-		});
-
-		return {
-			success: true,
-			message: 'Test run deleted successfully'
-		};
+	if (!testRun) {
+		throw error(404, 'Test run not found');
 	}
-);
+
+	// Delete the test run (cascade will delete results, attachments, steps)
+	// Include projectId for defense-in-depth security
+	await db.testRun.delete({
+		where: {
+			id,
+			projectId
+		}
+	});
+
+	return {
+		success: true,
+		message: 'Test run deleted successfully'
+	};
+});
