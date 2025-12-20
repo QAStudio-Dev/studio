@@ -1,6 +1,7 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
+import { sanitizeForMeta } from '$lib/utils/sanitize-meta';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const { userId } = locals.auth() || {};
@@ -173,8 +174,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		recentRuns,
 		currentUser: user,
 		pageMetaTags: {
-			title: `${project.name} - Project Dashboard`,
-			description: `Comprehensive project dashboard for ${project.name} (${project.key}). View test cases, test runs, execution statistics, recent activity, and quality metrics at a glance.`
+			title: `${sanitizeForMeta(project.name)} - Project Dashboard`,
+			description: `Comprehensive project dashboard for ${sanitizeForMeta(project.name)} (${sanitizeForMeta(project.key)}). View test cases, test runs, execution statistics, recent activity, and quality metrics.`
 		}
 	};
 };

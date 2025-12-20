@@ -41,15 +41,6 @@
 	let environments = $state<any[]>([]);
 	let milestones = $state<any[]>([]);
 
-	// Derive current project name from loaded data for meta tags
-	let currentProject = $derived(projects.find((p) => p.id === projectId));
-	let pageTitle = $derived(currentProject ? `Test Runs - ${currentProject.name}` : 'Test Runs');
-	let pageDescription = $derived(
-		currentProject
-			? `View and manage all test runs for the ${currentProject.name} project (${currentProject.key}). Track test execution progress, analyze results, and monitor quality metrics.`
-			: 'View and manage test runs for your project. Track test execution progress, analyze results, and monitor quality metrics.'
-	);
-
 	// Fetch test runs
 	async function fetchTestRuns() {
 		loading = true;
@@ -186,11 +177,6 @@
 		return Math.round((stats.passed / executedTests) * 100);
 	}
 </script>
-
-<svelte:head>
-	<title>{pageTitle} | QA Studio</title>
-	<meta name="description" content={pageDescription} />
-</svelte:head>
 
 <div class="container mx-auto max-w-7xl px-4 py-8" data-testid="test-runs-page">
 	<!-- Header -->

@@ -1,6 +1,7 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
+import { sanitizeForMeta } from '$lib/utils/sanitize-meta';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const { userId } = locals.auth() || {};
@@ -107,10 +108,10 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	return {
 		testCase,
 		pageMetaTags: {
-			title: `${testCase.title} - Test Case`,
+			title: `${sanitizeForMeta(testCase.title)} - Test Case`,
 			description:
-				testCase.description ||
-				`View complete test case details for ${testCase.title} in ${testCase.project.name}. Review test steps, execution history, results, and attachments.`
+				sanitizeForMeta(testCase.description) ||
+				`View complete test case details for ${sanitizeForMeta(testCase.title)} in ${sanitizeForMeta(testCase.project.name)}. Review test steps, execution history, results, and attachments.`
 		}
 	};
 };

@@ -1,6 +1,7 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
+import { sanitizeForMeta } from '$lib/utils/sanitize-meta';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const { userId } = locals.auth() || {};
@@ -125,8 +126,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		stats,
 		currentUser: user,
 		pageMetaTags: {
-			title: `Test Cases - ${project.name}`,
-			description: `Create, organize, and manage test cases and test suites for ${project.name} (${project.key}). Define test steps, set priorities, track automation status, and maintain test coverage.`
+			title: `Test Cases - ${sanitizeForMeta(project.name)}`,
+			description: `Create, organize, and manage test cases and test suites for ${sanitizeForMeta(project.name)} (${sanitizeForMeta(project.key)}). Define test steps, set priorities, track automation status, and maintain test coverage.`
 		}
 	};
 };
