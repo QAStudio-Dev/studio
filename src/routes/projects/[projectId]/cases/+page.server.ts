@@ -1,7 +1,6 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
-import { generatePageMetaTags } from '$lib/utils/meta-tags';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const { userId } = locals.auth() || {};
@@ -125,9 +124,9 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		},
 		stats,
 		currentUser: user,
-		pageMetaTags: generatePageMetaTags(
-			`Test Cases - ${project.name}`,
-			`Create, organize, and manage test cases and test suites for ${project.name} (${project.key}). Define test steps, set priorities, track automation status, and maintain test coverage.`
-		)
+		pageMetaTags: {
+			title: `Test Cases - ${project.name}`,
+			description: `Create, organize, and manage test cases and test suites for ${project.name} (${project.key}). Define test steps, set priorities, track automation status, and maintain test coverage.`
+		}
 	};
 };

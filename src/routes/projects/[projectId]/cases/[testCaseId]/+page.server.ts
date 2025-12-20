@@ -1,7 +1,6 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
-import { generatePageMetaTags } from '$lib/utils/meta-tags';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const { userId } = locals.auth() || {};
@@ -107,10 +106,11 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	return {
 		testCase,
-		pageMetaTags: generatePageMetaTags(
-			`${testCase.title} - Test Case`,
-			testCase.description ||
+		pageMetaTags: {
+			title: `${testCase.title} - Test Case`,
+			description:
+				testCase.description ||
 				`View complete test case details for ${testCase.title} in ${testCase.project.name}. Review test steps, execution history, results, and attachments.`
-		)
+		}
 	};
 };

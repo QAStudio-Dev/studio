@@ -1,7 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
-import { generatePageMetaTags } from '$lib/utils/meta-tags';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const { userId } = locals.auth() || {};
@@ -67,9 +66,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	return {
 		user,
-		pageMetaTags: generatePageMetaTags(
-			'Settings',
-			'Configure your account settings, manage API keys for automation, invite and organize team members, and set up integrations with external tools like Jira and Twilio.'
-		)
+		pageMetaTags: {
+			title: 'Settings',
+			description:
+				'Configure your account settings, manage API keys for automation, invite and organize team members, and set up integrations with external tools like Jira and Twilio.'
+		}
 	};
 };
