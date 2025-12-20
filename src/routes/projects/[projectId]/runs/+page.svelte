@@ -170,10 +170,11 @@
 		}
 	}
 
-	// Calculate pass rate
+	// Calculate pass rate (excludes skipped tests, following industry standard)
 	function getPassRate(stats: any) {
-		if (stats.total === 0) return 0;
-		return Math.round((stats.passed / stats.total) * 100);
+		const executedTests = stats.passed + stats.failed + stats.blocked;
+		if (executedTests === 0) return 0;
+		return Math.round((stats.passed / executedTests) * 100);
 	}
 </script>
 

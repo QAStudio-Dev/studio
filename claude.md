@@ -90,16 +90,60 @@ if (isValidType(result)) {
 }
 ```
 
-**When `as any` might be acceptable:**
+**When `any` IS acceptable:**
 
-- Only as a last resort when dealing with complex third-party library types
-- Even then, add a comment explaining why it's necessary and create a task to fix it properly
+There are legitimate cases where `any` is the correct choice:
+
+1. **Third-party library API contracts** - When a library expects `any` as part of its designed API:
+
+```typescript
+// ✅ Good - sveltekit-api's Modifier expects 'any' to mutate OpenAPI config
+export const Modifier = (r: any) => {
+	r.tags = ['Projects'];
+	r.summary = 'Update resource';
+	return r;
+};
+```
+
+2. **Dynamic Prisma updates** - When building update objects conditionally:
+
+```typescript
+// ✅ Good - Record<string, any> for dynamic Prisma updates
+const data: Record<string, any> = {};
+if (updateData.name !== undefined) {
+	data.name = updateData.name;
+}
+if (updateData.status !== undefined) {
+	data.status = updateData.status;
+}
+await db.resource.update({ where: { id }, data });
+```
+
+Note: `Record<string, any>` is better than plain `any` because it communicates "object with string keys" and is validated by Prisma at runtime.
+
+3. **Complex mutation patterns** - When mutating objects where the full type would be impractical:
+
+```typescript
+// ✅ Good - when working with complex OpenAPI/config objects
+function enhanceConfig(config: any): any {
+	config.metadata = { ...config.metadata, enhanced: true };
+	return config;
+}
+```
+
+**When `as any` is NOT acceptable:**
+
+- Your application's business logic
+- Data models and entities
+- Function return types (let TypeScript infer or use proper types)
+- Test mocks (use `satisfies` instead)
 
 **In tests specifically:**
 
 - Use Vitest's type utilities: `vi.mocked()` handles most typing needs
 - Mock with full object shapes that match the actual types
 - Use `satisfies` to ensure partial mocks are type-safe
+- Never use `as any` in test data - it hides type errors
 
 ## Database Schema
 
@@ -680,6 +724,128 @@ Skeleton includes optional **preset classes** for buttons, badges, cards, and ot
 	<Button class="preset-filled">Click Me</Button>
 </div>
 ```
+
+## Modal Dialogs with Skeleton + Tailwind
+
+When creating modal dialogs, the `card` class alone is **not sufficient** as it doesn't provide a background color. You must explicitly add background and styling classes.
+
+### ❌ WRONG - Missing Background
+
+```svelte
+<!-- This will appear transparent/invisible -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+	<div class="card p-6">
+		<h2>Modal Title</h2>
+		<!-- Content -->
+	</div>
+</div>
+```
+
+### ✅ CORRECT - Proper Modal Styling with Accessibility
+
+```svelte
+<!-- Modal overlay with semi-transparent backdrop -->
+<div
+	class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+	role="dialog"
+	aria-modal="true"
+	aria-labelledby="modal-title"
+	onkeydown={(e) => {
+		if (e.key === 'Escape') {
+			showModal = false;
+		}
+	}}
+>
+	<!-- Modal content with proper background -->
+	<div class="rounded-container-token w-full max-w-2xl bg-surface-50-950 p-6 shadow-xl">
+		<h2 id="modal-title" class="mb-4 text-2xl font-bold">Modal Title</h2>
+		<!-- Content -->
+	</div>
+</div>
+```
+
+### Key Classes for Modals
+
+- **Overlay**: `fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4`
+    - `fixed inset-0` - Cover entire viewport
+    - `z-50` - High z-index to appear above other content
+    - `bg-black/50` - Semi-transparent dark backdrop
+    - `flex items-center justify-center` - Center the modal
+    - `p-4` - Padding around modal on small screens
+
+- **Modal Container**: `rounded-container-token bg-surface-50-950 p-6 shadow-xl`
+    - `rounded-container-token` - Skeleton's responsive border radius
+    - `bg-surface-50-950` - Adaptive background (light mode: 50, dark mode: 950)
+    - `p-6` - Internal padding
+    - `shadow-xl` - Drop shadow for depth
+    - Add size classes: `w-full max-w-2xl` or `max-w-md`
+    - For scrollable content: `max-h-[90vh] overflow-y-auto`
+
+### Complete Accessible Modal Example
+
+```svelte
+<script lang="ts">
+	let showModal = $state(false);
+</script>
+
+{#if showModal}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="edit-modal-title"
+		onkeydown={(e) => {
+			if (e.key === 'Escape') {
+				showModal = false;
+			}
+		}}
+	>
+		<div
+			class="rounded-container-token max-h-[90vh] w-full max-w-2xl overflow-y-auto bg-surface-50-950 p-6 shadow-xl"
+		>
+			<h2 id="edit-modal-title" class="mb-4 text-2xl font-bold">Edit Item</h2>
+
+			<form class="space-y-4">
+				<div>
+					<label for="name" class="mb-2 block text-sm font-medium">Name</label>
+					<input id="name" type="text" class="input w-full" />
+				</div>
+
+				<div class="flex justify-end gap-3">
+					<button
+						type="button"
+						class="btn preset-outlined-surface-500"
+						onclick={() => (showModal = false)}
+					>
+						Cancel
+					</button>
+					<button type="submit" class="btn preset-filled-primary-500"> Save </button>
+				</div>
+			</form>
+		</div>
+	</div>
+{/if}
+```
+
+### Accessibility Requirements
+
+Always include these accessibility features for modals:
+
+- **`role="dialog"`** - Identifies the element as a dialog
+- **`aria-modal="true"`** - Indicates modal behavior (background inert)
+- **`aria-labelledby="modal-title"`** - Links to modal heading for screen readers
+- **Escape key handler** - Close modal on Escape key press
+- **Unique ID on heading** - Match with `aria-labelledby` attribute
+
+### Important Notes
+
+- **Always use `bg-surface-50-950`** for modal backgrounds - this ensures proper light/dark mode support
+- **Never use `card` class alone** for modals - it lacks the background color
+- **Use `rounded-container-token`** instead of `rounded-container` for Skeleton modals
+- **Add `shadow-xl`** for visual depth and separation from backdrop
+- **Include accessibility attributes** - `role`, `aria-modal`, `aria-labelledby`, and escape key handler
+- Consider **click-outside-to-close** for better UX (add `onclick` to overlay div)
+- **Disable escape during submission** - Prevent closing modal while saving/deleting
 
 ## Authentication
 

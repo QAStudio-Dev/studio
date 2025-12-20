@@ -1,0 +1,64 @@
+import { Endpoint, z, error } from 'sveltekit-api';
+import { db } from '$lib/server/db';
+import { requireApiAuth } from '$lib/server/api-auth';
+import { requireProjectAccess } from '$lib/server/authorization';
+
+export const Param = z.object({
+	projectId: z.string().describe('Project ID'),
+	id: z.string().describe('Test run ID')
+});
+
+export const Output = z.object({
+	success: z.boolean().describe('Operation success status'),
+	message: z.string().describe('Success message')
+});
+
+export const Error = {
+	403: error(403, 'Access denied'),
+	404: error(404, 'Test run or project not found')
+};
+
+export const Modifier = (r: any) => {
+	r.tags = ['Projects'];
+	r.summary = 'Delete test run';
+	r.description =
+		'Delete a test run and all associated test results, attachments, and step results.';
+	return r;
+};
+
+/**
+ * DELETE /api/projects/[projectId]/runs/[id]
+ * Delete a test run and all associated data
+ */
+export default new Endpoint({ Param, Output, Error, Modifier }).handle(async (input, event) => {
+	const userId = await requireApiAuth(event);
+	const { projectId, id } = input;
+
+	// Verify project access using shared helper
+	await requireProjectAccess(userId, projectId);
+
+	// Verify test run exists and delete in a transaction to prevent TOCTOU race conditions
+	await db.$transaction(async (tx) => {
+		// Verify test run exists in this project
+		const testRun = await tx.testRun.findFirst({
+			where: {
+				id,
+				projectId
+			}
+		});
+
+		if (!testRun) {
+			throw error(404, 'Test run not found');
+		}
+
+		// Delete the test run (cascade will delete results, attachments, steps)
+		await tx.testRun.delete({
+			where: { id }
+		});
+	});
+
+	return {
+		success: true,
+		message: 'Test run deleted successfully'
+	};
+});

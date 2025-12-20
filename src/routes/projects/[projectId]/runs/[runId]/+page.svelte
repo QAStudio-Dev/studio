@@ -21,10 +21,12 @@
 		Download,
 		Sparkles,
 		TrendingUp,
-		Bug
+		Bug,
+		Edit2,
+		Trash2
 	} from 'lucide-svelte';
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
 	import ErrorDisplay from '$lib/components/ErrorDisplay.svelte';
 	import AttachmentViewer from '$lib/components/AttachmentViewer.svelte';
@@ -81,6 +83,18 @@
 	let jiraModalTestResultId = $state<string | undefined>(undefined);
 	let jiraModalSummary = $state('');
 	let jiraModalDescription = $state('');
+
+	// Edit/Delete state
+	let showEditModal = $state(false);
+	let showDeleteConfirm = $state(false);
+	let editForm = $state({
+		name: '',
+		description: '',
+		status: '',
+		milestoneId: '',
+		environmentId: ''
+	});
+	let isSubmitting = $state(false);
 
 	function openJiraModal(result: any) {
 		jiraModalTestCaseId = result.testCase.id;
@@ -232,7 +246,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 
 	// Calculate pass rate (excluding skipped tests - industry standard)
 	function getPassRate() {
-		const executedTests = stats.passed + stats.failed;
+		const executedTests = stats.passed + stats.failed + stats.blocked;
 		if (executedTests === 0) return 0;
 		return Math.round((stats.passed / executedTests) * 100);
 	}
@@ -408,6 +422,74 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 			loadingSummary = false;
 		}
 	}
+
+	// Open edit modal
+	function openEditModal() {
+		editForm = {
+			name: testRun.name,
+			description: testRun.description || '',
+			status: testRun.status,
+			milestoneId: testRun.milestoneId || '',
+			environmentId: testRun.environmentId || ''
+		};
+		showEditModal = true;
+	}
+
+	// Save test run changes
+	async function saveTestRun() {
+		isSubmitting = true;
+		try {
+			const res = await fetch(`/api/projects/${projectId}/runs/${testRun.id}`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					name: editForm.name,
+					description: editForm.description || null,
+					status: editForm.status,
+					milestoneId: editForm.milestoneId || null,
+					environmentId: editForm.environmentId || null
+				})
+			});
+
+			if (!res.ok) {
+				const error = await res.json();
+				throw new Error(error.message || 'Failed to update test run');
+			}
+
+			// Invalidate all data to refresh the page with SvelteKit
+			await invalidateAll();
+			showEditModal = false;
+		} catch (err: any) {
+			console.error(err);
+			alert(err.message || 'Failed to update test run');
+		} finally {
+			isSubmitting = false;
+		}
+	}
+
+	// Delete test run
+	async function deleteTestRun() {
+		isSubmitting = true;
+		try {
+			const res = await fetch(`/api/projects/${projectId}/runs/${testRun.id}`, {
+				method: 'DELETE'
+			});
+
+			if (!res.ok) {
+				const error = await res.json();
+				throw new Error(error.message || 'Failed to delete test run');
+			}
+
+			// Navigate back to test runs list
+			goto(`/projects/${projectId}/runs`);
+		} catch (err: any) {
+			console.error(err);
+			alert(err.message || 'Failed to delete test run');
+		} finally {
+			isSubmitting = false;
+			showDeleteConfirm = false;
+		}
+	}
 </script>
 
 <div class="container mx-auto max-w-7xl px-4 py-8">
@@ -440,15 +522,37 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 				{/if}
 			</div>
 
-			<!-- Pass Rate -->
-			{#if stats.total > 0}
-				<div class="ml-4 text-center">
-					<div class="mb-1 text-4xl font-bold text-primary-500">
-						{getPassRate()}%
-					</div>
-					<div class="text-surface-600-300">Pass Rate</div>
+			<div class="ml-4 flex flex-col items-end gap-3">
+				<!-- Actions -->
+				<div class="flex gap-2">
+					<button
+						class="btn preset-outlined-surface-500 btn-sm"
+						onclick={openEditModal}
+						title="Edit test run"
+					>
+						<Edit2 class="h-4 w-4" />
+						Edit
+					</button>
+					<button
+						class="btn preset-outlined-error-500 btn-sm"
+						onclick={() => (showDeleteConfirm = true)}
+						title="Delete test run"
+					>
+						<Trash2 class="h-4 w-4" />
+						Delete
+					</button>
 				</div>
-			{/if}
+
+				<!-- Pass Rate -->
+				{#if stats.total > 0}
+					<div class="text-center">
+						<div class="mb-1 text-4xl font-bold text-primary-500">
+							{getPassRate()}%
+						</div>
+						<div class="text-surface-600-300">Pass Rate</div>
+					</div>
+				{/if}
+			</div>
 		</div>
 
 		<!-- Metadata -->
@@ -1115,3 +1219,154 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 	prefillSummary={jiraModalSummary}
 	prefillDescription={jiraModalDescription}
 />
+
+<!-- Edit Test Run Modal -->
+{#if showEditModal}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="edit-modal-title"
+		onkeydown={(e) => {
+			if (e.key === 'Escape' && !isSubmitting) {
+				showEditModal = false;
+			}
+		}}
+	>
+		<div
+			class="rounded-container-token max-h-[90vh] w-full max-w-2xl overflow-y-auto bg-surface-50-950 p-6 shadow-xl"
+		>
+			<h2 id="edit-modal-title" class="mb-4 text-2xl font-bold">Edit Test Run</h2>
+
+			<form
+				onsubmit={(e) => {
+					e.preventDefault();
+					saveTestRun();
+				}}
+				class="space-y-4"
+			>
+				<!-- Name -->
+				<div>
+					<label for="edit-name" class="mb-2 block text-sm font-medium">
+						Name <span class="text-error-500">*</span>
+					</label>
+					<input
+						id="edit-name"
+						type="text"
+						bind:value={editForm.name}
+						required
+						class="input w-full"
+						placeholder="Enter test run name"
+					/>
+				</div>
+
+				<!-- Description -->
+				<div>
+					<label for="edit-description" class="mb-2 block text-sm font-medium">
+						Description
+					</label>
+					<textarea
+						id="edit-description"
+						bind:value={editForm.description}
+						rows="3"
+						class="textarea w-full"
+						placeholder="Enter test run description (optional)"
+					></textarea>
+				</div>
+
+				<!-- Status -->
+				<div>
+					<label for="edit-status" class="mb-2 block text-sm font-medium">
+						Status <span class="text-error-500">*</span>
+					</label>
+					<select
+						id="edit-status"
+						bind:value={editForm.status}
+						required
+						class="select w-full"
+					>
+						<option value="PLANNED">Planned</option>
+						<option value="IN_PROGRESS">In Progress</option>
+						<option value="COMPLETED">Completed</option>
+						<option value="ABORTED">Aborted</option>
+					</select>
+				</div>
+
+				<!-- Actions -->
+				<div class="flex justify-end gap-3">
+					<button
+						type="button"
+						class="btn preset-outlined-surface-500"
+						onclick={() => (showEditModal = false)}
+						disabled={isSubmitting}
+					>
+						Cancel
+					</button>
+					<button
+						type="submit"
+						class="btn preset-filled-primary-500"
+						disabled={isSubmitting}
+					>
+						{#if isSubmitting}
+							<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+							Saving...
+						{:else}
+							Save Changes
+						{/if}
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+{/if}
+
+<!-- Delete Confirmation Modal -->
+{#if showDeleteConfirm}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="delete-modal-title"
+		onkeydown={(e) => {
+			if (e.key === 'Escape' && !isSubmitting) {
+				showDeleteConfirm = false;
+			}
+		}}
+	>
+		<div class="rounded-container-token w-full max-w-md bg-surface-50-950 p-6 shadow-xl">
+			<h2 id="delete-modal-title" class="mb-4 text-2xl font-bold text-error-500">
+				Delete Test Run
+			</h2>
+			<p class="text-surface-600-300 mb-6">
+				Are you sure you want to delete <strong>{testRun.name}</strong>? This will
+				permanently delete all test results, attachments, and associated data. This action
+				cannot be undone.
+			</p>
+
+			<div class="flex justify-end gap-3">
+				<button
+					type="button"
+					class="btn preset-outlined-surface-500"
+					onclick={() => (showDeleteConfirm = false)}
+					disabled={isSubmitting}
+				>
+					Cancel
+				</button>
+				<button
+					type="button"
+					class="btn preset-filled-error-500"
+					onclick={deleteTestRun}
+					disabled={isSubmitting}
+				>
+					{#if isSubmitting}
+						<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+						Deleting...
+					{:else}
+						<Trash2 class="mr-2 h-4 w-4" />
+						Delete Test Run
+					{/if}
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}

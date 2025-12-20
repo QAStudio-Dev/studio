@@ -20,7 +20,7 @@ export const GET: RequestHandler = async (event) => {
 	}
 
 	// Run all counts in parallel
-	const [totalProjects, totalTestCases, totalTestRuns, passedTests, totalTests] =
+	const [totalProjects, totalTestCases, totalTestRuns, passedTests, failedTests, blockedTests] =
 		await Promise.all([
 			db.project.count({
 				where: user.teamId ? { teamId: user.teamId } : { createdBy: userId, teamId: null }
@@ -44,13 +44,26 @@ export const GET: RequestHandler = async (event) => {
 				}
 			}),
 			db.testResult.count({
-				where: user.teamId
-					? { testRun: { project: { teamId: user.teamId } } }
-					: { executedBy: userId, testRun: { project: { teamId: null } } }
+				where: {
+					status: 'FAILED',
+					...(user.teamId
+						? { testRun: { project: { teamId: user.teamId } } }
+						: { executedBy: userId, testRun: { project: { teamId: null } } })
+				}
+			}),
+			db.testResult.count({
+				where: {
+					status: 'BLOCKED',
+					...(user.teamId
+						? { testRun: { project: { teamId: user.teamId } } }
+						: { executedBy: userId, testRun: { project: { teamId: null } } })
+				}
 			})
 		]);
 
-	const passRate = totalTests > 0 ? Math.round((passedTests / totalTests) * 100) : 0;
+	// Calculate pass rate excluding skipped tests (industry standard)
+	const executedTests = passedTests + failedTests + blockedTests;
+	const passRate = executedTests > 0 ? Math.round((passedTests / executedTests) * 100) : 0;
 
 	return json({
 		totalProjects,
