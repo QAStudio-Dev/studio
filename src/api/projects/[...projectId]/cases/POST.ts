@@ -10,8 +10,8 @@ export const Param = z.object({
 });
 
 export const Input = z.object({
-	title: z.string().trim().min(1).describe('Test case title'),
-	description: z.string().trim().optional().describe('Detailed test case description'),
+	title: z.string().trim().min(1).max(500).describe('Test case title'),
+	description: z.string().trim().max(5000).optional().describe('Detailed test case description'),
 	preconditions: z
 		.string()
 		.trim()

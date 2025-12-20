@@ -10,8 +10,8 @@ export const Param = z.object({
 });
 
 export const Input = z.object({
-	name: z.string().min(1).describe('Suite name'),
-	description: z.string().optional().describe('Optional suite description'),
+	name: z.string().trim().min(1).max(255).describe('Suite name'),
+	description: z.string().trim().max(1000).optional().describe('Optional suite description'),
 	parentId: z.string().nullish().describe('Parent suite ID for nesting')
 });
 
