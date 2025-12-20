@@ -12,7 +12,7 @@ export const Param = z.object({
 export const Input = z.object({
 	name: z.string().min(1).describe('Suite name'),
 	description: z.string().optional().describe('Optional suite description'),
-	parentId: z.string().nullable().optional().describe('Parent suite ID for nesting')
+	parentId: z.string().nullish().describe('Parent suite ID for nesting')
 });
 
 export const Output = z.object({
