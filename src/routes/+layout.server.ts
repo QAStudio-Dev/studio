@@ -14,6 +14,9 @@ export const load: LayoutServerLoad = async (event) => {
 	const csrfToken = getCsrfToken(event);
 
 	// Define base meta tags for SSR
+	// Use dynamic URLs based on current origin (works in dev/staging/prod)
+	const ogImageUrl = new URL('/og_image.png', url.origin).href;
+
 	const baseMetaTags = defineBaseMetaTags({
 		title: 'QA Studio',
 		titleTemplate: '%s | QA Studio',
@@ -30,11 +33,11 @@ export const load: LayoutServerLoad = async (event) => {
 			siteName: 'QA Studio',
 			images: [
 				{
-					url: 'https://qastudio.dev/og_image.png',
+					url: ogImageUrl,
 					alt: 'QA Studio - Modern Test Management',
 					width: 1200,
 					height: 630,
-					secureUrl: 'https://qastudio.dev/og_image.png',
+					secureUrl: ogImageUrl,
 					type: 'image/png'
 				}
 			]
@@ -45,7 +48,7 @@ export const load: LayoutServerLoad = async (event) => {
 			title: 'QA Studio - Modern Test Management Platform',
 			description:
 				'Modern test management platform built by QA engineers. Open source and API-first.',
-			image: 'https://qastudio.dev/og_image.png',
+			image: ogImageUrl,
 			imageAlt: 'QA Studio - Modern Test Management'
 		},
 		additionalMetaTags: [

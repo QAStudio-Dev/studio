@@ -2,6 +2,7 @@ import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { sanitizeForMeta } from '$lib/utils/sanitize-meta';
+import { hasProjectAccess } from '$lib/server/access-control';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	const { userId } = locals.auth() || {};
@@ -57,15 +58,19 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
 	// Get user with team info
 	const user = await db.user.findUnique({
-		where: { id: userId }
+		where: { id: userId },
+		select: {
+			id: true,
+			teamId: true
+		}
 	});
 
-	// Check access
-	const hasAccess =
-		testRun.project.createdBy === userId ||
-		(testRun.project.teamId && user?.teamId === testRun.project.teamId);
+	if (!user) {
+		throw error(401, { message: 'User not found' });
+	}
 
-	if (!hasAccess) {
+	// Check access: user must be creator or team member
+	if (!hasProjectAccess(testRun.project, user, userId)) {
 		throw error(403, { message: 'You do not have access to this test run' });
 	}
 

@@ -2,6 +2,7 @@ import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { sanitizeForMeta } from '$lib/utils/sanitize-meta';
+import { hasProjectAccess } from '$lib/server/access-control';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const { userId } = locals.auth() || {};
@@ -48,13 +49,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		throw error(401, { message: 'User not found' });
 	}
 
-	// Check access: user must be creator, team member, or project is in their team
-	const hasAccess =
-		project.createdBy === userId ||
-		(project.teamId && user.teamId === project.teamId) ||
-		(!project.teamId && project.createdBy === userId);
-
-	if (!hasAccess) {
+	// Check access: user must be creator or team member
+	if (!hasProjectAccess(project, user, userId)) {
 		throw error(403, {
 			message: 'You do not have access to this project'
 		});
