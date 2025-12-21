@@ -115,6 +115,7 @@ export const Output = z.object({
 						createdAt: z.coerce.string()
 					})
 				)
+				.optional()
 				.describe('Test result attachments'),
 			steps: z
 				.array(
@@ -134,7 +135,14 @@ export const Output = z.object({
 						duration: z.number().nullable(),
 						error: z.string().nullable(),
 						stackTrace: z.string().nullable(),
-						location: z.any().nullable()
+						location: z
+							.object({
+								file: z.string(),
+								line: z.number(),
+								column: z.number()
+							})
+							.nullable()
+							.describe('Source code location')
 					})
 				)
 				.optional()
