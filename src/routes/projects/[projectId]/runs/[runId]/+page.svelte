@@ -951,13 +951,6 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 															<Bug class="h-4 w-4" />
 															Create Jira Issue
 														</button>
-														{#if result.attachments && result.attachments.length > 0}
-															<div class="flex-1">
-																<AttachmentViewer
-																	attachments={result.attachments}
-																/>
-															</div>
-														{/if}
 														<a
 															href="/projects/{projectId}/cases/{result
 																.testCase.id}"
@@ -1076,7 +1069,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 													compact={false}
 												/>
 
-												<!-- Test Steps -->
+												<!-- Test Steps (shown for all tests) -->
 												{#if result.steps && result.steps.length > 0}
 													<TestStepsViewer
 														steps={result.steps}
@@ -1084,6 +1077,18 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 															result.errorMessage
 														)}
 													/>
+												{/if}
+
+												<!-- Attachments (shown for all tests) -->
+												{#if result.attachments && result.attachments.length > 0}
+													<div>
+														<h4 class="mb-2 text-sm font-semibold">
+															Attachments
+														</h4>
+														<AttachmentViewer
+															attachments={result.attachments}
+														/>
+													</div>
 												{/if}
 
 												<!-- Comment -->
@@ -1112,18 +1117,11 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 
 												<!-- View Test Case Button (for non-failed tests) -->
 												{#if result.status !== 'FAILED'}
-													<div class="flex gap-2">
-														{#if result.attachments && result.attachments.length > 0}
-															<div class="flex-1">
-																<AttachmentViewer
-																	attachments={result.attachments}
-																/>
-															</div>
-														{/if}
+													<div>
 														<a
 															href="/projects/{projectId}/cases/{result
 																.testCase.id}"
-															class="btn flex-1 preset-tonal-tertiary"
+															class="btn w-full preset-tonal-tertiary"
 														>
 															<FileText class="h-4 w-4" />
 															View Test Case
