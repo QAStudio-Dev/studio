@@ -65,6 +65,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 
 	return {
-		user
+		user,
+		pageMetaTags: {
+			title: 'Settings',
+			description:
+				'Configure your account settings, manage API keys for automation, invite and organize team members, and set up integrations with external tools like Jira and Twilio.'
+		}
 	};
 };

@@ -1,9 +1,12 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
+import { sanitizeForMeta } from '$lib/utils/sanitize-meta';
+import { hasProjectAccess } from '$lib/server/access-control';
+import type { PageMetaTags } from '$lib/types/meta';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
-	const { userId } = locals.auth() || {};
+	const userId = locals.userId;
 
 	if (!userId) {
 		throw redirect(302, '/login');
@@ -52,13 +55,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		throw error(401, { message: 'User not found' });
 	}
 
-	// Check access: user must be creator, team member, or project is in their team
-	const hasAccess =
-		project.createdBy === userId ||
-		(project.teamId && user.teamId === project.teamId) ||
-		(!project.teamId && project.createdBy === userId);
-
-	if (!hasAccess) {
+	// Check access: user must be creator or team member
+	if (!hasProjectAccess(project, user)) {
 		throw error(403, {
 			message: 'You do not have access to this project'
 		});
@@ -116,6 +114,11 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		totalSuites: testSuites.length
 	};
 
+	const pageMetaTags: PageMetaTags = {
+		title: `Test Cases - ${sanitizeForMeta(project.name)}`,
+		description: `Manage test cases for ${sanitizeForMeta(project.name)} (${sanitizeForMeta(project.key)}). Define steps, set priorities, and track coverage.`
+	};
+
 	return {
 		project: {
 			...project,
@@ -123,6 +126,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			testCases: testCasesWithoutSuite
 		},
 		stats,
-		currentUser: user
+		currentUser: user,
+		pageMetaTags
 	};
 };

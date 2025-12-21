@@ -8,5 +8,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 		throw redirect(302, '/login');
 	}
 
-	return {};
+	return {
+		pageMetaTags: {
+			title: 'Dashboard',
+			description:
+				'Your personalized test management dashboard. Monitor project health, track test execution metrics, view recent activity, and analyze quality trends across all your projects.'
+		}
+	};
 };

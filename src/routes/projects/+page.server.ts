@@ -57,6 +57,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	return {
 		user,
-		projects
+		projects,
+		pageMetaTags: {
+			title: 'Projects',
+			description:
+				'Browse and manage all your test management projects. View project statistics, test case counts, test run summaries, and team collaboration details.'
+		}
 	};
 };

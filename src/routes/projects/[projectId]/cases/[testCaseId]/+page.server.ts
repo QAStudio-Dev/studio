@@ -1,9 +1,11 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
+import { sanitizeForMeta } from '$lib/utils/sanitize-meta';
+import type { PageMetaTags } from '$lib/types/meta';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
-	const { userId } = locals.auth() || {};
+	const userId = locals.userId;
 
 	if (!userId) {
 		throw redirect(302, '/login');
@@ -104,7 +106,15 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		throw error(403, { message: 'Access denied' });
 	}
 
+	const pageMetaTags: PageMetaTags = {
+		title: `${sanitizeForMeta(testCase.title)} - Test Case`,
+		description:
+			sanitizeForMeta(testCase.description) ||
+			`Test case ${sanitizeForMeta(testCase.title)} in ${sanitizeForMeta(testCase.project.name)}. View steps, history, and results.`
+	};
+
 	return {
-		testCase
+		testCase,
+		pageMetaTags
 	};
 };
