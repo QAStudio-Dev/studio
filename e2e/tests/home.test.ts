@@ -10,7 +10,9 @@ test.describe('Home Page', () => {
 	});
 
 	test('should load the home page successfully', async () => {
-		await expect(homePage.page).toHaveTitle(/QA Studio/);
+		await expect(homePage.page).toHaveTitle(
+			/Open Source Test Management & Automated Test Reporting Platform/
+		);
 		await homePage.assertUrl('/');
 	});
 
