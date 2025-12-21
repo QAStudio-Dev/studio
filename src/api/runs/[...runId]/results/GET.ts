@@ -103,6 +103,42 @@ export const Output = z.object({
 				})
 				.optional()
 				.describe('User who executed the test'),
+			attachments: z
+				.array(
+					z.object({
+						id: z.string(),
+						filename: z.string(),
+						originalName: z.string(),
+						mimeType: z.string(),
+						url: z.string(),
+						size: z.number(),
+						createdAt: z.coerce.string()
+					})
+				)
+				.describe('Test result attachments'),
+			steps: z
+				.array(
+					z.object({
+						id: z.string(),
+						stepNumber: z.number(),
+						title: z.string(),
+						category: z.string().nullable(),
+						status: z.enum([
+							'PASSED',
+							'FAILED',
+							'BLOCKED',
+							'SKIPPED',
+							'RETEST',
+							'UNTESTED'
+						]),
+						duration: z.number().nullable(),
+						error: z.string().nullable(),
+						stackTrace: z.string().nullable(),
+						location: z.any().nullable()
+					})
+				)
+				.optional()
+				.describe('Test step results'),
 			_count: z
 				.object({
 					attachments: z.number(),
@@ -238,6 +274,36 @@ export default new Endpoint({ Param, Query, Output, Modifier }).handle(
 						firstName: true,
 						lastName: true,
 						email: true
+					}
+				},
+				attachments: {
+					select: {
+						id: true,
+						filename: true,
+						originalName: true,
+						mimeType: true,
+						url: true,
+						size: true,
+						createdAt: true
+					},
+					orderBy: {
+						createdAt: 'asc'
+					}
+				},
+				steps: {
+					select: {
+						id: true,
+						stepNumber: true,
+						title: true,
+						category: true,
+						status: true,
+						duration: true,
+						error: true,
+						stackTrace: true,
+						location: true
+					},
+					orderBy: {
+						stepNumber: 'asc'
 					}
 				},
 				_count: {
