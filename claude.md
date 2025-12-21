@@ -934,6 +934,60 @@ export const POST: RequestHandler = async (event) => {
 };
 ```
 
+### Authentication Patterns in Page Server Files
+
+**IMPORTANT**: Always use `locals.userId` for authentication in page server load functions.
+
+The authentication middleware ([src/hooks.server.ts](src/hooks.server.ts)) sets both `locals.userId` and `locals.auth()` for backward compatibility, but **`locals.userId` is the preferred pattern**.
+
+**✅ Correct Pattern:**
+
+```typescript
+import type { PageServerLoad } from './$types';
+import { redirect } from '@sveltejs/kit';
+
+export const load: PageServerLoad = async ({ locals, params }) => {
+	const userId = locals.userId;
+
+	if (!userId) {
+		throw redirect(302, '/login');
+	}
+
+	// Use userId for queries
+	const user = await db.user.findUnique({
+		where: { id: userId }
+	});
+
+	return { user };
+};
+```
+
+**❌ Deprecated Pattern (backward compatibility only):**
+
+```typescript
+// Don't use this - kept only for backward compatibility with old Clerk code
+const { userId } = locals.auth() || {};
+```
+
+**Why `locals.userId` is preferred:**
+
+1. **Simpler and more direct** - No function call needed
+2. **Canonical pattern** - Used in root layout ([src/routes/+layout.server.ts](src/routes/+layout.server.ts))
+3. **Better performance** - Direct property access vs function call
+4. **Clearer intent** - Explicitly shows you're accessing the authenticated user ID
+
+**Consistency across the codebase:**
+
+All page server files should use this pattern:
+
+- [src/routes/+layout.server.ts](src/routes/+layout.server.ts)
+- [src/routes/projects/[projectId]/+page.server.ts](src/routes/projects/[projectId]/+page.server.ts)
+- [src/routes/projects/[projectId]/cases/+page.server.ts](src/routes/projects/[projectId]/cases/+page.server.ts)
+- [src/routes/projects/[projectId]/runs/+page.server.ts](src/routes/projects/[projectId]/runs/+page.server.ts)
+- And all other protected pages
+
+**Note:** The `locals.auth()` function exists only to maintain backward compatibility with code that previously used Clerk. New code and refactored code should always use `locals.userId`.
+
 ### User Tracking
 
 The Prisma schema tracks user actions:
