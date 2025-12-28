@@ -144,7 +144,8 @@ test.describe('Test Cases Page', () => {
 			await testCasesPage.assertVisible(testCasesPage.newTestCaseTitleInput);
 		});
 
-		test('should create a new test case successfully', async ({ page }) => {
+		// TODO: create new project before running this test
+		test.skip('should create a new test case successfully', async ({ page }) => {
 			const testCaseTitle = `E2E Test Case ${Date.now()}`;
 
 			await testCasesPage.createTestCase(testCaseTitle);
@@ -159,7 +160,8 @@ test.describe('Test Cases Page', () => {
 			expect(createdTestCase).toBeDefined();
 		});
 
-		test('should create multiple test cases in quick succession', async ({ page }) => {
+		// TODO: create new project before running this test
+		test.skip('should create multiple test cases in quick succession', async ({ page }) => {
 			const baseName = `E2E Batch ${Date.now()}`;
 			const testCases = [`${baseName} - TC1`, `${baseName} - TC2`, `${baseName} - TC3`];
 
@@ -326,7 +328,8 @@ test.describe('Test Cases Page', () => {
 	});
 
 	test.describe('Keyboard Navigation', () => {
-		test('should support keyboard navigation in test case creation', async ({ page }) => {
+		// TODO: create new project before running this test
+		test.skip('should support keyboard navigation in test case creation', async ({ page }) => {
 			const testCaseTitle = `E2E Keyboard Test ${Date.now()}`;
 
 			await testCasesPage.clickNewTestCase();
