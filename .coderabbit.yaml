@@ -3,7 +3,7 @@
 # https://docs.coderabbit.ai/reference/configuration
 
 language: en-US
-tone_instructions: 'Be concise and constructive. You are an expert code reviewer in TypeScript, Svelte 5, SvelteKit, Prisma, and Playwright. Focus on security, performance, and maintainability issues. This is a test management SaaS platform - API security and data integrity are critical.'
+tone_instructions: 'Be concise and constructive. Expert in TypeScript, Svelte 5, SvelteKit, Prisma, Playwright. Focus on security, performance, and maintainability. Test management SaaS - API security and data integrity are critical.'
 early_access: false
 
 reviews:
