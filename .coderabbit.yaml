@@ -1,0 +1,136 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# CodeRabbit Configuration
+# https://docs.coderabbit.ai/reference/configuration
+
+language: en-US
+tone_instructions: 'Be concise and constructive. Expert in TypeScript, Svelte 5, SvelteKit, Prisma, Playwright. Focus on security, performance, and maintainability. Test management SaaS - API security and data integrity are critical.'
+early_access: false
+
+reviews:
+  profile: assertive
+  request_changes_workflow: false
+  high_level_summary: true
+  high_level_summary_placeholder: '@coderabbitai summary'
+  poem: true
+  review_status: true
+  commit_status: true
+  collapse_walkthrough: false
+
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    drafts: false
+    base_branches:
+      - main
+    ignore_title_keywords:
+      - WIP
+      - '[WIP]'
+      - DO NOT MERGE
+
+  # Path-specific review instructions
+  path_instructions:
+    - path: 'src/routes/api/**/*.ts'
+      instructions: |
+        SvelteKit API route review checklist:
+        - Authentication check (requireAuth from $lib/server/auth)
+        - Team membership validation (requireTeamMember) for team-scoped resources
+        - Input validation (JSON parsing, type checking)
+        - Proper error handling with try-catch and appropriate HTTP status codes
+        - Use locals.userId for authenticated user ID (not locals.auth())
+        - Resource access should be scoped to userId or teamId
+
+    - path: 'src/api/**/*.ts'
+      instructions: |
+        Public API route using sveltekit-api. Review checklist:
+        - Input/Output/Query schemas defined with Zod
+        - Use .describe() on all Zod fields for OpenAPI documentation
+        - Use .nullish() for optional foreign key fields (not just .optional())
+        - Authentication via requireApiAuth from $lib/server/api-auth
+        - Modifier function includes tags, summary, and description for OpenAPI
+        - Error object defines all possible HTTP error responses
+        - Route directory structure MUST match between src/api and src/routes/api (especially parameter naming like [...projectId] vs [projectId])
+
+    - path: 'src/lib/server/**/*.ts'
+      instructions: |
+        Server-only code. Review checklist:
+        - No client-side imports ($app/stores, browser-only APIs)
+        - Use db from $lib/server/db for Prisma queries
+        - Use Prisma from $prisma/client for types (NOT @prisma/client)
+        - Proper error handling and logging
+        - Sensitive operations should use encryption from $lib/server/encryption
+
+    - path: '**/*.svelte'
+      instructions: |
+        Svelte 5 component review checklist:
+        - Use runes: $state, $derived, $effect, $props (NOT let declarations for reactive state)
+        - Use Skeleton UI components from @skeletonlabs/skeleton-svelte
+        - Button classes: btn preset-filled-primary-500, preset-outlined-surface-500, etc.
+        - Modal backgrounds must use bg-surface-50-950 (card class alone is insufficient)
+        - Modals need accessibility: role="dialog", aria-modal="true", aria-labelledby, Escape key handler
+        - Check for accessibility (ARIA labels, semantic HTML)
+        - Mobile responsiveness (44px touch targets, proper font sizes)
+
+    - path: 'prisma/schema.prisma'
+      instructions: |
+        Database schema review checklist:
+        - Proper indexes on frequently queried fields
+        - Appropriate cascade rules for relations
+        - Multi-tenant data should be scoped via teamId or userId
+        - Use appropriate field types (DateTime, String, etc.)
+        - Consider adding @@index for common query patterns
+
+    - path: 'e2e/**/*.ts'
+      instructions: |
+        Playwright E2E test review:
+        - Tests should use page object pattern from e2e/pages/
+        - Proper test isolation (each test should be independent)
+        - Use meaningful test descriptions
+        - Avoid hardcoded waits (use proper Playwright locators/assertions)
+        - Check for proper authentication setup using helpers from e2e/helpers/
+
+    - path: 'scripts/**/*.ts'
+      instructions: |
+        Standalone script review checklist:
+        - Must NOT use SvelteKit path aliases ($lib, $app, $env, $prisma)
+        - Use dotenv for environment variables: import 'dotenv/config'
+        - Initialize Prisma with PG adapter: new PrismaClient({ adapter })
+        - Always cleanup connections: db.$disconnect() and pool.end()
+        - Support --dry-run flag for destructive operations
+
+    - path: 'src/__tests__/**/*.ts'
+      instructions: |
+        Unit test review with Vitest:
+        - Avoid 'as any' type assertions - use proper Prisma types with satisfies
+        - Use vi.mocked() for type-safe mocks
+        - Mock with full object shapes that match actual types
+        - Test error cases, not just happy paths
+
+  # Exclude generated/config files from detailed review
+  path_filters:
+    - '!**/*.lock'
+    - '!**/package-lock.json'
+    - '!prisma/migrations/**'
+    - '!src/generated/**'
+    - '!src/lib/paraglide/**'
+    - '!coverage/**'
+    - '!test-results/**'
+    - '!static/admin/**'
+
+  tools:
+    eslint:
+      enabled: true
+    biome:
+      enabled: false
+    github-checks:
+      enabled: true
+    # Security scanning
+    gitleaks:
+      enabled: true
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  opt_out: false
+  learnings:
+    scope: auto
