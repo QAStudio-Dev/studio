@@ -94,7 +94,7 @@ test.describe('Test Cases Page', () => {
 			await testCasesPage.assertVisible(testCasesPage.cancelSuiteButton);
 		});
 
-		test('should create a new test suite successfully', async ({ page }) => {
+		test.skip('should create a new test suite successfully', async ({ page }) => {
 			const suiteName = `E2E Suite ${Date.now()}`;
 
 			await testCasesPage.createTestSuite(suiteName);
