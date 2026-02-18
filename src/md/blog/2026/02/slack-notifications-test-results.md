@@ -38,12 +38,12 @@ Testing teams face a visibility problem. You run hundreds of tests across multip
 
 Once connected, QA Studio automatically sends notifications for:
 
-| Event | When It Fires | What You See |
-|-------|---------------|--------------|
-| **Test Run Completed** | When any test run finishes | Project name, pass rate, total/passed/failed counts |
-| **Test Run Failed** | When a run has one or more failures | Project name, run name, failure count |
-| **Milestone Due** | When a milestone is approaching its due date | Milestone name, due date |
-| **Project Created** | When a new project is added (optional) | Project name and key |
+| Event                  | When It Fires                                | What You See                                        |
+| ---------------------- | -------------------------------------------- | --------------------------------------------------- |
+| **Test Run Completed** | When any test run finishes                   | Project name, pass rate, total/passed/failed counts |
+| **Test Run Failed**    | When a run has one or more failures          | Project name, run name, failure count               |
+| **Milestone Due**      | When a milestone is approaching its due date | Milestone name, due date                            |
+| **Project Created**    | When a new project is added (optional)       | Project name and key                                |
 
 Each notification includes a "View Details" button that links directly to the relevant page in QA Studio.
 
@@ -106,16 +106,19 @@ This prevents the warning icon when users click "View Details" in notifications:
 Where should notifications go? It depends on your team structure:
 
 **Option A: Dedicated QA channel** (`#qa-team`, `#testing`)
+
 - Best for: QA-focused teams who want all test-related updates in one place
 - Pros: Clean separation, easy to find
 - Cons: Developers might miss failures if they don't watch the channel
 
 **Option B: Release/Deploy channel** (`#releases`, `#deployments`)
+
 - Best for: Teams that tie test results to deployment decisions
 - Pros: Right context for "can we ship?" discussions
 - Cons: Can get noisy if you run many test suites
 
 **Option C: Project-specific channels** (`#project-alpha`, `#mobile-app`)
+
 - Best for: Large orgs with separate teams per product
 - Requires: Multiple Slack integrations (one per channel) or routing logic
 
