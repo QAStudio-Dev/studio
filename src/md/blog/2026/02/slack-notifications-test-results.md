@@ -68,7 +68,6 @@ Each notification includes a "View Details" button that links directly to the re
 In your app settings, go to **OAuth & Permissions** and add these Bot Token Scopes:
 
 - `incoming-webhook` - Post messages to channels
-- `chat:write` - Send messages as the app
 - `channels:read` - View basic channel info
 - `groups:read` - View private channel info
 
@@ -128,7 +127,7 @@ Where should notifications go? It depends on your team structure:
 
 When a test run completes, your Slack channel will show something like:
 
-```
+```text
 ✅ Test Run Completed
 Project: E-Commerce Platform
 Run: Sprint 45 Regression
@@ -139,7 +138,7 @@ Duration: 12m 34s
 
 When tests fail:
 
-```
+```text
 ❌ Test Run Failed
 Project: E-Commerce Platform
 Run: Sprint 45 Regression
@@ -173,7 +172,7 @@ The redirect URI in your Slack app must match **exactly**—including protocol (
 ### Not receiving notifications
 
 1. Check that the integration shows **ACTIVE** in Settings → Integrations
-2. Verify the Slack app has permission to post in the selected channel (you may need to invite the app: `/invite @QA Studio`)
+2. Verify the Slack app has permission to post in the selected channel (you may need to invite the app using `/invite` and selecting your QA Studio app from the autocomplete picker)
 3. Ensure test runs are associated with a team project (personal projects don't trigger team notifications)
 
 ### Warning icon when clicking "View Details"
