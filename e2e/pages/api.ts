@@ -230,10 +230,7 @@ export class ApiClient {
 	/**
 	 * List test suites for a project
 	 */
-	async listSuites(
-		projectId: string,
-		params?: { parentId?: string }
-	): Promise<APIResponse> {
+	async listSuites(projectId: string, params?: { parentId?: string }): Promise<APIResponse> {
 		const searchParams = new URLSearchParams();
 		if (params?.parentId) {
 			searchParams.set('parentId', params.parentId);

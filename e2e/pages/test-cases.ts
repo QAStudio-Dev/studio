@@ -201,9 +201,12 @@ export class TestCasesPage extends BasePage {
 	async waitForTestCasePersisted(title: string, timeout = 20000) {
 		await this.waitForTestCase(title);
 
-		const testCaseRow = this.page.locator('[data-testcase-id]').filter({
-			has: this.page.locator('[data-test="test-case-button"]').filter({ hasText: title })
-		}).first();
+		const testCaseRow = this.page
+			.locator('[data-testcase-id]')
+			.filter({
+				has: this.page.locator('[data-test="test-case-button"]').filter({ hasText: title })
+			})
+			.first();
 
 		await expect
 			.poll(
