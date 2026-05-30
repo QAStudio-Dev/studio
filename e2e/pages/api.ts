@@ -225,6 +225,37 @@ export class ApiClient {
 		);
 	}
 
+	// ==================== TEST SUITES ====================
+
+	/**
+	 * List test suites for a project
+	 */
+	async listSuites(projectId: string, params?: { parentId?: string }): Promise<APIResponse> {
+		const searchParams = new URLSearchParams();
+		if (params?.parentId) {
+			searchParams.set('parentId', params.parentId);
+		}
+
+		const url = `${this.baseURL}/api/projects/${projectId}/suites${
+			searchParams.toString() ? '?' + searchParams.toString() : ''
+		}`;
+		return await this.request.get(url, {
+			headers: this.getHeaders()
+		});
+	}
+
+	/**
+	 * Delete a test suite
+	 */
+	async deleteSuite(projectId: string, suiteId: string): Promise<APIResponse> {
+		return await this.request.delete(
+			`${this.baseURL}/api/projects/${projectId}/suites/${suiteId}`,
+			{
+				headers: this.getHeaders()
+			}
+		);
+	}
+
 	// ==================== TEST RUNS ====================
 
 	/**
