@@ -3,12 +3,19 @@ import devtoolsJson from 'vite-plugin-devtools-json';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vitest/config';
 import { sveltekit } from '@sveltejs/kit/vite';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 export default defineConfig({
 	plugins: [
 		tailwindcss(),
 		sveltekit(),
 		devtoolsJson(),
+		process.env.ANALYZE === 'true' &&
+			visualizer({
+				filename: 'build-stats.html',
+				gzipSize: true,
+				open: false
+			}),
 		paraglideVitePlugin({
 			project: './project.inlang',
 			outdir: './src/lib/paraglide'
@@ -22,8 +29,25 @@ export default defineConfig({
 		port: 3000,
 		host: true
 	},
-	ssr: {
-		noExternal: ['svelte-clerk']
+	build: {
+		rollupOptions: {
+			output: {
+				manualChunks(id) {
+					if (id.includes('node_modules/lucide-svelte')) {
+						return 'lucide';
+					}
+					if (id.includes('node_modules/@skeletonlabs')) {
+						return 'skeleton';
+					}
+					if (id.includes('node_modules/marked')) {
+						return 'marked';
+					}
+					if (id.includes('node_modules/html5-qrcode')) {
+						return 'html5-qrcode';
+					}
+				}
+			}
+		}
 	},
 	test: {
 		expect: { requireAssertions: true },

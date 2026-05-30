@@ -1,7 +1,7 @@
 // src/routes/+layout.server.ts
 import type { LayoutServerLoad } from './$types';
-import { getUser } from '$lib/server/users';
-import { db } from '$lib/server/db';
+import { getUserForLayout } from '$lib/server/users';
+import { getAccessibleProjectsNav } from '$lib/server/projects';
 import { getCsrfToken } from '$lib/server/sessions';
 import { defineBaseMetaTags } from 'svelte-meta-tags';
 
@@ -77,7 +77,11 @@ export const load: LayoutServerLoad = async (event) => {
 	let projects: Array<{ id: string; name: string; key: string }> = [];
 
 	if (userId) {
-		const dbUser = await getUser(userId);
+		const [dbUser, navProjects] = await Promise.all([
+			getUserForLayout(userId),
+			getAccessibleProjectsNav(userId)
+		]);
+
 		if (dbUser) {
 			user = {
 				id: dbUser.id,
@@ -88,26 +92,7 @@ export const load: LayoutServerLoad = async (event) => {
 				role: dbUser.role,
 				teamId: dbUser.teamId
 			};
-
-			// Fetch user's projects
-			// Only fetch projects if user has a team
-			if (dbUser.teamId) {
-				const userProjects = await db.project.findMany({
-					where: {
-						teamId: dbUser.teamId
-					},
-					select: {
-						id: true,
-						name: true,
-						key: true
-					},
-					orderBy: {
-						createdAt: 'desc'
-					}
-				});
-
-				projects = userProjects;
-			}
+			projects = navProjects;
 		}
 	}
 

@@ -18,10 +18,30 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	// 1. Permission changes are rare
 	// 2. The authorization check (lines 51-59) validates access based on fetched data
 	// 3. The risk window is milliseconds
+	const testCaseListSelect = {
+		id: true,
+		title: true,
+		priority: true,
+		type: true,
+		automationStatus: true,
+		suiteId: true,
+		order: true,
+		projectId: true,
+		description: true,
+		preconditions: true,
+		expectedResult: true
+	} as const;
+
 	const [project, user] = await Promise.all([
 		db.project.findUnique({
 			where: { id: params.projectId },
-			include: {
+			select: {
+				id: true,
+				name: true,
+				key: true,
+				description: true,
+				createdBy: true,
+				teamId: true,
 				creator: {
 					select: {
 						id: true,
@@ -29,19 +49,12 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 						firstName: true,
 						lastName: true
 					}
-				},
-				team: {
-					include: {
-						members: true
-					}
 				}
 			}
 		}),
 		db.user.findUnique({
 			where: { id: userId },
-			include: {
-				team: true
-			}
+			select: { id: true, teamId: true }
 		})
 	]);
 
@@ -67,12 +80,20 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		// Fetch test suites without nested test cases to avoid N+1
 		db.testSuite.findMany({
 			where: { projectId: project.id },
-			orderBy: { order: 'asc' }
+			orderBy: { order: 'asc' },
+			select: {
+				id: true,
+				name: true,
+				description: true,
+				order: true,
+				projectId: true,
+				parentId: true
+			}
 		}),
-		// Fetch ALL test cases in a single query (includes both suite and non-suite cases)
 		db.testCase.findMany({
 			where: { projectId: project.id },
-			orderBy: { order: 'asc' }
+			orderBy: { order: 'asc' },
+			select: testCaseListSelect
 		}),
 		// Only count test runs (we derive the other counts from fetched data)
 		db.testRun.count({ where: { projectId: project.id } })

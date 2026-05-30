@@ -11,52 +11,19 @@
 		Users,
 		Crown,
 		AlertCircle,
-		Trash2,
-		Loader2
+		Trash2
 	} from 'lucide-svelte';
 	import { Avatar } from '@skeletonlabs/skeleton-svelte';
-	import { onMount } from 'svelte';
+	import { invalidateAll } from '$app/navigation';
 
-	// Client-side loading states
-	let loading = $state(true);
-	let user = $state<any>(null);
-	let projects = $state<any[]>([]);
-	let stats = $state<any>({
-		totalProjects: 0,
-		totalTestCases: 0,
-		totalTestRuns: 0,
-		passRate: 0,
-		recentResults: []
-	});
-	let subscription = $state<any>({
-		hasActiveSubscription: false,
-		projectLimit: 1,
-		canCreateProject: false
-	});
+	let { data } = $props();
+
+	let user = $derived(data.user);
+	let projects = $derived(data.projects);
+	let stats = $derived(data.stats);
+	let subscription = $derived(data.subscription);
 
 	let deletingProjectId = $state<string | null>(null);
-
-	// Fetch all dashboard data
-	async function fetchDashboardData() {
-		loading = true;
-		try {
-			const res = await fetch('/api/dashboard/stats');
-			if (!res.ok) throw new Error('Failed to fetch dashboard');
-			const data = await res.json();
-			user = data.user;
-			projects = data.projects;
-			stats = data.stats;
-			subscription = data.subscription;
-		} catch (err) {
-			console.error(err);
-		} finally {
-			loading = false;
-		}
-	}
-
-	onMount(() => {
-		fetchDashboardData();
-	});
 
 	async function handleDeleteProject(event: Event, projectId: string, projectName: string) {
 		event.preventDefault();
@@ -80,8 +47,7 @@
 				throw new Error(data.message || 'Failed to delete project');
 			}
 
-			// Refresh the dashboard data
-			await fetchDashboardData();
+			await invalidateAll();
 		} catch (err: any) {
 			alert('Error: ' + err.message);
 		} finally {
@@ -125,11 +91,7 @@
 </script>
 
 <div class="container mx-auto max-w-7xl px-4 py-8" data-testid="dashboard-page">
-	{#if loading}
-		<div class="flex items-center justify-center py-20" data-testid="dashboard-loading">
-			<Loader2 class="h-8 w-8 animate-spin text-primary-500" />
-		</div>
-	{:else if user}
+	{#if user}
 		<!-- Header -->
 		<div class="mb-8" data-testid="dashboard-header">
 			<div class="flex items-start justify-between">

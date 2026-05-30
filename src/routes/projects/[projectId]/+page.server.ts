@@ -16,7 +16,21 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const [project, user] = await Promise.all([
 		db.project.findUnique({
 			where: { id: params.projectId },
-			include: {
+			select: {
+				id: true,
+				name: true,
+				key: true,
+				description: true,
+				createdBy: true,
+				teamId: true,
+				createdAt: true,
+				updatedAt: true,
+				team: {
+					select: {
+						id: true,
+						name: true
+					}
+				},
 				creator: {
 					select: {
 						id: true,
@@ -24,19 +38,12 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 						firstName: true,
 						lastName: true
 					}
-				},
-				team: {
-					include: {
-						members: true
-					}
 				}
 			}
 		}),
 		db.user.findUnique({
 			where: { id: userId },
-			include: {
-				team: true
-			}
+			select: { id: true, teamId: true }
 		})
 	]);
 

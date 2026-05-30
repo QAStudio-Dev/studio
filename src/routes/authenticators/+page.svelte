@@ -2,7 +2,7 @@
 	import { Plus, Key, Copy, Trash2, Clock, QrCode, KeyRound } from 'lucide-svelte';
 	import { onMount, onDestroy } from 'svelte';
 	import type { PageData } from './$types';
-	import { Html5Qrcode } from 'html5-qrcode';
+	import type { Html5Qrcode as Html5QrcodeType } from 'html5-qrcode';
 	import { parseOTPAuthURL, isValidBase32Secret } from '$lib/utils/otpauth-parser';
 	import { invalidateAll } from '$app/navigation';
 	import { getCsrfToken } from '$lib/utils/csrf';
@@ -15,7 +15,7 @@
 	let intervalId: number | null = null;
 
 	// QR Scanner state
-	let qrScanner: Html5Qrcode | null = null;
+	let qrScanner: Html5QrcodeType | null = null;
 	let scannerStarted = $state(false);
 	let scanError = $state<string | null>(null);
 
@@ -127,6 +127,7 @@
 	async function startQRScanner() {
 		try {
 			scanError = null;
+			const { Html5Qrcode } = await import('html5-qrcode');
 			qrScanner = new Html5Qrcode('qr-reader');
 
 			await qrScanner.start(

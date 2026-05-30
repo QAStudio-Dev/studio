@@ -55,6 +55,14 @@ export const load: PageServerLoad = async ({ locals }) => {
 				}
 			},
 			apiKeys: {
+				select: {
+					id: true,
+					name: true,
+					prefix: true,
+					lastUsedAt: true,
+					expiresAt: true,
+					createdAt: true
+				},
 				orderBy: { createdAt: 'desc' }
 			}
 		}

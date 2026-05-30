@@ -31,7 +31,15 @@
 	<!-- Cover Image -->
 	{#if post.cover}
 		<div class="mb-8 aspect-video overflow-hidden rounded-container">
-			<img src={post.cover} alt={post.title} class="h-full w-full object-cover" />
+			<img
+				src={post.cover}
+				alt={post.title}
+				width="1200"
+				height="675"
+				fetchpriority="high"
+				decoding="async"
+				class="h-full w-full object-cover"
+			/>
 		</div>
 	{/if}
 

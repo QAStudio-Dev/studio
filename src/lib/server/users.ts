@@ -1,5 +1,30 @@
 import { db } from './db';
 
+const layoutUserSelect = {
+	id: true,
+	email: true,
+	firstName: true,
+	lastName: true,
+	imageUrl: true,
+	role: true,
+	teamId: true
+} as const;
+
+/**
+ * Minimal user fetch for layout shell (header / nav).
+ */
+export async function getUserForLayout(userId: string) {
+	try {
+		return await db.user.findUnique({
+			where: { id: userId },
+			select: layoutUserSelect
+		});
+	} catch (error) {
+		console.error('Error fetching layout user:', error);
+		return null;
+	}
+}
+
 /**
  * Get user from database
  */
