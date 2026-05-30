@@ -15,7 +15,7 @@ slug: test-milestones-release-planning
 published: true
 ---
 
-Every release week, the same questions surface in standup: *Are we done testing? What's still open? Can we ship Friday?* Without a shared view of testing against the release calendar, answers depend on spreadsheets, Slack threads, and whoever checked the CI dashboard last.
+Every release week, the same questions surface in standup: _Are we done testing? What's still open? Can we ship Friday?_ Without a shared view of testing against the release calendar, answers depend on spreadsheets, Slack threads, and whoever checked the CI dashboard last.
 
 **Test milestones** solve that. They tie your test execution to a named release goal—a version, sprint, or launch date—so everyone sees progress in one place instead of guessing.
 
@@ -31,11 +31,11 @@ A **test milestone** is a time-bound testing goal tied to a product release or d
 
 Each milestone usually has:
 
-| Attribute | Purpose |
-| --------- | ------- |
-| **Name** | Identifies the release or sprint (e.g., "v2.4.0") |
-| **Due date** | Sets the deadline QA and engineering align on |
-| **Status** | Tracks whether work is active, done, or archived |
+| Attribute            | Purpose                                              |
+| -------------------- | ---------------------------------------------------- |
+| **Name**             | Identifies the release or sprint (e.g., "v2.4.0")    |
+| **Due date**         | Sets the deadline QA and engineering align on        |
+| **Status**           | Tracks whether work is active, done, or archived     |
 | **Linked test runs** | Groups manual and automated execution under one goal |
 
 Milestones are not a replacement for project management tools like Jira or Linear. They answer a narrower question: **for this release, how much testing is done, and what failed?**
@@ -66,12 +66,12 @@ Create the milestone when scope is roughly locked—not the night before deploy.
 
 Break testing into logical runs instead of one giant "release test":
 
-| Test run | Typical scope |
-| -------- | ------------- |
-| Smoke – Staging | Critical paths after deploy to staging |
-| Regression – Staging | Full suite or priority-based subset |
-| Exploratory – Staging | Time-boxed session for new features |
-| Production verification | Post-deploy checks in production |
+| Test run                | Typical scope                          |
+| ----------------------- | -------------------------------------- |
+| Smoke – Staging         | Critical paths after deploy to staging |
+| Regression – Staging    | Full suite or priority-based subset    |
+| Exploratory – Staging   | Time-boxed session for new features    |
+| Production verification | Post-deploy checks in production       |
 
 Link each run to the same milestone so pass rates roll up to one release view.
 

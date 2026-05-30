@@ -50,11 +50,16 @@ Docker Compose (`npm run docker:dev`) includes Redis/MinIO/MailHog, but the app 
 |------|---------|
 | Install | `npm install` |
 | DB schema | `npx prisma migrate deploy` (or `db push` for throwaway DBs) |
+| **Format (before commit)** | `npm run format` — CI fails if unformatted files remain |
+| **Typecheck (before commit)** | `npm run check` — required for TS/Svelte changes |
 | Lint | `npm run lint` (large pre-existing eslint backlog in repo) |
-| Typecheck | `npm run check` |
 | Unit tests | `npm run test:unit -- --run` |
 | Build | `npm run build` |
 | Dev | `npm run dev` |
+
+### Before committing
+
+Always run **`npm run format`** and **`npm run check`** locally before `git commit`. Stage any files Prettier rewrites. See [CONTRIBUTING.md](CONTRIBUTING.md#creating-a-pull-request) for the full pre-commit checklist.
 
 ### Long-running processes
 
