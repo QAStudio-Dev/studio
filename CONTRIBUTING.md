@@ -170,13 +170,28 @@ npm run dev
     - Update documentation as needed
     - Keep commits focused and atomic
 
-3. **Test your changes**
+3. **Run checks before you commit**
+
+    CI runs the same gates on every pull request. Run these locally **before** `git commit` so you do not wait on a failed workflow:
 
     ```bash
-    npm run test        # Run all tests
-    npm run check       # Type check
-    npm run lint        # Lint code
-    npm run format      # Format code
+    npm run format      # Apply Prettier (required — CI fails if files are unformatted)
+    npm run check       # Svelte/TypeScript typecheck (required for code changes)
+    ```
+
+    For broader validation (recommended when you change application logic):
+
+    ```bash
+    npm run lint        # Prettier check + ESLint
+    npm run test:unit -- --run   # Unit tests
+    ```
+
+    **Important:** `npm run format` rewrites files in place. Stage and include any formatting changes in your commit. The [Format Check](.github/workflows/format-check.yml) workflow runs `npm run format` and fails if `git status` is not clean afterward.
+
+    If `npm run check` fails with missing `$lib/paraglide/*` modules, compile i18n first:
+
+    ```bash
+    npx @inlang/paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide
     ```
 
 4. **Commit your changes**
@@ -213,7 +228,7 @@ npm run dev
 
 ### PR Review Process
 
-1. **Automated checks** - CI/CD will run tests, linting, and type checking
+1. **Automated checks** - CI runs formatting (`npm run format`), type checking (`npm run check`), and tests — run these locally before pushing (see step 3 above)
 2. **Code review** - A maintainer will review your code
 3. **Feedback** - Address any requested changes
 4. **Approval** - Once approved, a maintainer will merge

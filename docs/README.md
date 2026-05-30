@@ -60,11 +60,19 @@ Welcome to the QA Studio documentation! This directory contains comprehensive gu
 
 When adding new documentation:
 
-1. **Place in `/docs` directory** - All markdown docs should live here
+1. **Place in `/docs` directory** - All markdown docs should live here (blog posts live under `src/md/blog/`)
 2. **Update this README** - Add your doc to the appropriate section
 3. **Use clear headings** - Make docs easy to navigate
 4. **Include code examples** - Show, don't just tell
 5. **Link related docs** - Help users find related information
+6. **Run checks before committing** - From the repo root:
+
+    ```bash
+    npm run format   # Required — Prettier must pass in CI (including markdown)
+    npm run check    # Required when you change TypeScript or Svelte code
+    ```
+
+    Commit any files that `npm run format` updates. See [CONTRIBUTING.md](../CONTRIBUTING.md#creating-a-pull-request) for the full workflow.
 
 ### Documentation Standards
 

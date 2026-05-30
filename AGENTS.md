@@ -12,13 +12,13 @@ Single-package **QA Studio** app (SvelteKit 2 + Svelte 5 + Prisma + PostgreSQL).
 
 The VM typically provides these via injected secrets (no `.env.local` required if set at process level):
 
-| Variable | Purpose |
-|----------|---------|
-| `DATABASE_URL` | PostgreSQL (Neon or local) |
-| `SESSION_SECRET` | Session HMAC |
-| `TOTP_ENCRYPTION_KEY` | 64 hex chars (`openssl rand -hex 32`) |
-| `BLOB_READ_WRITE_TOKEN` | Vercel Blob for attachments |
-| `ENCRYPTION_KEY`, `URL_SIGNING_SECRET` | Integrations / signed trace URLs |
+| Variable                               | Purpose                               |
+| -------------------------------------- | ------------------------------------- |
+| `DATABASE_URL`                         | PostgreSQL (Neon or local)            |
+| `SESSION_SECRET`                       | Session HMAC                          |
+| `TOTP_ENCRYPTION_KEY`                  | 64 hex chars (`openssl rand -hex 32`) |
+| `BLOB_READ_WRITE_TOKEN`                | Vercel Blob for attachments           |
+| `ENCRYPTION_KEY`, `URL_SIGNING_SECRET` | Integrations / signed trace URLs      |
 
 Optional but common: Upstash Redis REST URL/token (`KV_*`); caching is disabled in dev if unset. Set self-hosted mode (`SELF_HOSTED=true`) to skip Stripe/subscription gates for local full-feature testing.
 
@@ -36,25 +36,30 @@ npx @inlang/paraglide-js compile --project ./project.inlang --outdir ./src/lib/p
 
 ### Services
 
-| Service | Local dev |
-|---------|-----------|
-| **App** | `npm run dev` (port 3000) |
-| **PostgreSQL** | Use `DATABASE_URL` from env, or `docker compose up postgres` (Docker optional) |
+| Service            | Local dev                                                                                                                   |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| **App**            | `npm run dev` (port 3000)                                                                                                   |
+| **PostgreSQL**     | Use `DATABASE_URL` from env, or `docker compose up postgres` (Docker optional)                                              |
 | **Playwright E2E** | Default config hits production `the hosted deployment`; local E2E needs `webServer` + credentials in `playwright.config.ts` |
 
 Docker Compose (`npm run docker:dev`) includes Redis/MinIO/MailHog, but the app code uses **Upstash** (`KV_*`) and **Vercel Blob**, not the compose Redis/MinIO env vars.
 
 ### Standard commands
 
-| Task | Command |
-|------|---------|
-| Install | `npm install` |
-| DB schema | `npx prisma migrate deploy` (or `db push` for throwaway DBs) |
-| Lint | `npm run lint` (large pre-existing eslint backlog in repo) |
-| Typecheck | `npm run check` |
-| Unit tests | `npm run test:unit -- --run` |
-| Build | `npm run build` |
-| Dev | `npm run dev` |
+| Task                          | Command                                                      |
+| ----------------------------- | ------------------------------------------------------------ |
+| Install                       | `npm install`                                                |
+| DB schema                     | `npx prisma migrate deploy` (or `db push` for throwaway DBs) |
+| **Format (before commit)**    | `npm run format` — CI fails if unformatted files remain      |
+| **Typecheck (before commit)** | `npm run check` — required for TS/Svelte changes             |
+| Lint                          | `npm run lint` (large pre-existing eslint backlog in repo)   |
+| Unit tests                    | `npm run test:unit -- --run`                                 |
+| Build                         | `npm run build`                                              |
+| Dev                           | `npm run dev`                                                |
+
+### Before committing
+
+Always run **`npm run format`** and **`npm run check`** locally before `git commit`. Stage any files Prettier rewrites. See [CONTRIBUTING.md](CONTRIBUTING.md#creating-a-pull-request) for the full pre-commit checklist.
 
 ### Long-running processes
 
