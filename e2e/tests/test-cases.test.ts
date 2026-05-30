@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { TestCasesPage } from '../pages/test-cases';
 import { loginAsTestUser } from '../helpers/auth';
+import { cleanupE2eTestData, getE2eProjectId } from '../helpers/cleanup';
 
 /**
  * Test Cases Page E2E Tests
@@ -12,33 +13,26 @@ import { loginAsTestUser } from '../helpers/auth';
  */
 
 test.describe('Test Cases Page', () => {
+	test.describe.configure({ mode: 'serial' });
+
 	let testCasesPage: TestCasesPage;
 	let projectId: string;
 
+	test.beforeAll(async ({ request }) => {
+		projectId = getE2eProjectId();
+		await cleanupE2eTestData(request, projectId);
+	});
+
+	test.afterEach(async ({ request }) => {
+		if (projectId) {
+			await cleanupE2eTestData(request, projectId);
+		}
+	});
+
 	test.beforeEach(async ({ page }) => {
-		// Login before each test
+		projectId = getE2eProjectId();
 		await loginAsTestUser(page);
 
-		// Get the first project from the projects page
-		// Wait for projects to load (look for project cards with links)
-		await page.waitForSelector('a[href*="/projects/"]', { timeout: 10000 });
-
-		// Get first project link (they link to /projects/[id]/runs)
-		const firstProjectLink = page.locator('a[href*="/projects/"][href*="/runs"]').first();
-		const href = await firstProjectLink.getAttribute('href');
-
-		if (!href) {
-			throw new Error('No project found. Please create a project first.');
-		}
-
-		// Extract project ID from href (format: /projects/[id]/runs)
-		const match = href.match(/\/projects\/([^/]+)\/runs/);
-		if (!match) {
-			throw new Error('Could not extract project ID from URL');
-		}
-		projectId = match[1];
-
-		// Initialize page object and navigate
 		testCasesPage = new TestCasesPage(page, projectId);
 		await testCasesPage.navigate();
 		await testCasesPage.waitForLoad();
@@ -130,6 +124,7 @@ test.describe('Test Cases Page', () => {
 	});
 
 	test.describe('Test Case Management', () => {
+		test.describe.configure({ timeout: 60_000 });
 		test('should display "Test Cases" main section', async () => {
 			await testCasesPage.assertVisible(testCasesPage.testCasesMain);
 			await testCasesPage.assertVisible(testCasesPage.testCasesHeader);
@@ -200,75 +195,52 @@ test.describe('Test Cases Page', () => {
 			await testCasesPage.assertVisible(testCasesPage.newTestCaseTitleInput);
 		});
 
-		test('should increment test case count after creating a test case', async ({ page }) => {
+		test('should increment test case count after creating a test case', async () => {
 			const initialStats = await testCasesPage.getStats();
 			const testCaseTitle = `E2E Count Test ${Date.now()}`;
 
 			await testCasesPage.createTestCase(testCaseTitle);
-			await testCasesPage.waitForTestCase(testCaseTitle);
+			await testCasesPage.reloadAndWait();
 
-			// Refresh stats
-			await page.waitForTimeout(1000);
 			const updatedStats = await testCasesPage.getStats();
-
 			expect(updatedStats.totalTestCases).toBe(initialStats.totalTestCases + 1);
 		});
 	});
 
 	test.describe('Test Case Modal', () => {
-		test('should open modal when clicking on a test case', async ({ page }) => {
-			// First, create a test case to click on
+		test.describe.configure({ timeout: 60_000 });
+		test('should open modal when clicking on a test case', async () => {
 			const testCaseTitle = `E2E Modal Test ${Date.now()}`;
 			await testCasesPage.createTestCase(testCaseTitle);
-			await testCasesPage.waitForTestCase(testCaseTitle);
-
-			// Click on the test case
 			await testCasesPage.clickTestCase(testCaseTitle);
-
-			// Wait for modal to appear
-			await page.waitForTimeout(500);
-
-			// Verify modal is visible
 			expect(await testCasesPage.isModalVisible()).toBe(true);
 		});
 
-		test('should display test case information in modal', async ({ page }) => {
+		test('should display test case information in modal', async () => {
 			const testCaseTitle = `E2E Modal Info Test ${Date.now()}`;
 			await testCasesPage.createTestCase(testCaseTitle);
-			await testCasesPage.waitForTestCase(testCaseTitle);
-
 			await testCasesPage.clickTestCase(testCaseTitle);
-			await page.waitForTimeout(500);
 
 			const modalInfo = await testCasesPage.getModalTestCaseInfo();
 			expect(modalInfo).not.toBeNull();
 			expect(modalInfo?.title).toContain(testCaseTitle);
 		});
 
-		test('should close modal when clicking close button', async ({ page }) => {
+		test('should close modal when clicking close button', async () => {
 			const testCaseTitle = `E2E Modal Close Test ${Date.now()}`;
 			await testCasesPage.createTestCase(testCaseTitle);
-			await testCasesPage.waitForTestCase(testCaseTitle);
-
 			await testCasesPage.clickTestCase(testCaseTitle);
-			await page.waitForTimeout(500);
 
 			expect(await testCasesPage.isModalVisible()).toBe(true);
 
 			await testCasesPage.closeModal();
-			await page.waitForTimeout(500);
-
-			expect(await testCasesPage.isModalVisible()).toBe(false);
+			await expect(testCasesPage.testCaseModal).toBeHidden({ timeout: 5000 });
 		});
 
-		test('should have "Open Full View" button in modal', async ({ page }) => {
+		test('should have "Open Full View" button in modal', async () => {
 			const testCaseTitle = `E2E Full View Test ${Date.now()}`;
 			await testCasesPage.createTestCase(testCaseTitle);
-			await testCasesPage.waitForTestCase(testCaseTitle);
-
 			await testCasesPage.clickTestCase(testCaseTitle);
-			await page.waitForTimeout(500);
-
 			await testCasesPage.assertVisible(testCasesPage.modalOpenFullViewButton);
 		});
 
@@ -277,22 +249,18 @@ test.describe('Test Cases Page', () => {
 		}) => {
 			const testCaseTitle = `E2E Navigation Test ${Date.now()}`;
 			await testCasesPage.createTestCase(testCaseTitle);
-			await testCasesPage.waitForTestCase(testCaseTitle);
-
 			await testCasesPage.clickTestCase(testCaseTitle);
-			await page.waitForTimeout(500);
 
-			await testCasesPage.openFullView();
-
-			// Wait for navigation
-			await page.waitForURL(`**/projects/${projectId}/cases/**`, { timeout: 5000 });
-
-			// Verify we're on the test case detail page
+			await Promise.all([
+				page.waitForURL(`**/projects/${projectId}/cases/**`, { timeout: 15000 }),
+				testCasesPage.openFullView()
+			]);
 			expect(page.url()).toMatch(/\/projects\/[^/]+\/cases\/[^/]+/);
 		});
 	});
 
 	test.describe('Suite and Test Case Integration', () => {
+		test.describe.configure({ timeout: 60_000 });
 		test('should create suite and add test case to it', async ({ page }) => {
 			const suiteName = `E2E Integration Suite ${Date.now()}`;
 			const testCaseTitle = `E2E Integration TC ${Date.now()}`;

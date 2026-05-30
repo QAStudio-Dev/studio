@@ -13,13 +13,18 @@ function stripAnsi(str: string): string {
 	return str.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '').replace(/\[\d+m/g, '');
 }
 
+const baseURL = stripAnsi(process.env.BASE_URL || process.env.PUBLIC_BASE_URL || '');
+if (!baseURL) {
+	throw new Error('BASE_URL or PUBLIC_BASE_URL must be set for Playwright E2E tests');
+}
+
 export default defineConfig({
 	reporter: [
 		['list'],
 		[
 			'@qastudio-dev/playwright',
 			{
-				apiUrl: stripAnsi('https://qastudio.dev/api'),
+				apiUrl: stripAnsi(`${baseURL.replace(/\/$/, '')}/api`),
 				apiKey: stripAnsi(process.env.QA_STUDIO_API_KEY),
 				projectId: stripAnsi(process.env.QA_STUDIO_PROJECT_ID),
 				environment: process.env.CI ? 'CI' : 'local',
@@ -28,7 +33,7 @@ export default defineConfig({
 		]
 	],
 	use: {
-		baseURL: 'https://qastudio.dev',
+		baseURL,
 		// Capture screenshots on failure
 		screenshot: 'only-on-failure',
 		// Capture videos on failure

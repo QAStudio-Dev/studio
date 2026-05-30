@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 import { BasePage } from './base';
 
 /**
@@ -143,21 +143,31 @@ export class TestCasesPage extends BasePage {
 	}
 
 	/**
+	 * Ensure the uncategorized suite section is expanded in the main content area
+	 */
+	async ensureUncategorizedExpanded() {
+		const uncategorizedButton = this.testSuitesContainer.locator(
+			'button:has-text("Uncategorized")'
+		);
+		if (!(await this.isVisible(uncategorizedButton))) {
+			return;
+		}
+
+		const uncategorizedHeading = this.testCasesMain.locator('h3:has-text("Uncategorized")');
+		if (!(await this.isVisible(uncategorizedHeading))) {
+			await this.click(uncategorizedButton);
+			await uncategorizedHeading.waitFor({ state: 'visible', timeout: 5000 });
+		}
+	}
+
+	/**
 	 * Create a new test case
 	 * @param title - Test case title
 	 * @param description - Optional test case description
 	 * @param waitForCreation - Whether to wait for creation to complete
 	 */
 	async createTestCase(title: string, description?: string, waitForCreation = true) {
-		// Make sure we're in the uncategorized section by clicking it if needed
-		const uncategorizedButton = this.testSuitesContainer.locator(
-			'button:has-text("Uncategorized")'
-		);
-		if (await this.isVisible(uncategorizedButton)) {
-			// Click to ensure it's expanded
-			await this.click(uncategorizedButton);
-			await this.page.waitForTimeout(500);
-		}
+		await this.ensureUncategorizedExpanded();
 
 		// Click new test case button if form isn't visible
 		if (!(await this.isVisible(this.newTestCaseTitleInput))) {
@@ -180,10 +190,30 @@ export class TestCasesPage extends BasePage {
 			await this.pressKey('Enter');
 		}
 
-		// Wait for creation to complete
 		if (waitForCreation) {
-			await this.page.waitForTimeout(2000); // Increased timeout for optimistic rendering
+			await this.waitForTestCasePersisted(title);
 		}
+	}
+
+	/**
+	 * Wait until the test case exists with a real (non-temporary) server ID
+	 */
+	async waitForTestCasePersisted(title: string, timeout = 20000) {
+		await this.waitForTestCase(title);
+
+		const testCaseRow = this.page.locator('[data-testcase-id]').filter({
+			has: this.page.locator('[data-test="test-case-button"]').filter({ hasText: title })
+		}).first();
+
+		await expect
+			.poll(
+				async () => {
+					const id = await testCaseRow.getAttribute('data-testcase-id');
+					return Boolean(id && !id.startsWith('temp-'));
+				},
+				{ timeout, message: `Timed out waiting for "${title}" to persist` }
+			)
+			.toBe(true);
 	}
 
 	/**
@@ -216,7 +246,8 @@ export class TestCasesPage extends BasePage {
 		// Click the test case button containing the specific title
 		// Use force: true to bypass actionability checks that might interfere with draggable elements
 		const testCaseButton = this.page
-			.locator(`[data-test="test-case-button"]:has-text("${title}")`)
+			.locator('[data-test="test-case-button"]')
+			.filter({ hasText: title })
 			.first();
 		await testCaseButton.click({ force: true });
 		// Wait for the modal to appear
@@ -384,18 +415,24 @@ export class TestCasesPage extends BasePage {
 	/**
 	 * Wait for test case to appear in the list
 	 */
-	async waitForTestCase(title: string, timeout = 10000) {
-		// First ensure the uncategorized section is expanded
-		const uncategorizedButton = this.testSuitesContainer.locator(
-			'button:has-text("Uncategorized")'
-		);
-		if (await this.isVisible(uncategorizedButton)) {
-			await this.click(uncategorizedButton);
-			await this.page.waitForTimeout(500);
-		}
+	async waitForTestCase(title: string, timeout = 15000) {
+		await this.ensureUncategorizedExpanded();
 
-		// Now wait for the test case to appear
-		await this.page.waitForSelector(`text="${title}"`, { timeout, state: 'visible' });
+		const testCaseButton = this.page
+			.locator('[data-test="test-case-button"]')
+			.filter({ hasText: title })
+			.first();
+
+		await testCaseButton.scrollIntoViewIfNeeded();
+		await testCaseButton.waitFor({ state: 'visible', timeout });
+	}
+
+	/**
+	 * Reload the page and wait for it to be ready (updates server-derived stats)
+	 */
+	async reloadAndWait() {
+		await this.page.reload({ waitUntil: 'networkidle' });
+		await this.waitForLoad();
 	}
 
 	/**
