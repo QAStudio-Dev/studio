@@ -441,11 +441,9 @@
 			if (e.target === e.currentTarget) closeModal();
 		}}
 		onkeydown={(e) => {
-			if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
-				if (e.target === e.currentTarget) {
-					e.preventDefault();
-					closeModal();
-				}
+			if (e.key === 'Escape' && e.target === e.currentTarget) {
+				e.preventDefault();
+				closeModal();
 			}
 		}}
 	>

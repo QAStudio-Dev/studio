@@ -38,7 +38,7 @@ export const GET: RequestHandler = async (event) => {
 		});
 
 		if (!testCase) {
-			return json({ error: 'Test case not found' }, { status: 404 });
+			throw error(404, { message: 'Test case not found' });
 		}
 
 		const user = await db.user.findUnique({
@@ -118,6 +118,6 @@ export const GET: RequestHandler = async (event) => {
 			throw err;
 		}
 		console.error('Error fetching test case results:', err);
-		return json({ error: 'Failed to fetch test case results' }, { status: 500 });
+		throw error(500, { message: 'Failed to fetch test case results' });
 	}
 };
