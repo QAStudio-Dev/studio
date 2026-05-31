@@ -27,7 +27,7 @@
 </script>
 
 <script lang="ts">
-	import { Check, X } from 'lucide-svelte';
+	import { Check, X } from '@lucide/svelte';
 
 	let { password = '' } = $props();
 

@@ -3,7 +3,7 @@
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import { goto, invalidateAll } from '$app/navigation';
 	import { Popover, usePopover, Avatar } from '@skeletonlabs/skeleton-svelte';
-	import { X, Menu, User, LogOut } from 'lucide-svelte';
+	import { X, Menu, User, LogOut } from '@lucide/svelte';
 	import {
 		projectsRefreshTrigger,
 		selectedProject,

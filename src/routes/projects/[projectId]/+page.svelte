@@ -10,7 +10,7 @@
 		FileText,
 		Edit,
 		Trash2
-	} from 'lucide-svelte';
+	} from '@lucide/svelte';
 	import { setSelectedProject, triggerProjectsRefresh } from '$lib/stores/projectStore';
 	import { Dialog } from '@skeletonlabs/skeleton-svelte';
 	import { goto, invalidateAll } from '$app/navigation';

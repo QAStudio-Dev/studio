@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { FolderOpen, Plus } from 'lucide-svelte';
+	import { FolderOpen, Plus } from '@lucide/svelte';
 	import DraggableTestCase from './DraggableTestCase.svelte';
 	import TestCaseDropZone from './TestCaseDropZone.svelte';
 	import TestCaseInsertionZone from './TestCaseInsertionZone.svelte';

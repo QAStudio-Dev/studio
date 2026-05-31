@@ -19,7 +19,7 @@
 		Save,
 		Play,
 		Bug
-	} from 'lucide-svelte';
+	} from '@lucide/svelte';
 	import { Avatar, Accordion, useAccordion } from '@skeletonlabs/skeleton-svelte';
 	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
 	import { onMount } from 'svelte';

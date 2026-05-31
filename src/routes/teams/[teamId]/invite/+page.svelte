@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { UserPlus, Mail, Clock, XCircle, AlertCircle, CheckCircle, Copy } from 'lucide-svelte';
+	import { UserPlus, Mail, Clock, XCircle, AlertCircle, CheckCircle, Copy } from '@lucide/svelte';
 	import { browser } from '$app/environment';
 
 	let { data } = $props();

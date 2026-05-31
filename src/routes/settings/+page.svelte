@@ -15,7 +15,7 @@
 		XCircle,
 		X,
 		Trash2
-	} from 'lucide-svelte';
+	} from '@lucide/svelte';
 	import { Avatar } from '@skeletonlabs/skeleton-svelte';
 	import { Tabs } from '@skeletonlabs/skeleton-svelte';
 	import { invalidateAll } from '$app/navigation';

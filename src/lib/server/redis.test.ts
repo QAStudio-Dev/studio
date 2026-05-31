@@ -19,15 +19,17 @@ vi.mock('@upstash/redis', () => {
 	const mockScan = vi.fn();
 	const mockExists = vi.fn();
 
+	class MockRedis {
+		get = mockGet;
+		set = mockSet;
+		setex = mockSetex;
+		del = mockDel;
+		scan = mockScan;
+		exists = mockExists;
+	}
+
 	return {
-		Redis: vi.fn(() => ({
-			get: mockGet,
-			set: mockSet,
-			setex: mockSetex,
-			del: mockDel,
-			scan: mockScan,
-			exists: mockExists
-		})),
+		Redis: MockRedis,
 		// Export mocks so tests can access them
 		__mockGet: mockGet,
 		__mockSet: mockSet,

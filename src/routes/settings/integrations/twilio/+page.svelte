@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { AlertCircle, ArrowLeft, Check, ExternalLink, Phone, HelpCircle } from 'lucide-svelte';
+	import { AlertCircle, ArrowLeft, Check, ExternalLink, Phone, HelpCircle } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 	import { Dialog } from '@skeletonlabs/skeleton-svelte';
 	import {
@@ -391,9 +391,8 @@
 						class="mb-3 rounded-container border border-warning-500/20 bg-warning-500/10 p-3"
 					>
 						<p class="text-sm text-warning-600 dark:text-warning-400">
-							<strong>Required:</strong> Without A2P registration, your messages to US
-							numbers may be blocked or heavily filtered. This typically takes 1-5 business
-							days.
+							<strong>Required:</strong> Without A2P registration, your messages to US numbers
+							may be blocked or heavily filtered. This typically takes 1-5 business days.
 						</p>
 					</div>
 
@@ -453,9 +452,9 @@
 						class="rounded-container border border-primary-500/20 bg-primary-500/10 p-4"
 					>
 						<p class="text-sm text-primary-600 dark:text-primary-400">
-							<strong>Copy & Paste Ready:</strong> All fields below are ready to copy.
-							Simply click inside any text box and copy the example text to paste into
-							the Twilio form. Adapt to match your actual business information.
+							<strong>Copy & Paste Ready:</strong> All fields below are ready to copy. Simply
+							click inside any text box and copy the example text to paste into the Twilio
+							form. Adapt to match your actual business information.
 						</p>
 					</div>
 
@@ -508,8 +507,8 @@
 										and verification codes
 									</li>
 									<li>
-										<strong>Account Notifications:</strong> Order confirmations,
-										shipping updates, account alerts
+										<strong>Account Notifications:</strong> Order confirmations, shipping
+										updates, account alerts
 									</li>
 									<li>
 										<strong>Customer Care:</strong> Support messages, appointment
@@ -648,8 +647,8 @@
 								</label>
 							</div>
 							<p class="text-surface-500-400 mt-3 text-xs">
-								<strong>For 2FA/verification codes:</strong> Typically none of these
-								boxes need to be checked unless your codes include links or phone numbers.
+								<strong>For 2FA/verification codes:</strong> Typically none of these boxes
+								need to be checked unless your codes include links or phone numbers.
 							</p>
 						</div>
 					</div>

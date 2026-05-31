@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Heart, Code, Users, Zap } from 'lucide-svelte';
+	import { Heart, Code, Users, Zap } from '@lucide/svelte';
 </script>
 
 <div class="container mx-auto max-w-4xl px-4 py-12">

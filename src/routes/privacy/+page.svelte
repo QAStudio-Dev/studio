@@ -65,12 +65,12 @@
 			<h3>2.2 Automatically Collected Information</h3>
 			<ul>
 				<li>
-					<strong>Usage Data:</strong> IP address, browser type, device information, pages
-					visited, features used, and interaction patterns.
+					<strong>Usage Data:</strong> IP address, browser type, device information, pages visited,
+					features used, and interaction patterns.
 				</li>
 				<li>
-					<strong>Cookies:</strong> Session cookies for authentication, preference cookies
-					for user settings, and analytics cookies.
+					<strong>Cookies:</strong> Session cookies for authentication, preference cookies for
+					user settings, and analytics cookies.
 				</li>
 				<li>
 					<strong>API Usage:</strong> API requests, response times, and error logs for monitoring
@@ -97,8 +97,7 @@
 			<p>We use collected information for:</p>
 			<ul>
 				<li>
-					<strong>Service Delivery:</strong> Providing and maintaining the test management
-					platform.
+					<strong>Service Delivery:</strong> Providing and maintaining the test management platform.
 				</li>
 				<li>
 					<strong>Test Management:</strong> Storing, organizing, and displaying your test data.
@@ -159,8 +158,7 @@
 			<h2>5. Data Retention</h2>
 			<ul>
 				<li>
-					<strong>Active Accounts:</strong> We retain your data as long as your account is
-					active.
+					<strong>Active Accounts:</strong> We retain your data as long as your account is active.
 				</li>
 				<li>
 					<strong>Deleted Accounts:</strong> Data is deleted within 30 days of account deletion,

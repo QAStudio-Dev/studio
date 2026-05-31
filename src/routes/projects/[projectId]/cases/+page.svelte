@@ -12,7 +12,7 @@
 		MoreVertical,
 		GripVertical,
 		Play
-	} from 'lucide-svelte';
+	} from '@lucide/svelte';
 	import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
 	import { invalidateAll } from '$app/navigation';
 	import DraggableTestCase from '$lib/components/DraggableTestCase.svelte';

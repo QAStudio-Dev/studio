@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { AlertTriangle, Home, RefreshCw } from 'lucide-svelte';
+	import { AlertTriangle, Home, RefreshCw } from '@lucide/svelte';
 
 	let { error } = $derived($page);
 </script>

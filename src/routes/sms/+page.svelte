@@ -10,7 +10,7 @@
 		ArrowDownLeft,
 		Clock,
 		Settings
-	} from 'lucide-svelte';
+	} from '@lucide/svelte';
 	import { E164_PHONE_REGEX } from '$lib/validation/twilio';
 
 	// Constants

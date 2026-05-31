@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { FolderPlus, AlertCircle, Sparkles } from 'lucide-svelte';
+	import { FolderPlus, AlertCircle, Sparkles } from '@lucide/svelte';
 	import { triggerProjectsRefresh } from '$lib/stores/projectStore';
 	import type { PageData } from './$types';
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
-	import { AlertCircle, ArrowLeft, Check, ExternalLink, Link2 } from 'lucide-svelte';
+	import { AlertCircle, ArrowLeft, Check, ExternalLink, Link2 } from '@lucide/svelte';
 
 	let baseUrl = $state('');
 	let email = $state('');

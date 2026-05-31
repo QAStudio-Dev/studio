@@ -6,7 +6,7 @@
 		FileArchive,
 		File,
 		Image as ImageIcon
-	} from 'lucide-svelte';
+	} from '@lucide/svelte';
 	import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
 
 	interface Props {

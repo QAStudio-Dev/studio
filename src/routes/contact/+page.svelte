@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Mail, Github, MessageCircle } from 'lucide-svelte';
+	import { Mail, CodeXml, MessageCircle } from '@lucide/svelte';
 </script>
 
 <div class="container mx-auto max-w-4xl px-4 py-12">
@@ -49,7 +49,7 @@
 			<div
 				class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-500/10 transition-all group-hover:scale-110"
 			>
-				<Github class="h-8 w-8 text-surface-700 dark:text-surface-300" />
+				<CodeXml class="h-8 w-8 text-surface-700 dark:text-surface-300" />
 			</div>
 			<h2 class="mb-2 text-xl font-bold">Report Issues</h2>
 			<p class="mb-4 text-sm text-surface-600 dark:text-surface-400">

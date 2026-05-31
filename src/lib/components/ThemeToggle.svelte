@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { MoonIcon, SunIcon } from 'lucide-svelte';
+	import { MoonIcon, SunIcon } from '@lucide/svelte';
 	import { Switch } from '@skeletonlabs/skeleton-svelte';
 
 	let checked = $state(false);

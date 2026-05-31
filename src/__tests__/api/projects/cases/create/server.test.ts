@@ -1,9 +1,27 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import POST_ENDPOINT from '../../../../../api/projects/[...projectId]/cases/POST';
+import type { z } from 'zod';
+import POST_ENDPOINT, { Input, Output, Param } from '../../../../../api/projects/[...projectId]/cases/POST';
 
-// The Endpoint.default property contains the handler function after calling .handle()
-// sveltekit-api returns the data directly, not a Response object
-const POST = (POST_ENDPOINT as any).default as (evt: any) => Promise<any>;
+type PostResult = z.infer<typeof Output>;
+
+const endpointHandler = (POST_ENDPOINT as any).default as (
+	input: z.infer<typeof Input> & z.infer<typeof Param>,
+	evt: unknown
+) => Promise<PostResult>;
+
+/** Mirrors sveltekit-api body + param validation before invoking the route handler. */
+async function POST(event: {
+	request: Request;
+	params: { projectId: string };
+}): Promise<PostResult> {
+	const body = await event.request.json();
+	const param = Param.parse({ projectId: event.params.projectId });
+	const validation = Input.safeParse({ ...body, ...param });
+	if (!validation.success) {
+		throw validation.error;
+	}
+	return endpointHandler({ ...validation.data, ...param }, event);
+}
 
 // Mock dependencies before importing the module
 vi.mock('$lib/server/db', () => ({
@@ -490,19 +508,13 @@ describe('POST /api/projects/[projectId]/cases', () => {
 		it('should reject when project does not exist', async () => {
 			vi.mocked(db.project.findUnique).mockResolvedValue(null);
 
-			await expect(async () => {
-				const response = await POST(mockEvent);
-				await response.json();
-			}).rejects.toThrow();
+			await expect(POST(mockEvent)).rejects.toThrow();
 		});
 
 		it('should reject when user does not exist', async () => {
 			vi.mocked(db.user.findUnique).mockResolvedValue(null);
 
-			await expect(async () => {
-				const response = await POST(mockEvent);
-				await response.json();
-			}).rejects.toThrow();
+			await expect(POST(mockEvent)).rejects.toThrow();
 		});
 
 		it('should reject when user is not project owner and not in same team', async () => {
@@ -526,10 +538,7 @@ describe('POST /api/projects/[projectId]/cases', () => {
 
 			vi.mocked(requireApiAuth).mockResolvedValue('user_456');
 
-			await expect(async () => {
-				const response = await POST(mockEvent);
-				await response.json();
-			}).rejects.toThrow();
+			await expect(POST(mockEvent)).rejects.toThrow();
 		});
 
 		it('should allow project owner even if not in team', async () => {
@@ -634,13 +643,21 @@ describe('POST /api/projects/[projectId]/cases', () => {
 	});
 
 	describe('Suite validation', () => {
+		function eventWithSuiteId(suiteId: string) {
+			return {
+				...mockEvent,
+				request: new Request('http://localhost/api/projects/proj_123/cases', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ title: 'Test Login', suiteId })
+				})
+			};
+		}
+
 		it('should reject when suite does not exist', async () => {
 			vi.mocked(db.testSuite.findUnique).mockResolvedValue(null);
 
-			await expect(async () => {
-				const response = await POST(mockEvent);
-				await response.json();
-			}).rejects.toThrow();
+			await expect(POST(eventWithSuiteId('suite_missing'))).rejects.toThrow();
 		});
 
 		it('should reject when suite belongs to different project', async () => {
@@ -650,10 +667,7 @@ describe('POST /api/projects/[projectId]/cases', () => {
 				projectId: 'proj_456'
 			} as any);
 
-			await expect(async () => {
-				const response = await POST(mockEvent);
-				await response.json();
-			}).rejects.toThrow();
+			await expect(POST(eventWithSuiteId('suite_123'))).rejects.toThrow();
 		});
 	});
 
@@ -661,10 +675,7 @@ describe('POST /api/projects/[projectId]/cases', () => {
 		it('should handle database errors gracefully', async () => {
 			vi.mocked(db.testCase.create).mockRejectedValue(new Error('Database error'));
 
-			await expect(async () => {
-				const response = await POST(mockEvent);
-				await response.json();
-			}).rejects.toThrow();
+			await expect(POST(mockEvent)).rejects.toThrow();
 		});
 
 		it('should re-throw API errors without modification', async () => {

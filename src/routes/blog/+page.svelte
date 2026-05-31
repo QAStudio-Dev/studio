@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Calendar, User, Tag, Rss, Search } from 'lucide-svelte';
+	import { Calendar, User, Tag, Rss, Search } from '@lucide/svelte';
 
 	let { data } = $props();
 	let { posts } = $derived(data);

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Avatar } from '@skeletonlabs/skeleton-svelte';
-	import { CreditCard, Users, Settings, CheckCircle, AlertCircle } from 'lucide-svelte';
+	import { CreditCard, Users, Settings, CheckCircle, AlertCircle } from '@lucide/svelte';
 	import { page } from '$app/stores';
 
 	let { data } = $props();

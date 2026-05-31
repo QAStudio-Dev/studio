@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { Check, Sparkles, Users, Zap } from 'lucide-svelte';
+	import { Check, Sparkles, Users, Zap } from '@lucide/svelte';
 	import { env } from '$env/dynamic/public';
 	import { PRICING, getMonthlyEquivalent } from '$lib/constants/pricing';
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Avatar } from '@skeletonlabs/skeleton-svelte';
-	import { AlertTriangle, Users, CreditCard } from 'lucide-svelte';
+	import { AlertTriangle, Users, CreditCard } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
 
 	let { data } = $props();

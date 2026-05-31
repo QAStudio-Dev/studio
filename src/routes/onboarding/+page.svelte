@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { Check } from 'lucide-svelte';
+	import { Check } from '@lucide/svelte';
 	import { PRICING } from '$lib/constants/pricing';
 
 	let { data } = $props();

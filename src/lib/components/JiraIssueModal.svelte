@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { X, ExternalLink, Loader2, AlertCircle } from 'lucide-svelte';
+	import { X, ExternalLink, Loader2, AlertCircle } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 
 	interface Props {
@@ -285,8 +285,8 @@
 						<h3 class="font-semibold text-success-500">Issue Created Successfully!</h3>
 					</div>
 					<p class="mb-3 text-sm">
-						Jira issue <strong>{createdIssueKey}</strong> has been created and linked to
-						this test.
+						Jira issue <strong>{createdIssueKey}</strong> has been created and linked to this
+						test.
 					</p>
 					{#if createdIssueUrl}
 						<a

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { Building2, Mail, Phone, Users, Check } from 'lucide-svelte';
+	import { Building2, Mail, Phone, Users, Check } from '@lucide/svelte';
 	import { PRICING } from '$lib/constants/pricing';
 
 	let { data } = $props();
@@ -119,8 +119,7 @@
 							and account manager
 						</p>
 						<p>
-							<strong>Security & Compliance:</strong> SSO, SAML, audit logs, and SOC 2
-							compliance
+							<strong>Security & Compliance:</strong> SSO, SAML, audit logs, and SOC 2 compliance
 						</p>
 						<p>
 							<strong>On-Premise Options:</strong> Deploy QA Studio in your own infrastructure

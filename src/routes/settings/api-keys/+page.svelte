@@ -9,7 +9,7 @@
 		Calendar,
 		Clock,
 		Code
-	} from 'lucide-svelte';
+	} from '@lucide/svelte';
 	import { invalidateAll } from '$app/navigation';
 
 	let { data } = $props();
