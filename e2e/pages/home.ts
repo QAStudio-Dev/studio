@@ -27,7 +27,8 @@ export class HomePage extends BasePage {
 		this.logo = page.locator('img[alt="QA Studio"]').first();
 		this.signInButton = page.locator('a[href="/login"]');
 		this.heroTitle = page.locator('h1').first();
-		this.heroDescription = page.locator('p.text-xl').first();
+		// Hero subheading uses responsive typography (text-lg sm:text-xl), not bare text-xl
+		this.heroDescription = page.locator('main h1 + p').first();
 		this.getStartedButton = page.getByRole('link', { name: /get started/i });
 		this.viewDocsButton = page.getByRole('link', { name: /view docs|documentation/i });
 		this.discordLink = page.locator('a[href*="discord"]');
