@@ -2,21 +2,6 @@ import { db } from '$lib/server/db';
 import { hasActiveSubscription } from '$lib/server/subscriptions';
 import { getAccessibleProjectsWithCounts } from '$lib/server/projects';
 
-function resultScope(userId: string, teamId: string | null) {
-	return teamId
-		? {
-				testRun: {
-					project: { teamId }
-				}
-			}
-		: {
-				executedBy: userId,
-				testRun: {
-					project: { teamId: null }
-				}
-			};
-}
-
 export async function loadDashboardData(userId: string) {
 	const user = await db.user.findUnique({
 		where: { id: userId },
@@ -31,8 +16,7 @@ export async function loadDashboardData(userId: string) {
 			team: {
 				select: {
 					id: true,
-					name: true,
-					subscription: true
+					name: true
 				}
 			}
 		}
@@ -42,18 +26,46 @@ export async function loadDashboardData(userId: string) {
 		return null;
 	}
 
-	const scope = resultScope(userId, user.teamId);
-	const projectFilter = user.teamId
-		? { project: { teamId: user.teamId } }
-		: { createdBy: userId, project: { teamId: null } };
+	const projects = await getAccessibleProjectsWithCounts(userId);
+	const projectIds = projects.map((p) => p.id);
 
-	const [projects, totalTestCases, totalTestRuns, recentResults, passedTests, failedTests] =
+	const emptyStats = {
+		totalProjects: 0,
+		totalTestCases: 0,
+		totalTestRuns: 0,
+		passRate: 0,
+		recentResults: [] as Array<{
+			id: string;
+			status: string;
+			executedAt: Date;
+			testCase: { title: string };
+			testRun: { name: string; project: { name: string; key: string } };
+		}>
+	};
+
+	if (projectIds.length === 0) {
+		const hasSubscription = user.teamId ? await hasActiveSubscription(user.teamId) : false;
+		const projectLimit = hasSubscription ? null : 1;
+		return {
+			user,
+			projects,
+			stats: emptyStats,
+			subscription: {
+				hasActiveSubscription: hasSubscription,
+				projectLimit,
+				canCreateProject: projectLimit === null
+			}
+		};
+	}
+
+	const resultScope = { testRun: { projectId: { in: projectIds } } };
+
+	const [totalTestCases, totalTestRuns, recentResults, passedTests, failedTests] =
 		await Promise.all([
-			getAccessibleProjectsWithCounts(userId),
-			db.testCase.count({ where: projectFilter }),
-			db.testRun.count({ where: projectFilter }),
+			db.testCase.count({ where: { projectId: { in: projectIds } } }),
+			db.testRun.count({ where: { projectId: { in: projectIds } } }),
 			db.testResult.findMany({
-				where: scope,
+				where: resultScope,
 				select: {
 					id: true,
 					status: true,
@@ -74,10 +86,10 @@ export async function loadDashboardData(userId: string) {
 				take: 10
 			}),
 			db.testResult.count({
-				where: { status: 'PASSED', ...scope }
+				where: { status: 'PASSED', ...resultScope }
 			}),
 			db.testResult.count({
-				where: { status: 'FAILED', ...scope }
+				where: { status: 'FAILED', ...resultScope }
 			})
 		]);
 

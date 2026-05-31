@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite dev",
     "build": "prisma generate && vite build",
-    "build:analyze": "prisma generate && vite build && node -e \"console.log('Open .svelte-kit/output/client/stats.html after build if visualizer plugin is enabled')\"",
+    "build:analyze": "prisma generate && ANALYZE=true vite build && node -e \"console.log('Open build-stats.html at the repository root for the bundle treemap.')\"",
     "preview": "vite preview",
     "prepare": "svelte-kit sync || echo ''",
     "postinstall": "prisma generate || echo 'Prisma generate skipped'",

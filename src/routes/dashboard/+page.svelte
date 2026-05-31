@@ -13,7 +13,7 @@
 		AlertCircle,
 		Trash2
 	} from 'lucide-svelte';
-	import { Avatar } from '@skeletonlabs/skeleton-svelte';
+	import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
 	import { invalidateAll } from '$app/navigation';
 
 	let { data } = $props();
@@ -24,17 +24,23 @@
 	let subscription = $derived(data.subscription);
 
 	let deletingProjectId = $state<string | null>(null);
+	let deleteTarget = $state<{ id: string; name: string } | null>(null);
 
-	async function handleDeleteProject(event: Event, projectId: string, projectName: string) {
+	function requestDeleteProject(event: Event, projectId: string, projectName: string) {
 		event.preventDefault();
 		event.stopPropagation();
+		deleteTarget = { id: projectId, name: projectName };
+	}
 
-		const confirmed = confirm(
-			`Are you sure you want to delete "${projectName}"?\n\nThis will permanently delete:\n• All test suites\n• All test cases\n• All test runs\n• All test results\n\nThis action cannot be undone.`
-		);
+	function closeDeleteDialog() {
+		deleteTarget = null;
+	}
 
-		if (!confirmed) return;
+	async function confirmDeleteProject() {
+		if (!deleteTarget) return;
 
+		const { id: projectId } = deleteTarget;
+		closeDeleteDialog();
 		deletingProjectId = projectId;
 
 		try {
@@ -277,7 +283,7 @@
 									<!-- Delete button -->
 									<button
 										onclick={(e) =>
-											handleDeleteProject(e, project.id, project.name)}
+											requestDeleteProject(e, project.id, project.name)}
 										disabled={deletingProjectId === project.id}
 										class="text-surface-600-300 absolute top-4 right-4 z-10 rounded-container p-2 opacity-0 transition-colors group-hover:opacity-100 hover:bg-error-500/10 hover:text-error-500"
 										title="Delete project"
@@ -431,3 +437,47 @@
 		{/if}
 	{/if}
 </div>
+
+<Dialog
+	open={deleteTarget !== null}
+	onOpenChange={(details) => {
+		if (!details.open) closeDeleteDialog();
+	}}
+>
+	<Portal>
+		<Dialog.Backdrop class="fixed inset-0 z-40 bg-black/50" />
+		<Dialog.Positioner class="fixed inset-0 z-50 flex items-center justify-center p-4">
+			<Dialog.Content
+				class="w-full max-w-md card bg-surface-50-950 p-6 shadow-xl"
+				role="dialog"
+				aria-modal="true"
+				aria-labelledby="delete-project-title"
+			>
+				{#if deleteTarget}
+					<Dialog.Title id="delete-project-title" class="mb-2 text-xl font-bold">
+						Delete "{deleteTarget.name}"?
+					</Dialog.Title>
+					<Dialog.Description class="text-surface-600-300 mb-6 text-sm">
+						This will permanently delete all test suites, test cases, test runs, and
+						test results in this project. This action cannot be undone.
+					</Dialog.Description>
+					<div class="flex justify-end gap-3">
+						<Dialog.CloseTrigger
+							class="btn preset-outlined-surface-500"
+							onclick={closeDeleteDialog}
+						>
+							Cancel
+						</Dialog.CloseTrigger>
+						<button
+							type="button"
+							class="btn preset-filled-error-500"
+							onclick={confirmDeleteProject}
+						>
+							Delete project
+						</button>
+					</div>
+				{/if}
+			</Dialog.Content>
+		</Dialog.Positioner>
+	</Portal>
+</Dialog>

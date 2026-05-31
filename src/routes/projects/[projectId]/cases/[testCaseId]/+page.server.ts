@@ -1,6 +1,8 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
+import { hasProjectAccess } from '$lib/server/access-control';
+import { testResultStepsSelect } from '$lib/server/test-result-steps-select';
 import { sanitizeForMeta } from '$lib/utils/sanitize-meta';
 import type { PageMetaTags } from '$lib/types/meta';
 
@@ -37,40 +39,7 @@ const resultListSelect = {
 		},
 		orderBy: { createdAt: 'asc' as const }
 	},
-	steps: {
-		where: { parentStepId: null },
-		orderBy: { stepNumber: 'asc' as const },
-		select: {
-			id: true,
-			stepNumber: true,
-			description: true,
-			status: true,
-			duration: true,
-			errorMessage: true,
-			childSteps: {
-				orderBy: { stepNumber: 'asc' as const },
-				select: {
-					id: true,
-					stepNumber: true,
-					description: true,
-					status: true,
-					duration: true,
-					errorMessage: true,
-					childSteps: {
-						orderBy: { stepNumber: 'asc' as const },
-						select: {
-							id: true,
-							stepNumber: true,
-							description: true,
-							status: true,
-							duration: true,
-							errorMessage: true
-						}
-					}
-				}
-			}
-		}
-	}
+	steps: testResultStepsSelect
 } as const;
 
 export const load: PageServerLoad = async ({ params, locals }) => {
@@ -111,7 +80,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 						id: true,
 						name: true,
 						key: true,
-						teamId: true
+						teamId: true,
+						createdBy: true
 					}
 				},
 				suite: {
@@ -137,11 +107,11 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		throw error(404, { message: 'Test case not found' });
 	}
 
-	const hasAccess =
-		testCase.createdBy === userId ||
-		(testCase.project.teamId && user?.teamId === testCase.project.teamId);
+	if (!user) {
+		throw error(401, { message: 'User not found' });
+	}
 
-	if (!hasAccess) {
+	if (!hasProjectAccess(testCase.project, { id: userId, teamId: user.teamId })) {
 		throw error(403, { message: 'Access denied' });
 	}
 

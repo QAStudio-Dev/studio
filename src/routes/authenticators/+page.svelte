@@ -18,6 +18,7 @@
 	let qrScanner: Html5QrcodeType | null = null;
 	let scannerStarted = $state(false);
 	let scanError = $state<string | null>(null);
+	let qrScannerStartId = 0;
 
 	// Form state (shared between manual and QR)
 	let formData = $state({
@@ -124,14 +125,29 @@
 	}
 
 	// Start QR scanner
+	function isQrScannerContextActive() {
+		return showAddModal && activeTab === 'qr';
+	}
+
 	async function startQRScanner() {
+		const startId = ++qrScannerStartId;
 		try {
 			scanError = null;
 			const { Html5Qrcode } = await import('html5-qrcode');
+
+			if (startId !== qrScannerStartId || !isQrScannerContextActive()) {
+				return;
+			}
+
 			qrScanner = new Html5Qrcode('qr-reader');
 
+			if (startId !== qrScannerStartId || !isQrScannerContextActive()) {
+				qrScanner = null;
+				return;
+			}
+
 			await qrScanner.start(
-				{ facingMode: 'environment' }, // Use back camera
+				{ facingMode: 'environment' },
 				{
 					fps: 10,
 					qrbox: { width: 250, height: 250 }
@@ -140,8 +156,16 @@
 				onScanError
 			);
 
+			if (startId !== qrScannerStartId || !isQrScannerContextActive()) {
+				await stopQRScanner();
+				return;
+			}
+
 			scannerStarted = true;
 		} catch (err) {
+			if (startId !== qrScannerStartId) {
+				return;
+			}
 			scanError = 'Failed to start camera. Please check camera permissions.';
 			console.error('QR Scanner error:', err);
 		}
@@ -149,15 +173,17 @@
 
 	// Stop QR scanner
 	async function stopQRScanner() {
+		qrScannerStartId++;
 		if (qrScanner && scannerStarted) {
 			try {
 				await qrScanner.stop();
 				await qrScanner.clear();
-				scannerStarted = false;
 			} catch (err) {
 				console.error('Failed to stop scanner:', err);
 			}
 		}
+		scannerStarted = false;
+		qrScanner = null;
 	}
 
 	// Handle successful QR scan

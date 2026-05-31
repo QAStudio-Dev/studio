@@ -21,6 +21,37 @@ export type AccessibleProjectWithCounts = AccessibleProjectNav & {
 	};
 };
 
+function buildAccessibleProjectsWhere(userId: string, teamId: string | null | undefined) {
+	const whereClause: {
+		OR: Array<{ createdBy: string } | { teamId: string }>;
+	} = {
+		OR: [{ createdBy: userId }]
+	};
+
+	if (teamId) {
+		whereClause.OR.push({ teamId });
+	}
+
+	return whereClause;
+}
+
+async function fetchAccessibleProjectsNav(userId: string): Promise<AccessibleProjectNav[]> {
+	const user = await db.user.findUnique({
+		where: { id: userId },
+		select: { teamId: true }
+	});
+
+	return db.project.findMany({
+		where: buildAccessibleProjectsWhere(userId, user?.teamId),
+		orderBy: { createdAt: 'desc' },
+		select: {
+			id: true,
+			name: true,
+			key: true
+		}
+	});
+}
+
 async function fetchAccessibleProjectsWithCounts(
 	userId: string
 ): Promise<AccessibleProjectWithCounts[]> {
@@ -29,18 +60,8 @@ async function fetchAccessibleProjectsWithCounts(
 		select: { teamId: true }
 	});
 
-	const whereClause: {
-		OR: Array<{ createdBy: string } | { teamId: string }>;
-	} = {
-		OR: [{ createdBy: userId }]
-	};
-
-	if (user?.teamId) {
-		whereClause.OR.push({ teamId: user.teamId });
-	}
-
 	return db.project.findMany({
-		where: whereClause,
+		where: buildAccessibleProjectsWhere(userId, user?.teamId),
 		orderBy: { createdAt: 'desc' },
 		select: {
 			id: true,
@@ -63,7 +84,7 @@ async function fetchAccessibleProjectsWithCounts(
 }
 
 /**
- * Cached project list for API and layout (includes counts).
+ * Cached project list for API and dashboard (includes counts).
  */
 export async function getAccessibleProjectsWithCounts(
 	userId: string
@@ -77,13 +98,10 @@ export async function getAccessibleProjectsWithCounts(
 }
 
 /**
- * Sidebar / header navigation projects (id, name, key only).
+ * Sidebar / header navigation projects (id, name, key only; no aggregate counts).
  */
-export async function getAccessibleProjectsNav(
-	userId: string
-): Promise<AccessibleProjectNav[]> {
-	const projects = await getAccessibleProjectsWithCounts(userId);
-	return projects.map(({ id, name, key }) => ({ id, name, key }));
+export async function getAccessibleProjectsNav(userId: string): Promise<AccessibleProjectNav[]> {
+	return fetchAccessibleProjectsNav(userId);
 }
 
 /**

@@ -29,9 +29,14 @@
 	let { data } = $props();
 	let { testCase } = $derived(data);
 
-	let AttachmentViewerCmp = $state<any>(null);
-	let TestStepsViewerCmp = $state<any>(null);
-	let JiraIssueModalCmp = $state<any>(null);
+	type AttachmentViewerComponent =
+		typeof import('$lib/components/AttachmentViewer.svelte').default;
+	type TestStepsViewerComponent = typeof import('$lib/components/TestStepsViewer.svelte').default;
+	type JiraIssueModalComponent = typeof import('$lib/components/JiraIssueModal.svelte').default;
+
+	let AttachmentViewerCmp = $state<AttachmentViewerComponent | null>(null);
+	let TestStepsViewerCmp = $state<TestStepsViewerComponent | null>(null);
+	let JiraIssueModalCmp = $state<JiraIssueModalComponent | null>(null);
 
 	onMount(() => {
 		if (testCase.results.length > 0) {

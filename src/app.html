@@ -13,16 +13,14 @@
 			function gtag() {
 				dataLayer.push(arguments);
 			}
+			gtag('js', new Date());
+			gtag('config', 'G-HD0Y375DTY');
 			window.__loadGtag = function () {
 				if (window.__gtagLoaded) return;
 				window.__gtagLoaded = true;
 				var script = document.createElement('script');
 				script.async = true;
 				script.src = 'https://www.googletagmanager.com/gtag/js?id=G-HD0Y375DTY';
-				script.onload = function () {
-					gtag('js', new Date());
-					gtag('config', 'G-HD0Y375DTY');
-				};
 				document.head.appendChild(script);
 			};
 			if ('requestIdleCallback' in window) {

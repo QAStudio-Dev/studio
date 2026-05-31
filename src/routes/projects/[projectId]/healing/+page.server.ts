@@ -1,6 +1,8 @@
+import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { requireAuth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
+import { hasProjectAccess } from '$lib/server/access-control';
 import { Prisma, type AnalysisCategory } from '$prisma/client';
 const CATEGORY_KEYS: AnalysisCategory[] = [
 	'STALE_LOCATOR',
@@ -102,11 +104,15 @@ export const load: PageServerLoad = async (event) => {
 		]);
 
 	if (!project) {
-		return { status: 404, error: 'Project not found' };
+		throw error(404, { message: 'Project not found' });
 	}
 
-	if (!user || (project.createdBy !== userId && project.teamId !== user.teamId)) {
-		return { status: 403, error: 'Access denied' };
+	if (!user) {
+		throw error(401, { message: 'User not found' });
+	}
+
+	if (!hasProjectAccess(project, { id: userId, teamId: user.teamId })) {
+		throw error(403, { message: 'Access denied' });
 	}
 
 	const totalAnalyzed = aggregate._count;

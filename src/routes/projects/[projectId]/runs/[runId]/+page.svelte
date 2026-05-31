@@ -73,10 +73,17 @@
 	let loadingTraceAnalysis = $state<Set<string>>(new Set());
 	let traceAnalysisError = $state<Map<string, string>>(new Map());
 
-	let AttachmentViewerCmp = $state<any>(null);
-	let TestStepsViewerCmp = $state<any>(null);
-	let TestAnalysisDisplayCmp = $state<any>(null);
-	let JiraIssueModalCmp = $state<any>(null);
+	type AttachmentViewerComponent =
+		typeof import('$lib/components/AttachmentViewer.svelte').default;
+	type TestStepsViewerComponent = typeof import('$lib/components/TestStepsViewer.svelte').default;
+	type TestAnalysisDisplayComponent =
+		typeof import('$lib/components/TestAnalysisDisplay.svelte').default;
+	type JiraIssueModalComponent = typeof import('$lib/components/JiraIssueModal.svelte').default;
+
+	let AttachmentViewerCmp = $state<AttachmentViewerComponent | null>(null);
+	let TestStepsViewerCmp = $state<TestStepsViewerComponent | null>(null);
+	let TestAnalysisDisplayCmp = $state<TestAnalysisDisplayComponent | null>(null);
+	let JiraIssueModalCmp = $state<JiraIssueModalComponent | null>(null);
 
 	async function loadHeavyResultComponents() {
 		if (AttachmentViewerCmp && TestStepsViewerCmp && TestAnalysisDisplayCmp) {
@@ -86,7 +93,7 @@
 			import('$lib/components/AttachmentViewer.svelte'),
 			import('$lib/components/TestStepsViewer.svelte'),
 			import('$lib/components/TestAnalysisDisplay.svelte')
-		]);
+		] as const);
 		AttachmentViewerCmp = attachment.default;
 		TestStepsViewerCmp = steps.default;
 		TestAnalysisDisplayCmp = analysis.default;

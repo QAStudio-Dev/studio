@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
+import { testResultStepsInclude } from '$lib/server/test-result-steps-select';
 import type { RequestHandler } from './$types';
 
 // GET /api/cases/[testCaseId]/results - Get paginated results for a test case
@@ -43,20 +44,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
 							createdAt: 'asc'
 						}
 					},
-					steps: {
-						where: { parentStepId: null }, // Only get top-level steps
-						orderBy: { stepNumber: 'asc' },
-						include: {
-							childSteps: {
-								orderBy: { stepNumber: 'asc' },
-								include: {
-									childSteps: {
-										orderBy: { stepNumber: 'asc' }
-									}
-								}
-							}
-						}
-					}
+					steps: testResultStepsInclude
 				}
 			}),
 			db.testResult.count({ where: { testCaseId: params.testCaseId } })

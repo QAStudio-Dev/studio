@@ -34,8 +34,8 @@ Run `npm run build` and inspect `.svelte-kit/output/client/_app/immutable/chunks
 
 ## Suggested success metrics
 
-| Metric | Target direction |
-|--------|------------------|
-| TTFB on `/projects/.../cases` | Lower after slimmer Prisma selects |
-| LCP on `/dashboard` | Lower after SSR (no empty loading shell) |
-| First-load JS | Lower after code-splitting + removed unused deps |
+| Metric                        | Target direction                                 |
+| ----------------------------- | ------------------------------------------------ |
+| TTFB on `/projects/.../cases` | Lower after slimmer Prisma selects               |
+| LCP on `/dashboard`           | Lower after SSR (no empty loading shell)         |
+| First-load JS                 | Lower after code-splitting + removed unused deps |
