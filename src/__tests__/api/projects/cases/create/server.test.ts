@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { z } from 'zod';
-import POST_ENDPOINT, { Input, Output, Param } from '../../../../../api/projects/[...projectId]/cases/POST';
+import POST_ENDPOINT, {
+	Input,
+	Output,
+	Param
+} from '../../../../../api/projects/[...projectId]/cases/POST';
 
 type PostResult = z.infer<typeof Output>;
 
