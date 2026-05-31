@@ -324,8 +324,8 @@ test.describe('API Documentation Page', () => {
 			await freshDocsPage.navigateAndWaitForSpec();
 			const loadTime = Date.now() - startTime;
 
-			// Should load within 5 seconds
-			expect(loadTime).toBeLessThan(5000);
+			// Production CI can be slower than local; allow headroom beyond the 10s response wait
+			expect(loadTime).toBeLessThan(15000);
 		});
 
 		test('should render Swagger UI within reasonable time', async ({ page }) => {

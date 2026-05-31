@@ -106,6 +106,32 @@
 		creatingTestCase = null;
 	}
 
+	function replaceOptimisticTestCase(
+		optimisticId: string,
+		savedTestCase: Record<string, unknown>,
+		targetSuiteId: string | null
+	) {
+		if (targetSuiteId) {
+			const suite = project.testSuites.find((s) => s.id === targetSuiteId);
+			if (suite) {
+				suite.testCases =
+					suite.testCases?.map((tc) =>
+						tc.id === optimisticId ? { ...tc, ...savedTestCase } : tc
+					) || [];
+			} else if (import.meta.env.DEV) {
+				console.warn(
+					`replaceOptimisticTestCase: no suite in project.testSuites for targetSuiteId=${targetSuiteId}, optimisticId=${optimisticId}`
+				);
+			}
+		} else {
+			project.testCases =
+				project.testCases?.map((tc) =>
+					tc.id === optimisticId ? { ...tc, ...savedTestCase } : tc
+				) || [];
+		}
+		project = { ...project };
+	}
+
 	async function handleCreateTestCase(suiteId: string | null, keepOpen = true) {
 		if (!newTestCaseTitle.trim()) return;
 
@@ -165,8 +191,11 @@
 
 			if (!res.ok) throw new Error('Failed to create test case');
 
-			// Refresh data in background to get real IDs
-			invalidateAll();
+			const { testCase: savedTestCase } = await res.json();
+			replaceOptimisticTestCase(optimisticTestCase.id, savedTestCase, suiteId);
+
+			// Refresh data in background for full consistency (order, stats, etc.)
+			void invalidateAll();
 		} catch (err) {
 			console.error(err);
 			// Remove optimistic test case on error

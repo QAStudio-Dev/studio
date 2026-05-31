@@ -183,6 +183,14 @@ export class TestCasesPage extends BasePage {
 			await this.fill(this.newTestCaseDescriptionInput, description);
 		}
 
+		const createCasesPath = `/api/projects/${this.projectId}/cases`;
+		const createResponsePromise = this.page.waitForResponse(
+			(response) =>
+				response.request().method() === 'POST' &&
+				new URL(response.url()).pathname === createCasesPath,
+			{ timeout: 30000 }
+		);
+
 		// Submit the form (either click button or press Enter)
 		if (await this.isVisible(this.createTestCaseSubmitButton)) {
 			await this.click(this.createTestCaseSubmitButton);
@@ -191,6 +199,8 @@ export class TestCasesPage extends BasePage {
 		}
 
 		if (waitForCreation) {
+			const createResponse = await createResponsePromise;
+			expect(createResponse.ok()).toBe(true);
 			await this.waitForTestCasePersisted(title);
 		}
 	}
@@ -198,7 +208,7 @@ export class TestCasesPage extends BasePage {
 	/**
 	 * Wait until the test case exists with a real (non-temporary) server ID
 	 */
-	async waitForTestCasePersisted(title: string, timeout = 20000) {
+	async waitForTestCasePersisted(title: string, timeout = 30000) {
 		await this.waitForTestCase(title);
 
 		const testCaseRow = this.page
