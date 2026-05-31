@@ -44,6 +44,7 @@
 			href="https://github.com/QAStudio-Dev/studio/issues"
 			target="_blank"
 			rel="noopener noreferrer"
+			aria-label="Report issues on GitHub"
 			class="group flex flex-col items-center card p-8 text-center transition-all hover:-translate-y-1 hover:shadow-xl"
 		>
 			<div

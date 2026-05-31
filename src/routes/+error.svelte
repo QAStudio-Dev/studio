@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { Bug, Home, ArrowLeft, AlertTriangle, Frown, ServerCrash } from '@lucide/svelte';
+	import { Bug, Home, ArrowLeft } from '@lucide/svelte';
 
 	let error = $derived(page.error);
 	let status = $derived(page.status);

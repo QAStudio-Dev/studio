@@ -1,30 +1,25 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { z } from 'zod';
-import POST_ENDPOINT, {
-	Input,
-	Output,
-	Param
-} from '../../../../../api/projects/[...projectId]/cases/POST';
+import POST_ENDPOINT, { Input, Param } from '../../../../../api/projects/[...projectId]/cases/POST';
 
-type PostResult = z.infer<typeof Output>;
+const endpointHandler = POST_ENDPOINT.default;
 
-const endpointHandler = (POST_ENDPOINT as any).default as (
-	input: z.infer<typeof Input> & z.infer<typeof Param>,
-	evt: unknown
-) => Promise<PostResult>;
+type CaseCreateInput = Parameters<typeof endpointHandler>[0];
+type CaseCreateResult = Awaited<ReturnType<typeof endpointHandler>>;
 
 /** Mirrors sveltekit-api body + param validation before invoking the route handler. */
 async function POST(event: {
 	request: Request;
 	params: { projectId: string };
-}): Promise<PostResult> {
+}): Promise<CaseCreateResult> {
 	const body = await event.request.json();
 	const param = Param.parse({ projectId: event.params.projectId });
 	const validation = Input.safeParse({ ...body, ...param });
 	if (!validation.success) {
 		throw validation.error;
 	}
-	return endpointHandler({ ...validation.data, ...param }, event);
+	const input = { ...validation.data, ...param } as CaseCreateInput;
+	return endpointHandler(input, event as Parameters<typeof endpointHandler>[1]);
 }
 
 // Mock dependencies before importing the module
