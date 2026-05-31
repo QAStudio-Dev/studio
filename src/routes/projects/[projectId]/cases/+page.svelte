@@ -118,6 +118,10 @@
 					suite.testCases?.map((tc) =>
 						tc.id === optimisticId ? { ...tc, ...savedTestCase } : tc
 					) || [];
+			} else if (import.meta.env.DEV) {
+				console.warn(
+					`replaceOptimisticTestCase: no suite in project.testSuites for targetSuiteId=${targetSuiteId}, optimisticId=${optimisticId}`
+				);
 			}
 		} else {
 			project.testCases =

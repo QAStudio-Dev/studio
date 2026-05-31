@@ -183,11 +183,11 @@ export class TestCasesPage extends BasePage {
 			await this.fill(this.newTestCaseDescriptionInput, description);
 		}
 
+		const createCasesPath = `/api/projects/${this.projectId}/cases`;
 		const createResponsePromise = this.page.waitForResponse(
 			(response) =>
 				response.request().method() === 'POST' &&
-				response.url().includes(`/api/projects/${this.projectId}/cases`) &&
-				!response.url().includes('/cases/'),
+				new URL(response.url()).pathname === createCasesPath,
 			{ timeout: 30000 }
 		);
 
