@@ -21,15 +21,34 @@
 		Bug
 	} from 'lucide-svelte';
 	import { Avatar, Accordion, useAccordion } from '@skeletonlabs/skeleton-svelte';
-	import AttachmentViewer from '$lib/components/AttachmentViewer.svelte';
 	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
-	import JiraIssueModal from '$lib/components/JiraIssueModal.svelte';
-	import TestStepsViewer from '$lib/components/TestStepsViewer.svelte';
+	import { onMount } from 'svelte';
 	import { removeAnsiCodes } from '$lib/utils/error-formatter';
 	import { invalidateAll } from '$app/navigation';
 
 	let { data } = $props();
 	let { testCase } = $derived(data);
+
+	type AttachmentViewerComponent =
+		typeof import('$lib/components/AttachmentViewer.svelte').default;
+	type TestStepsViewerComponent = typeof import('$lib/components/TestStepsViewer.svelte').default;
+	type JiraIssueModalComponent = typeof import('$lib/components/JiraIssueModal.svelte').default;
+
+	let AttachmentViewerCmp = $state<AttachmentViewerComponent | null>(null);
+	let TestStepsViewerCmp = $state<TestStepsViewerComponent | null>(null);
+	let JiraIssueModalCmp = $state<JiraIssueModalComponent | null>(null);
+
+	onMount(() => {
+		if (testCase.results.length > 0) {
+			void Promise.all([
+				import('$lib/components/AttachmentViewer.svelte'),
+				import('$lib/components/TestStepsViewer.svelte')
+			]).then(([attachment, steps]) => {
+				AttachmentViewerCmp = attachment.default;
+				TestStepsViewerCmp = steps.default;
+			});
+		}
+	});
 
 	// Edit mode state
 	let showEditDialog = $state(false);
@@ -118,7 +137,11 @@
 	let jiraModalSummary = $state('');
 	let jiraModalDescription = $state('');
 
-	function openJiraModal() {
+	async function openJiraModal() {
+		if (!JiraIssueModalCmp) {
+			const mod = await import('$lib/components/JiraIssueModal.svelte');
+			JiraIssueModalCmp = mod.default;
+		}
 		jiraModalSummary = `Test Case: ${testCase.title}`;
 		jiraModalDescription = `**Test Case**: ${testCase.title}
 **Project**: ${testCase.project.name} (${testCase.project.key})
@@ -495,9 +518,9 @@ ${testCase.expectedResult || 'See test case for details'}`;
 											{/if}
 
 											<!-- Test Steps -->
-											{#if result.steps && result.steps.length > 0}
+											{#if result.steps && result.steps.length > 0 && TestStepsViewerCmp}
 												<div class="mt-2">
-													<TestStepsViewer
+													<TestStepsViewerCmp
 														steps={result.steps as any}
 														compact={true}
 													/>
@@ -577,11 +600,11 @@ ${testCase.expectedResult || 'See test case for details'}`;
 												</div>
 											{/if}
 
-											{#if result.attachments && result.attachments.length > 0}
+											{#if result.attachments && result.attachments.length > 0 && AttachmentViewerCmp}
 												<div
 													class="border-surface-200-700 mt-2 border-t pt-2"
 												>
-													<AttachmentViewer
+													<AttachmentViewerCmp
 														attachments={result.attachments}
 													/>
 												</div>
@@ -885,10 +908,12 @@ ${testCase.expectedResult || 'See test case for details'}`;
 {/if}
 
 <!-- Jira Issue Modal -->
-<JiraIssueModal
-	bind:open={showJiraModal}
-	onClose={() => (showJiraModal = false)}
-	testCaseId={testCase.id}
-	prefillSummary={jiraModalSummary}
-	prefillDescription={jiraModalDescription}
-/>
+{#if JiraIssueModalCmp}
+	<JiraIssueModalCmp
+		bind:open={showJiraModal}
+		onClose={() => (showJiraModal = false)}
+		testCaseId={testCase.id}
+		prefillSummary={jiraModalSummary}
+		prefillDescription={jiraModalDescription}
+	/>
+{/if}

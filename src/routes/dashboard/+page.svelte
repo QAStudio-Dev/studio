@@ -11,63 +11,36 @@
 		Users,
 		Crown,
 		AlertCircle,
-		Trash2,
-		Loader2
+		Trash2
 	} from 'lucide-svelte';
-	import { Avatar } from '@skeletonlabs/skeleton-svelte';
-	import { onMount } from 'svelte';
+	import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
+	import { invalidateAll } from '$app/navigation';
 
-	// Client-side loading states
-	let loading = $state(true);
-	let user = $state<any>(null);
-	let projects = $state<any[]>([]);
-	let stats = $state<any>({
-		totalProjects: 0,
-		totalTestCases: 0,
-		totalTestRuns: 0,
-		passRate: 0,
-		recentResults: []
-	});
-	let subscription = $state<any>({
-		hasActiveSubscription: false,
-		projectLimit: 1,
-		canCreateProject: false
-	});
+	let { data } = $props();
+
+	let user = $derived(data.user);
+	let projects = $derived(data.projects);
+	let stats = $derived(data.stats);
+	let subscription = $derived(data.subscription);
 
 	let deletingProjectId = $state<string | null>(null);
+	let deleteTarget = $state<{ id: string; name: string } | null>(null);
 
-	// Fetch all dashboard data
-	async function fetchDashboardData() {
-		loading = true;
-		try {
-			const res = await fetch('/api/dashboard/stats');
-			if (!res.ok) throw new Error('Failed to fetch dashboard');
-			const data = await res.json();
-			user = data.user;
-			projects = data.projects;
-			stats = data.stats;
-			subscription = data.subscription;
-		} catch (err) {
-			console.error(err);
-		} finally {
-			loading = false;
-		}
-	}
-
-	onMount(() => {
-		fetchDashboardData();
-	});
-
-	async function handleDeleteProject(event: Event, projectId: string, projectName: string) {
+	function requestDeleteProject(event: Event, projectId: string, projectName: string) {
 		event.preventDefault();
 		event.stopPropagation();
+		deleteTarget = { id: projectId, name: projectName };
+	}
 
-		const confirmed = confirm(
-			`Are you sure you want to delete "${projectName}"?\n\nThis will permanently delete:\n• All test suites\n• All test cases\n• All test runs\n• All test results\n\nThis action cannot be undone.`
-		);
+	function closeDeleteDialog() {
+		deleteTarget = null;
+	}
 
-		if (!confirmed) return;
+	async function confirmDeleteProject() {
+		if (!deleteTarget) return;
 
+		const { id: projectId } = deleteTarget;
+		closeDeleteDialog();
 		deletingProjectId = projectId;
 
 		try {
@@ -80,8 +53,7 @@
 				throw new Error(data.message || 'Failed to delete project');
 			}
 
-			// Refresh the dashboard data
-			await fetchDashboardData();
+			await invalidateAll();
 		} catch (err: any) {
 			alert('Error: ' + err.message);
 		} finally {
@@ -125,11 +97,7 @@
 </script>
 
 <div class="container mx-auto max-w-7xl px-4 py-8" data-testid="dashboard-page">
-	{#if loading}
-		<div class="flex items-center justify-center py-20" data-testid="dashboard-loading">
-			<Loader2 class="h-8 w-8 animate-spin text-primary-500" />
-		</div>
-	{:else if user}
+	{#if user}
 		<!-- Header -->
 		<div class="mb-8" data-testid="dashboard-header">
 			<div class="flex items-start justify-between">
@@ -315,7 +283,7 @@
 									<!-- Delete button -->
 									<button
 										onclick={(e) =>
-											handleDeleteProject(e, project.id, project.name)}
+											requestDeleteProject(e, project.id, project.name)}
 										disabled={deletingProjectId === project.id}
 										class="text-surface-600-300 absolute top-4 right-4 z-10 rounded-container p-2 opacity-0 transition-colors group-hover:opacity-100 hover:bg-error-500/10 hover:text-error-500"
 										title="Delete project"
@@ -469,3 +437,47 @@
 		{/if}
 	{/if}
 </div>
+
+<Dialog
+	open={deleteTarget !== null}
+	onOpenChange={(details) => {
+		if (!details.open) closeDeleteDialog();
+	}}
+>
+	<Portal>
+		<Dialog.Backdrop class="fixed inset-0 z-40 bg-black/50" />
+		<Dialog.Positioner class="fixed inset-0 z-50 flex items-center justify-center p-4">
+			<Dialog.Content
+				class="w-full max-w-md card bg-surface-50-950 p-6 shadow-xl"
+				role="dialog"
+				aria-modal="true"
+				aria-labelledby="delete-project-title"
+			>
+				{#if deleteTarget}
+					<Dialog.Title id="delete-project-title" class="mb-2 text-xl font-bold">
+						Delete "{deleteTarget.name}"?
+					</Dialog.Title>
+					<Dialog.Description class="text-surface-600-300 mb-6 text-sm">
+						This will permanently delete all test suites, test cases, test runs, and
+						test results in this project. This action cannot be undone.
+					</Dialog.Description>
+					<div class="flex justify-end gap-3">
+						<Dialog.CloseTrigger
+							class="btn preset-outlined-surface-500"
+							onclick={closeDeleteDialog}
+						>
+							Cancel
+						</Dialog.CloseTrigger>
+						<button
+							type="button"
+							class="btn preset-filled-error-500"
+							onclick={confirmDeleteProject}
+						>
+							Delete project
+						</button>
+					</div>
+				{/if}
+			</Dialog.Content>
+		</Dialog.Positioner>
+	</Portal>
+</Dialog>

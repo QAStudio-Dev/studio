@@ -190,6 +190,10 @@
 							<img
 								src={post.cover}
 								alt={post.title}
+								width="640"
+								height="360"
+								loading="lazy"
+								decoding="async"
 								class="h-full w-full object-cover transition-transform group-hover:scale-105"
 							/>
 						</div>

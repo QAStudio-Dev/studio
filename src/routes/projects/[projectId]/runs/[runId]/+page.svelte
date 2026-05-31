@@ -29,10 +29,6 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
 	import ErrorDisplay from '$lib/components/ErrorDisplay.svelte';
-	import AttachmentViewer from '$lib/components/AttachmentViewer.svelte';
-	import JiraIssueModal from '$lib/components/JiraIssueModal.svelte';
-	import TestStepsViewer from '$lib/components/TestStepsViewer.svelte';
-	import TestAnalysisDisplay from '$lib/components/TestAnalysisDisplay.svelte';
 	import { isTimeoutError } from '$lib/utils/error-formatter';
 
 	let { data } = $props();
@@ -77,6 +73,32 @@
 	let loadingTraceAnalysis = $state<Set<string>>(new Set());
 	let traceAnalysisError = $state<Map<string, string>>(new Map());
 
+	type AttachmentViewerComponent =
+		typeof import('$lib/components/AttachmentViewer.svelte').default;
+	type TestStepsViewerComponent = typeof import('$lib/components/TestStepsViewer.svelte').default;
+	type TestAnalysisDisplayComponent =
+		typeof import('$lib/components/TestAnalysisDisplay.svelte').default;
+	type JiraIssueModalComponent = typeof import('$lib/components/JiraIssueModal.svelte').default;
+
+	let AttachmentViewerCmp = $state<AttachmentViewerComponent | null>(null);
+	let TestStepsViewerCmp = $state<TestStepsViewerComponent | null>(null);
+	let TestAnalysisDisplayCmp = $state<TestAnalysisDisplayComponent | null>(null);
+	let JiraIssueModalCmp = $state<JiraIssueModalComponent | null>(null);
+
+	async function loadHeavyResultComponents() {
+		if (AttachmentViewerCmp && TestStepsViewerCmp && TestAnalysisDisplayCmp) {
+			return;
+		}
+		const [attachment, steps, analysis] = await Promise.all([
+			import('$lib/components/AttachmentViewer.svelte'),
+			import('$lib/components/TestStepsViewer.svelte'),
+			import('$lib/components/TestAnalysisDisplay.svelte')
+		] as const);
+		AttachmentViewerCmp = attachment.default;
+		TestStepsViewerCmp = steps.default;
+		TestAnalysisDisplayCmp = analysis.default;
+	}
+
 	// Jira integration
 	let showJiraModal = $state(false);
 	let jiraModalTestCaseId = $state<string | undefined>(undefined);
@@ -96,7 +118,11 @@
 	});
 	let isSubmitting = $state(false);
 
-	function openJiraModal(result: any) {
+	async function openJiraModal(result: any) {
+		if (!JiraIssueModalCmp) {
+			const mod = await import('$lib/components/JiraIssueModal.svelte');
+			JiraIssueModalCmp = mod.default;
+		}
 		jiraModalTestCaseId = result.testCase.id;
 		jiraModalTestResultId = result.id;
 		jiraModalSummary = `Test Failure: ${result.testCase.title}`;
@@ -135,6 +161,9 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 			testResults = resultData.testResults;
 			total = resultData.pagination.total;
 			totalPages = resultData.pagination.totalPages;
+			if (testResults.length > 0) {
+				void loadHeavyResultComponents();
+			}
 		} catch (err) {
 			console.error(err);
 			alert('Failed to load test results');
@@ -1045,8 +1074,8 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 																>
 															</div>
 														</div>
-													{:else if traceAnalyses.has(result.id)}
-														<TestAnalysisDisplay
+													{:else if traceAnalyses.has(result.id) && TestAnalysisDisplayCmp}
+														<TestAnalysisDisplayCmp
 															analysis={traceAnalyses.get(result.id)}
 															cached={traceAnalyses.get(result.id)
 																?.cached}
@@ -1070,8 +1099,8 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 												/>
 
 												<!-- Test Steps (shown for all tests) -->
-												{#if result.steps && result.steps.length > 0}
-													<TestStepsViewer
+												{#if result.steps && result.steps.length > 0 && TestStepsViewerCmp}
+													<TestStepsViewerCmp
 														steps={result.steps}
 														isTimeout={isTimeoutError(
 															result.errorMessage
@@ -1080,12 +1109,12 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 												{/if}
 
 												<!-- Attachments (shown for all tests) -->
-												{#if result.attachments && result.attachments.length > 0}
+												{#if result.attachments && result.attachments.length > 0 && AttachmentViewerCmp}
 													<div>
 														<h4 class="mb-2 text-sm font-semibold">
 															Attachments
 														</h4>
-														<AttachmentViewer
+														<AttachmentViewerCmp
 															attachments={result.attachments}
 														/>
 													</div>
@@ -1209,14 +1238,16 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 </div>
 
 <!-- Jira Issue Modal -->
-<JiraIssueModal
-	bind:open={showJiraModal}
-	onClose={() => (showJiraModal = false)}
-	testCaseId={jiraModalTestCaseId}
-	testResultId={jiraModalTestResultId}
-	prefillSummary={jiraModalSummary}
-	prefillDescription={jiraModalDescription}
-/>
+{#if JiraIssueModalCmp}
+	<JiraIssueModalCmp
+		bind:open={showJiraModal}
+		onClose={() => (showJiraModal = false)}
+		testCaseId={jiraModalTestCaseId}
+		testResultId={jiraModalTestResultId}
+		prefillSummary={jiraModalSummary}
+		prefillDescription={jiraModalDescription}
+	/>
+{/if}
 
 <!-- Edit Test Run Modal -->
 {#if showEditModal}

@@ -2,7 +2,7 @@
 	import { Plus, Key, Copy, Trash2, Clock, QrCode, KeyRound } from 'lucide-svelte';
 	import { onMount, onDestroy } from 'svelte';
 	import type { PageData } from './$types';
-	import { Html5Qrcode } from 'html5-qrcode';
+	import type { Html5Qrcode as Html5QrcodeType } from 'html5-qrcode';
 	import { parseOTPAuthURL, isValidBase32Secret } from '$lib/utils/otpauth-parser';
 	import { invalidateAll } from '$app/navigation';
 	import { getCsrfToken } from '$lib/utils/csrf';
@@ -15,9 +15,10 @@
 	let intervalId: number | null = null;
 
 	// QR Scanner state
-	let qrScanner: Html5Qrcode | null = null;
+	let qrScanner: Html5QrcodeType | null = null;
 	let scannerStarted = $state(false);
 	let scanError = $state<string | null>(null);
+	let qrScannerStartId = 0;
 
 	// Form state (shared between manual and QR)
 	let formData = $state({
@@ -124,13 +125,40 @@
 	}
 
 	// Start QR scanner
+	function isQrScannerContextActive() {
+		return showAddModal && activeTab === 'qr';
+	}
+
 	async function startQRScanner() {
+		const startId = ++qrScannerStartId;
 		try {
 			scanError = null;
+			const { Html5Qrcode } = await import('html5-qrcode');
+
+			if (startId !== qrScannerStartId || !isQrScannerContextActive()) {
+				return;
+			}
+
 			qrScanner = new Html5Qrcode('qr-reader');
 
-			await qrScanner.start(
-				{ facingMode: 'environment' }, // Use back camera
+			if (startId !== qrScannerStartId || !isQrScannerContextActive()) {
+				const staleScanner = qrScanner;
+				qrScanner = null;
+				if (staleScanner) {
+					try {
+						await staleScanner.stop();
+						await staleScanner.clear();
+					} catch {
+						// Scanner may not have started yet
+					}
+				}
+				return;
+			}
+
+			const activeScanner = qrScanner;
+
+			await activeScanner.start(
+				{ facingMode: 'environment' },
 				{
 					fps: 10,
 					qrbox: { width: 250, height: 250 }
@@ -139,8 +167,16 @@
 				onScanError
 			);
 
+			if (startId !== qrScannerStartId || !isQrScannerContextActive()) {
+				await stopQRScanner();
+				return;
+			}
+
 			scannerStarted = true;
 		} catch (err) {
+			if (startId !== qrScannerStartId) {
+				return;
+			}
 			scanError = 'Failed to start camera. Please check camera permissions.';
 			console.error('QR Scanner error:', err);
 		}
@@ -148,14 +184,20 @@
 
 	// Stop QR scanner
 	async function stopQRScanner() {
-		if (qrScanner && scannerStarted) {
-			try {
-				await qrScanner.stop();
-				await qrScanner.clear();
-				scannerStarted = false;
-			} catch (err) {
-				console.error('Failed to stop scanner:', err);
-			}
+		qrScannerStartId++;
+		const localScanner = qrScanner;
+		scannerStarted = false;
+		qrScanner = null;
+
+		if (!localScanner) {
+			return;
+		}
+
+		try {
+			await localScanner.stop();
+			await localScanner.clear();
+		} catch (err) {
+			console.error('Failed to stop scanner:', err);
 		}
 	}
 
@@ -220,6 +262,22 @@
 		return () => {
 			stopQRScanner();
 		};
+	});
+
+	// Close modal on Escape while open
+	$effect(() => {
+		if (!showAddModal) {
+			return;
+		}
+
+		const onKeyDown = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') {
+				closeModal();
+			}
+		};
+
+		window.addEventListener('keydown', onKeyDown);
+		return () => window.removeEventListener('keydown', onKeyDown);
 	});
 
 	onMount(() => {
@@ -377,14 +435,25 @@
 {#if showAddModal}
 	<div
 		class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md"
+		role="presentation"
+		tabindex="-1"
 		onclick={(e) => {
 			if (e.target === e.currentTarget) closeModal();
+		}}
+		onkeydown={(e) => {
+			if (e.key === 'Escape' && e.target === e.currentTarget) {
+				e.preventDefault();
+				closeModal();
+			}
 		}}
 	>
 		<div
 			class="w-full max-w-2xl space-y-4 rounded-container border-2 border-surface-300 bg-white p-6 shadow-2xl dark:border-surface-700 dark:bg-surface-900"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="add-authenticator-title"
 		>
-			<h2 class="text-2xl font-bold">Add Authenticator Token</h2>
+			<h2 id="add-authenticator-title" class="text-2xl font-bold">Add Authenticator Token</h2>
 
 			<!-- Tab Switcher -->
 			<div class="flex gap-2 border-b border-surface-300 dark:border-surface-700">

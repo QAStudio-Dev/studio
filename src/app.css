@@ -1,5 +1,5 @@
 @import 'tailwindcss';
-@import '@fontsource/fira-mono';
+@import '@fontsource/fira-mono/400.css';
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
 

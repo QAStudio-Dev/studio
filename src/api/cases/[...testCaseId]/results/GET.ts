@@ -2,6 +2,7 @@ import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
 import { serializeDates } from '$lib/utils/date';
+import { testResultStepsInclude } from '$lib/server/test-result-steps-select';
 
 export const Param = z.object({
 	testCaseId: z.string().describe('Test case ID')
@@ -150,20 +151,7 @@ export default new Endpoint({ Param, Query, Output, Modifier }).handle(
 							createdAt: 'asc'
 						}
 					},
-					steps: {
-						where: { parentStepId: null }, // Only get top-level steps
-						orderBy: { stepNumber: 'asc' },
-						include: {
-							childSteps: {
-								orderBy: { stepNumber: 'asc' },
-								include: {
-									childSteps: {
-										orderBy: { stepNumber: 'asc' }
-									}
-								}
-							}
-						}
-					}
+					steps: testResultStepsInclude
 				}
 			}),
 			db.testResult.count({ where: { testCaseId } })

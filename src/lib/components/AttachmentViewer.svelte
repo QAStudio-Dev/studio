@@ -8,8 +8,6 @@
 		Image as ImageIcon
 	} from 'lucide-svelte';
 	import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
-	import { marked } from 'marked';
-	import { onMount } from 'svelte';
 
 	interface Props {
 		attachments: Array<{
@@ -28,14 +26,6 @@
 	let loadingMarkdown = $state<Record<string, boolean>>({});
 	let traceSignedUrls = $state<Record<string, string>>({});
 	let loadingTraceUrl = $state<Record<string, boolean>>({});
-
-	// Configure marked for safe HTML rendering
-	onMount(() => {
-		marked.setOptions({
-			breaks: true,
-			gfm: true
-		});
-	});
 
 	// Load content when modal is opened for markdown or trace files
 	$effect(() => {
@@ -117,7 +107,12 @@
 			const response = await fetch(`/api/attachments/${attachmentId}`);
 			if (response.ok) {
 				const text = await response.text();
-				markdownContents[attachmentId] = text;
+				const { marked } = await import('marked');
+				marked.setOptions({
+					breaks: true,
+					gfm: true
+				});
+				markdownContents[attachmentId] = marked.parse(text) as string;
 			}
 		} catch (error) {
 			console.error('Failed to load markdown:', error);
@@ -264,6 +259,8 @@
 										<img
 											src="/api/attachments/{attachment.id}"
 											alt={attachment.originalName}
+											loading="lazy"
+											decoding="async"
 											class="max-h-full max-w-full object-contain"
 										/>
 									{:else if isVideo(attachment.mimeType)}
@@ -324,9 +321,7 @@
 												<div
 													class="prose prose-sm max-w-none dark:prose-invert"
 												>
-													{@html marked.parse(
-														markdownContents[attachment.id]
-													)}
+													{@html markdownContents[attachment.id]}
 												</div>
 											{/if}
 										</div>

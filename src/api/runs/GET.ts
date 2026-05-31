@@ -196,37 +196,39 @@ export default new Endpoint({ Query, Output, Modifier }).handle(
 			}
 		});
 
-		// Calculate statistics for each test run
-		const testRunsWithStats = await Promise.all(
-			testRuns.map(async (testRun) => {
-				const stats = await db.testResult.groupBy({
-					by: ['status'],
-					where: { testRunId: testRun.id },
-					_count: true
-				});
+		const runIds = testRuns.map((run) => run.id);
+		const statusRows =
+			runIds.length > 0
+				? await db.testResult.groupBy({
+						by: ['testRunId', 'status'],
+						where: { testRunId: { in: runIds } },
+						_count: true
+					})
+				: [];
 
-				const statusCounts = stats.reduce(
-					(acc, stat) => {
-						acc[stat.status] = stat._count;
-						return acc;
-					},
-					{} as Record<string, number>
-				);
+		const statusByRun = new Map<string, Record<string, number>>();
+		for (const row of statusRows) {
+			const counts = statusByRun.get(row.testRunId) ?? {};
+			counts[row.status] = row._count;
+			statusByRun.set(row.testRunId, counts);
+		}
 
-				return {
-					...testRun,
-					stats: {
-						total: testRun._count.results,
-						passed: statusCounts.PASSED || 0,
-						failed: statusCounts.FAILED || 0,
-						blocked: statusCounts.BLOCKED || 0,
-						skipped: statusCounts.SKIPPED || 0,
-						retest: statusCounts.RETEST || 0,
-						untested: statusCounts.UNTESTED || 0
-					}
-				};
-			})
-		);
+		const testRunsWithStats = testRuns.map((testRun) => {
+			const statusCounts = statusByRun.get(testRun.id) ?? {};
+
+			return {
+				...testRun,
+				stats: {
+					total: testRun._count.results,
+					passed: statusCounts.PASSED || 0,
+					failed: statusCounts.FAILED || 0,
+					blocked: statusCounts.BLOCKED || 0,
+					skipped: statusCounts.SKIPPED || 0,
+					retest: statusCounts.RETEST || 0,
+					untested: statusCounts.UNTESTED || 0
+				}
+			};
+		});
 
 		return serializeDates({
 			testRuns: testRunsWithStats,

@@ -1,134 +1,168 @@
+import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { requireAuth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
-import type { AnalysisCategory } from '$prisma/client';
+import { hasProjectAccess } from '$lib/server/access-control';
+import { Prisma, type AnalysisCategory } from '$prisma/client';
+const CATEGORY_KEYS: AnalysisCategory[] = [
+	'STALE_LOCATOR',
+	'TIMING_ISSUE',
+	'NETWORK_ERROR',
+	'ASSERTION_FAILURE',
+	'DATA_ISSUE',
+	'ENVIRONMENT_ISSUE',
+	'CONFIGURATION_ERROR',
+	'OTHER'
+];
 
 export const load: PageServerLoad = async (event) => {
 	const userId = await requireAuth(event);
 	const projectId = event.params.projectId;
 
-	// Verify user has access to this project
-	const project = await db.project.findUnique({
-		where: { id: projectId },
-		include: {
-			team: true
-		}
-	});
-
-	if (!project) {
-		return { status: 404, error: 'Project not found' };
-	}
-
-	// Get user's team
-	const user = await db.user.findUnique({
-		where: { id: userId },
-		select: { teamId: true }
-	});
-
-	if (!user || (project.createdBy !== userId && project.team?.id !== user.teamId)) {
-		return { status: 403, error: 'Access denied' };
-	}
-
-	// Get all analyses for this project
-	const analyses = await db.testResultAnalysis.findMany({
-		where: {
-			testResult: {
-				testCase: {
-					projectId
+	const [project, user, aggregate, categoryStats, recentAnalyses, problematicRows] =
+		await Promise.all([
+			db.project.findUnique({
+				where: { id: projectId },
+				select: {
+					id: true,
+					name: true,
+					key: true,
+					createdBy: true,
+					teamId: true
 				}
-			}
-		},
-		include: {
-			testResult: {
-				include: {
-					testCase: {
+			}),
+			db.user.findUnique({
+				where: { id: userId },
+				select: { teamId: true }
+			}),
+			db.testResultAnalysis.aggregate({
+				where: {
+					testResult: {
+						testCase: { projectId }
+					}
+				},
+				_count: true,
+				_avg: { confidence: true }
+			}),
+			db.testResultAnalysis.groupBy({
+				by: ['category'],
+				where: {
+					testResult: {
+						testCase: { projectId }
+					}
+				},
+				_count: true
+			}),
+			db.testResultAnalysis.findMany({
+				where: {
+					testResult: {
+						testCase: { projectId }
+					}
+				},
+				select: {
+					id: true,
+					category: true,
+					confidence: true,
+					rootCause: true,
+					analyzedAt: true,
+					wasFixed: true,
+					testResult: {
 						select: {
-							id: true,
-							title: true
-						}
-					},
-					testRun: {
-						select: {
-							id: true,
-							name: true
+							testCase: {
+								select: { id: true, title: true }
+							},
+							testRun: {
+								select: { id: true, name: true }
+							}
 						}
 					}
+				},
+				orderBy: { analyzedAt: 'desc' },
+				take: 10
+			}),
+			db.$queryRaw<
+				Array<{
+					testCaseId: string;
+					title: string;
+					failureCount: bigint;
+					avgConfidence: number | null;
+				}>
+			>`
+				SELECT
+					tc.id AS "testCaseId",
+					tc.title,
+					COUNT(*)::bigint AS "failureCount",
+					AVG(tra.confidence)::float AS "avgConfidence"
+				FROM "TestResultAnalysis" tra
+				INNER JOIN "TestResult" tr ON tr.id = tra."testResultId"
+				INNER JOIN "TestCase" tc ON tc.id = tr."testCaseId"
+				WHERE tc."projectId" = ${projectId}
+				GROUP BY tc.id, tc.title
+				ORDER BY "failureCount" DESC
+				LIMIT 10
+			`
+		]);
+
+	if (!project) {
+		throw error(404, { message: 'Project not found' });
+	}
+
+	if (!user) {
+		throw error(401, { message: 'User not found' });
+	}
+
+	if (!hasProjectAccess(project, { id: userId, teamId: user.teamId })) {
+		throw error(403, { message: 'Access denied' });
+	}
+
+	const totalAnalyzed = aggregate._count;
+	const avgConfidence = aggregate._avg.confidence ?? 0;
+
+	const categoryBreakdown = CATEGORY_KEYS.reduce(
+		(acc, key) => {
+			acc[key] = 0;
+			return acc;
+		},
+		{} as Record<AnalysisCategory, number>
+	);
+
+	for (const row of categoryStats) {
+		categoryBreakdown[row.category] = row._count;
+	}
+
+	const [fixesApplied, categoryRows] = await Promise.all([
+		db.testResultAnalysis.count({
+			where: {
+				wasFixed: true,
+				testResult: {
+					testCase: { projectId }
 				}
 			}
-		},
-		orderBy: {
-			analyzedAt: 'desc'
+		}),
+		problematicRows.length > 0
+			? db.$queryRaw<Array<{ testCaseId: string; category: AnalysisCategory }>>`
+					SELECT DISTINCT tr."testCaseId", tra.category
+					FROM "TestResultAnalysis" tra
+					INNER JOIN "TestResult" tr ON tr.id = tra."testResultId"
+					WHERE tr."testCaseId" IN (${Prisma.join(problematicRows.map((row) => row.testCaseId))})
+				`
+			: Promise.resolve([])
+	]);
+
+	const categoriesByTestCase = new Map<string, AnalysisCategory[]>();
+	for (const row of categoryRows) {
+		const existing = categoriesByTestCase.get(row.testCaseId) ?? [];
+		if (!existing.includes(row.category)) {
+			existing.push(row.category);
 		}
-	});
+		categoriesByTestCase.set(row.testCaseId, existing);
+	}
 
-	// Calculate statistics
-	const totalAnalyzed = analyses.length;
-
-	// Category breakdown
-	const categoryBreakdown: Record<AnalysisCategory, number> = {
-		STALE_LOCATOR: 0,
-		TIMING_ISSUE: 0,
-		NETWORK_ERROR: 0,
-		ASSERTION_FAILURE: 0,
-		DATA_ISSUE: 0,
-		ENVIRONMENT_ISSUE: 0,
-		CONFIGURATION_ERROR: 0,
-		OTHER: 0
-	};
-
-	analyses.forEach((analysis) => {
-		categoryBreakdown[analysis.category]++;
-	});
-
-	// Average confidence
-	const avgConfidence =
-		analyses.length > 0
-			? analyses.reduce((sum, a) => sum + a.confidence, 0) / analyses.length
-			: 0;
-
-	// Most problematic tests (tests with most failures analyzed)
-	const testFailureCounts = new Map<string, { count: number; testCase: any; analyses: any[] }>();
-
-	analyses.forEach((analysis) => {
-		const testCaseId = analysis.testResult.testCase.id;
-		const existing = testFailureCounts.get(testCaseId);
-
-		if (existing) {
-			existing.count++;
-			existing.analyses.push(analysis);
-		} else {
-			testFailureCounts.set(testCaseId, {
-				count: 1,
-				testCase: analysis.testResult.testCase,
-				analyses: [analysis]
-			});
-		}
-	});
-
-	const mostProblematicTests = Array.from(testFailureCounts.values())
-		.sort((a, b) => b.count - a.count)
-		.slice(0, 10)
-		.map((item) => ({
-			testCase: item.testCase,
-			failureCount: item.count,
-			categories: item.analyses.map((a) => a.category),
-			avgConfidence:
-				item.analyses.reduce((sum, a) => sum + a.confidence, 0) / item.analyses.length
-		}));
-
-	// Fixes applied count
-	const fixesApplied = analyses.filter((a) => a.wasFixed).length;
-
-	// Recent analyses (last 10)
-	const recentAnalyses = analyses.slice(0, 10).map((analysis) => ({
-		id: analysis.id,
-		testCase: analysis.testResult.testCase,
-		testRun: analysis.testResult.testRun,
-		category: analysis.category,
-		confidence: analysis.confidence,
-		rootCause: analysis.rootCause,
-		analyzedAt: analysis.analyzedAt,
-		wasFixed: analysis.wasFixed
+	const mostProblematicTests = problematicRows.map((row) => ({
+		testCase: { id: row.testCaseId, title: row.title },
+		failureCount: Number(row.failureCount),
+		categories: categoriesByTestCase.get(row.testCaseId) ?? [],
+		avgConfidence: row.avgConfidence ?? 0
 	}));
 
 	return {
@@ -139,7 +173,16 @@ export const load: PageServerLoad = async (event) => {
 			avgConfidence,
 			mostProblematicTests,
 			fixesApplied,
-			recentAnalyses
+			recentAnalyses: recentAnalyses.map((analysis) => ({
+				id: analysis.id,
+				testCase: analysis.testResult.testCase,
+				testRun: analysis.testResult.testRun,
+				category: analysis.category,
+				confidence: analysis.confidence,
+				rootCause: analysis.rootCause,
+				analyzedAt: analysis.analyzedAt,
+				wasFixed: analysis.wasFixed
+			}))
 		}
 	};
 };
