@@ -71,7 +71,7 @@
 
 <!-- Hero Section with Animated Background -->
 <div
-	class="relative min-h-[90vh] overflow-hidden bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-600"
+	class="relative min-h-[min(90vh,52rem)] overflow-hidden bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-600 2xl:min-h-[min(72vh,44rem)]"
 >
 	<!-- Animated Background Grid -->
 	<div class="absolute inset-0 opacity-20">
@@ -84,19 +84,19 @@
 	<!-- Floating Shapes -->
 	<div class="absolute inset-0 overflow-hidden">
 		<div
-			class="animate-float absolute top-20 left-1/4 h-64 w-64 rounded-full bg-white/5 blur-3xl"
+			class="animate-float absolute top-20 left-1/4 h-48 w-48 rounded-full bg-white/5 blur-3xl md:h-64 md:w-64 2xl:h-56 2xl:w-56"
 		></div>
 		<div
-			class="animate-float-delayed absolute right-1/4 bottom-20 h-96 w-96 rounded-full bg-white/5 blur-3xl"
+			class="animate-float-delayed absolute right-1/4 bottom-20 h-64 w-64 rounded-full bg-white/5 blur-3xl md:h-80 md:w-80 2xl:h-72 2xl:w-72"
 		></div>
 		<div
-			class="animate-float-slow absolute top-1/2 left-1/2 h-80 w-80 rounded-full bg-white/5 blur-3xl"
+			class="animate-float-slow absolute top-1/2 left-1/2 h-56 w-56 rounded-full bg-white/5 blur-3xl md:h-80 md:w-80 2xl:h-64 2xl:w-64"
 		></div>
 	</div>
 
 	<!-- Hero Content -->
-	<div class="relative z-10 container mx-auto px-4 py-20 lg:py-32">
-		<div class="mx-auto max-w-5xl text-center">
+	<div class="relative z-10 container mx-auto px-4 py-16 sm:py-20 lg:py-24 2xl:py-20">
+		<div class="mx-auto max-w-4xl text-center 2xl:max-w-3xl">
 			<!-- Badge with Animation -->
 			<div
 				class="mb-8 inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-2 backdrop-blur-sm transition-all hover:bg-white/20 {mounted
@@ -121,7 +121,7 @@
 
 			<!-- Main Headline with Gradient -->
 			<h1
-				class="mb-6 text-6xl leading-tight font-black text-white lg:text-7xl xl:text-8xl {mounted
+				class="mb-6 text-4xl leading-tight font-black text-white sm:text-5xl md:text-6xl lg:text-7xl {mounted
 					? 'animate-fade-in-up'
 					: 'opacity-0'}"
 			>
@@ -134,7 +134,7 @@
 
 			<!-- Subheading -->
 			<p
-				class="mb-12 text-xl leading-relaxed text-white/90 lg:text-2xl {mounted
+				class="mb-10 text-lg leading-relaxed text-white/90 sm:text-xl lg:mb-12 {mounted
 					? 'animate-fade-in-up animation-delay-100'
 					: 'opacity-0'}"
 			>
@@ -145,7 +145,7 @@
 
 			<!-- CTA Buttons -->
 			<div
-				class="mb-16 flex flex-col items-center justify-center gap-4 sm:flex-row {mounted
+				class="mb-12 flex flex-col items-center justify-center gap-4 sm:mb-14 sm:flex-row lg:mb-16 {mounted
 					? 'animate-fade-in-up animation-delay-200'
 					: 'opacity-0'}"
 			>
@@ -211,12 +211,14 @@
 </div>
 
 <!-- Stats Section -->
-<div class="bg-surface-50 py-16 dark:bg-surface-950">
+<div class="bg-surface-50 py-12 lg:py-16 dark:bg-surface-950">
 	<div class="container mx-auto px-4">
-		<div class="mx-auto grid max-w-4xl grid-cols-2 gap-8 md:grid-cols-4">
+		<div class="mx-auto grid max-w-4xl grid-cols-2 gap-6 md:grid-cols-4 md:gap-8">
 			{#each [{ value: '<5min', label: 'Setup Time' }, { value: '1 Free', label: 'Project' }, { value: '100%', label: 'Open Source' }, { value: 'AI', label: 'Diagnostics' }] as stat}
 				<div class="text-center">
-					<div class="mb-2 text-4xl font-black text-primary-600 dark:text-primary-400">
+					<div
+						class="mb-2 text-3xl font-black text-primary-600 sm:text-4xl dark:text-primary-400"
+					>
 						{stat.value}
 					</div>
 					<div class="text-sm font-medium text-surface-600 dark:text-surface-400">
@@ -229,9 +231,9 @@
 </div>
 
 <!-- Features Section with Bento Grid -->
-<div class="container mx-auto px-4 py-20">
-	<div class="mb-16 text-center">
-		<h2 class="mb-4 text-4xl font-black lg:text-5xl">
+<div class="container mx-auto px-4 py-16 lg:py-20">
+	<div class="mb-12 text-center lg:mb-16">
+		<h2 class="mb-4 text-3xl font-black sm:text-4xl lg:text-5xl">
 			Everything You Need.<br /><span class="text-primary-600 dark:text-primary-400"
 				>Nothing You Don't.</span
 			>
@@ -530,7 +532,7 @@
 
 <!-- Social Proof / Why Choose -->
 <div
-	class="bg-gradient-to-br from-primary-50 to-secondary-50 py-20 dark:from-surface-900 dark:to-surface-950"
+	class="bg-gradient-to-br from-primary-50 to-secondary-50 py-16 lg:py-20 dark:from-surface-900 dark:to-surface-950"
 >
 	<div class="container mx-auto px-4">
 		<div class="mx-auto max-w-4xl text-center">
@@ -554,18 +556,20 @@
 </div>
 
 <!-- Final CTA -->
-<div class="container mx-auto px-4 py-20">
+<div class="container mx-auto px-4 py-16 lg:py-20">
 	<div class="mx-auto max-w-4xl overflow-hidden card border-2 border-primary-500/20">
 		<div
-			class="relative bg-gradient-to-br from-primary-500 to-secondary-600 p-12 text-center text-white"
+			class="relative bg-gradient-to-br from-primary-500 to-secondary-600 p-8 text-center text-white sm:p-10 lg:p-12"
 		>
 			<div
 				class="absolute inset-0 opacity-10"
 				style="background-image: linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px); background-size: 30px 30px;"
 			></div>
 			<div class="relative">
-				<h2 class="mb-4 text-4xl font-black">Ready to Ship Quality Software?</h2>
-				<p class="mb-8 text-xl text-white/90">
+				<h2 class="mb-4 text-3xl font-black sm:text-4xl">
+					Ready to Ship Quality Software?
+				</h2>
+				<p class="mb-8 text-lg text-white/90 sm:text-xl">
 					Join QA teams who stopped wasting time on complex tools and started shipping.
 				</p>
 				<div class="flex flex-col justify-center gap-4 sm:flex-row">
@@ -589,10 +593,10 @@
 
 <!-- Latest Blog Posts Section -->
 {#if posts && posts.length > 0}
-	<div class="container mx-auto max-w-6xl px-4 py-20">
+	<div class="container mx-auto max-w-6xl px-4 py-16 lg:py-20">
 		<div class="mb-12 flex items-end justify-between">
 			<div>
-				<h2 class="mb-2 text-4xl font-black">Latest from the Blog</h2>
+				<h2 class="mb-2 text-3xl font-black sm:text-4xl">Latest from the Blog</h2>
 				<p class="text-lg text-surface-600-400">
 					Insights, guides, and updates from the QA Studio team
 				</p>
