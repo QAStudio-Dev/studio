@@ -53,7 +53,7 @@ export async function loadDashboardData(userId: string) {
 			subscription: {
 				hasActiveSubscription: hasSubscription,
 				projectLimit,
-				canCreateProject: projectLimit === null
+				canCreateProject: projectLimit === null || projects.length < projectLimit
 			}
 		};
 	}

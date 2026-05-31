@@ -142,11 +142,22 @@
 			qrScanner = new Html5Qrcode('qr-reader');
 
 			if (startId !== qrScannerStartId || !isQrScannerContextActive()) {
+				const staleScanner = qrScanner;
 				qrScanner = null;
+				if (staleScanner) {
+					try {
+						await staleScanner.stop();
+						await staleScanner.clear();
+					} catch {
+						// Scanner may not have started yet
+					}
+				}
 				return;
 			}
 
-			await qrScanner.start(
+			const activeScanner = qrScanner;
+
+			await activeScanner.start(
 				{ facingMode: 'environment' },
 				{
 					fps: 10,
@@ -174,16 +185,20 @@
 	// Stop QR scanner
 	async function stopQRScanner() {
 		qrScannerStartId++;
-		if (qrScanner && scannerStarted) {
-			try {
-				await qrScanner.stop();
-				await qrScanner.clear();
-			} catch (err) {
-				console.error('Failed to stop scanner:', err);
-			}
-		}
+		const localScanner = qrScanner;
 		scannerStarted = false;
 		qrScanner = null;
+
+		if (!localScanner) {
+			return;
+		}
+
+		try {
+			await localScanner.stop();
+			await localScanner.clear();
+		} catch (err) {
+			console.error('Failed to stop scanner:', err);
+		}
 	}
 
 	// Handle successful QR scan
@@ -247,6 +262,22 @@
 		return () => {
 			stopQRScanner();
 		};
+	});
+
+	// Close modal on Escape while open
+	$effect(() => {
+		if (!showAddModal) {
+			return;
+		}
+
+		const onKeyDown = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') {
+				closeModal();
+			}
+		};
+
+		window.addEventListener('keydown', onKeyDown);
+		return () => window.removeEventListener('keydown', onKeyDown);
 	});
 
 	onMount(() => {
@@ -404,14 +435,27 @@
 {#if showAddModal}
 	<div
 		class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md"
+		role="presentation"
+		tabindex="-1"
 		onclick={(e) => {
 			if (e.target === e.currentTarget) closeModal();
+		}}
+		onkeydown={(e) => {
+			if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+				if (e.target === e.currentTarget) {
+					e.preventDefault();
+					closeModal();
+				}
+			}
 		}}
 	>
 		<div
 			class="w-full max-w-2xl space-y-4 rounded-container border-2 border-surface-300 bg-white p-6 shadow-2xl dark:border-surface-700 dark:bg-surface-900"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="add-authenticator-title"
 		>
-			<h2 class="text-2xl font-bold">Add Authenticator Token</h2>
+			<h2 id="add-authenticator-title" class="text-2xl font-bold">Add Authenticator Token</h2>
 
 			<!-- Tab Switcher -->
 			<div class="flex gap-2 border-b border-surface-300 dark:border-surface-700">
