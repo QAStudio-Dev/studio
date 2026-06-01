@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Calendar, ArrowRight } from 'lucide-svelte';
+	import { Calendar, ArrowRight } from '@lucide/svelte';
 
 	let { data } = $props();
 	let { posts } = $derived(data);

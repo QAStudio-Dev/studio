@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Check, X, ArrowRight, Zap, Shield, Code, Download } from 'lucide-svelte';
+	import { Check, X, ArrowRight, Zap, Shield, Code, Download } from '@lucide/svelte';
 </script>
 
 <svelte:head>

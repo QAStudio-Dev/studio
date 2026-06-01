@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { UserCheck, Users, Shield, AlertCircle, CheckCircle, LogIn } from 'lucide-svelte';
+	import { UserCheck, Users, Shield, AlertCircle, CheckCircle, LogIn } from '@lucide/svelte';
 	import { Avatar } from '@skeletonlabs/skeleton-svelte';
 
 	let { data } = $props();

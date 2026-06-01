@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Plus, FolderOpen, TestTube2, PlayCircle, Users, Trash2 } from 'lucide-svelte';
+	import { Plus, FolderOpen, TestTube2, PlayCircle, Users, Trash2 } from '@lucide/svelte';
 	import { invalidateAll } from '$app/navigation';
 
 	let { data } = $props();

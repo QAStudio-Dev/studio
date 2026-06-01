@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { AlertCircle, ChevronDown, ChevronUp, Copy, Check, Clock } from 'lucide-svelte';
+	import { AlertCircle, ChevronDown, ChevronUp, Copy, Check, Clock } from '@lucide/svelte';
 	import {
 		cleanErrorMessage,
 		cleanStackTrace,

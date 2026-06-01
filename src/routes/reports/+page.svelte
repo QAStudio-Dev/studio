@@ -10,7 +10,7 @@
 		Loader2,
 		Calendar,
 		BarChart3
-	} from 'lucide-svelte';
+	} from '@lucide/svelte';
 	import { onMount } from 'svelte';
 	import type { PageData } from './$types';
 

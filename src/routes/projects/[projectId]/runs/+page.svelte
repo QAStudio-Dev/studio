@@ -11,7 +11,7 @@
 		ChevronLeft,
 		ChevronRight,
 		Loader2
-	} from 'lucide-svelte';
+	} from '@lucide/svelte';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page as pageStore } from '$app/stores';

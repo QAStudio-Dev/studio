@@ -6,7 +6,7 @@
 		FileArchive,
 		File,
 		Image as ImageIcon
-	} from 'lucide-svelte';
+	} from '@lucide/svelte';
 	import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
 
 	interface Props {
@@ -164,14 +164,14 @@
 
 					<div class="flex-1 space-y-3 overflow-y-auto">
 						{#each attachments as attachment}
+							{@const AttachmentIcon = getAttachmentIcon(attachment.mimeType)}
 							<div class="card bg-surface-50-950 p-4">
 								<div class="flex items-start justify-between gap-3">
 									<div class="flex min-w-0 flex-1 items-center gap-3">
 										<div class="text-surface-600-300">
-											<svelte:component
-												this={getAttachmentIcon(attachment.mimeType)}
-												class="h-5 w-5"
-											/>
+											{#if AttachmentIcon}
+												<AttachmentIcon class="h-5 w-5" />
+											{/if}
 										</div>
 										<div class="min-w-0 flex-1">
 											<div

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { Building2, Users, Mail, Phone, Calendar, Shield } from 'lucide-svelte';
 	import { enhance } from '$app/forms';
 	import { onMount } from 'svelte';
 	import { TeamPlan, type TeamPlanType } from '$lib/types/team';

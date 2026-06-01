@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ChevronDown, FolderOpen, Check, X } from 'lucide-svelte';
+	import { ChevronDown, FolderOpen, Check, X } from '@lucide/svelte';
 	import {
 		selectedProject,
 		setSelectedProject,

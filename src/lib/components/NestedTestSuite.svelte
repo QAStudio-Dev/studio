@@ -1,5 +1,11 @@
 <script lang="ts">
-	import { ChevronRight, ChevronDown, FolderOpen, FolderPlus, GripVertical } from 'lucide-svelte';
+	import {
+		ChevronRight,
+		ChevronDown,
+		FolderOpen,
+		FolderPlus,
+		GripVertical
+	} from '@lucide/svelte';
 
 	interface Props {
 		suite: any;

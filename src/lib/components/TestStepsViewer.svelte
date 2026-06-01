@@ -12,7 +12,7 @@
 		FlaskConical,
 		FileCode,
 		AlertTriangle
-	} from 'lucide-svelte';
+	} from '@lucide/svelte';
 	import { Accordion, useAccordion } from '@skeletonlabs/skeleton-svelte';
 	import { removeAnsiCodes } from '$lib/utils/error-formatter';
 

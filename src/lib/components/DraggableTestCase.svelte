@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { GripVertical, TestTube2, ExternalLink } from 'lucide-svelte';
+	import { GripVertical, TestTube2, ExternalLink } from '@lucide/svelte';
 	import type { Priority } from '$prisma/client';
 
 	interface TestCase {

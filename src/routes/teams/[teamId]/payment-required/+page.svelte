@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CreditCard, AlertTriangle, CheckCircle } from 'lucide-svelte';
+	import { CreditCard, AlertTriangle } from '@lucide/svelte';
 
 	let { data } = $props();
 	let { team, subscription, isAdmin } = $derived(data);

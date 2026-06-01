@@ -28,8 +28,8 @@
 				Service.
 			</p>
 			<p>
-				<strong>Self-Hosted Deployments:</strong> These Terms apply to our hosted service at
-				qastudio.dev. Self-hosted deployments are governed by our open-source license.
+				<strong>Self-Hosted Deployments:</strong> These Terms apply to our hosted service at qastudio.dev.
+				Self-hosted deployments are governed by our open-source license.
 			</p>
 		</section>
 
