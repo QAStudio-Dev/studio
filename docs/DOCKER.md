@@ -1,6 +1,8 @@
 # QA Studio - Docker Setup Guide
 
-QA Studio can run as a fully self-contained Docker environment with no external cloud dependencies. All services (database, cache, storage, email) run locally.
+> **Production deployment:** See [DEPLOYMENT.md](DEPLOYMENT.md) for required env vars (Vercel Blob, Upstash Redis), HTTPS, and cron jobs. This guide focuses on Compose workflows and operations.
+
+QA Studio can run a local Docker stack with PostgreSQL, Redis, MinIO, and MailHog alongside the app. For attachments and production caching, the application still uses **Vercel Blob** and **Upstash** environment variables today—see [DEPLOYMENT.md — External services](DEPLOYMENT.md#external-services).
 
 ## Quick Start
 

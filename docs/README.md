@@ -4,6 +4,11 @@ Welcome to the QA Studio documentation! This directory contains comprehensive gu
 
 ## 📚 Table of Contents
 
+### Deployment
+
+- [DEPLOYMENT.md](DEPLOYMENT.md) - **Production deployment** (Vercel, Docker, VPS, env vars, cron jobs)
+- [DOCKER.md](DOCKER.md) - Docker Compose development and operations
+
 ### Features & Setup
 
 - [PRICING.md](PRICING.md) - Pricing plans and billing configuration
@@ -31,6 +36,12 @@ Welcome to the QA Studio documentation! This directory contains comprehensive gu
 ---
 
 ## 🚀 Quick Start
+
+### Deploying QA Studio
+
+1. Read [DEPLOYMENT.md](DEPLOYMENT.md) for Vercel, Docker, or Node.js hosting
+2. For self-hosted unlimited features: [SELF_HOSTED.md](../SELF_HOSTED.md)
+3. For local Docker dev: [DOCKER.md](DOCKER.md)
 
 ### Setting Up a New Development Environment
 
