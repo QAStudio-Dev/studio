@@ -147,6 +147,7 @@ If you're self-hosting and don't want to use Vercel Blob, you can:
 
 - 📚 **[API Documentation](https://qastudio.dev/docs)** - Complete REST API reference
 - 🔧 **[Setup Guides](docs/)** - Detailed setup instructions
+    - [Deployment](docs/DEPLOYMENT.md) - Vercel, Docker, and self-hosting
     - [Team Invitations](docs/TEAM_INVITATIONS.md) - Invite members with role-based access
     - [Stripe Integration](docs/STRIPE_SETUP.md) - Team billing and subscriptions
     - [Decap CMS Setup](docs/DECAP_CMS_SETUP.md) - Blog management
