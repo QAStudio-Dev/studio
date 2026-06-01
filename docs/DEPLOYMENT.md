@@ -8,7 +8,7 @@ This guide covers how to deploy QA Studio in production. For day-to-day Docker d
 | ---------------------------------------------- | ---------------------------------------- | ----------- |
 | [Vercel](#vercel-recommended-for-hosted-saas)  | Hosted SaaS, fastest path to production  | Low         |
 | [Docker](#docker-recommended-for-self-hosting) | Private infrastructure, all-in-one stack | Medium      |
-| [Node.js / VPS](#nodejs-vps-or-any-node-host)  | Custom servers, Kubernetes, existing ops | Medium–High |
+| [Node.js / VPS](#nodejs--vps-or-any-node-host) | Custom servers, Kubernetes, existing ops | Medium–High |
 
 All paths require **PostgreSQL**. Most production deployments also use **Vercel Blob** (attachments) and **Upstash Redis** (caching and rate limits). See [External services](#external-services) below.
 
