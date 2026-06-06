@@ -10,8 +10,8 @@ export const generateProjectId = customAlphabet(alphabet, 8);
 // Test Runs: 4 characters (14.7 million combinations) - scoped per project
 export const generateTestRunId = customAlphabet(alphabet, 4);
 
-// Test Cases: 3 characters (238k combinations) - scoped per project
-export const generateTestCaseId = customAlphabet(alphabet, 3);
+// Test Cases: 4 characters (14.7 million combinations) - globally unique
+export const generateTestCaseId = customAlphabet(alphabet, 4);
 
 // Test Results: 4 characters (14.7 million combinations) - scoped per run
 export const generateTestResultId = customAlphabet(alphabet, 4);

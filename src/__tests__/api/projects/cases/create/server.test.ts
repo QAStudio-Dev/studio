@@ -1,11 +1,24 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { z } from 'zod';
+import type { Prisma } from '$prisma/client';
 import POST_ENDPOINT, { Input, Param } from '../../../../../api/projects/[...projectId]/cases/POST';
 
 const endpointHandler = POST_ENDPOINT.default;
 
 type CaseCreateInput = Parameters<typeof endpointHandler>[0];
 type CaseCreateResult = Awaited<ReturnType<typeof endpointHandler>>;
+type TestCaseCreateResult = Prisma.TestCaseGetPayload<{
+	include: {
+		creator: {
+			select: {
+				id: true;
+				email: true;
+				firstName: true;
+				lastName: true;
+			};
+		};
+	};
+}>;
 
 /** Mirrors sveltekit-api body + param validation before invoking the route handler. */
 async function POST(event: {
@@ -174,6 +187,47 @@ describe('POST /api/projects/[projectId]/cases', () => {
 					resourceId: 'tc_test123'
 				})
 			);
+		});
+
+		it('should retry when generated test case ID collides', async () => {
+			const mockTestCase = {
+				id: 'tc_retry',
+				title: 'Test Login',
+				description: null,
+				preconditions: null,
+				steps: null,
+				expectedResult: null,
+				priority: 'MEDIUM',
+				type: 'FUNCTIONAL',
+				automationStatus: 'NOT_AUTOMATED',
+				tags: [],
+				projectId: 'proj_123',
+				suiteId: null,
+				createdBy: 'user_123',
+				order: 0,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+				creator: {
+					id: 'user_123',
+					email: 'test@example.com',
+					firstName: 'Test',
+					lastName: 'User'
+				}
+			} satisfies TestCaseCreateResult;
+
+			const collisionError = Object.assign(new Error('Unique constraint failed'), {
+				code: 'P2002',
+				meta: { target: ['id'] }
+			});
+
+			vi.mocked(db.testCase.create)
+				.mockRejectedValueOnce(collisionError)
+				.mockResolvedValueOnce(mockTestCase);
+
+			const result = await POST(mockEvent);
+
+			expect(result.testCase.id).toBe('tc_retry');
+			expect(vi.mocked(db.testCase.create)).toHaveBeenCalledTimes(2);
 		});
 
 		it('should create a complete test case with all fields', async () => {
