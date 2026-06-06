@@ -221,35 +221,73 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 				order: step.order ?? index
 			}));
 
-			// Create the test case
-			const testCase = await db.testCase.create({
-				data: {
-					id: generateTestCaseId(),
-					title: input.title,
-					description: input.description,
-					preconditions: input.preconditions,
-					steps: stepsWithOrder,
-					expectedResult: input.expectedResult,
-					priority: input.priority || 'MEDIUM',
-					type: input.type || 'FUNCTIONAL',
-					automationStatus: input.automationStatus || 'NOT_AUTOMATED',
-					tags: input.tags || [],
-					projectId: input.projectId,
-					suiteId: input.suiteId,
-					createdBy: userId,
-					order: nextOrder
-				},
-				include: {
-					creator: {
-						select: {
-							id: true,
-							email: true,
-							firstName: true,
-							lastName: true
+			// Create the test case with retry on ID collision (3-char legacy IDs fill the space quickly)
+			const MAX_RETRIES = 5;
+			let attempts = 0;
+			let testCase;
+
+			while (attempts < MAX_RETRIES) {
+				try {
+					testCase = await db.testCase.create({
+						data: {
+							id: generateTestCaseId(),
+							title: input.title,
+							description: input.description,
+							preconditions: input.preconditions,
+							steps: stepsWithOrder,
+							expectedResult: input.expectedResult,
+							priority: input.priority || 'MEDIUM',
+							type: input.type || 'FUNCTIONAL',
+							automationStatus: input.automationStatus || 'NOT_AUTOMATED',
+							tags: input.tags || [],
+							projectId: input.projectId,
+							suiteId: input.suiteId,
+							createdBy: userId,
+							order: nextOrder
+						},
+						include: {
+							creator: {
+								select: {
+									id: true,
+									email: true,
+									firstName: true,
+									lastName: true
+								}
+							}
 						}
+					});
+					break;
+				} catch (createErr: unknown) {
+					const err = createErr as {
+						code?: string;
+						meta?: { target?: string | string[] };
+					};
+					const target = Array.isArray(err.meta?.target)
+						? err.meta.target
+						: [err.meta?.target];
+					if (
+						err.code === 'P2002' &&
+						target.some((field) => field?.toLowerCase() === 'id')
+					) {
+						attempts++;
+						if (attempts >= MAX_RETRIES) {
+							console.error(
+								`Test case ID collision after ${MAX_RETRIES} attempts for project ${input.projectId}`
+							);
+							throw error(500, 'Failed to create test case - please try again');
+						}
+						console.warn(
+							`Test case ID collision detected - retrying (attempt ${attempts + 1})`
+						);
+						continue;
 					}
+					throw createErr;
 				}
-			});
+			}
+
+			if (!testCase) {
+				throw error(500, 'Failed to create test case');
+			}
 
 			// Create audit log for tracking (non-blocking - don't fail the operation if audit logging fails)
 			try {

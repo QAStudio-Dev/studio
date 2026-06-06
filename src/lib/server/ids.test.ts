@@ -24,9 +24,9 @@ describe('ID Generators', () => {
 			expect(id).toHaveLength(4);
 		});
 
-		it('should generate test case IDs with correct length (3 chars)', () => {
+		it('should generate test case IDs with correct length (4 chars)', () => {
 			const id = generateTestCaseId();
-			expect(id).toHaveLength(3);
+			expect(id).toHaveLength(4);
 		});
 
 		it('should generate test result IDs with correct length (4 chars)', () => {

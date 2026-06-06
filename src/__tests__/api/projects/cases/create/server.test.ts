@@ -176,6 +176,47 @@ describe('POST /api/projects/[projectId]/cases', () => {
 			);
 		});
 
+		it('should retry when generated test case ID collides', async () => {
+			const mockTestCase = {
+				id: 'tc_retry',
+				title: 'Test Login',
+				description: null,
+				preconditions: null,
+				steps: null,
+				expectedResult: null,
+				priority: 'MEDIUM',
+				type: 'FUNCTIONAL',
+				automationStatus: 'NOT_AUTOMATED',
+				tags: [],
+				projectId: 'proj_123',
+				suiteId: null,
+				createdBy: 'user_123',
+				order: 0,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+				creator: {
+					id: 'user_123',
+					email: 'test@example.com',
+					firstName: 'Test',
+					lastName: 'User'
+				}
+			};
+
+			const collisionError = Object.assign(new Error('Unique constraint failed'), {
+				code: 'P2002',
+				meta: { target: ['id'] }
+			});
+
+			vi.mocked(db.testCase.create)
+				.mockRejectedValueOnce(collisionError)
+				.mockResolvedValueOnce(mockTestCase as any);
+
+			const result = await POST(mockEvent);
+
+			expect(result.testCase.id).toBe('tc_retry');
+			expect(vi.mocked(db.testCase.create)).toHaveBeenCalledTimes(2);
+		});
+
 		it('should create a complete test case with all fields', async () => {
 			const mockTestCase = {
 				id: 'tc_test123',
