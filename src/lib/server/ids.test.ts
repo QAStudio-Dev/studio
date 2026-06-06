@@ -136,9 +136,8 @@ describe('ID Generators', () => {
 				ids.add(generateTestCaseId());
 			}
 
-			// 3-char IDs have 238k combinations, so some collisions are statistically possible
-			// Expect at least 99% uniqueness in 1000 generations
-			expect(ids.size).toBeGreaterThanOrEqual(iterations * 0.99);
+			// 4-char IDs (~14.7M combinations)
+			expect(ids.size).toBe(iterations);
 		});
 
 		it('should generate unique attachment IDs (with allowance for rare collisions)', () => {
@@ -199,9 +198,9 @@ describe('ID Generators', () => {
 			expect(ids.size).toBeGreaterThanOrEqual(iterations * 0.995);
 		});
 
-		it('should have acceptable collision probability for test case IDs (3 chars)', () => {
-			// 62^3 = 238k combinations
-			// Testing with 1,000 IDs should have low collision rate
+		it('should have low collision probability for test case IDs (4 chars)', () => {
+			// 62^4 = 14.7M combinations
+			// Testing with 1,000 IDs should have very low collision rate
 			const ids = new Set();
 			const iterations = 1000;
 
@@ -209,8 +208,7 @@ describe('ID Generators', () => {
 				ids.add(generateTestCaseId());
 			}
 
-			// Allow for potential collisions with 3 char IDs, but expect > 95% uniqueness
-			expect(ids.size).toBeGreaterThan(iterations * 0.95);
+			expect(ids.size).toBeGreaterThan(iterations * 0.965);
 		});
 	});
 

@@ -1,11 +1,24 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { z } from 'zod';
+import type { Prisma } from '$prisma/client';
 import POST_ENDPOINT, { Input, Param } from '../../../../../api/projects/[...projectId]/cases/POST';
 
 const endpointHandler = POST_ENDPOINT.default;
 
 type CaseCreateInput = Parameters<typeof endpointHandler>[0];
 type CaseCreateResult = Awaited<ReturnType<typeof endpointHandler>>;
+type TestCaseCreateResult = Prisma.TestCaseGetPayload<{
+	include: {
+		creator: {
+			select: {
+				id: true;
+				email: true;
+				firstName: true;
+				lastName: true;
+			};
+		};
+	};
+}>;
 
 /** Mirrors sveltekit-api body + param validation before invoking the route handler. */
 async function POST(event: {
@@ -174,6 +187,7 @@ describe('POST /api/projects/[projectId]/cases', () => {
 					resourceId: 'tc_test123'
 				})
 			);
+
 		});
 
 		it('should retry when generated test case ID collides', async () => {
@@ -200,7 +214,7 @@ describe('POST /api/projects/[projectId]/cases', () => {
 					firstName: 'Test',
 					lastName: 'User'
 				}
-			};
+			} satisfies TestCaseCreateResult;
 
 			const collisionError = Object.assign(new Error('Unique constraint failed'), {
 				code: 'P2002',
@@ -209,7 +223,7 @@ describe('POST /api/projects/[projectId]/cases', () => {
 
 			vi.mocked(db.testCase.create)
 				.mockRejectedValueOnce(collisionError)
-				.mockResolvedValueOnce(mockTestCase as any);
+				.mockResolvedValueOnce(mockTestCase);
 
 			const result = await POST(mockEvent);
 
