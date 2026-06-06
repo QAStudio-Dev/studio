@@ -208,7 +208,7 @@ describe('ID Generators', () => {
 				ids.add(generateTestCaseId());
 			}
 
-			expect(ids.size).toBeGreaterThan(iterations * 0.965);
+			expect(ids.size).toBe(iterations);
 		});
 	});
 

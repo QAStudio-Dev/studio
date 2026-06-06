@@ -187,7 +187,6 @@ describe('POST /api/projects/[projectId]/cases', () => {
 					resourceId: 'tc_test123'
 				})
 			);
-
 		});
 
 		it('should retry when generated test case ID collides', async () => {
