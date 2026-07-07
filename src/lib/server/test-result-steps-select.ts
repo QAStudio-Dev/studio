@@ -1,6 +1,8 @@
 /**
  * Nested step depth for Prisma. TestStepsViewer renders one child level only.
  */
+import type { Prisma } from '$prisma/client';
+
 export const testResultStepsInclude = {
 	where: { parentStepId: null },
 	orderBy: { stepNumber: 'asc' as const },
@@ -11,26 +13,24 @@ export const testResultStepsInclude = {
 	}
 } as const;
 
+const testStepFieldsSelect = {
+	id: true,
+	stepNumber: true,
+	title: true,
+	category: true,
+	status: true,
+	duration: true,
+	error: true
+} satisfies Prisma.TestStepResultSelect;
+
 export const testResultStepsSelect = {
 	where: { parentStepId: null },
 	orderBy: { stepNumber: 'asc' as const },
 	select: {
-		id: true,
-		stepNumber: true,
-		description: true,
-		status: true,
-		duration: true,
-		errorMessage: true,
+		...testStepFieldsSelect,
 		childSteps: {
 			orderBy: { stepNumber: 'asc' as const },
-			select: {
-				id: true,
-				stepNumber: true,
-				description: true,
-				status: true,
-				duration: true,
-				errorMessage: true
-			}
+			select: testStepFieldsSelect
 		}
 	}
 } as const;
