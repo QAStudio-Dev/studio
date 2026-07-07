@@ -161,12 +161,38 @@ export class TestCasesPage extends BasePage {
 	}
 
 	/**
+	 * Look up a single test case by title without scanning the entire list.
+	 * The shared E2E project can contain hundreds of cases, so avoid getTestCases().
+	 */
+	async getTestCaseByTitle(title: string): Promise<{ title: string; id: string }> {
+		await this.ensureUncategorizedExpanded();
+
+		const testCaseRow = this.page
+			.locator('[data-testcase-id]')
+			.filter({
+				has: this.page.locator('[data-test="test-case-button"]').filter({ hasText: title })
+			})
+			.first();
+
+		const id = await testCaseRow.getAttribute('data-testcase-id');
+		if (!id) {
+			throw new Error(`Test case "${title}" not found`);
+		}
+
+		return { title, id };
+	}
+
+	/**
 	 * Create a new test case
 	 * @param title - Test case title
 	 * @param description - Optional test case description
 	 * @param waitForCreation - Whether to wait for creation to complete
 	 */
-	async createTestCase(title: string, description?: string, waitForCreation = true) {
+	async createTestCase(
+		title: string,
+		description?: string,
+		waitForCreation = true
+	): Promise<{ title: string; id: string } | void> {
 		await this.ensureUncategorizedExpanded();
 
 		// Click new test case button if form isn't visible
@@ -202,6 +228,7 @@ export class TestCasesPage extends BasePage {
 			const createResponse = await createResponsePromise;
 			expect(createResponse.ok()).toBe(true);
 			await this.waitForTestCasePersisted(title);
+			return this.getTestCaseByTitle(title);
 		}
 	}
 

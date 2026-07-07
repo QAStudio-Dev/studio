@@ -38,10 +38,7 @@ test.describe('Test Case Detail Page', () => {
 			const listPage = new TestCasesPage(page, projectId);
 			await listPage.navigate();
 			await listPage.waitForLoad();
-			await listPage.createTestCase(title);
-
-			const testCases = await listPage.getTestCases();
-			const created = testCases.find((tc) => tc.title === title);
+			const created = await listPage.createTestCase(title);
 			expect(created).toBeDefined();
 			expect(created?.id).toBeTruthy();
 			expect(created?.id.startsWith('temp-')).toBe(false);
@@ -87,10 +84,7 @@ test.describe('Test Case Detail Page', () => {
 			const listPage = new TestCasesPage(page, projectId);
 			await listPage.navigate();
 			await listPage.waitForLoad();
-			await listPage.createTestCase(originalTitle);
-
-			const testCases = await listPage.getTestCases();
-			const created = testCases.find((tc) => tc.title === originalTitle);
+			const created = await listPage.createTestCase(originalTitle);
 			expect(created).toBeDefined();
 
 			const detailPage = new TestCaseDetailPage(page, projectId, created!.id);
