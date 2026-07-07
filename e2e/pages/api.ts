@@ -339,6 +339,42 @@ export class ApiClient {
 	// ==================== TEST RESULTS ====================
 
 	/**
+	 * Submit batch test results (Playwright reporter format)
+	 */
+	async submitTestResults(data: {
+		testRunId: string;
+		results: Array<{
+			title: string;
+			fullTitle?: string;
+			status: 'passed' | 'failed' | 'skipped' | 'timedout' | 'interrupted' | 'timedOut';
+			duration?: number;
+			errorMessage?: string;
+			error?: string;
+			stackTrace?: string;
+			steps?: Array<{
+				title: string;
+				category?: 'hook' | 'test.step' | 'pw:api' | 'expect' | 'fixture' | 'other';
+				status?: 'passed' | 'failed' | 'skipped' | 'timedout';
+				duration?: number;
+				error?: string;
+				stackTrace?: string;
+				steps?: Array<{
+					title: string;
+					category?: 'hook' | 'test.step' | 'pw:api' | 'expect' | 'fixture' | 'other';
+					status?: 'passed' | 'failed' | 'skipped' | 'timedout';
+					duration?: number;
+					error?: string;
+				}>;
+			}>;
+		}>;
+	}): Promise<APIResponse> {
+		return await this.request.post(`${this.baseURL}/api/results`, {
+			headers: this.getHeaders(),
+			data
+		});
+	}
+
+	/**
 	 * Create a test result
 	 */
 	async createTestResult(data: {
