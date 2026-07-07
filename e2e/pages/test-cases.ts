@@ -161,19 +161,27 @@ export class TestCasesPage extends BasePage {
 	}
 
 	/**
+	 * Locate the test case row for an exact title match (avoids substring collisions).
+	 */
+	private testCaseRowByTitle(title: string): Locator {
+		return this.page
+			.locator('[data-testcase-id]')
+			.filter({
+				has: this.page
+					.locator('[data-test="test-case-button"]')
+					.getByText(title, { exact: true })
+			})
+			.first();
+	}
+
+	/**
 	 * Look up a single test case by title without scanning the entire list.
 	 * The shared E2E project can contain hundreds of cases, so avoid getTestCases().
 	 */
 	async getTestCaseByTitle(title: string): Promise<{ title: string; id: string }> {
 		await this.ensureUncategorizedExpanded();
 
-		const testCaseRow = this.page
-			.locator('[data-testcase-id]')
-			.filter({
-				has: this.page.locator('[data-test="test-case-button"]').filter({ hasText: title })
-			})
-			.first();
-
+		const testCaseRow = this.testCaseRowByTitle(title);
 		const id = await testCaseRow.getAttribute('data-testcase-id');
 		if (!id) {
 			throw new Error(`Test case "${title}" not found`);
@@ -227,33 +235,40 @@ export class TestCasesPage extends BasePage {
 		if (waitForCreation) {
 			const createResponse = await createResponsePromise;
 			expect(createResponse.ok()).toBe(true);
-			await this.waitForTestCasePersisted(title);
-			return this.getTestCaseByTitle(title);
+			return this.waitForTestCasePersisted(title);
 		}
 	}
 
 	/**
 	 * Wait until the test case exists with a real (non-temporary) server ID
 	 */
-	async waitForTestCasePersisted(title: string, timeout = 30000) {
-		await this.waitForTestCase(title);
+	async waitForTestCasePersisted(
+		title: string,
+		timeout = 30000
+	): Promise<{ title: string; id: string }> {
+		await this.ensureUncategorizedExpanded();
 
-		const testCaseRow = this.page
-			.locator('[data-testcase-id]')
-			.filter({
-				has: this.page.locator('[data-test="test-case-button"]').filter({ hasText: title })
-			})
-			.first();
+		const testCaseRow = this.testCaseRowByTitle(title);
+		const testCaseButton = testCaseRow.locator('[data-test="test-case-button"]');
+		await testCaseButton.scrollIntoViewIfNeeded();
+		await testCaseButton.waitFor({ state: 'visible', timeout: Math.min(timeout, 15000) });
 
+		let persistedId = '';
 		await expect
 			.poll(
 				async () => {
 					const id = await testCaseRow.getAttribute('data-testcase-id');
-					return Boolean(id && !id.startsWith('temp-'));
+					if (id && !id.startsWith('temp-')) {
+						persistedId = id;
+						return true;
+					}
+					return false;
 				},
 				{ timeout, message: `Timed out waiting for "${title}" to persist` }
 			)
 			.toBe(true);
+
+		return { title, id: persistedId };
 	}
 
 	/**
