@@ -11,26 +11,24 @@ export const testResultStepsInclude = {
 	}
 } as const;
 
+const testStepFieldsSelect = {
+	id: true,
+	stepNumber: true,
+	title: true,
+	category: true,
+	status: true,
+	duration: true,
+	error: true
+} as const;
+
 export const testResultStepsSelect = {
 	where: { parentStepId: null },
 	orderBy: { stepNumber: 'asc' as const },
 	select: {
-		id: true,
-		stepNumber: true,
-		description: true,
-		status: true,
-		duration: true,
-		errorMessage: true,
+		...testStepFieldsSelect,
 		childSteps: {
 			orderBy: { stepNumber: 'asc' as const },
-			select: {
-				id: true,
-				stepNumber: true,
-				description: true,
-				status: true,
-				duration: true,
-				errorMessage: true
-			}
+			select: testStepFieldsSelect
 		}
 	}
 } as const;
