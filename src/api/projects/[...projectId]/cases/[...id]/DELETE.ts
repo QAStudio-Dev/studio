@@ -1,4 +1,4 @@
-import { Endpoint, z, error } from 'sveltekit-api';
+import { Endpoint, z, error, type RouteModifier } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
 import { requireProjectAccess } from '$lib/server/authorization';
@@ -19,7 +19,7 @@ export const Error = {
 	404: error(404, 'Test case or project not found')
 };
 
-export const Modifier = (r: any) => {
+export const Modifier: RouteModifier = (r) => {
 	r.tags = ['Cases'];
 	r.summary = 'Delete test case';
 	r.description =
@@ -46,7 +46,7 @@ export default new Endpoint({ Param, Output, Error, Modifier }).handle(async (in
 		});
 
 		if (!testCase) {
-			throw error(404, 'Test case not found');
+			throw Error[404];
 		}
 
 		await tx.testCase.delete({

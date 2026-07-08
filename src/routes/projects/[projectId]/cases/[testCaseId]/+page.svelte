@@ -124,9 +124,9 @@
 			}
 
 			goto(`/projects/${testCase.project.id}/cases`);
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error(err);
-			alert(err.message || 'Failed to delete test case');
+			alert(err instanceof Error ? err.message : 'Failed to delete test case');
 		} finally {
 			deleting = false;
 			showDeleteConfirm = false;
@@ -952,7 +952,6 @@ ${testCase.expectedResult || 'See test case for details'}`;
 {/if}
 
 {#if showDeleteConfirm}
-	<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 	<div
 		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
 		role="dialog"

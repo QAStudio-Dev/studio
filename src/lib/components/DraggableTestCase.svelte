@@ -84,7 +84,7 @@
 		{#if onDelete}
 			<button
 				onclick={() => onDelete(testCase)}
-				class="preset-ghost-surface-500 btn btn-sm text-error-500 opacity-0 transition-opacity group-hover:opacity-100 hover:text-error-500"
+				class="preset-ghost-surface-500 btn btn-sm text-error-500 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 max-sm:opacity-100 hover:text-error-500"
 				title="Delete test case"
 				data-testid="delete-test-case-button"
 			>

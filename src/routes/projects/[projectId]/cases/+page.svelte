@@ -939,7 +939,6 @@
 </Dialog>
 
 {#if showDeleteConfirm && testCaseToDelete}
-	<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 	<div
 		class="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4"
 		role="dialog"
@@ -952,7 +951,7 @@
 			}
 		}}
 	>
-		<div class="rounded-container-token w-full max-w-md bg-surface-50-950 p-6 shadow-xl">
+		<div class="rounded-container w-full max-w-md bg-surface-50-950 p-6 shadow-xl">
 			<h2
 				id="delete-test-case-list-modal-title"
 				class="mb-4 text-2xl font-bold text-error-500"
