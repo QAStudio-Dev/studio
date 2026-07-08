@@ -11,7 +11,9 @@
 		AlertCircle,
 		MoreVertical,
 		GripVertical,
-		Play
+		Play,
+		Trash2,
+		Loader2
 	} from '@lucide/svelte';
 	import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
 	import { invalidateAll } from '$app/navigation';
@@ -42,6 +44,9 @@
 	let creatingSuite = $state(false);
 	let selectedTestCase = $state<any | null>(null);
 	let showTestCaseModal = $state(false);
+	let showDeleteConfirm = $state(false);
+	let testCaseToDelete = $state<any | null>(null);
+	let deleting = $state(false);
 
 	// Get only root-level suites (those without a parent)
 	let rootSuites = $derived(project.testSuites.filter((s) => !s.parentId));
@@ -259,6 +264,57 @@
 	function openTestCaseModal(testCase: any) {
 		selectedTestCase = testCase;
 		showTestCaseModal = true;
+	}
+
+	function requestDeleteTestCase(testCase: any) {
+		testCaseToDelete = testCase;
+		showDeleteConfirm = true;
+		if (showTestCaseModal) {
+			showTestCaseModal = false;
+		}
+	}
+
+	function removeTestCaseFromProject(testCaseId: string, suiteId: string | null) {
+		if (suiteId) {
+			const suite = project.testSuites.find((s) => s.id === suiteId);
+			if (suite) {
+				suite.testCases = suite.testCases?.filter((tc) => tc.id !== testCaseId) || [];
+			}
+		} else {
+			project.testCases = project.testCases?.filter((tc) => tc.id !== testCaseId) || [];
+		}
+		project = { ...project };
+	}
+
+	async function confirmDeleteTestCase() {
+		if (!testCaseToDelete) return;
+
+		const { id: testCaseId, suiteId } = testCaseToDelete;
+		deleting = true;
+
+		try {
+			const res = await fetch(`/api/projects/${project.id}/cases/${testCaseId}`, {
+				method: 'DELETE'
+			});
+
+			if (!res.ok) {
+				const errorData = await res.json();
+				throw new Error(errorData.message || 'Failed to delete test case');
+			}
+
+			removeTestCaseFromProject(testCaseId, suiteId ?? null);
+			showDeleteConfirm = false;
+			testCaseToDelete = null;
+			void invalidateAll();
+		} catch (err) {
+			console.error(err);
+			alert(
+				'Failed to delete test case: ' +
+					(err instanceof Error ? err.message : 'Unknown error')
+			);
+		} finally {
+			deleting = false;
+		}
 	}
 
 	// Drag and drop handlers
@@ -686,6 +742,7 @@
 					onInsertionDragLeave={handleInsertionDragLeave}
 					onInsertionDrop={handleInsertionDrop}
 					onOpenModal={openTestCaseModal}
+					onDelete={requestDeleteTestCase}
 				/>
 			{/each}
 
@@ -751,6 +808,7 @@
 									onDragStart={handleDragStart}
 									onDragEnd={handleDragEnd}
 									onOpenModal={openTestCaseModal}
+									onDelete={requestDeleteTestCase}
 									isDragging={draggedTestCase?.id === testCase.id}
 								/>
 							{/each}
@@ -865,7 +923,13 @@
 								<ExternalLink class="mr-2 h-4 w-4" />
 								Open Full View
 							</a>
-							<button class="btn preset-outlined-surface-500">Edit</button>
+							<button
+								class="btn preset-outlined-error-500"
+								onclick={() => requestDeleteTestCase(selectedTestCase)}
+							>
+								<Trash2 class="mr-2 h-4 w-4" />
+								Delete
+							</button>
 						</div>
 					</div>
 				{/if}
@@ -873,3 +937,61 @@
 		</Dialog.Positioner>
 	</Portal>
 </Dialog>
+
+{#if showDeleteConfirm && testCaseToDelete}
+	<div
+		class="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4"
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="delete-test-case-list-modal-title"
+		onkeydown={(e) => {
+			if (e.key === 'Escape' && !deleting) {
+				showDeleteConfirm = false;
+				testCaseToDelete = null;
+			}
+		}}
+	>
+		<div class="rounded-container w-full max-w-md bg-surface-50-950 p-6 shadow-xl">
+			<h2
+				id="delete-test-case-list-modal-title"
+				class="mb-4 text-2xl font-bold text-error-500"
+			>
+				Delete Test Case
+			</h2>
+			<p class="text-surface-600-300 mb-6">
+				Are you sure you want to delete <strong>{testCaseToDelete.title}</strong>? This will
+				permanently delete all execution history, attachments, and associated data. This
+				action cannot be undone.
+			</p>
+
+			<div class="flex justify-end gap-3">
+				<button
+					type="button"
+					class="btn preset-outlined-surface-500"
+					onclick={() => {
+						showDeleteConfirm = false;
+						testCaseToDelete = null;
+					}}
+					disabled={deleting}
+					autofocus
+				>
+					Cancel
+				</button>
+				<button
+					type="button"
+					class="btn preset-filled-error-500"
+					onclick={confirmDeleteTestCase}
+					disabled={deleting}
+				>
+					{#if deleting}
+						<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+						Deleting...
+					{:else}
+						<Trash2 class="mr-2 h-4 w-4" />
+						Delete Test Case
+					{/if}
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}

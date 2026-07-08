@@ -28,6 +28,7 @@
 		onInsertionDragLeave: () => void;
 		onInsertionDrop: (e: DragEvent, suiteId: string, index: number) => void;
 		onOpenModal: (testCase: any) => void;
+		onDelete?: (testCase: any) => void;
 		level?: number;
 	}
 
@@ -55,6 +56,7 @@
 		onInsertionDragLeave,
 		onInsertionDrop,
 		onOpenModal,
+		onDelete,
 		level = 0
 	}: Props = $props();
 
@@ -124,6 +126,7 @@
 						{onDragStart}
 						{onDragEnd}
 						{onOpenModal}
+						{onDelete}
 						isDragging={draggedTestCase?.id === testCase.id}
 					/>
 				{/each}
@@ -176,6 +179,7 @@
 			{onInsertionDragLeave}
 			{onInsertionDrop}
 			{onOpenModal}
+			{onDelete}
 			level={level + 1}
 		/>
 	{/each}

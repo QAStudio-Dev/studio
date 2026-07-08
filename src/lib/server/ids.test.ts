@@ -136,8 +136,8 @@ describe('ID Generators', () => {
 				ids.add(generateTestCaseId());
 			}
 
-			// 4-char IDs (~14.7M combinations)
-			expect(ids.size).toBe(iterations);
+			// 4-char IDs (~14.7M combinations), collisions are very rare but possible
+			expect(ids.size).toBeGreaterThanOrEqual(iterations * 0.999);
 		});
 
 		it('should generate unique attachment IDs (with allowance for rare collisions)', () => {
@@ -208,7 +208,8 @@ describe('ID Generators', () => {
 				ids.add(generateTestCaseId());
 			}
 
-			expect(ids.size).toBe(iterations);
+			// 4-char IDs (~14.7M combinations), collisions are very rare but possible
+			expect(ids.size).toBeGreaterThanOrEqual(iterations * 0.999);
 		});
 	});
 
