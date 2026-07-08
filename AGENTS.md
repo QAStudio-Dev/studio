@@ -67,6 +67,7 @@ Use **tmux** (`tmux -f /exec-daemon/tmux.portal.conf`) for `npm run dev` and oth
 
 ### Gotchas
 
+- **Do not reset the DB tables.** The `DATABASE_URL` points at a shared, already-provisioned Postgres (Neon) whose schema is up to date (`npx prisma migrate status` reports "up to date"). Never run `prisma migrate reset` / `prisma db push --force-reset` or otherwise drop/recreate tables; use `npx prisma migrate deploy` only if new migrations need applying. Creating rows (e.g. a test signup/project) is fine.
 - `postinstall` runs `prisma generate` but may skip if `.svelte-kit` is missing; run `npx svelte-kit sync` first on a clean clone.
 - Lint reports many `svelte/no-navigation-without-resolve` issues repo-wide; do not treat as introduced by your change unless you touched those files.
 - Default `npm run test:e2e` does **not** start a local server.
