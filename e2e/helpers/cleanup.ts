@@ -1,8 +1,19 @@
 import type { APIRequestContext } from '@playwright/test';
 import { ApiClient } from '../pages/api';
 
-/** Prefix used by test-cases E2E tests for created resources */
+/** Prefix for test-cases.test.ts resources (must not overlap with other E2E files). */
+export const E2E_CASES_PREFIX = 'E2E Cases';
+
+/** Prefix for test-case-detail.test.ts resources (must not overlap with other E2E files). */
+export const E2E_DETAIL_PREFIX = 'E2E Detail';
+
+/** @deprecated Use E2E_CASES_PREFIX or E2E_DETAIL_PREFIX for scoped cleanup. */
 export const E2E_RESOURCE_PREFIX = 'E2E ';
+
+export type CleanupE2eOptions = {
+	/** Only delete cases/suites whose title/name starts with this prefix. */
+	prefix: string;
+};
 
 export function getApiClient(request: APIRequestContext): ApiClient {
 	const apiKey = process.env.QA_STUDIO_API_KEY;
@@ -20,8 +31,8 @@ export function getE2eProjectId(): string {
 	return projectId;
 }
 
-function isE2eResourceName(name: string): boolean {
-	return name.startsWith(E2E_RESOURCE_PREFIX) || name.startsWith('E2E');
+function matchesCleanupPrefix(name: string, prefix: string): boolean {
+	return name.startsWith(prefix);
 }
 
 type SuiteNode = {
@@ -50,8 +61,10 @@ function flattenSuites(
  */
 export async function cleanupE2eTestData(
 	request: APIRequestContext,
-	projectId: string
+	projectId: string,
+	options: CleanupE2eOptions
 ): Promise<{ casesDeleted: number; suitesDeleted: number }> {
+	const { prefix } = options;
 	const api = getApiClient(request);
 	let casesDeleted = 0;
 	let suitesDeleted = 0;
@@ -61,7 +74,7 @@ export async function cleanupE2eTestData(
 
 	while (hasMore) {
 		const response = await api.listTestCases(projectId, {
-			search: 'E2E',
+			search: prefix,
 			page,
 			limit: 100
 		});
@@ -78,7 +91,7 @@ export async function cleanupE2eTestData(
 		}
 
 		for (const testCase of cases) {
-			if (!isE2eResourceName(testCase.title)) {
+			if (!matchesCleanupPrefix(testCase.title, prefix)) {
 				continue;
 			}
 			const deleted = await api.deleteTestCase(projectId, testCase.id);
@@ -95,7 +108,7 @@ export async function cleanupE2eTestData(
 	if (suitesResponse.ok()) {
 		const suites = (await api.getResponseBody(suitesResponse)) as SuiteNode[];
 		const e2eSuites = flattenSuites(suites)
-			.filter((suite) => isE2eResourceName(suite.name))
+			.filter((suite) => matchesCleanupPrefix(suite.name, prefix))
 			.sort((a, b) => b.depth - a.depth);
 
 		for (const suite of e2eSuites) {
@@ -113,4 +126,28 @@ export async function cleanupE2eTestData(
 	}
 
 	return { casesDeleted, suitesDeleted };
+}
+
+/**
+ * Poll the API until a test case is readable (avoids navigating before persistence
+ * or while another worker's cleanup is in flight).
+ */
+export async function waitForTestCaseInApi(
+	request: APIRequestContext,
+	projectId: string,
+	testCaseId: string,
+	timeoutMs = 30_000
+): Promise<void> {
+	const api = getApiClient(request);
+	const deadline = Date.now() + timeoutMs;
+
+	while (Date.now() < deadline) {
+		const response = await api.getTestCase(projectId, testCaseId);
+		if (response.ok()) {
+			return;
+		}
+		await new Promise((resolve) => setTimeout(resolve, 250));
+	}
+
+	throw new Error(`Timed out waiting for test case ${testCaseId} to be available via API`);
 }

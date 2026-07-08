@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { TestCasesPage } from '../pages/test-cases';
 import { loginAsTestUser } from '../helpers/auth';
-import { cleanupE2eTestData, getE2eProjectId } from '../helpers/cleanup';
+import { cleanupE2eTestData, E2E_CASES_PREFIX, getE2eProjectId } from '../helpers/cleanup';
 
 /**
  * Test Cases Page E2E Tests
@@ -20,12 +20,12 @@ test.describe('Test Cases Page', () => {
 
 	test.beforeAll(async ({ request }) => {
 		projectId = getE2eProjectId();
-		await cleanupE2eTestData(request, projectId);
+		await cleanupE2eTestData(request, projectId, { prefix: E2E_CASES_PREFIX });
 	});
 
 	test.afterEach(async ({ request }) => {
 		if (projectId) {
-			await cleanupE2eTestData(request, projectId);
+			await cleanupE2eTestData(request, projectId, { prefix: E2E_CASES_PREFIX });
 		}
 	});
 
@@ -89,7 +89,7 @@ test.describe('Test Cases Page', () => {
 		});
 
 		test.skip('should create a new test suite successfully', async ({ page }) => {
-			const suiteName = `E2E Suite ${Date.now()}`;
+			const suiteName = `E2E Cases Suite ${Date.now()}`;
 
 			await testCasesPage.createTestSuite(suiteName);
 
@@ -141,7 +141,7 @@ test.describe('Test Cases Page', () => {
 
 		// TODO: create new project before running this test
 		test.skip('should create a new test case successfully', async ({ page }) => {
-			const testCaseTitle = `E2E Test Case ${Date.now()}`;
+			const testCaseTitle = `E2E Cases TC ${Date.now()}`;
 
 			await testCasesPage.createTestCase(testCaseTitle);
 
@@ -157,7 +157,7 @@ test.describe('Test Cases Page', () => {
 
 		// TODO: create new project before running this test
 		test.skip('should create multiple test cases in quick succession', async ({ page }) => {
-			const baseName = `E2E Batch ${Date.now()}`;
+			const baseName = `E2E Cases Batch ${Date.now()}`;
 			const testCases = [`${baseName} - TC1`, `${baseName} - TC2`, `${baseName} - TC3`];
 
 			// Create first test case
@@ -197,7 +197,7 @@ test.describe('Test Cases Page', () => {
 
 		test('should increment test case count after creating a test case', async () => {
 			const initialStats = await testCasesPage.getStats();
-			const testCaseTitle = `E2E Count Test ${Date.now()}`;
+			const testCaseTitle = `E2E Cases Count ${Date.now()}`;
 
 			await testCasesPage.createTestCase(testCaseTitle);
 			await testCasesPage.reloadAndWait();
@@ -210,14 +210,14 @@ test.describe('Test Cases Page', () => {
 	test.describe('Test Case Modal', () => {
 		test.describe.configure({ timeout: 60_000 });
 		test('should open modal when clicking on a test case', async () => {
-			const testCaseTitle = `E2E Modal Test ${Date.now()}`;
+			const testCaseTitle = `E2E Cases Modal ${Date.now()}`;
 			await testCasesPage.createTestCase(testCaseTitle);
 			await testCasesPage.clickTestCase(testCaseTitle);
 			expect(await testCasesPage.isModalVisible()).toBe(true);
 		});
 
 		test('should display test case information in modal', async () => {
-			const testCaseTitle = `E2E Modal Info Test ${Date.now()}`;
+			const testCaseTitle = `E2E Cases Modal Info ${Date.now()}`;
 			await testCasesPage.createTestCase(testCaseTitle);
 			await testCasesPage.clickTestCase(testCaseTitle);
 
@@ -227,7 +227,7 @@ test.describe('Test Cases Page', () => {
 		});
 
 		test('should close modal when clicking close button', async () => {
-			const testCaseTitle = `E2E Modal Close Test ${Date.now()}`;
+			const testCaseTitle = `E2E Cases Modal Close ${Date.now()}`;
 			await testCasesPage.createTestCase(testCaseTitle);
 			await testCasesPage.clickTestCase(testCaseTitle);
 
@@ -238,7 +238,7 @@ test.describe('Test Cases Page', () => {
 		});
 
 		test('should have "Open Full View" button in modal', async () => {
-			const testCaseTitle = `E2E Full View Test ${Date.now()}`;
+			const testCaseTitle = `E2E Cases Full View ${Date.now()}`;
 			await testCasesPage.createTestCase(testCaseTitle);
 			await testCasesPage.clickTestCase(testCaseTitle);
 			await testCasesPage.assertVisible(testCasesPage.modalOpenFullViewButton);
@@ -247,7 +247,7 @@ test.describe('Test Cases Page', () => {
 		test('should navigate to full test case page when clicking "Open Full View"', async ({
 			page
 		}) => {
-			const testCaseTitle = `E2E Navigation Test ${Date.now()}`;
+			const testCaseTitle = `E2E Cases Navigation ${Date.now()}`;
 			await testCasesPage.createTestCase(testCaseTitle);
 			await testCasesPage.clickTestCase(testCaseTitle);
 
@@ -262,8 +262,8 @@ test.describe('Test Cases Page', () => {
 	test.describe('Suite and Test Case Integration', () => {
 		test.describe.configure({ timeout: 60_000 });
 		test('should create suite and add test case to it', async ({ page }) => {
-			const suiteName = `E2E Integration Suite ${Date.now()}`;
-			const testCaseTitle = `E2E Integration TC ${Date.now()}`;
+			const suiteName = `E2E Cases Integration Suite ${Date.now()}`;
+			const testCaseTitle = `E2E Cases Integration TC ${Date.now()}`;
 
 			// Create suite first
 			await testCasesPage.createTestSuite(suiteName);
@@ -279,7 +279,7 @@ test.describe('Test Cases Page', () => {
 		});
 
 		test('should expand and collapse test suites', async ({ page }) => {
-			const suiteName = `E2E Expand Suite ${Date.now()}`;
+			const suiteName = `E2E Cases Expand Suite ${Date.now()}`;
 
 			// Create a suite
 			await testCasesPage.createTestSuite(suiteName);
@@ -298,7 +298,7 @@ test.describe('Test Cases Page', () => {
 	test.describe('Keyboard Navigation', () => {
 		// TODO: create new project before running this test
 		test.skip('should support keyboard navigation in test case creation', async ({ page }) => {
-			const testCaseTitle = `E2E Keyboard Test ${Date.now()}`;
+			const testCaseTitle = `E2E Cases Keyboard ${Date.now()}`;
 
 			await testCasesPage.clickNewTestCase();
 

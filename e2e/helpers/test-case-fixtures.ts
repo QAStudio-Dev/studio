@@ -70,7 +70,7 @@ export async function createTestCaseWithExecutionHistory(
 
 	const runResponse = await api.createTestRun({
 		projectId,
-		name: `E2E Run ${Date.now()}`
+		name: `E2E Detail Run ${Date.now()}`
 	});
 	expect(runResponse.ok()).toBe(true);
 	const runBody = await api.getResponseBody(runResponse);
