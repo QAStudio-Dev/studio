@@ -2,7 +2,12 @@ import { test, expect } from '@playwright/test';
 import { TestCasesPage } from '../pages/test-cases';
 import { TestCaseDetailPage } from '../pages/test-case-detail';
 import { loginAsTestUser } from '../helpers/auth';
-import { cleanupE2eTestData, getE2eProjectId } from '../helpers/cleanup';
+import {
+	cleanupE2eTestData,
+	E2E_DETAIL_PREFIX,
+	getE2eProjectId,
+	waitForTestCaseInApi
+} from '../helpers/cleanup';
 import { createTestCaseWithExecutionHistory } from '../helpers/test-case-fixtures';
 
 /**
@@ -18,20 +23,23 @@ test.describe('Test Case Detail Page', () => {
 
 	test.beforeAll(async ({ request }) => {
 		projectId = getE2eProjectId();
-		await cleanupE2eTestData(request, projectId);
+		await cleanupE2eTestData(request, projectId, { prefix: E2E_DETAIL_PREFIX });
 	});
 
 	test.afterEach(async ({ request }) => {
 		if (projectId) {
-			await cleanupE2eTestData(request, projectId);
+			await cleanupE2eTestData(request, projectId, { prefix: E2E_DETAIL_PREFIX });
 		}
 	});
 
 	test.describe('Open test case', () => {
 		test.describe.configure({ timeout: 60_000 });
 
-		test('should open a newly created test case without a server error', async ({ page }) => {
-			const title = `E2E Open Case ${Date.now()}`;
+		test('should open a newly created test case without a server error', async ({
+			page,
+			request
+		}) => {
+			const title = `E2E Detail Open ${Date.now()}`;
 
 			await loginAsTestUser(page);
 
@@ -42,6 +50,8 @@ test.describe('Test Case Detail Page', () => {
 			expect(created).toBeDefined();
 			expect(created?.id).toBeTruthy();
 			expect(created?.id.startsWith('temp-')).toBe(false);
+
+			await waitForTestCaseInApi(request, projectId, created!.id);
 
 			const detailPage = new TestCaseDetailPage(page, projectId, created!.id);
 			await detailPage.navigate();
@@ -55,7 +65,7 @@ test.describe('Test Case Detail Page', () => {
 			page,
 			request
 		}) => {
-			const title = `E2E History Case ${Date.now()}`;
+			const title = `E2E Detail History ${Date.now()}`;
 			const fixture = await createTestCaseWithExecutionHistory(request, projectId, title);
 
 			await loginAsTestUser(page);
@@ -73,8 +83,11 @@ test.describe('Test Case Detail Page', () => {
 	test.describe('Edit test case', () => {
 		test.describe.configure({ timeout: 60_000 });
 
-		test('should edit and save test case content on the detail page', async ({ page }) => {
-			const originalTitle = `E2E Edit Case ${Date.now()}`;
+		test('should edit and save test case content on the detail page', async ({
+			page,
+			request
+		}) => {
+			const originalTitle = `E2E Detail Edit ${Date.now()}`;
 			const updatedTitle = `${originalTitle} Updated`;
 			const description = 'Updated description from E2E test';
 			const steps = 'Step 1: Do something\nStep 2: Verify outcome';
@@ -86,6 +99,8 @@ test.describe('Test Case Detail Page', () => {
 			await listPage.waitForLoad();
 			const created = await listPage.createTestCase(originalTitle);
 			expect(created).toBeDefined();
+
+			await waitForTestCaseInApi(request, projectId, created!.id);
 
 			const detailPage = new TestCaseDetailPage(page, projectId, created!.id);
 			await detailPage.navigate();
