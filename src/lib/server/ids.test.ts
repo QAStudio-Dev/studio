@@ -208,7 +208,8 @@ describe('ID Generators', () => {
 				ids.add(generateTestCaseId());
 			}
 
-			expect(ids.size).toBe(iterations);
+			// 4-char IDs (~14.7M combinations), collisions are very rare but possible
+			expect(ids.size).toBeGreaterThanOrEqual(iterations * 0.999);
 		});
 	});
 
