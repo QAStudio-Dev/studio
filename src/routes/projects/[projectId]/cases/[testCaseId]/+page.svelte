@@ -980,6 +980,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 					class="btn preset-outlined-surface-500"
 					onclick={() => (showDeleteConfirm = false)}
 					disabled={deleting}
+					autofocus
 				>
 					Cancel
 				</button>

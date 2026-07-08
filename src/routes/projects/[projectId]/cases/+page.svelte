@@ -974,6 +974,7 @@
 						testCaseToDelete = null;
 					}}
 					disabled={deleting}
+					autofocus
 				>
 					Cancel
 				</button>

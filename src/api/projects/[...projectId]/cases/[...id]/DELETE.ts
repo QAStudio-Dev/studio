@@ -37,7 +37,7 @@ export default new Endpoint({ Param, Output, Error, Modifier }).handle(async (in
 
 	const { project } = await requireProjectAccess(userId, projectId);
 
-	await db.$transaction(async (tx) => {
+	const deletedTestCase = await db.$transaction(async (tx) => {
 		const testCase = await tx.testCase.findFirst({
 			where: {
 				id,
@@ -53,23 +53,25 @@ export default new Endpoint({ Param, Output, Error, Modifier }).handle(async (in
 			where: { id }
 		});
 
-		try {
-			await createAuditLog({
-				userId,
-				teamId: project.teamId ?? undefined,
-				action: 'TEST_CASE_DELETED',
-				resourceType: 'TestCase',
-				resourceId: id,
-				metadata: {
-					testCaseTitle: testCase.title,
-					projectId
-				},
-				event
-			});
-		} catch (auditError) {
-			console.error('Failed to create audit log for test case deletion:', auditError);
-		}
+		return testCase;
 	});
+
+	try {
+		await createAuditLog({
+			userId,
+			teamId: project.teamId ?? undefined,
+			action: 'TEST_CASE_DELETED',
+			resourceType: 'TestCase',
+			resourceId: id,
+			metadata: {
+				testCaseTitle: deletedTestCase.title,
+				projectId
+			},
+			event
+		});
+	} catch (auditError) {
+		console.error('Failed to create audit log for test case deletion:', auditError);
+	}
 
 	return {
 		success: true,
