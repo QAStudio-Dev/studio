@@ -263,7 +263,6 @@ test.describe('Test Cases Page', () => {
 		test.describe.configure({ timeout: 60_000 });
 		test('should create suite and add test case to it', async ({ page }) => {
 			const suiteName = `E2E Cases Integration Suite ${Date.now()}`;
-			const testCaseTitle = `E2E Cases Integration TC ${Date.now()}`;
 
 			// Create suite first
 			await testCasesPage.createTestSuite(suiteName);

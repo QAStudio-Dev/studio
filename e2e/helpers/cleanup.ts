@@ -142,9 +142,13 @@ export async function waitForTestCaseInApi(
 	const deadline = Date.now() + timeoutMs;
 
 	while (Date.now() < deadline) {
-		const response = await api.getTestCase(projectId, testCaseId);
-		if (response.ok()) {
-			return;
+		try {
+			const response = await api.getTestCase(projectId, testCaseId);
+			if (response.ok()) {
+				return;
+			}
+		} catch {
+			// Transient network/request errors — keep polling until deadline.
 		}
 		await new Promise((resolve) => setTimeout(resolve, 250));
 	}
