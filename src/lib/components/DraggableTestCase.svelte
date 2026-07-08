@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { GripVertical, TestTube2, ExternalLink } from '@lucide/svelte';
+	import { GripVertical, TestTube2, ExternalLink, Trash2 } from '@lucide/svelte';
 	import type { Priority } from '$prisma/client';
 
 	interface TestCase {
@@ -14,6 +14,7 @@
 		onDragStart: (event: DragEvent, testCase: TestCase) => void;
 		onDragEnd: () => void;
 		onOpenModal: (testCase: TestCase) => void;
+		onDelete?: (testCase: TestCase) => void;
 		isDragging?: boolean;
 	}
 
@@ -23,6 +24,7 @@
 		onDragStart,
 		onDragEnd,
 		onOpenModal,
+		onDelete,
 		isDragging = false
 	}: Props = $props();
 
@@ -79,6 +81,16 @@
 		</button>
 
 		<!-- Actions -->
+		{#if onDelete}
+			<button
+				onclick={() => onDelete(testCase)}
+				class="preset-ghost-surface-500 btn btn-sm text-error-500 opacity-0 transition-opacity group-hover:opacity-100 hover:text-error-500"
+				title="Delete test case"
+				data-testid="delete-test-case-button"
+			>
+				<Trash2 class="h-3.5 w-3.5" />
+			</button>
+		{/if}
 		<a
 			href="/projects/{projectId}/cases/{testCase.id}"
 			class="preset-ghost-surface-500 btn btn-sm opacity-0 transition-opacity group-hover:opacity-100"

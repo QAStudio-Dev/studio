@@ -1,3 +1,4 @@
+import api from '$api';
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import type { RequestHandler } from './$types';
@@ -101,19 +102,5 @@ export const PATCH: RequestHandler = async ({ params, request }) => {
 	}
 };
 
-// DELETE /api/projects/[projectId]/test-cases/[id] - Delete test case
-export const DELETE: RequestHandler = async ({ params }) => {
-	try {
-		await db.testCase.delete({
-			where: { id: params.id }
-		});
-
-		return json({ success: true });
-	} catch (error: any) {
-		console.error('Error deleting test case:', error);
-		if (error.code === 'P2025') {
-			return json({ error: 'Test case not found' }, { status: 404 });
-		}
-		return json({ error: 'Failed to delete test case' }, { status: 500 });
-	}
-};
+export const DELETE: RequestHandler = async (evt) => api.handle(evt);
+export const OPTIONS: RequestHandler = async (evt) => api.handle(evt);

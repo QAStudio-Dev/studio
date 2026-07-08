@@ -18,13 +18,14 @@
 		X,
 		Save,
 		Play,
-		Bug
+		Bug,
+		Trash2
 	} from '@lucide/svelte';
 	import { Avatar, Accordion, useAccordion } from '@skeletonlabs/skeleton-svelte';
 	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
 	import { onMount } from 'svelte';
 	import { removeAnsiCodes } from '$lib/utils/error-formatter';
-	import { invalidateAll } from '$app/navigation';
+	import { invalidateAll, goto } from '$app/navigation';
 
 	let { data } = $props();
 	let { testCase } = $derived(data);
@@ -63,6 +64,8 @@
 		automationStatus: 'NOT_AUTOMATED'
 	});
 	let savingEdit = $state(false);
+	let showDeleteConfirm = $state(false);
+	let deleting = $state(false);
 
 	function openEditDialog() {
 		// Reset form with current values
@@ -105,6 +108,28 @@
 			alert('Failed to update test case');
 		} finally {
 			savingEdit = false;
+		}
+	}
+
+	async function deleteTestCase() {
+		deleting = true;
+		try {
+			const res = await fetch(`/api/projects/${testCase.project.id}/cases/${testCase.id}`, {
+				method: 'DELETE'
+			});
+
+			if (!res.ok) {
+				const errorData = await res.json();
+				throw new Error(errorData.message || 'Failed to delete test case');
+			}
+
+			goto(`/projects/${testCase.project.id}/cases`);
+		} catch (err: any) {
+			console.error(err);
+			alert(err.message || 'Failed to delete test case');
+		} finally {
+			deleting = false;
+			showDeleteConfirm = false;
 		}
 	}
 
@@ -307,6 +332,14 @@ ${testCase.expectedResult || 'See test case for details'}`;
 				<button onclick={openEditDialog} class="preset-filled-primary btn">
 					<Edit class="mr-2 h-4 w-4" />
 					Edit
+				</button>
+				<button
+					onclick={() => (showDeleteConfirm = true)}
+					class="btn preset-outlined-error-500"
+					title="Delete test case"
+				>
+					<Trash2 class="mr-2 h-4 w-4" />
+					Delete
 				</button>
 			</div>
 		</div>
@@ -916,4 +949,55 @@ ${testCase.expectedResult || 'See test case for details'}`;
 		prefillSummary={jiraModalSummary}
 		prefillDescription={jiraModalDescription}
 	/>
+{/if}
+
+{#if showDeleteConfirm}
+	<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="delete-test-case-modal-title"
+		onkeydown={(e) => {
+			if (e.key === 'Escape' && !deleting) {
+				showDeleteConfirm = false;
+			}
+		}}
+	>
+		<div class="rounded-container-token w-full max-w-md bg-surface-50-950 p-6 shadow-xl">
+			<h2 id="delete-test-case-modal-title" class="mb-4 text-2xl font-bold text-error-500">
+				Delete Test Case
+			</h2>
+			<p class="text-surface-600-300 mb-6">
+				Are you sure you want to delete <strong>{testCase.title}</strong>? This will
+				permanently delete all execution history, attachments, and associated data. This
+				action cannot be undone.
+			</p>
+
+			<div class="flex justify-end gap-3">
+				<button
+					type="button"
+					class="btn preset-outlined-surface-500"
+					onclick={() => (showDeleteConfirm = false)}
+					disabled={deleting}
+				>
+					Cancel
+				</button>
+				<button
+					type="button"
+					class="btn preset-filled-error-500"
+					onclick={deleteTestCase}
+					disabled={deleting}
+				>
+					{#if deleting}
+						<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+						Deleting...
+					{:else}
+						<Trash2 class="mr-2 h-4 w-4" />
+						Delete Test Case
+					{/if}
+				</button>
+			</div>
+		</div>
+	</div>
 {/if}
