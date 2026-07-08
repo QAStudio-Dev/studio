@@ -33,20 +33,6 @@ type MockTx = {
 	};
 };
 
-type MockProject = {
-	id: string;
-	name: string;
-	key: string;
-	createdBy: string;
-	teamId: string;
-};
-
-type MockUser = {
-	id: string;
-	email: string;
-	teamId: string;
-};
-
 /** Mirrors sveltekit-api param validation before invoking the route handler. */
 async function DELETE(
 	event: MockDeleteEvent
@@ -55,7 +41,7 @@ async function DELETE(
 		projectId: event.params.projectId,
 		id: event.params.id
 	});
-	return endpointHandler(param as CaseDeleteInput, event as CaseDeleteEvent);
+	return endpointHandler(param as CaseDeleteInput, event as unknown as CaseDeleteEvent);
 }
 
 vi.mock('$lib/server/db', () => ({
@@ -82,23 +68,46 @@ import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
 import { createAuditLog } from '$lib/server/audit';
 
-describe('DELETE /api/projects/[projectId]/cases/[id]', () => {
-	let mockEvent: MockDeleteEvent;
-	let mockTx: MockTx;
+type ProjectRecord = NonNullable<Awaited<ReturnType<typeof db.project.findUnique>>>;
+type UserRecord = NonNullable<Awaited<ReturnType<typeof db.user.findUnique>>>;
+type TransactionClient = Parameters<Parameters<typeof db.$transaction>[0]>[0];
 
-	const mockProject = {
+function createMockProject(overrides: Partial<ProjectRecord> = {}): ProjectRecord {
+	return {
 		id: 'proj_123',
 		name: 'Test Project',
 		key: 'TEST',
 		createdBy: 'user_123',
-		teamId: 'team_123'
-	} satisfies MockProject;
+		teamId: 'team_123',
+		createdAt: new Date(),
+		updatedAt: new Date(),
+		description: null,
+		...overrides
+	};
+}
 
-	const mockUser = {
+function createMockUser(overrides: Partial<UserRecord> = {}): UserRecord {
+	return {
 		id: 'user_123',
 		email: 'test@example.com',
-		teamId: 'team_123'
-	} satisfies MockUser;
+		passwordHash: null,
+		firstName: 'Test',
+		lastName: 'User',
+		imageUrl: null,
+		role: 'TESTER',
+		emailVerified: true,
+		ssoProvider: null,
+		ssoProviderId: null,
+		teamId: 'team_123',
+		createdAt: new Date(),
+		updatedAt: new Date(),
+		...overrides
+	};
+}
+
+describe('DELETE /api/projects/[projectId]/cases/[id]', () => {
+	let mockEvent: MockDeleteEvent;
+	let mockTx: MockTx;
 
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -111,7 +120,7 @@ describe('DELETE /api/projects/[projectId]/cases/[id]', () => {
 		};
 
 		vi.mocked(db.$transaction).mockImplementation(async (callback) => {
-			return callback(mockTx);
+			return callback(mockTx as unknown as TransactionClient);
 		});
 
 		mockEvent = {
@@ -132,8 +141,8 @@ describe('DELETE /api/projects/[projectId]/cases/[id]', () => {
 		};
 
 		vi.mocked(requireApiAuth).mockResolvedValue('user_123');
-		vi.mocked(db.project.findUnique).mockResolvedValue(mockProject);
-		vi.mocked(db.user.findUnique).mockResolvedValue(mockUser);
+		vi.mocked(db.project.findUnique).mockResolvedValue(createMockProject());
+		vi.mocked(db.user.findUnique).mockResolvedValue(createMockUser());
 	});
 
 	afterEach(() => {
@@ -176,11 +185,13 @@ describe('DELETE /api/projects/[projectId]/cases/[id]', () => {
 
 	it('should reject when user lacks project access', async () => {
 		vi.mocked(requireApiAuth).mockResolvedValue('user_other');
-		vi.mocked(db.user.findUnique).mockResolvedValue({
-			id: 'user_other',
-			email: 'other@example.com',
-			teamId: 'team_other'
-		} satisfies MockUser);
+		vi.mocked(db.user.findUnique).mockResolvedValue(
+			createMockUser({
+				id: 'user_other',
+				email: 'other@example.com',
+				teamId: 'team_other'
+			})
+		);
 
 		await expect(DELETE(mockEvent)).rejects.toMatchObject({
 			status: 403
@@ -195,11 +206,13 @@ describe('DELETE /api/projects/[projectId]/cases/[id]', () => {
 		});
 		mockTx.testCase.delete.mockResolvedValue({ id: 'tc_test123' });
 		vi.mocked(createAuditLog).mockRejectedValue(new Error('Audit service unavailable'));
+		const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
 		const result = await DELETE(mockEvent);
 
 		expect(result.success).toBe(true);
 		expect(mockTx.testCase.delete).toHaveBeenCalledWith({ where: { id: 'tc_test123' } });
 		expect(createAuditLog).toHaveBeenCalled();
+		consoleErrorSpy.mockRestore();
 	});
 });
