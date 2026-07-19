@@ -61,10 +61,12 @@
 		}
 	});
 
+	type EditableStructuredStep = StructuredTestCaseStep & { id: string };
+
 	// Edit mode state
 	let showEditDialog = $state(false);
 	let editStepsMode = $state<'string' | 'structured'>('string');
-	let editStructuredSteps = $state<StructuredTestCaseStep[]>([]);
+	let editStructuredSteps = $state<EditableStructuredStep[]>([]);
 	let editForm = $state({
 		title: '',
 		description: '',
@@ -79,6 +81,10 @@
 	let showDeleteConfirm = $state(false);
 	let deleting = $state(false);
 
+	function createEditableStepId() {
+		return crypto.randomUUID();
+	}
+
 	function openEditDialog() {
 		const kind = classifyTestCaseSteps(testCase.steps);
 		const structured = getStructuredTestCaseSteps(testCase.steps);
@@ -86,6 +92,7 @@
 		if (kind === 'structured' && structured) {
 			editStepsMode = 'structured';
 			editStructuredSteps = structured.map((step) => ({
+				id: createEditableStepId(),
 				action: step.action,
 				expectedResult: step.expectedResult ?? '',
 				order: step.order
@@ -125,13 +132,18 @@
 	function addEditStep() {
 		editStructuredSteps = [
 			...editStructuredSteps,
-			{ action: '', expectedResult: '', order: editStructuredSteps.length }
+			{
+				id: createEditableStepId(),
+				action: '',
+				expectedResult: '',
+				order: editStructuredSteps.length
+			}
 		];
 	}
 
-	function removeEditStep(index: number) {
+	function removeEditStep(id: string) {
 		editStructuredSteps = editStructuredSteps
-			.filter((_, i) => i !== index)
+			.filter((step) => step.id !== id)
 			.map((step, i) => ({ ...step, order: i }));
 	}
 
@@ -864,12 +876,23 @@ ${testCase.expectedResult || 'See test case for details'}`;
 	<div class="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center p-4">
 		<div
 			class="border-surface-200-700 pointer-events-auto max-h-[90vh] w-full max-w-3xl overflow-y-auto card border bg-surface-50-950 p-6 shadow-2xl"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="edit-test-case-modal-title"
+			tabindex="-1"
+			onkeydown={(e) => {
+				if (e.key === 'Escape' && !savingEdit) {
+					showEditDialog = false;
+				}
+			}}
 		>
 			<div class="mb-6 flex items-start justify-between">
 				<div>
 					<div class="mb-2 flex items-center gap-3">
 						<Edit class="h-6 w-6 text-primary-500" />
-						<h2 class="text-2xl font-bold">Edit Test Case</h2>
+						<h2 id="edit-test-case-modal-title" class="text-2xl font-bold">
+							Edit Test Case
+						</h2>
 					</div>
 					<p class="text-surface-600-300">Update test case details and documentation</p>
 				</div>
@@ -974,7 +997,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 					<span class="mb-2 block text-sm font-medium">Test Steps</span>
 					{#if editStepsMode === 'structured'}
 						<div class="space-y-3">
-							{#each editStructuredSteps as step, index (index)}
+							{#each editStructuredSteps as step, index (step.id)}
 								<div
 									class="border-surface-200-700 space-y-2 rounded-base border p-3"
 								>
@@ -983,7 +1006,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 										<button
 											type="button"
 											class="btn preset-tonal-error btn-sm"
-											onclick={() => removeEditStep(index)}
+											onclick={() => removeEditStep(step.id)}
 											disabled={savingEdit || editStructuredSteps.length <= 1}
 											aria-label={`Remove step ${index + 1}`}
 										>
@@ -994,14 +1017,14 @@ ${testCase.expectedResult || 'See test case for details'}`;
 										class="input"
 										type="text"
 										placeholder="Action"
-										bind:value={editStructuredSteps[index].action}
+										bind:value={step.action}
 										disabled={savingEdit}
 									/>
 									<input
 										class="input"
 										type="text"
 										placeholder="Expected result (optional)"
-										bind:value={editStructuredSteps[index].expectedResult}
+										bind:value={step.expectedResult}
 										disabled={savingEdit}
 									/>
 								</div>
