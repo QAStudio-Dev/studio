@@ -28,6 +28,13 @@ jobs:
           DATABASE_URL: postgresql://user:pass@localhost:5432/db
         run: npm ci
 
+      # postinstall runs prisma generate before prepare/svelte-kit sync, so it
+      # often skips on a clean CI checkout. Regenerate after sync (like type-check).
+      - name: Generate Prisma Client
+        env:
+          DATABASE_URL: postgresql://user:pass@localhost:5432/db
+        run: npx prisma generate
+
       - name: Run unit tests with coverage
         run: npm run test:unit -- --run --coverage
 

@@ -19,16 +19,26 @@
 		Save,
 		Play,
 		Bug,
-		Trash2
+		Trash2,
+		Plus
 	} from '@lucide/svelte';
 	import { Avatar, Accordion, useAccordion } from '@skeletonlabs/skeleton-svelte';
 	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
 	import { onMount } from 'svelte';
 	import { removeAnsiCodes } from '$lib/utils/error-formatter';
 	import { invalidateAll, goto } from '$app/navigation';
+	import {
+		classifyTestCaseSteps,
+		formatTestCaseStepsForText,
+		getStructuredTestCaseSteps,
+		normalizeStructuredStepsForSave,
+		type StructuredTestCaseStep
+	} from '$lib/utils/test-case-steps';
 
 	let { data } = $props();
 	let { testCase } = $derived(data);
+	let stepsKind = $derived(classifyTestCaseSteps(testCase.steps));
+	let structuredSteps = $derived(getStructuredTestCaseSteps(testCase.steps));
 
 	type AttachmentViewerComponent =
 		typeof import('$lib/components/AttachmentViewer.svelte').default;
@@ -51,8 +61,12 @@
 		}
 	});
 
+	type EditableStructuredStep = StructuredTestCaseStep & { id: string };
+
 	// Edit mode state
 	let showEditDialog = $state(false);
+	let editStepsMode = $state<'string' | 'structured'>('string');
+	let editStructuredSteps = $state<EditableStructuredStep[]>([]);
 	let editForm = $state({
 		title: '',
 		description: '',
@@ -67,22 +81,70 @@
 	let showDeleteConfirm = $state(false);
 	let deleting = $state(false);
 
+	function createEditableStepId() {
+		return crypto.randomUUID();
+	}
+
 	function openEditDialog() {
-		// Reset form with current values
-		editForm = {
-			title: testCase.title,
-			description: testCase.description || '',
-			preconditions: testCase.preconditions || '',
-			steps:
-				(typeof testCase.steps === 'string'
-					? testCase.steps
-					: JSON.stringify(testCase.steps)) || '',
-			expectedResult: testCase.expectedResult || '',
-			priority: testCase.priority,
-			type: testCase.type,
-			automationStatus: testCase.automationStatus
-		};
+		const kind = classifyTestCaseSteps(testCase.steps);
+		const structured = getStructuredTestCaseSteps(testCase.steps);
+
+		if (kind === 'structured' && structured) {
+			editStepsMode = 'structured';
+			editStructuredSteps = structured.map((step) => ({
+				id: createEditableStepId(),
+				action: step.action,
+				expectedResult: step.expectedResult ?? '',
+				order: step.order
+			}));
+			editForm = {
+				title: testCase.title,
+				description: testCase.description || '',
+				preconditions: testCase.preconditions || '',
+				steps: '',
+				expectedResult: testCase.expectedResult || '',
+				priority: testCase.priority,
+				type: testCase.type,
+				automationStatus: testCase.automationStatus
+			};
+		} else {
+			editStepsMode = 'string';
+			editStructuredSteps = [];
+			editForm = {
+				title: testCase.title,
+				description: testCase.description || '',
+				preconditions: testCase.preconditions || '',
+				steps:
+					typeof testCase.steps === 'string'
+						? testCase.steps
+						: testCase.steps
+							? formatTestCaseStepsForText(testCase.steps)
+							: '',
+				expectedResult: testCase.expectedResult || '',
+				priority: testCase.priority,
+				type: testCase.type,
+				automationStatus: testCase.automationStatus
+			};
+		}
 		showEditDialog = true;
+	}
+
+	function addEditStep() {
+		editStructuredSteps = [
+			...editStructuredSteps,
+			{
+				id: createEditableStepId(),
+				action: '',
+				expectedResult: '',
+				order: editStructuredSteps.length
+			}
+		];
+	}
+
+	function removeEditStep(id: string) {
+		editStructuredSteps = editStructuredSteps
+			.filter((step) => step.id !== id)
+			.map((step, i) => ({ ...step, order: i }));
 	}
 
 	async function handleSaveEdit() {
@@ -91,12 +153,34 @@
 			return;
 		}
 
+		if (editStepsMode === 'structured') {
+			const hasEmptyAction = editStructuredSteps.some((step) => !step.action.trim());
+			if (editStructuredSteps.length === 0 || hasEmptyAction) {
+				alert('Each step needs an action');
+				return;
+			}
+		}
+
 		savingEdit = true;
 		try {
+			const payload = {
+				title: editForm.title,
+				description: editForm.description,
+				preconditions: editForm.preconditions,
+				expectedResult: editForm.expectedResult,
+				priority: editForm.priority,
+				type: editForm.type,
+				automationStatus: editForm.automationStatus,
+				steps:
+					editStepsMode === 'structured'
+						? normalizeStructuredStepsForSave(editStructuredSteps)
+						: editForm.steps
+			};
+
 			const res = await fetch(`/api/cases/${testCase.id}`, {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(editForm)
+				body: JSON.stringify(payload)
 			});
 
 			if (!res.ok) throw new Error('Failed to update test case');
@@ -175,7 +259,7 @@
 **Automation Status**: ${testCase.automationStatus}
 
 ${testCase.description ? `**Description**:\n${testCase.description}\n\n` : ''}${testCase.preconditions ? `**Preconditions**:\n${testCase.preconditions}\n\n` : ''}**Test Steps**:
-${testCase.steps || 'See test case for details'}
+${formatTestCaseStepsForText(testCase.steps) || 'See test case for details'}
 
 **Expected Result**:
 ${testCase.expectedResult || 'See test case for details'}`;
@@ -282,6 +366,14 @@ ${testCase.expectedResult || 'See test case for details'}`;
 	}
 </script>
 
+<svelte:window
+	onkeydown={(e) => {
+		if (e.key === 'Escape' && showEditDialog && !savingEdit) {
+			showEditDialog = false;
+		}
+	}}
+/>
+
 <div class="container mx-auto max-w-[1600px] px-4 py-8">
 	<!-- Header -->
 	<div class="mb-8">
@@ -365,17 +457,30 @@ ${testCase.expectedResult || 'See test case for details'}`;
 			{/if}
 
 			<!-- Test Steps -->
-			{#if testCase.steps}
+			{#if stepsKind !== 'empty'}
 				<div class="card p-6">
 					<h2 class="mb-3 text-lg font-bold">Test Steps</h2>
-					{#if Array.isArray(testCase.steps)}
-						<ol class="list-inside list-decimal space-y-2">
-							{#each testCase.steps as step}
-								<li class="text-surface-600-300">{step}</li>
+					{#if stepsKind === 'structured' && structuredSteps}
+						<ol class="list-decimal space-y-3 pl-5">
+							{#each structuredSteps as step, index (step.order ?? index)}
+								<li class="text-surface-600-300">
+									<div class="font-medium text-surface-800-100">
+										{step.action}
+									</div>
+									{#if step.expectedResult}
+										<div class="text-surface-500-400 mt-1 text-sm">
+											Expected: {step.expectedResult}
+										</div>
+									{/if}
+								</li>
 							{/each}
 						</ol>
+					{:else if stepsKind === 'string'}
+						<p class="text-surface-600-300 whitespace-pre-wrap">{testCase.steps}</p>
 					{:else}
-						<p class="text-surface-600-300">{testCase.steps}</p>
+						<p class="text-surface-600-300 whitespace-pre-wrap">
+							{formatTestCaseStepsForText(testCase.steps)}
+						</p>
 					{/if}
 				</div>
 			{/if}
@@ -773,18 +878,25 @@ ${testCase.expectedResult || 'See test case for details'}`;
 		onclick={() => (showEditDialog = false)}
 		class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm"
 		aria-label="Close dialog"
+		disabled={savingEdit}
 	></button>
 
 	<!-- Dialog -->
 	<div class="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center p-4">
 		<div
 			class="border-surface-200-700 pointer-events-auto max-h-[90vh] w-full max-w-3xl overflow-y-auto card border bg-surface-50-950 p-6 shadow-2xl"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="edit-test-case-modal-title"
+			tabindex="-1"
 		>
 			<div class="mb-6 flex items-start justify-between">
 				<div>
 					<div class="mb-2 flex items-center gap-3">
 						<Edit class="h-6 w-6 text-primary-500" />
-						<h2 class="text-2xl font-bold">Edit Test Case</h2>
+						<h2 id="edit-test-case-modal-title" class="text-2xl font-bold">
+							Edit Test Case
+						</h2>
 					</div>
 					<p class="text-surface-600-300">Update test case details and documentation</p>
 				</div>
@@ -887,16 +999,64 @@ ${testCase.expectedResult || 'See test case for details'}`;
 				<!-- Test Steps -->
 				<div class="label">
 					<span class="mb-2 block text-sm font-medium">Test Steps</span>
-					<textarea
-						class="textarea"
-						rows="5"
-						placeholder="Step-by-step instructions to execute this test"
-						bind:value={editForm.steps}
-						disabled={savingEdit}
-					></textarea>
-					<span class="text-surface-600-300 mt-1 text-xs">
-						Enter each step on a new line for better readability
-					</span>
+					{#if editStepsMode === 'structured'}
+						<div class="space-y-3">
+							{#each editStructuredSteps as step, index (step.id)}
+								<div
+									class="border-surface-200-700 space-y-2 rounded-base border p-3"
+								>
+									<div class="flex items-center justify-between gap-2">
+										<span class="text-sm font-medium">Step {index + 1}</span>
+										<button
+											type="button"
+											class="btn preset-tonal-error btn-sm"
+											onclick={() => removeEditStep(step.id)}
+											disabled={savingEdit || editStructuredSteps.length <= 1}
+											aria-label={`Remove step ${index + 1}`}
+										>
+											<Trash2 class="h-3.5 w-3.5" />
+										</button>
+									</div>
+									<input
+										class="input"
+										type="text"
+										placeholder="Action"
+										aria-label={`Step ${index + 1} action`}
+										bind:value={step.action}
+										disabled={savingEdit}
+									/>
+									<input
+										class="input"
+										type="text"
+										placeholder="Expected result (optional)"
+										aria-label={`Step ${index + 1} expected result`}
+										bind:value={step.expectedResult}
+										disabled={savingEdit}
+									/>
+								</div>
+							{/each}
+							<button
+								type="button"
+								class="btn preset-outlined-surface-500 btn-sm"
+								onclick={addEditStep}
+								disabled={savingEdit || editStructuredSteps.length >= 100}
+							>
+								<Plus class="mr-1 h-4 w-4" />
+								Add Step
+							</button>
+						</div>
+					{:else}
+						<textarea
+							class="textarea"
+							rows="5"
+							placeholder="Step-by-step instructions to execute this test"
+							bind:value={editForm.steps}
+							disabled={savingEdit}
+						></textarea>
+						<span class="text-surface-600-300 mt-1 text-xs">
+							Enter each step on a new line for better readability
+						</span>
+					{/if}
 				</div>
 
 				<!-- Expected Result -->

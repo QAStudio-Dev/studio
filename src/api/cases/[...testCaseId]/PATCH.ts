@@ -3,16 +3,39 @@ import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
 import { serializeDates } from '$lib/utils/date';
 import { Prisma } from '$prisma/client';
+import { normalizeStructuredStepsForSave } from '$lib/utils/test-case-steps';
 
 export const Param = z.object({
 	testCaseId: z.string()
+});
+
+const StructuredStepInput = z.object({
+	action: z.string().trim().min(1).describe('Step action/description'),
+	expectedResult: z.string().trim().optional().describe('Expected result for this step'),
+	order: z
+		.number()
+		.int()
+		.nonnegative()
+		.optional()
+		.describe('Step order (auto-calculated if not provided)')
 });
 
 export const Input = z.object({
 	title: z.string().min(1).optional().describe('Test case title'),
 	description: z.string().nullable().optional().describe('Detailed test case description'),
 	preconditions: z.string().nullable().optional().describe('Pre-requisites before executing'),
-	steps: z.string().nullable().optional().describe('Test execution steps'),
+	steps: z
+		.union([
+			z.string().describe('Legacy plain-text test steps'),
+			z
+				.array(StructuredStepInput)
+				.min(1)
+				.max(100)
+				.describe('Structured test execution steps (max 100 steps)'),
+			z.null()
+		])
+		.optional()
+		.describe('Test execution steps (plain text or structured array)'),
 	expectedResult: z.string().nullable().optional().describe('Expected test outcome'),
 	priority: z
 		.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'])
@@ -44,7 +67,7 @@ export const Output = z.object({
 	title: z.string(),
 	description: z.string().nullable(),
 	preconditions: z.string().nullable(),
-	steps: z.string().nullable(),
+	steps: z.any().nullable().describe('Plain-text string or structured step array'),
 	expectedResult: z.string().nullable(),
 	priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']),
 	type: z.enum([
@@ -99,6 +122,17 @@ export const Modifier = (r: any) => {
 	return r;
 };
 
+function stepsToDbValue(
+	steps: string | z.infer<typeof StructuredStepInput>[] | null
+): string | ReturnType<typeof normalizeStructuredStepsForSave> | typeof Prisma.JsonNull {
+	if (steps === null) return Prisma.JsonNull;
+	if (typeof steps === 'string') {
+		const trimmed = steps.trim();
+		return trimmed ? trimmed : Prisma.JsonNull;
+	}
+	return normalizeStructuredStepsForSave(steps);
+}
+
 export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 	async (input, evt): Promise<any> => {
 		const userId = await requireApiAuth(evt);
@@ -138,7 +172,7 @@ export default new Endpoint({ Param, Input, Output, Error, Modifier }).handle(
 						preconditions: input.preconditions?.trim() || null
 					}),
 					...(input.steps !== undefined && {
-						steps: input.steps?.trim() ? input.steps.trim() : Prisma.JsonNull
+						steps: stepsToDbValue(input.steps)
 					}),
 					...(input.expectedResult !== undefined && {
 						expectedResult: input.expectedResult?.trim() || null
