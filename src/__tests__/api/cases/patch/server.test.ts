@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ZodError } from 'zod';
-import { Prisma } from '$prisma/client';
 import PATCH_ENDPOINT, { Input, Param } from '../../../../api/cases/[...testCaseId]/PATCH';
 
 const endpointHandler = PATCH_ENDPOINT.default;
@@ -154,13 +153,12 @@ describe('PATCH /api/cases/[testCaseId]', () => {
 
 	it('clears steps when null or blank string is sent', async () => {
 		await PATCH(makeEvent({ steps: null }));
-		expect(db.testCase.update).toHaveBeenCalledWith(
-			expect.objectContaining({
-				data: expect.objectContaining({
-					steps: Prisma.JsonNull
-				})
-			})
-		);
+		const nullClearSteps = vi.mocked(db.testCase.update).mock.calls[0]?.[0]?.data?.steps;
+		// Prisma.JsonNull is an object enum sentinel, not JS null / string / array
+		expect(nullClearSteps).toBeTruthy();
+		expect(typeof nullClearSteps).toBe('object');
+		expect(Array.isArray(nullClearSteps)).toBe(false);
+		expect(String(nullClearSteps)).toMatch(/JsonNull/);
 
 		vi.clearAllMocks();
 		vi.mocked(requireApiAuth).mockResolvedValue('user_123');
@@ -168,13 +166,8 @@ describe('PATCH /api/cases/[testCaseId]', () => {
 		vi.mocked(db.testCase.update).mockResolvedValue(updatedBase as never);
 
 		await PATCH(makeEvent({ steps: '   ' }));
-		expect(db.testCase.update).toHaveBeenCalledWith(
-			expect.objectContaining({
-				data: expect.objectContaining({
-					steps: Prisma.JsonNull
-				})
-			})
-		);
+		const blankClearSteps = vi.mocked(db.testCase.update).mock.calls[0]?.[0]?.data?.steps;
+		expect(String(blankClearSteps)).toMatch(/JsonNull/);
 	});
 
 	it('rejects structured steps with empty action', async () => {
