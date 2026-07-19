@@ -366,6 +366,14 @@ ${testCase.expectedResult || 'See test case for details'}`;
 	}
 </script>
 
+<svelte:window
+	onkeydown={(e) => {
+		if (e.key === 'Escape' && showEditDialog && !savingEdit) {
+			showEditDialog = false;
+		}
+	}}
+/>
+
 <div class="container mx-auto max-w-[1600px] px-4 py-8">
 	<!-- Header -->
 	<div class="mb-8">
@@ -870,6 +878,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 		onclick={() => (showEditDialog = false)}
 		class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm"
 		aria-label="Close dialog"
+		disabled={savingEdit}
 	></button>
 
 	<!-- Dialog -->
@@ -880,11 +889,6 @@ ${testCase.expectedResult || 'See test case for details'}`;
 			aria-modal="true"
 			aria-labelledby="edit-test-case-modal-title"
 			tabindex="-1"
-			onkeydown={(e) => {
-				if (e.key === 'Escape' && !savingEdit) {
-					showEditDialog = false;
-				}
-			}}
 		>
 			<div class="mb-6 flex items-start justify-between">
 				<div>
@@ -1017,6 +1021,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 										class="input"
 										type="text"
 										placeholder="Action"
+										aria-label={`Step ${index + 1} action`}
 										bind:value={step.action}
 										disabled={savingEdit}
 									/>
@@ -1024,6 +1029,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 										class="input"
 										type="text"
 										placeholder="Expected result (optional)"
+										aria-label={`Step ${index + 1} expected result`}
 										bind:value={step.expectedResult}
 										disabled={savingEdit}
 									/>
