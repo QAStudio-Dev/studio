@@ -98,7 +98,7 @@
     "@lucide/svelte": "^1.28.0",
     "marked": "^18.0.9",
     "marked-highlight": "^2.2.4",
-    "nanoid": "^5.1.11",
+    "nanoid": "^6.0.1",
     "nodemailer": "^8.0.10",
     "openai": "^6.39.1",
     "otpauth": "^9.5.1",
