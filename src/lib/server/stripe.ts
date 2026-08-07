@@ -6,7 +6,7 @@ if (!STRIPE_SECRET_KEY) {
 }
 
 export const stripe = new Stripe(STRIPE_SECRET_KEY, {
-	apiVersion: '2026-05-27.dahlia',
+	apiVersion: '2026-07-29.dahlia',
 	typescript: true
 });
 
