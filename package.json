@@ -99,7 +99,7 @@
     "marked": "^18.0.9",
     "marked-highlight": "^2.2.4",
     "nanoid": "^5.1.11",
-    "nodemailer": "^8.0.10",
+    "nodemailer": "^9.0.4",
     "openai": "^6.39.1",
     "otpauth": "^9.5.1",
     "pg": "^8.22.0",
