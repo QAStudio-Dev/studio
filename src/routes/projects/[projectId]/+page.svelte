@@ -524,8 +524,7 @@
 							rows="3"
 							class="input"
 							placeholder="Optional description"
-							data-testid="edit-description-input"
-						></textarea>
+							data-testid="edit-description-input"></textarea>
 					</div>
 
 					<!-- Actions -->

@@ -303,8 +303,7 @@
 					rows="3"
 					placeholder="Tell us about your team and what you'll be testing..."
 					bind:value={teamDescription}
-					disabled={loading}
-				></textarea>
+					disabled={loading}></textarea>
 			</label>
 		</div>
 	</div>

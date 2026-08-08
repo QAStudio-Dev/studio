@@ -196,8 +196,7 @@
 					rows="4"
 					placeholder="What will you be testing in this project?"
 					bind:value={description}
-					disabled={loading}
-				></textarea>
+					disabled={loading}></textarea>
 			</label>
 
 			<!-- Actions -->

@@ -533,8 +533,7 @@
 							class="textarea w-full"
 							maxlength="1600"
 							required
-							disabled={sending}
-						></textarea>
+							disabled={sending}></textarea>
 						<div class="text-surface-500-400 mt-1 flex justify-between text-xs">
 							<span>Max 1600 characters for SMS</span>
 							<span>{messageBody.length} / 1600</span>
