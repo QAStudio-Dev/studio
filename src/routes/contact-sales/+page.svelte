@@ -256,8 +256,7 @@
 								rows="4"
 								placeholder="Tell us about your needs: SSO provider, compliance requirements, custom features, etc."
 								bind:value={requirements}
-								disabled={loading}
-							></textarea>
+								disabled={loading}></textarea>
 						</label>
 
 						<!-- Submit Button -->

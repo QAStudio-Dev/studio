@@ -951,7 +951,7 @@
 			}
 		}}
 	>
-		<div class="rounded-container w-full max-w-md bg-surface-50-950 p-6 shadow-xl">
+		<div class="w-full max-w-md rounded-container bg-surface-50-950 p-6 shadow-xl">
 			<h2
 				id="delete-test-case-list-modal-title"
 				class="mb-4 text-2xl font-bold text-error-500"

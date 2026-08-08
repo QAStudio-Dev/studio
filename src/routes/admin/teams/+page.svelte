@@ -404,8 +404,7 @@
 							class="textarea"
 							rows="4"
 							bind:value={inquiryNotes}
-							placeholder="Internal notes about this inquiry..."
-						></textarea>
+							placeholder="Internal notes about this inquiry..."></textarea>
 					</label>
 
 					<div class="flex gap-3">

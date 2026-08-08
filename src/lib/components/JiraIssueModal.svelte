@@ -449,8 +449,7 @@
 								rows="6"
 								placeholder="Detailed description of the issue..."
 								bind:value={description}
-								disabled={loading}
-							></textarea>
+								disabled={loading}></textarea>
 							<p class="text-surface-500-400 mt-1 text-xs">
 								Test case details and error information will be automatically
 								included

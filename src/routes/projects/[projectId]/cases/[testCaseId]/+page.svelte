@@ -464,7 +464,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 						<ol class="list-decimal space-y-3 pl-5">
 							{#each structuredSteps as step, index (step.order ?? index)}
 								<li class="text-surface-600-300">
-									<div class="font-medium text-surface-800-100">
+									<div class="text-surface-800-100 font-medium">
 										{step.action}
 									</div>
 									{#if step.expectedResult}
@@ -938,8 +938,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 						rows="3"
 						placeholder="Describe what this test case validates"
 						bind:value={editForm.description}
-						disabled={savingEdit}
-					></textarea>
+						disabled={savingEdit}></textarea>
 				</div>
 
 				<!-- Priority, Type, Automation Status -->
@@ -992,8 +991,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 						rows="3"
 						placeholder="Setup steps or conditions required before test execution"
 						bind:value={editForm.preconditions}
-						disabled={savingEdit}
-					></textarea>
+						disabled={savingEdit}></textarea>
 				</div>
 
 				<!-- Test Steps -->
@@ -1051,8 +1049,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 							rows="5"
 							placeholder="Step-by-step instructions to execute this test"
 							bind:value={editForm.steps}
-							disabled={savingEdit}
-						></textarea>
+							disabled={savingEdit}></textarea>
 						<span class="text-surface-600-300 mt-1 text-xs">
 							Enter each step on a new line for better readability
 						</span>
@@ -1067,8 +1064,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 						rows="3"
 						placeholder="What should happen when the test passes"
 						bind:value={editForm.expectedResult}
-						disabled={savingEdit}
-					></textarea>
+						disabled={savingEdit}></textarea>
 				</div>
 
 				<!-- Actions -->
@@ -1123,7 +1119,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 			}
 		}}
 	>
-		<div class="rounded-container w-full max-w-md bg-surface-50-950 p-6 shadow-xl">
+		<div class="w-full max-w-md rounded-container bg-surface-50-950 p-6 shadow-xl">
 			<h2 id="delete-test-case-modal-title" class="mb-4 text-2xl font-bold text-error-500">
 				Delete Test Case
 			</h2>

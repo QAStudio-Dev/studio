@@ -1299,8 +1299,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 						bind:value={editForm.description}
 						rows="3"
 						class="textarea w-full"
-						placeholder="Enter test run description (optional)"
-					></textarea>
+						placeholder="Enter test run description (optional)"></textarea>
 				</div>
 
 				<!-- Status -->

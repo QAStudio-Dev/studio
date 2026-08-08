@@ -41,10 +41,7 @@ export function parseOTPAuthURL(url: string): OTPAuthData {
 		const issuer = urlObj.searchParams.get('issuer') || undefined;
 		const algorithm =
 			(urlObj.searchParams.get('algorithm')?.toUpperCase() as
-				| 'SHA1'
-				| 'SHA256'
-				| 'SHA512'
-				| undefined) || 'SHA1';
+				'SHA1' | 'SHA256' | 'SHA512' | undefined) || 'SHA1';
 		const digits = urlObj.searchParams.get('digits')
 			? parseInt(urlObj.searchParams.get('digits')!)
 			: 6;
