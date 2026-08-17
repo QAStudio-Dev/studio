@@ -54,7 +54,7 @@
     "@tailwindcss/vite": "^4.3.3",
     "@types/adm-zip": "^0.5.8",
     "@types/bcrypt": "^6.0.0",
-    "@types/node": "^22.19.19",
+    "@types/node": "^26.2.0",
     "@types/nodemailer": "^8.0.0",
     "@types/pg": "^8.20.4",
     "@types/simple-oauth2": "^5.0.8",
