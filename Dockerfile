@@ -2,7 +2,7 @@
 # Supports both development and production builds
 
 # Stage 1: Base Node.js image with dependencies
-FROM node:22-alpine AS base
+FROM node:26-alpine AS base
 
 # Install dependencies needed for native modules
 RUN apk add --no-cache libc6-compat openssl
@@ -49,7 +49,7 @@ RUN npm prune --production
 RUN npx prisma generate
 
 # Stage 4: Production runner
-FROM node:22-alpine AS production
+FROM node:26-alpine AS production
 
 # Install dumb-init to handle signals properly
 RUN apk add --no-cache dumb-init
