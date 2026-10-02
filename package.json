@@ -61,7 +61,7 @@
     "@types/swagger-ui-dist": "^3.30.6",
     "@vitest/browser": "^4.1.11",
     "@vitest/browser-playwright": "^4.1.10",
-    "@vitest/coverage-v8": "^4.1.10",
+    "@vitest/coverage-v8": "^5.0.2",
     "eslint": "^10.11.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-svelte": "^3.23.0",
