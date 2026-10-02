@@ -59,7 +59,7 @@
     "@types/pg": "^8.23.1",
     "@types/simple-oauth2": "^5.0.8",
     "@types/swagger-ui-dist": "^3.30.6",
-    "@vitest/browser": "^4.1.11",
+    "@vitest/browser": "^5.0.2",
     "@vitest/browser-playwright": "^4.1.10",
     "@vitest/coverage-v8": "^4.1.10",
     "eslint": "^10.11.0",
