@@ -35,6 +35,8 @@
 			: ['profile', 'api-keys', 'integrations'];
 		if (requested && validTabs.includes(requested)) {
 			activeTab = requested;
+		} else if (!validTabs.includes(activeTab)) {
+			activeTab = 'profile';
 		}
 	});
 
@@ -1207,6 +1209,17 @@
 	</Tabs>
 </div>
 
+<svelte:window
+	onkeydown={(e) => {
+		if (e.key !== 'Escape') return;
+		if (showSeatUpdateDialog) {
+			if (!updatingSeats) showSeatUpdateDialog = false;
+		} else if (configuringIntegrationId && !savingSettings) {
+			configuringIntegrationId = null;
+		}
+	}}
+/>
+
 <!-- Integration Configuration Modal -->
 {#if configuringIntegrationId}
 	<div
@@ -1216,11 +1229,16 @@
 		}}
 	>
 		<div
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="notification-settings-title"
 			class="max-h-[90vh] w-full max-w-2xl overflow-y-auto card bg-surface-50-950 p-6 shadow-2xl"
 		>
 			<!-- Header -->
 			<div class="mb-6 flex items-center justify-between">
-				<h2 class="text-2xl font-bold">Notification Settings</h2>
+				<h2 id="notification-settings-title" class="text-2xl font-bold">
+					Notification Settings
+				</h2>
 				<button
 					onclick={() => (configuringIntegrationId = null)}
 					class="rounded-container p-2 transition-colors hover:bg-surface-200-800"
@@ -1294,10 +1312,13 @@
 	<!-- Dialog -->
 	<div class="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center p-4">
 		<div
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="seat-update-title"
 			class="pointer-events-auto w-full max-w-md overflow-y-auto card border border-surface-200-800 bg-surface-50-950 p-6 shadow-2xl"
 		>
 			<div class="mb-4 flex items-center justify-between">
-				<h2 class="text-xl font-bold">Update Seat Count</h2>
+				<h2 id="seat-update-title" class="text-xl font-bold">Update Seat Count</h2>
 				<button
 					onclick={() => (showSeatUpdateDialog = false)}
 					class="rounded-base p-1 text-surface-500 transition-colors hover:text-surface-950-50"

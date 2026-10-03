@@ -263,7 +263,11 @@
 						Create a new issue in Jira linked to this test
 					</p>
 				</div>
-				<button class="preset-ghost-surface-500 btn btn-sm" onclick={handleClose}>
+				<button
+					class="preset-ghost-surface-500 btn btn-sm"
+					onclick={handleClose}
+					aria-label="Close dialog"
+				>
 					<X class="h-4 w-4" />
 				</button>
 			</div>
