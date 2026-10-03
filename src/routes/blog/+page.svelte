@@ -93,17 +93,6 @@
 </script>
 
 <svelte:head>
-	<title>Blog - QA Studio</title>
-	<meta
-		name="description"
-		content="Articles about testing, QA engineering, automation, and best practices from the QA Studio team."
-	/>
-	<link
-		rel="alternate"
-		type="application/rss+xml"
-		title="QA Studio Blog RSS Feed"
-		href="/rss.xml"
-	/>
 	<link
 		rel="alternate"
 		type="application/atom+xml"
@@ -124,7 +113,7 @@
 		<div class="mt-6 flex items-center justify-center gap-4">
 			<a
 				href="/rss.xml"
-				class="inline-flex items-center gap-2 rounded-lg bg-surface-200-800 px-4 py-2 text-sm font-medium transition-colors hover:bg-surface-300-700"
+				class="btn gap-2 preset-outlined-surface-200-800 btn-sm text-surface-700-300 hover:border-warning-500 hover:text-warning-600-400"
 				target="_blank"
 				rel="noopener noreferrer"
 			>
@@ -133,7 +122,7 @@
 			</a>
 			<a
 				href="/atom.xml"
-				class="inline-flex items-center gap-2 rounded-lg bg-surface-200-800 px-4 py-2 text-sm font-medium transition-colors hover:bg-surface-300-700"
+				class="btn gap-2 preset-outlined-surface-200-800 btn-sm text-surface-700-300 hover:border-warning-500 hover:text-warning-600-400"
 				target="_blank"
 				rel="noopener noreferrer"
 			>
@@ -151,7 +140,7 @@
 				type="text"
 				bind:value={searchQuery}
 				placeholder="Search posts by title, description, category, or tags..."
-				class="w-full rounded-lg border border-surface-300-700 bg-surface-100-900 py-3 pr-4 pl-12 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 focus:outline-none"
+				class="w-full rounded-full border border-surface-200-800 bg-surface-50-950 py-3 pr-4 pl-12 text-sm shadow-sm transition-shadow focus:border-primary-500 focus:ring-4 focus:ring-primary-500/15 focus:outline-none"
 			/>
 		</div>
 		{#if searchQuery.trim()}
@@ -208,7 +197,7 @@
 						<!-- Category Badge -->
 						{#if post.category}
 							<span
-								class="mb-3 inline-block rounded-full bg-primary-500/10 px-3 py-1 text-xs font-medium text-primary-500"
+								class="mb-3 inline-block rounded-full bg-primary-500/10 px-3 py-1 text-xs font-medium text-primary-600-400"
 							>
 								{post.category}
 							</span>
@@ -247,7 +236,7 @@
 							<div class="mt-4 flex flex-wrap gap-2">
 								{#each post.tags.slice(0, 3) as tag}
 									<span
-										class="flex items-center gap-1 rounded-full bg-surface-200-800 px-2 py-1 text-xs"
+										class="flex items-center gap-1 rounded-full bg-surface-500/10 px-2 py-1 text-xs text-surface-700-300"
 									>
 										<Tag class="h-3 w-3" />
 										{tag}

@@ -175,27 +175,27 @@
 					>
 				</div>
 				{#if project.description}
-					<p class="text-surface-600-300 text-lg" data-testid="project-description">
+					<p class="text-lg text-surface-600-400" data-testid="project-description">
 						{project.description}
 					</p>
 				{/if}
 			</div>
 			<div class="flex gap-2">
 				<button
-					onclick={openDeleteModal}
-					class="btn flex items-center gap-2 preset-filled-error-500"
-					data-testid="delete-project-button"
-				>
-					<Trash2 class="h-4 w-4" />
-					Delete
-				</button>
-				<button
 					onclick={openEditModal}
-					class="btn flex items-center gap-2 preset-filled-surface-500"
+					class="btn flex items-center gap-2 preset-filled-primary-500"
 					data-testid="edit-project-button"
 				>
 					<Edit class="h-4 w-4" />
 					Edit
+				</button>
+				<button
+					onclick={openDeleteModal}
+					class="btn flex items-center gap-2 preset-outlined-error-500 text-error-600-400 hover:preset-filled-error-500"
+					data-testid="delete-project-button"
+				>
+					<Trash2 class="h-4 w-4" />
+					Delete
 				</button>
 			</div>
 		</div>
@@ -215,7 +215,7 @@
 						<TestTube2 class="h-5 w-5 text-primary-500" />
 					</div>
 					<div>
-						<p class="text-surface-600-300 text-sm">Test Cases</p>
+						<p class="text-sm text-surface-600-400">Test Cases</p>
 						<p class="text-2xl font-bold" data-testid="total-test-cases">
 							{stats.totalTestCases}
 						</p>
@@ -233,7 +233,7 @@
 						<FolderOpen class="h-5 w-5 text-secondary-500" />
 					</div>
 					<div>
-						<p class="text-surface-600-300 text-sm">Test Suites</p>
+						<p class="text-sm text-surface-600-400">Test Suites</p>
 						<p class="text-2xl font-bold" data-testid="total-suites">
 							{stats.totalSuites}
 						</p>
@@ -251,7 +251,7 @@
 						<PlayCircle class="h-5 w-5 text-tertiary-500" />
 					</div>
 					<div>
-						<p class="text-surface-600-300 text-sm">Test Runs</p>
+						<p class="text-sm text-surface-600-400">Test Runs</p>
 						<p class="text-2xl font-bold" data-testid="total-test-runs">
 							{stats.totalTestRuns}
 						</p>
@@ -265,7 +265,7 @@
 						<TrendingUp class="h-5 w-5 text-success-500" />
 					</div>
 					<div>
-						<p class="text-surface-600-300 text-sm">Pass Rate</p>
+						<p class="text-sm text-surface-600-400">Pass Rate</p>
 						<p class="text-2xl font-bold">
 							{stats.totalResults > 0
 								? Math.round((stats.passedResults / stats.totalResults) * 100)
@@ -293,7 +293,7 @@
 
 			{#if recentRuns.length === 0}
 				<div
-					class="text-surface-600-300 py-8 text-center"
+					class="py-8 text-center text-surface-600-400"
 					data-testid="no-runs-empty-state"
 				>
 					<PlayCircle class="mx-auto mb-4 h-12 w-12 opacity-50" />
@@ -311,7 +311,7 @@
 					{#each recentRuns as run}
 						<a
 							href="/projects/{project.id}/runs/{run.id}"
-							class="hover:bg-surface-100-800 block rounded-container border border-surface-300-700 p-4 transition-colors"
+							class="block rounded-container border border-surface-200-800 p-4 transition-colors hover:bg-surface-100-900"
 							data-testid="recent-run-item"
 						>
 							<div class="mb-2 flex items-center justify-between">
@@ -326,7 +326,7 @@
 								</span>
 							</div>
 							<div
-								class="text-surface-600-300 flex items-center gap-4 text-sm"
+								class="flex items-center gap-4 text-sm text-surface-600-400"
 								data-testid="run-metadata"
 							>
 								{#if run.environment}
@@ -351,7 +351,7 @@
 									<span class="text-error-500" data-testid="run-failed-count"
 										>{run._count.failedResults || 0} failed</span
 									>
-									<span class="text-surface-600-300" data-testid="run-total-count"
+									<span class="text-surface-600-400" data-testid="run-total-count"
 										>{run._count.totalResults || 0} total</span
 									>
 								</div>
@@ -368,37 +368,37 @@
 			<div class="grid gap-3">
 				<a
 					href="/projects/{project.id}/cases"
-					class="hover:bg-surface-100-800 flex items-center gap-3 rounded-container border border-surface-300-700 p-4 transition-colors"
+					class="flex items-center gap-3 rounded-container border border-surface-200-800 p-4 transition-colors hover:bg-surface-100-900"
 					data-testid="quick-action-manage-cases"
 				>
 					<TestTube2 class="h-5 w-5 text-primary-500" />
 					<div>
 						<p class="font-medium">Manage Test Cases</p>
-						<p class="text-surface-600-300 text-sm">Create and organize test cases</p>
+						<p class="text-sm text-surface-600-400">Create and organize test cases</p>
 					</div>
 				</a>
 
 				<a
 					href="/projects/{project.id}/runs"
-					class="hover:bg-surface-100-800 flex items-center gap-3 rounded-container border border-surface-300-700 p-4 transition-colors"
+					class="flex items-center gap-3 rounded-container border border-surface-200-800 p-4 transition-colors hover:bg-surface-100-900"
 					data-testid="quick-action-view-runs"
 				>
 					<PlayCircle class="h-5 w-5 text-tertiary-500" />
 					<div>
 						<p class="font-medium">View Test Runs</p>
-						<p class="text-surface-600-300 text-sm">Track test execution history</p>
+						<p class="text-sm text-surface-600-400">Track test execution history</p>
 					</div>
 				</a>
 
 				<a
 					href="/docs"
-					class="hover:bg-surface-100-800 flex items-center gap-3 rounded-container border border-surface-300-700 p-4 transition-colors"
+					class="flex items-center gap-3 rounded-container border border-surface-200-800 p-4 transition-colors hover:bg-surface-100-900"
 					data-testid="quick-action-api-docs"
 				>
 					<FileText class="h-5 w-5 text-secondary-500" />
 					<div>
 						<p class="font-medium">API Documentation</p>
-						<p class="text-surface-600-300 text-sm">
+						<p class="text-sm text-surface-600-400">
 							Integrate with your test framework
 						</p>
 					</div>
@@ -412,25 +412,25 @@
 		<h2 class="mb-4 text-xl font-bold">Project Details</h2>
 		<div class="grid gap-4 md:grid-cols-2">
 			<div>
-				<p class="text-surface-600-300 mb-1 text-sm">Created by</p>
+				<p class="mb-1 text-sm text-surface-600-400">Created by</p>
 				<p class="font-medium" data-testid="project-creator">
 					{project.creator.firstName || project.creator.email}
 				</p>
 			</div>
 			{#if project.team}
 				<div>
-					<p class="text-surface-600-300 mb-1 text-sm">Team</p>
+					<p class="mb-1 text-sm text-surface-600-400">Team</p>
 					<p class="font-medium" data-testid="project-team">{project.team.name}</p>
 				</div>
 			{/if}
 			<div>
-				<p class="text-surface-600-300 mb-1 text-sm">Created on</p>
+				<p class="mb-1 text-sm text-surface-600-400">Created on</p>
 				<p class="font-medium" data-testid="project-created-date">
 					{new Date(project.createdAt).toLocaleDateString()}
 				</p>
 			</div>
 			<div>
-				<p class="text-surface-600-300 mb-1 text-sm">Last updated</p>
+				<p class="mb-1 text-sm text-surface-600-400">Last updated</p>
 				<p class="font-medium" data-testid="project-updated-date">
 					{new Date(project.updatedAt).toLocaleDateString()}
 				</p>
@@ -581,10 +581,10 @@
 								<p class="mb-2 font-semibold text-error-500">
 									This action cannot be undone!
 								</p>
-								<p class="text-surface-600-300 text-sm">
+								<p class="text-sm text-surface-600-400">
 									Deleting this project will permanently remove:
 								</p>
-								<ul class="text-surface-600-300 mt-2 space-y-1 text-sm">
+								<ul class="mt-2 space-y-1 text-sm text-surface-600-400">
 									<li>• All test cases ({stats.totalTestCases})</li>
 									<li>• All test suites ({stats.totalSuites})</li>
 									<li>• All test runs ({stats.totalTestRuns})</li>
@@ -598,12 +598,12 @@
 
 					<!-- Project Info -->
 					<div
-						class="rounded-container border border-surface-300-700 bg-surface-100-900 p-4"
+						class="rounded-container border border-surface-200-800 bg-surface-100-900 p-4"
 						data-testid="delete-project-info"
 					>
-						<p class="text-surface-600-300 mb-2 text-sm">You are about to delete:</p>
+						<p class="mb-2 text-sm text-surface-600-400">You are about to delete:</p>
 						<p class="text-lg font-semibold">{project.name}</p>
-						<p class="text-surface-600-300 mt-1 text-sm">Key: {project.key}</p>
+						<p class="mt-1 text-sm text-surface-600-400">Key: {project.key}</p>
 					</div>
 
 					{#if deleteError}

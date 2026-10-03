@@ -116,7 +116,7 @@
 <div class="container mx-auto max-w-7xl px-4 py-12">
 	<div class="mb-8">
 		<h1 class="mb-2 text-3xl font-bold">Team Administration</h1>
-		<p class="text-surface-600-300">Manage teams, plans, and enterprise inquiries</p>
+		<p class="text-surface-600-400">Manage teams, plans, and enterprise inquiries</p>
 	</div>
 
 	<!-- Tabs -->
@@ -126,7 +126,7 @@
 				Teams
 			</button>
 			<button
-				class="text-surface-600-300 px-4 py-2 hover:text-surface-900 dark:hover:text-surface-100"
+				class="px-4 py-2 text-surface-600-400 hover:text-surface-900 dark:hover:text-surface-100"
 			>
 				Enterprise Inquiries ({data.inquiries.length})
 			</button>
@@ -138,7 +138,7 @@
 		<div class="overflow-x-auto">
 			<table class="w-full">
 				<thead
-					class="bg-surface-50-900 border-b border-surface-200 dark:border-surface-800"
+					class="border-b border-surface-200 bg-surface-50-950 dark:border-surface-800"
 				>
 					<tr>
 						<th class="px-6 py-3 text-left text-sm font-semibold">Team</th>
@@ -150,13 +150,13 @@
 					</tr>
 				</thead>
 				<tbody class="divide-y divide-surface-200 dark:divide-surface-800">
-					{#each data.teams as team}
-						<tr class="hover:bg-surface-50-900/50">
+					{#each data.teams as team (team.id)}
+						<tr class="hover:bg-surface-50-950/50">
 							<td class="px-6 py-4">
 								<div>
 									<div class="font-medium">{team.name}</div>
 									{#if team.description}
-										<div class="text-surface-600-300 text-sm">
+										<div class="text-sm text-surface-600-400">
 											{team.description}
 										</div>
 									{/if}
@@ -167,7 +167,7 @@
 									{team.plan}
 								</span>
 								{#if team.plan === TeamPlan.ENTERPRISE && team.customSeats}
-									<div class="text-surface-600-300 mt-1 text-xs">
+									<div class="mt-1 text-xs text-surface-600-400">
 										{team.customSeats} seats
 									</div>
 								{/if}
@@ -175,7 +175,7 @@
 							<td class="px-6 py-4">{team._count.members}</td>
 							<td class="px-6 py-4">{team._count.projects}</td>
 							<td class="px-6 py-4">
-								<div class="text-surface-600-300 text-sm">
+								<div class="text-sm text-surface-600-400">
 									{new Date(team.createdAt).toLocaleDateString()}
 								</div>
 							</td>
@@ -198,18 +198,18 @@
 	<div class="mt-8 card p-6">
 		<h2 class="mb-4 text-xl font-bold">Enterprise Inquiries</h2>
 		<div class="space-y-4">
-			{#each data.inquiries as inquiry}
+			{#each data.inquiries as inquiry (inquiry.id)}
 				<div class="rounded-lg border border-surface-200 p-4 dark:border-surface-800">
 					<div class="mb-3 flex items-start justify-between">
 						<div>
 							<h3 class="font-semibold">{inquiry.companyName}</h3>
-							<p class="text-surface-600-300 text-sm">{inquiry.email}</p>
+							<p class="text-sm text-surface-600-400">{inquiry.email}</p>
 						</div>
 						<span class={getStatusBadgeClass(inquiry.status)}>
 							{inquiry.status}
 						</span>
 					</div>
-					<div class="text-surface-600-300 grid gap-2 text-sm">
+					<div class="grid gap-2 text-sm text-surface-600-400">
 						{#if inquiry.contactName}
 							<div>Contact: {inquiry.contactName}</div>
 						{/if}
@@ -240,9 +240,7 @@
 	<div
 		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
 		onclick={(e) => handleBackdropClick(e, closeUpgradeModal)}
-		role="button"
-		tabindex="-1"
-		aria-label="Close modal"
+		role="presentation"
 	>
 		<div
 			class="max-h-[90vh] w-full max-w-2xl overflow-y-auto card p-8"
@@ -348,9 +346,7 @@
 	<div
 		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
 		onclick={(e) => handleBackdropClick(e, closeInquiryModal)}
-		role="button"
-		tabindex="-1"
-		aria-label="Close modal"
+		role="presentation"
 	>
 		<div
 			class="w-full max-w-2xl card p-8"

@@ -108,11 +108,11 @@
 <div class="container mx-auto max-w-4xl p-8">
 	<!-- Header -->
 	<div class="mb-8">
-		<a href="/teams/{team.id}" class="text-surface-600-300 mb-2 inline-block text-sm">
+		<a href="/teams/{team.id}" class="mb-2 inline-block text-sm text-surface-600-400">
 			← Back to team
 		</a>
 		<h1 class="mb-2 text-3xl font-bold">Invite Team Members</h1>
-		<p class="text-surface-600-300">
+		<p class="text-surface-600-400">
 			Send invitations to add new members to {team.name}
 		</p>
 	</div>
@@ -122,7 +122,7 @@
 		<div class="mb-4 flex items-center justify-between">
 			<div>
 				<h2 class="h4">Available Seats</h2>
-				<p class="text-surface-600-300 text-sm">
+				<p class="text-sm text-surface-600-400">
 					{availableSeats} of {maxSeats} seats available
 				</p>
 			</div>
@@ -144,7 +144,7 @@
 		</div>
 
 		{#if availableSeats <= 0}
-			<div class="alert preset-filled-warning">
+			<div class="alert preset-filled-warning-500">
 				<AlertCircle class="h-5 w-5" />
 				<p>
 					You've reached your seat limit. {!team.subscription
@@ -157,14 +157,14 @@
 
 	<!-- Alerts -->
 	{#if error}
-		<div class="alert preset-filled-error mb-6">
+		<div class="alert mb-6 preset-filled-error-500">
 			<AlertCircle class="h-5 w-5" />
 			<p>{error}</p>
 		</div>
 	{/if}
 
 	{#if success}
-		<div class="alert preset-filled-success mb-6">
+		<div class="alert mb-6 preset-filled-success-500">
 			<CheckCircle class="h-5 w-5" />
 			<p>{success}</p>
 		</div>
@@ -173,7 +173,7 @@
 	{#if lastInviteUrl}
 		<div class="mb-6 card border-2 border-primary-500 p-6">
 			<h3 class="mb-3 font-bold text-primary-500">Invitation Created!</h3>
-			<p class="text-surface-600-300 mb-4 text-sm">
+			<p class="mb-4 text-sm text-surface-600-400">
 				Share this link with the invitee to join your team:
 			</p>
 			<div class="flex items-center gap-2">
@@ -231,7 +231,7 @@
 						required
 						disabled={loading}
 					/>
-					<p class="text-surface-600-300 mt-1 text-sm">
+					<p class="mt-1 text-sm text-surface-600-400">
 						They'll receive an invitation link to join your team
 					</p>
 				</div>
@@ -261,22 +261,22 @@
 			<h2 class="mb-4 h3">Pending Invitations</h2>
 
 			<div class="space-y-3">
-				{#each team.invitations as invitation}
+				{#each team.invitations as invitation (invitation.id)}
 					<div
-						class="hover:bg-surface-100-800 rounded-container border border-surface-300-700 p-4"
+						class="rounded-container border border-surface-200-800 p-4 hover:bg-surface-100-900"
 					>
 						<div class="flex items-start justify-between gap-4">
 							<div class="flex-1">
 								<div class="flex items-center gap-2">
-									<Mail class="text-surface-600-300 h-4 w-4" />
+									<Mail class="h-4 w-4 text-surface-600-400" />
 									<span class="font-medium">{invitation.email}</span>
-									<span class="preset-filled-surface badge text-xs"
+									<span class="badge preset-filled-surface-500 text-xs"
 										>{invitation.role}</span
 									>
 								</div>
 
 								<div
-									class="text-surface-600-300 mt-2 flex items-center gap-4 text-sm"
+									class="mt-2 flex items-center gap-4 text-sm text-surface-600-400"
 								>
 									<span class="flex items-center gap-1">
 										<Clock class="h-3 w-3" />
@@ -287,7 +287,7 @@
 
 								<!-- Invitation Link -->
 								<div class="mt-3 rounded-base bg-surface-100-900 p-3">
-									<div class="text-surface-600-300 mb-2 text-xs font-medium">
+									<div class="mb-2 text-xs font-medium text-surface-600-400">
 										Invitation Link
 									</div>
 									<div class="flex items-center gap-2">
@@ -312,7 +312,7 @@
 											{/if}
 										</button>
 									</div>
-									<p class="text-surface-500-400 mt-1 text-xs">
+									<p class="mt-1 text-xs text-surface-500">
 										Share this link with the invitee to join your team
 									</p>
 								</div>
@@ -320,7 +320,7 @@
 
 							<button
 								onclick={() => cancelInvitation(invitation.id)}
-								class="preset-outlined-error btn btn-sm"
+								class="btn preset-outlined-error-500 btn-sm"
 								title="Cancel invitation"
 							>
 								<XCircle class="h-4 w-4" />

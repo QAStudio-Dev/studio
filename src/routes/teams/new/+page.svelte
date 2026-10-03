@@ -102,14 +102,14 @@
 		>
 			Create Your Team
 		</h1>
-		<p class="text-surface-600-300 mx-auto max-w-2xl text-lg">
+		<p class="mx-auto max-w-2xl text-lg text-surface-600-400">
 			Start collaborating with your team on test management. Choose the plan that fits your
 			needs.
 		</p>
 	</div>
 
 	{#if error}
-		<div class="alert preset-filled-error mx-auto mb-8 max-w-3xl">
+		<div class="alert mx-auto mb-8 max-w-3xl preset-filled-error-500">
 			<p>{error}</p>
 		</div>
 	{/if}
@@ -150,10 +150,10 @@
 			<div class="mb-6 flex items-start justify-between">
 				<div>
 					<div class="mb-2 inline-flex items-center gap-2">
-						<Users class="text-surface-600-300 h-5 w-5" />
+						<Users class="h-5 w-5 text-surface-600-400" />
 						<h3 class="text-2xl font-bold">{PRICING.FREE.name}</h3>
 					</div>
-					<p class="text-surface-600-300 text-sm">{PRICING.FREE.description}</p>
+					<p class="text-sm text-surface-600-400">{PRICING.FREE.description}</p>
 				</div>
 				{#if selectedPlan === 'free'}
 					<div class="badge preset-filled-primary-500">Selected</div>
@@ -163,9 +163,9 @@
 			<div class="mb-8">
 				<div class="flex items-baseline gap-2">
 					<span class="text-5xl font-bold">${PRICING.FREE.price}</span>
-					<span class="text-surface-600-300">/month</span>
+					<span class="text-surface-600-400">/month</span>
 				</div>
-				<p class="text-surface-600-300 mt-2 text-sm">{PRICING.FREE.tagline}</p>
+				<p class="mt-2 text-sm text-surface-600-400">{PRICING.FREE.tagline}</p>
 			</div>
 
 			<ul class="space-y-4">
@@ -202,7 +202,7 @@
 						<Zap class="h-5 w-5 text-primary-500" />
 						<h3 class="text-2xl font-bold">{PRICING.PRO.name}</h3>
 					</div>
-					<p class="text-surface-600-300 text-sm">{PRICING.PRO.description}</p>
+					<p class="text-sm text-surface-600-400">{PRICING.PRO.description}</p>
 				</div>
 				{#if selectedPlan === 'pro'}
 					<div class="badge preset-filled-primary-500">Selected</div>
@@ -216,14 +216,14 @@
 							? PRICING.PRO.pricePerSeatMonthly
 							: getMonthlyEquivalent('pro').toFixed(2)}
 					</span>
-					<span class="text-surface-600-300">/seat/month</span>
+					<span class="text-surface-600-400">/seat/month</span>
 				</div>
 				{#if billingPeriod === 'yearly'}
 					<p class="mt-2 text-sm font-medium text-success-500">
 						Billed ${PRICING.PRO.pricePerSeatYearly}/seat/year
 					</p>
 				{:else}
-					<p class="text-surface-600-300 mt-2 text-sm">Billed monthly</p>
+					<p class="mt-2 text-sm text-surface-600-400">Billed monthly</p>
 				{/if}
 			</div>
 
@@ -252,7 +252,7 @@
 						<Sparkles class="h-5 w-5 text-primary-500" />
 						<h3 class="text-2xl font-bold">{PRICING.ENTERPRISE.name}</h3>
 					</div>
-					<p class="text-surface-600-300 text-sm">{PRICING.ENTERPRISE.description}</p>
+					<p class="text-sm text-surface-600-400">{PRICING.ENTERPRISE.description}</p>
 				</div>
 				{#if selectedPlan === 'enterprise'}
 					<div class="badge preset-filled-primary-500">Selected</div>
@@ -263,7 +263,7 @@
 				<div class="flex items-baseline gap-2">
 					<span class="text-5xl font-bold">{PRICING.ENTERPRISE.priceDisplay}</span>
 				</div>
-				<p class="text-surface-600-300 mt-2 text-sm">{PRICING.ENTERPRISE.tagline}</p>
+				<p class="mt-2 text-sm text-surface-600-400">{PRICING.ENTERPRISE.tagline}</p>
 			</div>
 
 			<ul class="space-y-4">
@@ -342,7 +342,7 @@
 
 	<!-- Info Footer -->
 	<div class="mx-auto mt-12 max-w-3xl">
-		<div class="bg-surface-50-900/50 border-surface-200-700 card border p-6">
+		<div class="card border border-surface-200-800 bg-surface-50-950/50 p-6">
 			<div class="flex items-start gap-4">
 				<div class="text-2xl">
 					{selectedPlan === 'pro' ? '💳' : '🎉'}
@@ -350,13 +350,13 @@
 				<div class="flex-1">
 					{#if selectedPlan === 'free'}
 						<p class="mb-1 font-medium">Start for free - no credit card required</p>
-						<p class="text-surface-600-300 text-sm">
+						<p class="text-sm text-surface-600-400">
 							Upgrade to Pro anytime to unlock team collaboration and AI-powered
 							features.
 						</p>
 					{:else}
 						<p class="mb-1 font-medium">Secure payment powered by Stripe</p>
-						<p class="text-surface-600-300 text-sm">
+						<p class="text-sm text-surface-600-400">
 							You'll be redirected to Stripe to complete payment. Cancel anytime from
 							your team settings.
 						</p>
@@ -367,8 +367,8 @@
 
 		<!-- Trust Signals -->
 		<div class="mt-8 text-center">
-			<p class="text-surface-600-300 mb-3 text-sm">Trusted by QA teams worldwide</p>
-			<div class="text-surface-500-400 flex items-center justify-center gap-6 text-xs">
+			<p class="mb-3 text-sm text-surface-600-400">Trusted by QA teams worldwide</p>
+			<div class="flex items-center justify-center gap-6 text-xs text-surface-500">
 				<div class="flex items-center gap-2">
 					<Check class="h-4 w-4 text-success-500" />
 					<span>14-day money back</span>

@@ -4,6 +4,25 @@ import { getUserForLayout } from '$lib/server/users';
 import { getAccessibleProjectsNav } from '$lib/server/projects';
 import { getCsrfToken } from '$lib/server/sessions';
 import { defineBaseMetaTags } from 'svelte-meta-tags';
+import { building } from '$app/environment';
+import { SITE_URL } from '$lib/site';
+
+const PRIVATE_PATH_PREFIXES = [
+	'/dashboard',
+	'/projects',
+	'/teams',
+	'/settings',
+	'/reports',
+	'/sms',
+	'/authenticators',
+	'/onboarding',
+	'/admin',
+	'/invitations',
+	'/change-password',
+	'/reset-password',
+	'/setup-password',
+	'/user-profile'
+];
 
 export const load: LayoutServerLoad = async (event) => {
 	const { locals, url } = event;
@@ -13,19 +32,24 @@ export const load: LayoutServerLoad = async (event) => {
 	// Generate CSRF token for forms
 	const csrfToken = getCsrfToken(event);
 
-	// Define base meta tags for SSR
-	// Use dynamic URLs based on current origin (works in dev/staging/prod)
-	const ogImageUrl = new URL('/og_image.png', url.origin).href;
+	// Prerendered pages are built with a placeholder origin, so fall back to the public URL
+	const origin = building ? SITE_URL : url.origin;
+	const ogImageUrl = new URL('/og_image.png', origin).href;
+	const pageUrl = new URL(url.pathname, origin).href;
+	const isPrivate = PRIVATE_PATH_PREFIXES.some(
+		(prefix) => url.pathname === prefix || url.pathname.startsWith(`${prefix}/`)
+	);
 
-	const baseMetaTags = defineBaseMetaTags({
+	const { baseMetaTags } = defineBaseMetaTags({
 		title: 'QA Studio',
 		titleTemplate: '%s | QA Studio',
 		description:
 			'Modern test management platform built by QA engineers. Open source, API-first, and designed for modern testing workflows.',
-		canonical: new URL(url.pathname, url.origin).href,
+		canonical: pageUrl,
+		robots: isPrivate ? 'noindex,nofollow' : 'index,follow',
 		openGraph: {
 			type: 'website',
-			url: new URL(url.pathname, url.origin).href,
+			url: pageUrl,
 			locale: 'en_US',
 			title: 'QA Studio - Modern Test Management Platform',
 			description:
@@ -60,14 +84,6 @@ export const load: LayoutServerLoad = async (event) => {
 			{
 				name: 'author',
 				content: 'QA Studio'
-			},
-			{
-				name: 'viewport',
-				content: 'width=device-width, initial-scale=1'
-			},
-			{
-				httpEquiv: 'x-ua-compatible',
-				content: 'IE=edge'
 			}
 		]
 	});

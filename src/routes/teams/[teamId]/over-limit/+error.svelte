@@ -12,22 +12,22 @@
 			<h1 class="h2">Something Went Wrong</h1>
 		</div>
 
-		<p class="text-surface-600-300 mb-6">
+		<p class="mb-6 text-surface-600-400">
 			We encountered an error while loading the seat limit resolution page. This could be due
 			to a temporary issue.
 		</p>
 
 		{#if error}
-			<div class="bg-surface-100-800 mb-6 rounded-container p-4">
-				<p class="text-surface-600-300 font-mono text-sm">
+			<div class="mb-6 rounded-container bg-surface-100-900 p-4">
+				<p class="font-mono text-sm text-surface-600-400">
 					{error.message || 'Unknown error occurred'}
 				</p>
 			</div>
 		{/if}
 
-		<div class="border-surface-200-700 border-t pt-6">
-			<p class="text-surface-600-300 mb-4 text-sm">What you can try:</p>
-			<ul class="text-surface-600-300 mb-6 space-y-2 text-sm">
+		<div class="border-t border-surface-200-800 pt-6">
+			<p class="mb-4 text-sm text-surface-600-400">What you can try:</p>
+			<ul class="mb-6 space-y-2 text-sm text-surface-600-400">
 				<li>• Refresh the page to try again</li>
 				<li>• Contact your team administrator</li>
 				<li>• If the issue persists, contact support</li>

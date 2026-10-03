@@ -574,7 +574,7 @@
 					<span class="badge preset-filled-surface-500">{project.key}</span>
 				</div>
 				{#if project.description}
-					<p class="text-surface-600-300 text-lg">{project.description}</p>
+					<p class="text-lg text-surface-600-400">{project.description}</p>
 				{/if}
 			</div>
 			<div>
@@ -586,7 +586,7 @@
 		</div>
 
 		<!-- Stats -->
-		<div class="text-surface-600-300 mt-6 flex items-center gap-6 text-sm">
+		<div class="mt-6 flex items-center gap-6 text-sm text-surface-600-400">
 			<div class="flex items-center gap-2">
 				<FolderOpen class="h-4 w-4" />
 				<span>{stats.totalSuites} suites</span>
@@ -618,7 +618,7 @@
 			{#if creatingSuite}
 				<form
 					onsubmit={handleCreateSuite}
-					class="bg-surface-50-900 mb-4 rounded-container border border-primary-500 p-3"
+					class="mb-4 rounded-container border border-primary-500 bg-surface-50-950 p-3"
 				>
 					<input
 						type="text"
@@ -684,7 +684,7 @@
 				<!-- Root test cases (no suite) - at the bottom -->
 				<button
 					onclick={() => toggleSuite('root')}
-					class="hover:bg-surface-100-800 flex w-full min-w-0 items-center gap-2 rounded-base px-3 py-2 text-left transition-colors"
+					class="flex w-full min-w-0 items-center gap-2 rounded-base px-3 py-2 text-left transition-colors hover:bg-surface-100-900"
 				>
 					{#if expandedSuites.has('root')}
 						<ChevronDown class="h-4 w-4 flex-shrink-0" />
@@ -760,7 +760,7 @@
 								e.preventDefault();
 								handleCreateTestCase(null);
 							}}
-							class="bg-surface-50-900 mb-3 rounded-container border border-primary-500 p-3"
+							class="mb-3 rounded-container border border-primary-500 bg-surface-50-950 p-3"
 						>
 							<div class="flex gap-2">
 								<input
@@ -830,7 +830,7 @@
 							{#if project.testCases?.length && creatingTestCase !== 'root'}
 								<button
 									onclick={() => startCreatingTestCase(null)}
-									class="hover:bg-surface-100-800 text-surface-600-300 mt-1 flex w-full items-center justify-center gap-2 rounded-base p-2 text-sm transition-colors hover:text-primary-500"
+									class="mt-1 flex w-full items-center justify-center gap-2 rounded-base p-2 text-sm text-surface-600-400 transition-colors hover:bg-surface-100-900 hover:text-primary-500"
 								>
 									<Plus class="h-4 w-4" />
 									<span>Add test case</span>
@@ -842,7 +842,7 @@
 			{/if}
 
 			{#if !expandedSuites.size}
-				<div class="text-surface-600-300 py-12 text-center">
+				<div class="py-12 text-center text-surface-600-400">
 					<FolderOpen class="mx-auto mb-4 h-16 w-16 opacity-50" />
 					<p>Select a suite from the sidebar to view test cases</p>
 				</div>
@@ -890,7 +890,7 @@
 							{#if selectedTestCase.description}
 								<div>
 									<h3 class="mb-2 font-bold">Description</h3>
-									<p class="text-surface-600-300">
+									<p class="text-surface-600-400">
 										{selectedTestCase.description}
 									</p>
 								</div>
@@ -899,7 +899,7 @@
 							{#if selectedTestCase.preconditions}
 								<div>
 									<h3 class="mb-2 font-bold">Preconditions</h3>
-									<p class="text-surface-600-300">
+									<p class="text-surface-600-400">
 										{selectedTestCase.preconditions}
 									</p>
 								</div>
@@ -908,14 +908,14 @@
 							{#if selectedTestCase.expectedResult}
 								<div>
 									<h3 class="mb-2 font-bold">Expected Result</h3>
-									<p class="text-surface-600-300">
+									<p class="text-surface-600-400">
 										{selectedTestCase.expectedResult}
 									</p>
 								</div>
 							{/if}
 						</Dialog.Description>
 
-						<div class="border-surface-200-700 flex gap-3 border-t pt-4">
+						<div class="flex gap-3 border-t border-surface-200-800 pt-4">
 							<a
 								href="/projects/{project.id}/cases/{selectedTestCase.id}"
 								class="btn flex-1 preset-filled-primary-500"
@@ -958,7 +958,7 @@
 			>
 				Delete Test Case
 			</h2>
-			<p class="text-surface-600-300 mb-6">
+			<p class="mb-6 text-surface-600-400">
 				Are you sure you want to delete <strong>{testCaseToDelete.title}</strong>? This will
 				permanently delete all execution history, attachments, and associated data. This
 				action cannot be undone.

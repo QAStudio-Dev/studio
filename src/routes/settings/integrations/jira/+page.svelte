@@ -72,7 +72,7 @@
 			Back to Settings
 		</a>
 		<h1 class="mb-2 text-4xl font-bold">Connect Jira</h1>
-		<p class="text-surface-600-300 text-lg">
+		<p class="text-lg text-surface-600-400">
 			Automatically create Jira issues from failed tests and link them to test results
 		</p>
 	</div>
@@ -109,10 +109,10 @@
 					type="text"
 					bind:value={name}
 					placeholder="e.g., Production Jira, Team Jira"
-					class="w-full rounded-base border border-surface-300-700 bg-surface-100-900 px-3 py-2"
+					class="w-full rounded-base border border-surface-200-800 bg-surface-100-900 px-3 py-2"
 					required
 				/>
-				<p class="text-surface-500-400 mt-1 text-xs">
+				<p class="mt-1 text-xs text-surface-500">
 					A friendly name to identify this connection
 				</p>
 			</div>
@@ -127,10 +127,10 @@
 					type="url"
 					bind:value={baseUrl}
 					placeholder="https://yourcompany.atlassian.net"
-					class="w-full rounded-base border border-surface-300-700 bg-surface-100-900 px-3 py-2"
+					class="w-full rounded-base border border-surface-200-800 bg-surface-100-900 px-3 py-2"
 					required
 				/>
-				<p class="text-surface-500-400 mt-1 text-xs">
+				<p class="mt-1 text-xs text-surface-500">
 					Your Jira instance URL (e.g., https://yourcompany.atlassian.net)
 				</p>
 			</div>
@@ -145,10 +145,10 @@
 					type="email"
 					bind:value={email}
 					placeholder="you@company.com"
-					class="w-full rounded-base border border-surface-300-700 bg-surface-100-900 px-3 py-2"
+					class="w-full rounded-base border border-surface-200-800 bg-surface-100-900 px-3 py-2"
 					required
 				/>
-				<p class="text-surface-500-400 mt-1 text-xs">Your Jira account email address</p>
+				<p class="mt-1 text-xs text-surface-500">Your Jira account email address</p>
 			</div>
 
 			<!-- API Token -->
@@ -161,10 +161,10 @@
 					type="password"
 					bind:value={apiToken}
 					placeholder="••••••••••••••••••••"
-					class="w-full rounded-base border border-surface-300-700 bg-surface-100-900 px-3 py-2"
+					class="w-full rounded-base border border-surface-200-800 bg-surface-100-900 px-3 py-2"
 					required
 				/>
-				<p class="text-surface-500-400 mt-1 text-xs">
+				<p class="mt-1 text-xs text-surface-500">
 					<a
 						href="https://id.atlassian.com/manage-profile/security/api-tokens"
 						target="_blank"
@@ -208,7 +208,7 @@
 				</div>
 				<div>
 					<h3 class="mb-1 font-semibold">Get your Jira URL</h3>
-					<p class="text-surface-600-300 text-sm">
+					<p class="text-sm text-surface-600-400">
 						This is usually in the format <code
 							class="rounded bg-surface-200-800 px-1 py-0.5 text-xs"
 							>https://yourcompany.atlassian.net</code
@@ -225,7 +225,7 @@
 				</div>
 				<div>
 					<h3 class="mb-1 font-semibold">Create an API token</h3>
-					<p class="text-surface-600-300 mb-2 text-sm">
+					<p class="mb-2 text-sm text-surface-600-400">
 						Visit <a
 							href="https://id.atlassian.com/manage-profile/security/api-tokens"
 							target="_blank"
@@ -233,7 +233,7 @@
 							class="text-primary-500 hover:underline">Atlassian API Tokens</a
 						> and create a new token
 					</p>
-					<p class="text-surface-600-300 text-sm">
+					<p class="text-sm text-surface-600-400">
 						Give it a name like "QA Studio Integration" and copy the generated token
 					</p>
 				</div>
@@ -247,7 +247,7 @@
 				</div>
 				<div>
 					<h3 class="mb-1 font-semibold">Enter your credentials</h3>
-					<p class="text-surface-600-300 text-sm">
+					<p class="text-sm text-surface-600-400">
 						Fill in the form above with your Jira URL, email, and API token
 					</p>
 				</div>
@@ -261,7 +261,7 @@
 				</div>
 				<div>
 					<h3 class="mb-1 font-semibold">Start creating issues</h3>
-					<p class="text-surface-600-300 text-sm">
+					<p class="text-sm text-surface-600-400">
 						Once connected, you can create Jira issues directly from failed test results
 					</p>
 				</div>
@@ -277,7 +277,7 @@
 				<Check class="mt-0.5 h-5 w-5 text-success-500" />
 				<div>
 					<h3 class="mb-1 font-semibold">Create issues from test failures</h3>
-					<p class="text-surface-600-300 text-sm">
+					<p class="text-sm text-surface-600-400">
 						Automatically or manually create Jira issues when tests fail, with full test
 						context
 					</p>
@@ -287,7 +287,7 @@
 				<Check class="mt-0.5 h-5 w-5 text-success-500" />
 				<div>
 					<h3 class="mb-1 font-semibold">Link test results to issues</h3>
-					<p class="text-surface-600-300 text-sm">
+					<p class="text-sm text-surface-600-400">
 						View Jira issue status directly from test result pages
 					</p>
 				</div>
@@ -296,7 +296,7 @@
 				<Check class="mt-0.5 h-5 w-5 text-success-500" />
 				<div>
 					<h3 class="mb-1 font-semibold">Track issue resolution</h3>
-					<p class="text-surface-600-300 text-sm">
+					<p class="text-sm text-surface-600-400">
 						See which test failures have been addressed and their current status in Jira
 					</p>
 				</div>

@@ -9,7 +9,8 @@
 		Play,
 		Loader2,
 		Calendar,
-		BarChart3
+		BarChart3,
+		RefreshCw
 	} from '@lucide/svelte';
 	import { onMount } from 'svelte';
 	import type { PageData } from './$types';
@@ -142,7 +143,7 @@
 		<div class="flex items-start justify-between">
 			<div>
 				<h1 class="mb-2 text-4xl font-bold">Reports & Analytics</h1>
-				<p class="text-surface-600-300 text-lg">
+				<p class="text-lg text-surface-600-400">
 					Insights into test performance, flaky tests, and execution trends
 				</p>
 			</div>
@@ -159,7 +160,7 @@
 					<BarChart3 class="h-12 w-12 text-primary-500" />
 				</div>
 				<h2 class="mb-2 text-3xl font-bold">No Projects Yet</h2>
-				<p class="text-surface-600-300 mb-8 text-lg">
+				<p class="mb-8 text-lg text-surface-600-400">
 					Create a project and run some tests to see analytics here.
 				</p>
 			</div>
@@ -173,7 +174,9 @@
 			<div class="flex flex-wrap items-center gap-4">
 				<!-- Project Selector -->
 				<div class="flex items-center gap-2">
-					<label for="project-select" class="text-sm font-medium">Project:</label>
+					<label for="project-select" class="text-sm font-medium whitespace-nowrap"
+						>Project</label
+					>
 					<select
 						id="project-select"
 						bind:value={selectedProjectId}
@@ -188,7 +191,9 @@
 
 				<!-- Days Selector -->
 				<div class="flex items-center gap-2">
-					<label for="days-select" class="text-sm font-medium">Time Range:</label>
+					<label for="days-select" class="text-sm font-medium whitespace-nowrap"
+						>Time range</label
+					>
 					<select
 						id="days-select"
 						bind:value={selectedDays}
@@ -204,8 +209,10 @@
 
 				<button
 					onclick={() => fetchAnalytics()}
-					class="ml-auto btn preset-filled-surface-500 btn-sm"
+					class="ml-auto btn gap-2 preset-outlined-surface-300-700 btn-sm hover:border-primary-500 hover:text-primary-600-400"
+					disabled={loading}
 				>
+					<RefreshCw class="h-4 w-4 {loading ? 'animate-spin' : ''}" />
 					Refresh
 				</button>
 			</div>
@@ -225,7 +232,7 @@
 						<AlertTriangle class="h-12 w-12 text-error-500" />
 					</div>
 					<h2 class="mb-2 text-3xl font-bold">Error Loading Analytics</h2>
-					<p class="text-surface-600-300 mb-8 text-lg">{error}</p>
+					<p class="mb-8 text-lg text-surface-600-400">{error}</p>
 				</div>
 				<button
 					onclick={() => fetchAnalytics()}
@@ -250,8 +257,8 @@
 							{formatNumber(analytics.stats.totalTestRuns)}
 						</span>
 					</div>
-					<h3 class="text-surface-600-300 text-sm font-medium">Test Runs</h3>
-					<p class="text-surface-500-400 mt-1 text-xs">
+					<h3 class="text-sm font-medium text-surface-600-400">Test Runs</h3>
+					<p class="mt-1 text-xs text-surface-500">
 						{formatNumber(analytics.stats.completedTestRuns)} completed
 					</p>
 				</div>
@@ -269,9 +276,9 @@
 							{formatNumber(analytics.stats.totalTests)}
 						</span>
 					</div>
-					<h3 class="text-surface-600-300 text-sm font-medium">Test Executions</h3>
+					<h3 class="text-sm font-medium text-surface-600-400">Test Executions</h3>
 					<p
-						class="text-surface-500-400 mt-1 truncate text-xs"
+						class="mt-1 truncate text-xs text-surface-500"
 						title="{analytics.stats.passedTests} passed, {analytics.stats
 							.failedTests} failed"
 					>
@@ -291,7 +298,7 @@
 							{analytics.stats.passRate.toFixed(1)}%
 						</span>
 					</div>
-					<h3 class="text-surface-600-300 text-sm font-medium">Pass Rate</h3>
+					<h3 class="text-sm font-medium text-surface-600-400">Pass Rate</h3>
 				</div>
 
 				<!-- Avg Duration -->
@@ -307,7 +314,7 @@
 							{formatDuration(analytics.stats.avgTestDuration)}
 						</span>
 					</div>
-					<h3 class="text-surface-600-300 text-sm font-medium">Avg Test Duration</h3>
+					<h3 class="text-sm font-medium text-surface-600-400">Avg Test Duration</h3>
 				</div>
 			</div>
 
@@ -322,7 +329,7 @@
 
 					{#if analytics.runsOverTime.length === 0}
 						<div class="py-12 text-center">
-							<p class="text-surface-600-300 text-sm">No test runs in this period</p>
+							<p class="text-sm text-surface-600-400">No test runs in this period</p>
 						</div>
 					{:else}
 						{@const maxRuns = Math.max(
@@ -333,7 +340,7 @@
 								{#each analytics.runsOverTime as day}
 									<div>
 										<div class="mb-1 flex items-center justify-between text-sm">
-											<span class="text-surface-600-300"
+											<span class="text-surface-600-400"
 												>{formatDate(day.date)}</span
 											>
 											<div class="flex items-center gap-3 text-xs">
@@ -347,7 +354,7 @@
 											</div>
 										</div>
 										<div
-											class="bg-surface-100-800 relative h-8 w-full overflow-hidden rounded-container"
+											class="relative h-8 w-full overflow-hidden rounded-container bg-surface-100-900"
 										>
 											{#if day.passed > 0}
 												<div
@@ -388,14 +395,14 @@
 					{#if analytics.flakyTests.length === 0}
 						<div class="py-12 text-center">
 							<CheckCircle2 class="mx-auto mb-2 h-12 w-12 text-success-500" />
-							<p class="text-surface-600-300 text-sm">No flaky tests detected!</p>
+							<p class="text-sm text-surface-600-400">No flaky tests detected!</p>
 						</div>
 					{:else}
 						<div class="space-y-3">
 							{#each analytics.flakyTests as test}
 								<a
 									href="/projects/{selectedProjectId}/cases/{test.id}"
-									class="hover:bg-surface-100-800 border-surface-200-700 block rounded-container border p-3 transition-colors"
+									class="block rounded-container border border-surface-200-800 p-3 transition-colors hover:bg-surface-100-900"
 								>
 									<div class="mb-2 flex items-start justify-between">
 										<h3 class="flex-1 text-sm font-medium">{test.title}</h3>
@@ -407,7 +414,7 @@
 										</span>
 									</div>
 									<div
-										class="text-surface-600-300 flex items-center gap-4 text-xs"
+										class="flex items-center gap-4 text-xs text-surface-600-400"
 									>
 										<span>{test.totalRuns} runs</span>
 										<span>{test.failures} failures</span>
@@ -434,14 +441,14 @@
 					{#if analytics.problematicTests.length === 0}
 						<div class="py-12 text-center">
 							<CheckCircle2 class="mx-auto mb-2 h-12 w-12 text-success-500" />
-							<p class="text-surface-600-300 text-sm">All tests passing!</p>
+							<p class="text-sm text-surface-600-400">All tests passing!</p>
 						</div>
 					{:else}
 						<div class="space-y-3">
 							{#each analytics.problematicTests as test}
 								<a
 									href="/projects/{selectedProjectId}/cases/{test.id}"
-									class="hover:bg-surface-100-800 border-surface-200-700 block rounded-container border p-3 transition-colors"
+									class="block rounded-container border border-surface-200-800 p-3 transition-colors hover:bg-surface-100-900"
 								>
 									<div class="mb-2 flex items-start justify-between">
 										<h3 class="flex-1 text-sm font-medium">{test.title}</h3>
@@ -453,7 +460,7 @@
 										</span>
 									</div>
 									<div
-										class="text-surface-600-300 flex items-center gap-4 text-xs"
+										class="flex items-center gap-4 text-xs text-surface-600-400"
 									>
 										<span class="flex items-center gap-1">
 											<XCircle class="h-3 w-3" />
@@ -479,7 +486,7 @@
 
 					{#if analytics.slowestTests.length === 0}
 						<div class="py-12 text-center">
-							<p class="text-surface-600-300 text-sm">
+							<p class="text-sm text-surface-600-400">
 								No test duration data available
 							</p>
 						</div>
@@ -491,7 +498,7 @@
 							{#each analytics.slowestTests as test}
 								<a
 									href="/projects/{selectedProjectId}/cases/{test.id}"
-									class="hover:bg-surface-100-800 border-surface-200-700 block rounded-container border p-3 transition-colors"
+									class="block rounded-container border border-surface-200-800 p-3 transition-colors hover:bg-surface-100-900"
 								>
 									<div class="mb-2 flex items-start justify-between">
 										<h3 class="flex-1 text-sm font-medium">{test.title}</h3>
@@ -499,11 +506,11 @@
 											{formatDuration(test.avgDuration)}
 										</span>
 									</div>
-									<div class="text-surface-600-300 mb-2 text-xs">
+									<div class="mb-2 text-xs text-surface-600-400">
 										Max: {formatDuration(test.maxDuration)} · {test.count} runs
 									</div>
 									<div
-										class="bg-surface-100-800 h-1.5 w-full overflow-hidden rounded-full"
+										class="h-1.5 w-full overflow-hidden rounded-full bg-surface-100-900"
 									>
 										<div
 											class="h-full bg-tertiary-500"

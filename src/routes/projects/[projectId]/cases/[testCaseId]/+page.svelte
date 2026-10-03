@@ -374,7 +374,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 	}}
 />
 
-<div class="container mx-auto max-w-[1600px] px-4 py-8">
+<div class="container mx-auto px-4 py-8">
 	<!-- Header -->
 	<div class="mb-8">
 		<a
@@ -393,7 +393,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 					</div>
 					<div>
 						<h1 class="text-3xl font-bold">{testCase.title}</h1>
-						<p class="text-surface-600-300">
+						<p class="text-surface-600-400">
 							{testCase.project.key} · {testCase.suite?.name || 'Uncategorized'}
 						</p>
 					</div>
@@ -421,7 +421,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 					<Bug class="mr-2 h-4 w-4" />
 					Create Jira Issue
 				</button>
-				<button onclick={openEditDialog} class="preset-filled-primary btn">
+				<button onclick={openEditDialog} class="btn preset-filled-primary-500">
 					<Edit class="mr-2 h-4 w-4" />
 					Edit
 				</button>
@@ -444,7 +444,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 			{#if testCase.description}
 				<div class="card p-6">
 					<h2 class="mb-3 text-lg font-bold">Description</h2>
-					<p class="text-surface-600-300">{testCase.description}</p>
+					<p class="text-surface-600-400">{testCase.description}</p>
 				</div>
 			{/if}
 
@@ -452,7 +452,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 			{#if testCase.preconditions}
 				<div class="card p-6">
 					<h2 class="mb-3 text-lg font-bold">Preconditions</h2>
-					<p class="text-surface-600-300">{testCase.preconditions}</p>
+					<p class="text-surface-600-400">{testCase.preconditions}</p>
 				</div>
 			{/if}
 
@@ -463,12 +463,12 @@ ${testCase.expectedResult || 'See test case for details'}`;
 					{#if stepsKind === 'structured' && structuredSteps}
 						<ol class="list-decimal space-y-3 pl-5">
 							{#each structuredSteps as step, index (step.order ?? index)}
-								<li class="text-surface-600-300">
-									<div class="text-surface-800-100 font-medium">
+								<li class="text-surface-600-400">
+									<div class="font-medium text-surface-800-200">
 										{step.action}
 									</div>
 									{#if step.expectedResult}
-										<div class="text-surface-500-400 mt-1 text-sm">
+										<div class="mt-1 text-sm text-surface-500">
 											Expected: {step.expectedResult}
 										</div>
 									{/if}
@@ -476,9 +476,9 @@ ${testCase.expectedResult || 'See test case for details'}`;
 							{/each}
 						</ol>
 					{:else if stepsKind === 'string'}
-						<p class="text-surface-600-300 whitespace-pre-wrap">{testCase.steps}</p>
+						<p class="whitespace-pre-wrap text-surface-600-400">{testCase.steps}</p>
 					{:else}
-						<p class="text-surface-600-300 whitespace-pre-wrap">
+						<p class="whitespace-pre-wrap text-surface-600-400">
 							{formatTestCaseStepsForText(testCase.steps)}
 						</p>
 					{/if}
@@ -489,7 +489,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 			{#if testCase.expectedResult}
 				<div class="card p-6">
 					<h2 class="mb-3 text-lg font-bold">Expected Result</h2>
-					<p class="text-surface-600-300">{testCase.expectedResult}</p>
+					<p class="text-surface-600-400">{testCase.expectedResult}</p>
 				</div>
 			{/if}
 
@@ -504,7 +504,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 								{@const StatusIcon = getStatusIcon(result.status)}
 								<Accordion.Item
 									value={result.id}
-									class="border-surface-200-700 overflow-hidden rounded-lg border"
+									class="overflow-hidden rounded-lg border border-surface-200-800"
 								>
 									<Accordion.ItemTrigger
 										class="w-full p-3 transition-colors hover:bg-surface-100-900"
@@ -531,11 +531,11 @@ ${testCase.expectedResult || 'See test case for details'}`;
 											</div>
 											<div class="flex items-center gap-4">
 												{#if result.duration}
-													<span class="text-surface-600-300 text-sm">
+													<span class="text-sm text-surface-600-400">
 														{Math.round(result.duration / 1000)}s
 													</span>
 												{/if}
-												<span class="text-surface-600-300 text-sm"
+												<span class="text-sm text-surface-600-400"
 													>{formatDate(result.executedAt)}</span
 												>
 											</div>
@@ -544,19 +544,19 @@ ${testCase.expectedResult || 'See test case for details'}`;
 
 									<Accordion.ItemContent>
 										<div
-											class="border-surface-200-700 border-t bg-primary-50 p-3 dark:bg-primary-950/30"
+											class="border-t border-surface-200-800 bg-primary-50 p-3 dark:bg-primary-950/30"
 										>
 											<div
 												class="mb-2 flex items-center justify-between gap-4"
 											>
-												<div class="text-surface-600-300 text-sm">
+												<div class="text-sm text-surface-600-400">
 													Executed by: {result.executor.firstName ||
 														result.executor.email}
 												</div>
 												<a
 													href="/projects/{testCase.project
 														.id}/runs/{result.testRun.id}"
-													class="preset-tonal-primary-500 btn btn-sm"
+													class="btn preset-tonal-primary btn-sm"
 												>
 													<Play class="h-3 w-3" />
 													View Test Run
@@ -564,7 +564,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 											</div>
 
 											{#if result.comment}
-												<p class="text-surface-600-300 mt-2 text-sm">
+												<p class="mt-2 text-sm text-surface-600-400">
 													{result.comment}
 												</p>
 											{/if}
@@ -668,7 +668,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 											<!-- AI Diagnosis for Failed Tests -->
 											{#if result.status === 'FAILED'}
 												<div
-													class="border-surface-200-700 mt-2 border-t pt-2"
+													class="mt-2 border-t border-surface-200-800 pt-2"
 												>
 													{#if !aiDiagnoses.has(result.id) && !loadingDiagnosis.has(result.id)}
 														<button
@@ -740,7 +740,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 
 											{#if result.attachments && result.attachments.length > 0 && AttachmentViewerCmp}
 												<div
-													class="border-surface-200-700 mt-2 border-t pt-2"
+													class="mt-2 border-t border-surface-200-800 pt-2"
 												>
 													<AttachmentViewerCmp
 														attachments={result.attachments}
@@ -763,7 +763,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 						/>
 					</div>
 				{:else}
-					<div class="text-surface-600-300 py-8 text-center">
+					<div class="py-8 text-center text-surface-600-400">
 						<Clock class="mx-auto mb-2 h-12 w-12 opacity-50" />
 						<p>No execution history yet</p>
 					</div>
@@ -779,7 +779,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 
 				<div class="space-y-4 text-sm">
 					<div>
-						<div class="text-surface-600-300 mb-1">Created By</div>
+						<div class="mb-1 text-surface-600-400">Created By</div>
 						<div class="flex items-center gap-2">
 							<Avatar class="h-6 w-6">
 								{#if testCase.creator.imageUrl}
@@ -802,7 +802,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 					</div>
 
 					<div>
-						<div class="text-surface-600-300 mb-1">Project</div>
+						<div class="mb-1 text-surface-600-400">Project</div>
 						<a
 							href="/projects/{testCase.project.id}"
 							class="flex items-center gap-2 text-primary-500 hover:underline"
@@ -814,7 +814,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 
 					{#if testCase.suite}
 						<div>
-							<div class="text-surface-600-300 mb-1">Test Suite</div>
+							<div class="mb-1 text-surface-600-400">Test Suite</div>
 							<div class="flex items-center gap-2">
 								<FolderOpen class="h-4 w-4 text-primary-500" />
 								{testCase.suite.name}
@@ -823,7 +823,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 					{/if}
 
 					<div>
-						<div class="text-surface-600-300 mb-1">Created</div>
+						<div class="mb-1 text-surface-600-400">Created</div>
 						<div class="flex items-center gap-2">
 							<Calendar class="h-4 w-4" />
 							{formatDate(testCase.createdAt)}
@@ -831,7 +831,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 					</div>
 
 					<div>
-						<div class="text-surface-600-300 mb-1">Last Updated</div>
+						<div class="mb-1 text-surface-600-400">Last Updated</div>
 						<div class="flex items-center gap-2">
 							<Clock class="h-4 w-4" />
 							{formatDate(testCase.updatedAt)}
@@ -846,7 +846,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 
 				<div class="space-y-3 text-sm">
 					<div class="flex items-center justify-between">
-						<span class="text-surface-600-300">Total Executions</span>
+						<span class="text-surface-600-400">Total Executions</span>
 						<span class="text-lg font-bold">{testCase.results.length}</span>
 					</div>
 
@@ -861,7 +861,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 						{@const passRate =
 							executedTests > 0 ? Math.round((passedCount / executedTests) * 100) : 0}
 						<div class="flex items-center justify-between">
-							<span class="text-surface-600-300">Pass Rate</span>
+							<span class="text-surface-600-400">Pass Rate</span>
 							<span class="text-lg font-bold text-success-500">{passRate}%</span>
 						</div>
 					{/if}
@@ -884,7 +884,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 	<!-- Dialog -->
 	<div class="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center p-4">
 		<div
-			class="border-surface-200-700 pointer-events-auto max-h-[90vh] w-full max-w-3xl overflow-y-auto card border bg-surface-50-950 p-6 shadow-2xl"
+			class="pointer-events-auto max-h-[90vh] w-full max-w-3xl overflow-y-auto card border border-surface-200-800 bg-surface-50-950 p-6 shadow-2xl"
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby="edit-test-case-modal-title"
@@ -898,7 +898,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 							Edit Test Case
 						</h2>
 					</div>
-					<p class="text-surface-600-300">Update test case details and documentation</p>
+					<p class="text-surface-600-400">Update test case details and documentation</p>
 				</div>
 				<button
 					class="preset-ghost-surface-500 btn btn-sm"
@@ -1001,7 +1001,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 						<div class="space-y-3">
 							{#each editStructuredSteps as step, index (step.id)}
 								<div
-									class="border-surface-200-700 space-y-2 rounded-base border p-3"
+									class="space-y-2 rounded-base border border-surface-200-800 p-3"
 								>
 									<div class="flex items-center justify-between gap-2">
 										<span class="text-sm font-medium">Step {index + 1}</span>
@@ -1050,7 +1050,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 							placeholder="Step-by-step instructions to execute this test"
 							bind:value={editForm.steps}
 							disabled={savingEdit}></textarea>
-						<span class="text-surface-600-300 mt-1 text-xs">
+						<span class="mt-1 text-xs text-surface-600-400">
 							Enter each step on a new line for better readability
 						</span>
 					{/if}
@@ -1068,7 +1068,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 				</div>
 
 				<!-- Actions -->
-				<div class="border-surface-200-700 flex justify-end gap-3 border-t pt-4">
+				<div class="flex justify-end gap-3 border-t border-surface-200-800 pt-4">
 					<button
 						type="button"
 						onclick={() => (showEditDialog = false)}
@@ -1123,7 +1123,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 			<h2 id="delete-test-case-modal-title" class="mb-4 text-2xl font-bold text-error-500">
 				Delete Test Case
 			</h2>
-			<p class="text-surface-600-300 mb-6">
+			<p class="mb-6 text-surface-600-400">
 				Are you sure you want to delete <strong>{testCase.title}</strong>? This will
 				permanently delete all execution history, attachments, and associated data. This
 				action cannot be undone.

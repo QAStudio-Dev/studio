@@ -223,6 +223,8 @@
 	}
 </script>
 
+<svelte:window onkeydown={(e) => e.key === 'Escape' && open && !loading && handleClose()} />
+
 {#if open}
 	<!-- Backdrop -->
 	<button
@@ -234,7 +236,10 @@
 	<!-- Dialog -->
 	<div class="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center p-4">
 		<div
-			class="border-surface-200-700 pointer-events-auto max-h-[90vh] w-full max-w-2xl overflow-y-auto card border bg-surface-50-950 p-6 shadow-2xl"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="jira-modal-title"
+			class="pointer-events-auto max-h-[90vh] w-full max-w-2xl overflow-y-auto card border border-surface-200-800 bg-surface-50-950 p-6 shadow-2xl"
 		>
 			<div class="mb-6 flex items-start justify-between">
 				<div>
@@ -252,13 +257,17 @@
 							/>
 							<path d="M11.5 11.3h7.5l-.1 8.9H11.5z" />
 						</svg>
-						<h2 class="text-2xl font-bold">Create Jira Issue</h2>
+						<h2 id="jira-modal-title" class="text-2xl font-bold">Create Jira Issue</h2>
 					</div>
-					<p class="text-surface-600-300">
+					<p class="text-surface-600-400">
 						Create a new issue in Jira linked to this test
 					</p>
 				</div>
-				<button class="preset-ghost-surface-500 btn btn-sm" onclick={handleClose}>
+				<button
+					class="preset-ghost-surface-500 btn btn-sm"
+					onclick={handleClose}
+					aria-label="Close dialog"
+				>
 					<X class="h-4 w-4" />
 				</button>
 			</div>
@@ -293,7 +302,7 @@
 							href={createdIssueUrl}
 							target="_blank"
 							rel="noopener noreferrer"
-							class="preset-tonal-success-500 btn btn-sm"
+							class="btn preset-tonal-success btn-sm"
 						>
 							<ExternalLink class="h-4 w-4" />
 							View in Jira
@@ -320,7 +329,7 @@
 					<div class="py-8 text-center">
 						<AlertCircle class="mx-auto mb-3 h-12 w-12 text-warning-500" />
 						<h3 class="mb-2 text-lg font-semibold">No Jira Integration Found</h3>
-						<p class="text-surface-600-300 mb-4">
+						<p class="mb-4 text-surface-600-400">
 							Connect Jira in Settings to create issues from test failures.
 						</p>
 						<a href="/settings?tab=integrations" class="btn preset-filled-primary-500">
@@ -450,14 +459,14 @@
 								placeholder="Detailed description of the issue..."
 								bind:value={description}
 								disabled={loading}></textarea>
-							<p class="text-surface-500-400 mt-1 text-xs">
+							<p class="mt-1 text-xs text-surface-500">
 								Test case details and error information will be automatically
 								included
 							</p>
 						</div>
 
 						<!-- Actions -->
-						<div class="border-surface-200-700 flex justify-end gap-3 border-t pt-4">
+						<div class="flex justify-end gap-3 border-t border-surface-200-800 pt-4">
 							<button
 								type="button"
 								onclick={handleClose}

@@ -74,11 +74,11 @@
 				<FolderOpen class="h-4 w-4 text-primary-500" />
 				<div class="text-left">
 					<div class="text-sm font-medium">{currentProject.name}</div>
-					<div class="text-surface-600-300 text-xs">{currentProject.key}</div>
+					<div class="text-xs text-surface-600-400">{currentProject.key}</div>
 				</div>
 			</div>
 		{:else}
-			<div class="text-surface-600-300 flex items-center gap-2">
+			<div class="flex items-center gap-2 text-surface-600-400">
 				<FolderOpen class="h-4 w-4" />
 				<span>Select Project</span>
 			</div>
@@ -97,21 +97,21 @@
 
 		<!-- Dropdown -->
 		<div
-			class="border-surface-200-700 absolute top-full left-0 z-50 mt-2 max-h-96 w-80 overflow-y-auto card border bg-surface-50-950 p-2 shadow-xl"
+			class="absolute top-full left-0 z-50 mt-2 max-h-96 w-80 overflow-y-auto card border border-surface-200-800 bg-surface-50-950 p-2 shadow-xl"
 		>
 			{#if currentProject}
 				<button
 					onclick={deselectProject}
-					class="hover:bg-surface-100-800 flex w-full items-center justify-between rounded-base px-3 py-2 text-left text-error-500 transition-colors"
+					class="flex w-full items-center justify-between rounded-base px-3 py-2 text-left text-error-500 transition-colors hover:bg-surface-100-900"
 				>
 					<span class="text-sm">Clear selection</span>
 					<X class="h-4 w-4" />
 				</button>
-				<div class="bg-surface-200-700 my-2 h-px"></div>
+				<div class="my-2 h-px bg-surface-200-800"></div>
 			{/if}
 
 			{#if projects.length === 0}
-				<div class="text-surface-600-300 px-3 py-8 text-center">
+				<div class="px-3 py-8 text-center text-surface-600-400">
 					<FolderOpen class="mx-auto mb-2 h-8 w-8 opacity-50" />
 					<p class="text-sm">No projects available</p>
 					<a
@@ -125,7 +125,7 @@
 				{#each projects as project}
 					<button
 						onclick={() => selectProject(project)}
-						class="hover:bg-surface-100-800 group flex w-full items-center justify-between rounded-base px-3 py-2 text-left transition-colors"
+						class="group flex w-full items-center justify-between rounded-base px-3 py-2 text-left transition-colors hover:bg-surface-100-900"
 					>
 						<div class="flex items-center gap-3">
 							<FolderOpen class="h-4 w-4 text-primary-500" />
@@ -135,7 +135,7 @@
 								>
 									{project.name}
 								</div>
-								<div class="text-surface-600-300 text-xs">{project.key}</div>
+								<div class="text-xs text-surface-600-400">{project.key}</div>
 							</div>
 						</div>
 						{#if currentProject?.id === project.id}
@@ -145,10 +145,10 @@
 				{/each}
 			{/if}
 
-			<div class="bg-surface-200-700 my-2 h-px"></div>
+			<div class="my-2 h-px bg-surface-200-800"></div>
 			<a
 				href="/projects"
-				class="hover:bg-surface-100-800 flex w-full items-center gap-2 rounded-base px-3 py-2 text-left text-sm text-primary-500 transition-colors"
+				class="flex w-full items-center gap-2 rounded-base px-3 py-2 text-left text-sm text-primary-500 transition-colors hover:bg-surface-100-900"
 			>
 				<FolderOpen class="h-4 w-4" />
 				<span>View all projects</span>

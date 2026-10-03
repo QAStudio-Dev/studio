@@ -20,14 +20,6 @@
 	} from '@lucide/svelte';
 </script>
 
-<svelte:head>
-	<title>Features - QA Studio</title>
-	<meta
-		name="description"
-		content="Complete test management features. Test cases, test runs, milestones, reporting, API access, and more. Self-hosted and open source."
-	/>
-</svelte:head>
-
 <!-- Hero Section -->
 <section
 	class="bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-600 py-20 text-white"
@@ -309,9 +301,11 @@
 		<div class="mx-auto max-w-6xl">
 			<h2 class="mb-12 text-center text-3xl font-bold lg:text-4xl">Built for Developers</h2>
 
-			<div class="grid gap-8 md:grid-cols-3">
+			<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
 				<!-- REST API -->
-				<div class="rounded-xl border border-surface-300 p-6 dark:border-surface-700">
+				<div
+					class="rounded-xl border border-surface-200-800 bg-surface-50-950 p-6 transition-shadow hover:shadow-lg"
+				>
 					<div
 						class="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary-500/10 text-primary-500"
 					>
@@ -343,7 +337,9 @@
 				</div>
 
 				<!-- CI/CD Integration -->
-				<div class="rounded-xl border border-surface-300 p-6 dark:border-surface-700">
+				<div
+					class="rounded-xl border border-surface-200-800 bg-surface-50-950 p-6 transition-shadow hover:shadow-lg"
+				>
 					<div
 						class="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-secondary-500/10 text-secondary-500"
 					>
@@ -375,7 +371,9 @@
 				</div>
 
 				<!-- Test Framework Support -->
-				<div class="rounded-xl border border-surface-300 p-6 dark:border-surface-700">
+				<div
+					class="rounded-xl border border-surface-200-800 bg-surface-50-950 p-6 transition-shadow hover:shadow-lg"
+				>
 					<div
 						class="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-tertiary-500/10 text-tertiary-500"
 					>
@@ -406,7 +404,9 @@
 				</div>
 
 				<!-- Built-in Testing Features -->
-				<div class="rounded-xl border border-surface-300 p-6 dark:border-surface-700">
+				<div
+					class="rounded-xl border border-surface-200-800 bg-surface-50-950 p-6 transition-shadow hover:shadow-lg"
+				>
 					<div
 						class="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-success-500/10 text-success-500"
 					>
@@ -770,7 +770,7 @@
 				</a>
 				<a
 					href="/docs"
-					class="btn w-full border-white bg-transparent btn-lg text-white hover:bg-white/10 sm:w-auto"
+					class="btn w-full border-2 border-white/80 bg-transparent btn-lg text-white hover:bg-white/10 sm:w-auto"
 				>
 					View Documentation
 				</a>

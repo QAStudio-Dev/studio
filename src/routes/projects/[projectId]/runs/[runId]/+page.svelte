@@ -524,7 +524,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 <div class="container mx-auto max-w-7xl px-4 py-8">
 	<!-- Back Button -->
 	<button
-		class="text-surface-600-300 mb-4 flex items-center gap-2 transition-colors hover:text-primary-500"
+		class="mb-4 flex items-center gap-2 text-surface-600-400 transition-colors hover:text-primary-500"
 		onclick={() => goto(`/projects/${projectId}/runs`)}
 	>
 		<ArrowLeft class="h-4 w-4" />
@@ -547,7 +547,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 					{/if}
 				</div>
 				{#if testRun.description}
-					<p class="text-surface-600-300 mb-4">{testRun.description}</p>
+					<p class="mb-4 text-surface-600-400">{testRun.description}</p>
 				{/if}
 			</div>
 
@@ -578,7 +578,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 						<div class="mb-1 text-4xl font-bold text-primary-500">
 							{getPassRate()}%
 						</div>
-						<div class="text-surface-600-300">Pass Rate</div>
+						<div class="text-surface-600-400">Pass Rate</div>
 					</div>
 				{/if}
 			</div>
@@ -586,12 +586,12 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 
 		<!-- Metadata -->
 		<div
-			class="border-surface-200-700 mb-4 grid grid-cols-1 gap-4 border-t pt-4 md:grid-cols-2 lg:grid-cols-4"
+			class="mb-4 grid grid-cols-1 gap-4 border-t border-surface-200-800 pt-4 md:grid-cols-2 lg:grid-cols-4"
 		>
 			<div class="flex items-start gap-3">
 				<Folder class="mt-1 h-5 w-5 text-surface-500" />
 				<div>
-					<div class="text-surface-600-300 text-xs">Project</div>
+					<div class="text-xs text-surface-600-400">Project</div>
 					<div class="font-semibold">{testRun.project.name}</div>
 					<div class="text-xs text-surface-500">{testRun.project.key}</div>
 				</div>
@@ -601,7 +601,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 				<div class="flex items-start gap-3">
 					<Target class="mt-1 h-5 w-5 text-surface-500" />
 					<div>
-						<div class="text-surface-600-300 text-xs">Milestone</div>
+						<div class="text-xs text-surface-600-400">Milestone</div>
 						<div class="font-semibold">{testRun.milestone.name}</div>
 						{#if testRun.milestone.dueDate}
 							<div class="text-xs text-surface-500">
@@ -615,7 +615,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 			<div class="flex items-start gap-3">
 				<User class="mt-1 h-5 w-5 text-surface-500" />
 				<div>
-					<div class="text-surface-600-300 text-xs">Created By</div>
+					<div class="text-xs text-surface-600-400">Created By</div>
 					<div class="font-semibold">
 						{testRun.creator.firstName
 							? `${testRun.creator.firstName} ${testRun.creator.lastName || ''}`
@@ -627,7 +627,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 			<div class="flex items-start gap-3">
 				<Clock class="mt-1 h-5 w-5 text-surface-500" />
 				<div>
-					<div class="text-surface-600-300 text-xs">Started</div>
+					<div class="text-xs text-surface-600-400">Started</div>
 					<div class="font-semibold">
 						{formatDate(testRun.startedAt?.toISOString() || null)}
 					</div>
@@ -641,40 +641,40 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 		</div>
 
 		<!-- Stats -->
-		<div class="border-surface-200-700 flex flex-wrap items-center gap-6 border-t pt-4">
+		<div class="flex flex-wrap items-center gap-6 border-t border-surface-200-800 pt-4">
 			<div class="flex items-center gap-2">
 				<CheckCircle2 class="h-5 w-5 text-success-500" />
 				<span class="font-semibold">{stats.passed}</span>
-				<span class="text-surface-600-300 text-sm">Passed</span>
+				<span class="text-sm text-surface-600-400">Passed</span>
 			</div>
 			<div class="flex items-center gap-2">
 				<XCircle class="h-5 w-5 text-error-500" />
 				<span class="font-semibold">{stats.failed}</span>
-				<span class="text-surface-600-300 text-sm">Failed</span>
+				<span class="text-sm text-surface-600-400">Failed</span>
 			</div>
 			<div class="flex items-center gap-2">
 				<AlertCircle class="h-5 w-5 text-warning-500" />
 				<span class="font-semibold">{stats.blocked}</span>
-				<span class="text-surface-600-300 text-sm">Blocked</span>
+				<span class="text-sm text-surface-600-400">Blocked</span>
 			</div>
 			<div class="flex items-center gap-2">
 				<Circle class="h-5 w-5 text-surface-500" />
 				<span class="font-semibold">{stats.skipped}</span>
-				<span class="text-surface-600-300 text-sm">Skipped</span>
+				<span class="text-sm text-surface-600-400">Skipped</span>
 			</div>
 			<div class="ml-auto flex items-center gap-2">
-				<span class="text-surface-600-300 text-sm">Total:</span>
+				<span class="text-sm text-surface-600-400">Total:</span>
 				<span class="text-xl font-bold">{stats.total}</span>
 			</div>
 		</div>
 
 		<!-- AI Summary Section -->
 		{#if stats.total > 0}
-			<div class="border-surface-200-700 border-t pt-4">
+			<div class="border-t border-surface-200-800 pt-4">
 				{#if !runSummary && !loadingSummary}
 					<button
 						onclick={() => getRunSummary()}
-						class="preset-tonal-primary-500 btn btn-sm"
+						class="btn preset-tonal-primary btn-sm"
 						disabled={loadingSummary}
 					>
 						<Sparkles class="h-4 w-4" />
@@ -697,7 +697,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 							</div>
 							<button
 								onclick={() => getRunSummary(true)}
-								class="preset-tonal-primary-500 btn btn-sm"
+								class="btn preset-tonal-primary btn-sm"
 								title="Regenerate summary"
 								disabled={loadingSummary}
 							>
@@ -788,7 +788,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 		</div>
 
 		<!-- Results Summary -->
-		<div class="text-surface-600-300 flex items-center gap-4 text-sm">
+		<div class="flex items-center gap-4 text-sm text-surface-600-400">
 			<span>Showing {testResults.length} of {total} results</span>
 			{#if search || selectedStatus || selectedPriority || selectedType}
 				<button
@@ -817,7 +817,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 		<div class="card p-12 text-center">
 			<Play class="mx-auto mb-4 h-16 w-16 text-surface-400" />
 			<h2 class="mb-2 text-xl font-bold">No test results found</h2>
-			<p class="text-surface-600-300">
+			<p class="text-surface-600-400">
 				{#if search || selectedStatus || selectedPriority || selectedType}
 					Try adjusting your filters
 				{:else}
@@ -835,7 +835,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 				<div class="overflow-hidden card">
 					<!-- Suite Header -->
 					<button
-						class="hover:bg-surface-50-900 border-surface-200-700 flex w-full items-center gap-3 border-b bg-surface-100-900 px-4 py-3 text-left transition-colors"
+						class="flex w-full items-center gap-3 border-b border-surface-200-800 bg-surface-100-900 px-4 py-3 text-left transition-colors hover:bg-surface-50-950"
 						onclick={() => toggleSuite(suiteId)}
 					>
 						{#if isExpanded}
@@ -849,7 +849,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 								<div class="flex items-center gap-2">
 									<h3 class="font-semibold">{group.suite.name}</h3>
 									{#if group.suite.path.length > 1}
-										<span class="text-surface-600-300 text-xs">
+										<span class="text-xs text-surface-600-400">
 											({group.suite.path
 												.slice(0, -1)
 												.map((s) => s.name)
@@ -869,13 +869,13 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 
 					<!-- Test Results in Suite -->
 					{#if isExpanded}
-						<div class="divide-surface-200-700 divide-y">
+						<div class="divide-y divide-surface-200-800">
 							{#each group.results as result (result.id)}
 								{@const Icon = getStatusIcon(result.status)}
 								<div>
 									<!-- Main Row (Clickable) -->
 									<button
-										class="hover:bg-surface-50-900 flex w-full items-center gap-4 p-4 text-left transition-colors"
+										class="flex w-full items-center gap-4 p-4 text-left transition-colors hover:bg-surface-50-950"
 										onclick={() => toggleResult(result.id)}
 									>
 										<!-- Status Icon -->
@@ -899,7 +899,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 												</h4>
 											</div>
 											<div
-												class="text-surface-600-300 flex items-center gap-3 text-xs"
+												class="flex items-center gap-3 text-xs text-surface-600-400"
 											>
 												<span
 													class={getPriorityColor(
@@ -928,7 +928,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 									<!-- Expanded Details -->
 									{#if expandedResults.has(result.id)}
 										<div
-											class="border-surface-200-700 border-t bg-primary-50 p-4 dark:bg-primary-950/30"
+											class="border-t border-surface-200-800 bg-primary-50 p-4 dark:bg-primary-950/30"
 										>
 											<div class="space-y-4">
 												<!-- Test Case Details -->
@@ -937,7 +937,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 														<h4 class="mb-1 text-sm font-semibold">
 															Description
 														</h4>
-														<p class="text-surface-600-300 text-sm">
+														<p class="text-sm text-surface-600-400">
 															{result.testCase.description}
 														</p>
 													</div>
@@ -1039,7 +1039,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 																			result.id,
 																			true
 																		)}
-																	class="preset-tonal-primary-500 btn btn-sm"
+																	class="btn preset-tonal-primary btn-sm"
 																	title="Regenerate diagnosis"
 																	disabled={loadingDiagnosis.has(
 																		result.id
@@ -1126,7 +1126,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 														<h4 class="mb-1 text-sm font-semibold">
 															Comment
 														</h4>
-														<p class="text-surface-600-300 text-sm">
+														<p class="text-sm text-surface-600-400">
 															{result.comment}
 														</p>
 													</div>
@@ -1134,7 +1134,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 
 												<!-- Execution Info -->
 												<div
-													class="text-surface-600-300 flex items-center gap-6 text-xs"
+													class="flex items-center gap-6 text-xs text-surface-600-400"
 												>
 													<span>
 														Executed by: {result.executor.firstName
@@ -1263,7 +1263,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 		}}
 	>
 		<div
-			class="rounded-container-token max-h-[90vh] w-full max-w-2xl overflow-y-auto bg-surface-50-950 p-6 shadow-xl"
+			class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-container bg-surface-50-950 p-6 shadow-xl"
 		>
 			<h2 id="edit-modal-title" class="mb-4 text-2xl font-bold">Edit Test Run</h2>
 
@@ -1361,11 +1361,11 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 			}
 		}}
 	>
-		<div class="rounded-container-token w-full max-w-md bg-surface-50-950 p-6 shadow-xl">
+		<div class="w-full max-w-md rounded-container bg-surface-50-950 p-6 shadow-xl">
 			<h2 id="delete-modal-title" class="mb-4 text-2xl font-bold text-error-500">
 				Delete Test Run
 			</h2>
-			<p class="text-surface-600-300 mb-6">
+			<p class="mb-6 text-surface-600-400">
 				Are you sure you want to delete <strong>{testRun.name}</strong>? This will
 				permanently delete all test results, attachments, and associated data. This action
 				cannot be undone.

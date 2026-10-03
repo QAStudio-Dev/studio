@@ -168,7 +168,7 @@
 							<div class="card bg-surface-50-950 p-4">
 								<div class="flex items-start justify-between gap-3">
 									<div class="flex min-w-0 flex-1 items-center gap-3">
-										<div class="text-surface-600-300">
+										<div class="text-surface-600-400">
 											{#if AttachmentIcon}
 												<AttachmentIcon class="h-5 w-5" />
 											{/if}
@@ -180,7 +180,7 @@
 											>
 												{attachment.originalName}
 											</div>
-											<div class="text-surface-600-300 mt-1 text-xs">
+											<div class="mt-1 text-xs text-surface-600-400">
 												{getAttachmentType(attachment.mimeType)} • {formatBytes(
 													attachment.size
 												)}
@@ -192,7 +192,7 @@
 										{#if isViewable(attachment.mimeType)}
 											<button
 												onclick={() => selectAttachment(attachment.id)}
-												class="preset-tonal-primary-500 btn btn-sm"
+												class="btn preset-tonal-primary btn-sm"
 												title="View {attachment.originalName}"
 											>
 												<ImageIcon class="h-4 w-4" />
@@ -202,7 +202,7 @@
 										<a
 											href="/api/attachments/{attachment.id}"
 											download={attachment.originalName}
-											class="preset-tonal-surface-500 btn btn-sm"
+											class="btn preset-tonal-surface btn-sm"
 											title="Download {attachment.originalName}"
 										>
 											<Download class="h-4 w-4" />
@@ -283,7 +283,7 @@
 														<div
 															class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent"
 														></div>
-														<p class="text-surface-600-300 mt-4">
+														<p class="mt-4 text-surface-600-400">
 															Loading trace viewer...
 														</p>
 													</div>
@@ -311,7 +311,7 @@
 											class="w-full max-w-4xl overflow-auto bg-surface-100-900 p-8"
 										>
 											{#if loadingMarkdown[attachment.id]}
-												<div class="text-surface-600-300 py-8 text-center">
+												<div class="py-8 text-center text-surface-600-400">
 													<div
 														class="inline-block h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent"
 													></div>
@@ -331,14 +331,14 @@
 								<!-- Info Bar (hidden for trace files) -->
 								{#if !isTrace(attachment.mimeType)}
 									<div
-										class="border-surface-200-700 border-t bg-surface-100-900 p-4"
+										class="border-t border-surface-200-800 bg-surface-100-900 p-4"
 									>
 										<div class="flex items-center justify-between gap-4">
 											<div class="min-w-0 flex-1">
 												<div class="truncate text-sm font-medium">
 													{attachment.originalName}
 												</div>
-												<div class="text-surface-600-300 text-xs">
+												<div class="text-xs text-surface-600-400">
 													{getAttachmentType(attachment.mimeType)} • {formatBytes(
 														attachment.size
 													)}

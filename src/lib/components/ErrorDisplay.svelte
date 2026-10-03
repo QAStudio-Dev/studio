@@ -154,7 +154,7 @@
 							</button>
 						</div>
 						<div
-							class="stack-trace border-surface-200-700 bg-surface-900-50 max-h-96 overflow-y-auto rounded-container border p-4"
+							class="stack-trace max-h-96 overflow-y-auto rounded-container border border-surface-200-800 bg-surface-100-900 p-4"
 						>
 							<div class="space-y-1 font-mono text-xs">
 								{#each parsedStackTrace as line}

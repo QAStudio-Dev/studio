@@ -1,27 +1,30 @@
 import { definePageMetaTags } from 'svelte-meta-tags';
 import type { PageLoad } from './$types';
+import { SITE_URL } from '$lib/site';
 
 export const load: PageLoad = async ({ data, url }) => {
 	const post = data.post;
+	const postUrl = new URL(url.pathname, SITE_URL).href;
+	const coverUrl = post.cover ? new URL(post.cover, SITE_URL).href : undefined;
 
 	const pageTags = definePageMetaTags({
 		title: post.title,
 		description: post.description,
-		canonical: new URL(url.pathname, url.origin).href,
+		canonical: postUrl,
 		openGraph: {
 			type: 'article',
 			title: post.title,
 			description: post.description,
-			url: new URL(url.pathname, url.origin).href,
+			url: postUrl,
 			article: {
 				publishedTime: post.date,
 				authors: [post.author],
 				tags: post.tags
 			},
-			...(post.cover && {
+			...(coverUrl && {
 				images: [
 					{
-						url: post.cover,
+						url: coverUrl,
 						alt: post.title
 					}
 				]
@@ -31,8 +34,8 @@ export const load: PageLoad = async ({ data, url }) => {
 			cardType: 'summary_large_image',
 			title: post.title,
 			description: post.description,
-			...(post.cover && {
-				image: post.cover,
+			...(coverUrl && {
+				image: coverUrl,
 				imageAlt: post.title
 			})
 		},

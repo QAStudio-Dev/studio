@@ -88,11 +88,11 @@
 			<AlertTriangle class="h-12 w-12 text-error-500" />
 		</div>
 		<h1 class="mb-2 text-3xl font-bold">{statusInfo.title}</h1>
-		<p class="text-surface-600-300 text-lg">{statusInfo.description}</p>
+		<p class="text-lg text-surface-600-400">{statusInfo.description}</p>
 	</div>
 
 	{#if error}
-		<div class="alert preset-filled-error mb-6">
+		<div class="alert mb-6 preset-filled-error-500">
 			<AlertTriangle class="h-5 w-5" />
 			<p>{error}</p>
 		</div>
@@ -107,28 +107,28 @@
 
 		<div class="space-y-6">
 			<!-- Status Display -->
-			<div class="bg-surface-100-800 rounded-container p-6">
+			<div class="rounded-container bg-surface-100-900 p-6">
 				<div class="mb-4 flex items-center justify-between">
-					<span class="text-surface-600-300">Current Status</span>
+					<span class="text-surface-600-400">Current Status</span>
 					<span
-						class="badge preset-filled-{statusInfo.color === 'error'
-							? 'error'
+						class="badge {statusInfo.color === 'error'
+							? 'preset-filled-error-500'
 							: statusInfo.color === 'warning'
-								? 'warning'
-								: 'surface'}"
+								? 'preset-filled-warning-500'
+								: 'preset-filled-surface-500'}"
 					>
 						{subscription?.status || 'Unknown'}
 					</span>
 				</div>
 
 				<div class="mb-4 flex items-center justify-between">
-					<span class="text-surface-600-300">Team</span>
+					<span class="text-surface-600-400">Team</span>
 					<span class="font-medium">{team.name}</span>
 				</div>
 
 				{#if subscription?.currentPeriodEnd}
 					<div class="flex items-center justify-between">
-						<span class="text-surface-600-300">Period End</span>
+						<span class="text-surface-600-400">Period End</span>
 						<span class="font-medium">
 							{new Date(subscription.currentPeriodEnd).toLocaleDateString('en-US', {
 								year: 'numeric',
@@ -190,9 +190,9 @@
 			{#if isAdmin}
 				<button
 					onclick={openBillingPortal}
-					class="btn w-full preset-filled-{statusInfo.color === 'error'
-						? 'error'
-						: 'primary'}"
+					class="btn w-full {statusInfo.color === 'error'
+						? 'preset-filled-error-500'
+						: 'preset-filled-primary-500'}"
 					disabled={loading}
 				>
 					{loading ? 'Loading...' : statusInfo.action}
@@ -211,7 +211,7 @@
 	<!-- Help Section -->
 	<div class="card p-6">
 		<h3 class="mb-4 font-semibold">Need Help?</h3>
-		<div class="text-surface-600-300 space-y-3 text-sm">
+		<div class="space-y-3 text-sm text-surface-600-400">
 			<p>
 				If you're experiencing issues with your payment or subscription, our support team is
 				here to help.

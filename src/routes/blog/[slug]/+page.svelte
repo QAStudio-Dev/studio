@@ -1,8 +1,14 @@
 <script lang="ts">
 	import { Calendar, User, Tag, ArrowLeft } from '@lucide/svelte';
+	import { JsonLd } from 'svelte-meta-tags';
+	import { page } from '$app/state';
+	import { SITE_URL } from '$lib/site';
 
 	let { data } = $props();
 	let { post } = $derived(data);
+
+	const site = SITE_URL;
+	let postUrl = $derived(new URL(page.url.pathname, site).href);
 
 	function formatDate(date: string) {
 		return new Date(date).toLocaleDateString('en-US', {
@@ -13,10 +19,36 @@
 	}
 </script>
 
-<svelte:head>
-	<title>{post.title} - QA Studio Blog</title>
-	<meta name="description" content={post.description || post.title} />
-</svelte:head>
+<JsonLd
+	schema={[
+		{
+			'@type': 'BlogPosting',
+			headline: post.title,
+			description: post.description,
+			datePublished: post.date,
+			...(post.author && { author: { '@type': 'Person', name: post.author } }),
+			publisher: {
+				'@type': 'Organization',
+				name: 'QA Studio',
+				logo: {
+					'@type': 'ImageObject',
+					url: `${site}/android-chrome-512x512.png`
+				}
+			},
+			mainEntityOfPage: { '@type': 'WebPage', '@id': postUrl },
+			...(post.tags?.length && { keywords: post.tags.join(', ') }),
+			...(post.cover && { image: new URL(post.cover, site).href })
+		},
+		{
+			'@type': 'BreadcrumbList',
+			itemListElement: [
+				{ '@type': 'ListItem', position: 1, name: 'Home', item: site },
+				{ '@type': 'ListItem', position: 2, name: 'Blog', item: `${site}/blog` },
+				{ '@type': 'ListItem', position: 3, name: post.title, item: postUrl }
+			]
+		}
+	]}
+/>
 
 <article class="container mx-auto max-w-4xl px-4 py-12">
 	<!-- Back Link -->
@@ -92,7 +124,7 @@
 	</header>
 
 	<!-- Divider -->
-	<hr class="mb-8 border-surface-300-700" />
+	<hr class="mb-8 border-surface-200-800" />
 
 	<!-- Content -->
 	<div class="prose prose-lg max-w-none prose-slate dark:prose-invert">
@@ -100,7 +132,7 @@
 	</div>
 
 	<!-- Divider -->
-	<hr class="my-12 border-surface-300-700" />
+	<hr class="my-12 border-surface-200-800" />
 
 	<!-- Footer -->
 	<footer class="text-center">

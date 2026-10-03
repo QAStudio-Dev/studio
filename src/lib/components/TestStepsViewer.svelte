@@ -276,7 +276,7 @@
 	<div class="space-y-3">
 		<div class="flex items-center justify-between">
 			<h4 class="text-sm font-semibold">Test Steps</h4>
-			<div class="text-surface-600-300 flex items-center gap-2 text-xs">
+			<div class="flex items-center gap-2 text-xs text-surface-600-400">
 				<span>{steps.length} step{steps.length !== 1 ? 's' : ''}</span>
 			</div>
 		</div>
@@ -286,7 +286,7 @@
 				{#each sections as section}
 					<Accordion.Item
 						value={section.title}
-						class="border-surface-200-700 overflow-hidden rounded-lg border"
+						class="overflow-hidden rounded-lg border border-surface-200-800"
 					>
 						<h3>
 							<Accordion.ItemTrigger
@@ -301,7 +301,7 @@
 									/>
 								</Accordion.ItemIndicator>
 								<span class="text-sm font-semibold">{section.title}</span>
-								<span class="text-surface-600-300 ml-auto text-sm">
+								<span class="ml-auto text-sm text-surface-600-400">
 									{section.steps.length} step{section.steps.length !== 1
 										? 's'
 										: ''}
@@ -310,7 +310,7 @@
 						</h3>
 
 						<Accordion.ItemContent>
-							<div class="divide-surface-200-700 divide-y bg-surface-50-950">
+							<div class="divide-y divide-surface-200-800 bg-surface-50-950">
 								{#each section.steps as step}
 									{@const StatusIcon = getStatusIcon(step.status)}
 									{@const CategoryIcon = getCategoryIcon(step.category)}
@@ -321,7 +321,7 @@
 									<div>
 										<!-- Step Row -->
 										<button
-											class="hover:bg-surface-100-800 flex w-full items-center gap-2 px-3 py-2 text-left transition-colors {step.status ===
+											class="flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-surface-100-900 {step.status ===
 											'FAILED'
 												? 'border-l-4 border-error-500 bg-error-500/5'
 												: isTimeout && step.id === lastStepId
@@ -358,7 +358,7 @@
 											<div class="min-w-0 flex-1">
 												<div class="flex flex-wrap items-center gap-2">
 													<span
-														class="text-surface-900-50 text-sm {step.status ===
+														class="text-sm text-surface-950-50 {step.status ===
 														'FAILED'
 															? 'font-medium'
 															: isTimeout && step.id === lastStepId
@@ -403,7 +403,7 @@
 												{#if step.stackTrace && !compact}
 													<details class="mt-0.5">
 														<summary
-															class="text-surface-600-300 hover:text-surface-700-200 cursor-pointer text-xs"
+															class="cursor-pointer text-xs text-surface-600-400 hover:text-surface-700-300"
 														>
 															Stack Trace
 														</summary>
@@ -417,7 +417,7 @@
 
 											<!-- Duration & Location -->
 											<div
-												class="text-surface-600-300 flex flex-shrink-0 flex-col items-end gap-0.5 text-xs"
+												class="flex flex-shrink-0 flex-col items-end gap-0.5 text-xs text-surface-600-400"
 											>
 												{#if step.duration}
 													<div class="flex items-center gap-1">
@@ -435,7 +435,7 @@
 
 										<!-- Nested Child Steps -->
 										{#if hasChildren && isStepExpanded && step.childSteps}
-											<div class="border-surface-200-700 border-l-2 pl-6">
+											<div class="border-l-2 border-surface-200-800 pl-6">
 												{#each step.childSteps as childStep}
 													{@const ChildStatusIcon = getStatusIcon(
 														childStep.status
@@ -445,7 +445,7 @@
 													)}
 
 													<div
-														class="border-surface-200-700 flex items-start gap-2 border-b px-3 py-1.5 last:border-b-0 hover:bg-surface-100-900 {childStep.status ===
+														class="flex items-start gap-2 border-b border-surface-200-800 px-3 py-1.5 last:border-b-0 hover:bg-surface-100-900 {childStep.status ===
 														'FAILED'
 															? 'bg-error-500/5'
 															: ''}"
@@ -459,7 +459,7 @@
 														<div class="min-w-0 flex-1">
 															<div class="flex items-start gap-2">
 																<span
-																	class="text-surface-900-50 text-xs {childStep.status ===
+																	class="text-xs text-surface-950-50 {childStep.status ===
 																	'FAILED'
 																		? 'font-medium'
 																		: ''}"
@@ -497,7 +497,7 @@
 
 														{#if childStep.duration}
 															<div
-																class="text-surface-600-300 flex-shrink-0 text-xs"
+																class="flex-shrink-0 text-xs text-surface-600-400"
 															>
 																{formatDuration(childStep.duration)}
 															</div>

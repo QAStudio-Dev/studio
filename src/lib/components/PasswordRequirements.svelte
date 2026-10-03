@@ -55,7 +55,7 @@
 </script>
 
 {#if hasValue}
-	<div class="mt-2 rounded-base border border-surface-300-700 bg-surface-100-900 p-3">
+	<div class="mt-2 rounded-base border border-surface-200-800 bg-surface-100-900 p-3">
 		<p class="mb-2 text-xs font-semibold text-surface-600-400">Password requirements:</p>
 		<ul class="space-y-1">
 			{#each results as { text, met }}

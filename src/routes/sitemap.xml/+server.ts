@@ -3,11 +3,12 @@ import { readdir, readFile, access } from 'fs/promises';
 import { join } from 'path';
 import matter from 'gray-matter';
 import { constants } from 'fs';
+import { SITE_URL } from '$lib/site';
 
 // Prerender this at build time so blog files are available
 export const prerender = true;
 
-const site = 'https://qastudio.dev';
+const site = SITE_URL;
 
 // Recursively find all .md files in a directory
 async function findMarkdownFiles(dir: string): Promise<string[]> {
@@ -27,25 +28,27 @@ async function findMarkdownFiles(dir: string): Promise<string[]> {
 }
 
 // Static pages that should be in the sitemap
-const staticPages = [
-	'', // homepage
-	'/docs',
-	'/blog',
-	'/about',
-	'/contact',
-	'/privacy',
-	'/terms',
-	'/projects',
-	'/login',
-	'/sign-up'
+const staticPages: Array<{ path: string; changefreq: string; priority: string }> = [
+	{ path: '', changefreq: 'daily', priority: '1.0' },
+	{ path: '/features', changefreq: 'weekly', priority: '0.9' },
+	{ path: '/pricing', changefreq: 'weekly', priority: '0.9' },
+	{ path: '/docs', changefreq: 'weekly', priority: '0.8' },
+	{ path: '/blog', changefreq: 'daily', priority: '0.8' },
+	{ path: '/about', changefreq: 'monthly', priority: '0.6' },
+	{ path: '/contact', changefreq: 'monthly', priority: '0.6' },
+	{ path: '/contact-sales', changefreq: 'monthly', priority: '0.6' },
+	{ path: '/signup', changefreq: 'monthly', priority: '0.5' },
+	{ path: '/login', changefreq: 'monthly', priority: '0.3' },
+	{ path: '/privacy', changefreq: 'yearly', priority: '0.3' },
+	{ path: '/terms', changefreq: 'yearly', priority: '0.3' }
 ];
 
 export const GET: RequestHandler = async () => {
-	const pages = staticPages.map((page) => ({
-		loc: `${site}${page}`,
+	const pages = staticPages.map(({ path, changefreq, priority }) => ({
+		loc: `${site}${path}`,
 		lastmod: new Date().toISOString().split('T')[0],
-		changefreq: page === '' ? 'daily' : 'weekly',
-		priority: page === '' ? '1.0' : '0.8'
+		changefreq,
+		priority
 	}));
 
 	// Dynamically load blog posts from markdown files

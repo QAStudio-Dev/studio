@@ -4,11 +4,12 @@
 
 	let error = $derived(page.error);
 	let status = $derived(page.status);
+	let isAuthenticated = $derived(!!page.data.userId);
 
 	// Fun error messages based on status code
 	const errorMessages: Record<number, { title: string; message: string; emoji: string }> = {
 		404: {
-			title: 'Test Case Not Found',
+			title: 'Page Not Found',
 			message: "Looks like this page failed its test! It's missing in action.",
 			emoji: '🔍'
 		},
@@ -36,18 +37,36 @@
 	};
 
 	let errorInfo = $derived(errorMessages[status] || defaultError);
+
+	let helpLinks = $derived(
+		isAuthenticated
+			? [
+					{ label: 'Projects', href: '/projects' },
+					{ label: 'Dashboard', href: '/dashboard' },
+					{ label: 'API Docs', href: '/docs' }
+				]
+			: [
+					{ label: 'Features', href: '/features' },
+					{ label: 'Pricing', href: '/pricing' },
+					{ label: 'Blog', href: '/blog' },
+					{ label: 'Contact', href: '/contact' }
+				]
+	);
 </script>
 
 <svelte:head>
 	<title>{status} - {errorInfo.title} | QA Studio</title>
+	<meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 
 <div
-	class="flex min-h-screen items-center justify-center bg-gradient-to-br from-surface-50 to-surface-100 p-4 dark:from-surface-950 dark:to-surface-900"
+	class="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-gradient-to-br from-surface-50 to-surface-100 px-4 py-16 dark:from-surface-950 dark:to-surface-900"
 >
 	<div class="w-full max-w-2xl">
 		<!-- Error Card -->
-		<div class="card p-8 text-center md:p-12">
+		<div
+			class="rounded-container border border-surface-200-800 bg-surface-50-950 p-8 text-center shadow-xl md:p-12"
+		>
 			<!-- Status Code with Animation -->
 			<div class="mb-8">
 				<div class="relative inline-block">
@@ -75,15 +94,15 @@
 			</h1>
 
 			<!-- Error Message -->
-			<p class="text-surface-600-300 mx-auto mb-8 max-w-md text-lg">
+			<p class="mx-auto mb-8 max-w-md text-lg text-surface-600-400">
 				{errorInfo.message}
 			</p>
 
 			<!-- Technical Details (collapsible) -->
-			{#if error?.message}
-				<details class="bg-surface-100-800 mb-8 rounded-container p-4 text-left">
+			{#if error?.message && status !== 404}
+				<details class="mb-8 rounded-container bg-surface-100-900 p-4 text-left">
 					<summary
-						class="text-surface-600-300 flex cursor-pointer items-center gap-2 text-sm font-medium transition-colors hover:text-primary-500"
+						class="flex cursor-pointer items-center gap-2 text-sm font-medium text-surface-600-400 transition-colors hover:text-primary-500"
 					>
 						<Bug class="h-4 w-4" />
 						Technical Details
@@ -103,15 +122,18 @@
 					<ArrowLeft class="h-4 w-4" />
 					Go Back
 				</button>
-				<a href="/dashboard" class="btn flex items-center gap-2 preset-filled-primary-500">
+				<a
+					href={isAuthenticated ? '/dashboard' : '/'}
+					class="btn flex items-center gap-2 preset-filled-primary-500"
+				>
 					<Home class="h-4 w-4" />
-					Back to Dashboard
+					{isAuthenticated ? 'Back to Dashboard' : 'Back to Home'}
 				</a>
 			</div>
 
 			<!-- Fun QA-themed quote -->
-			<div class="border-surface-200-700 mt-12 border-t pt-8">
-				<p class="text-surface-600-300 text-sm italic">
+			<div class="mt-12 border-t border-surface-200-800 pt-8">
+				<p class="text-sm text-surface-600-400 italic">
 					"It's not a bug, it's an undocumented feature!"
 					<br />
 					<span class="text-xs">- Every developer, probably</span>
@@ -121,13 +143,15 @@
 
 		<!-- Additional Help Links -->
 		<div class="mt-6 text-center">
-			<p class="text-surface-600-300 mb-3 text-sm">Need help? Check out these resources:</p>
+			<p class="mb-3 text-sm text-surface-600-400">Need help? Check out these resources:</p>
 			<div class="flex flex-wrap justify-center gap-4 text-sm">
-				<a href="/projects" class="text-primary-500 hover:underline"> View Projects </a>
-				<span class="text-surface-400">•</span>
-				<a href="/dashboard" class="text-primary-500 hover:underline"> Dashboard </a>
-				<span class="text-surface-400">•</span>
-				<a href="/" class="text-primary-500 hover:underline"> Home </a>
+				{#each helpLinks as link, i (link.href)}
+					{#if i > 0}
+						<span class="text-surface-400-600" aria-hidden="true">•</span>
+					{/if}
+					<a href={link.href} class="text-primary-600-400 hover:underline">{link.label}</a
+					>
+				{/each}
 			</div>
 		</div>
 	</div>

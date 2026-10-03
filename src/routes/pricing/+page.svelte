@@ -1,14 +1,64 @@
 <script lang="ts">
-	import { Check, X, ArrowRight, Zap, Shield, Code, Download } from '@lucide/svelte';
+	import { Check, X, ArrowRight, Zap, Shield, Code, Download, ChevronDown } from '@lucide/svelte';
+	import { JsonLd } from 'svelte-meta-tags';
+
+	const faqs: { question: string; answer: string[] }[] = [
+		{
+			question: "What's the difference between self-hosted and hosted SaaS?",
+			answer: [
+				'Self-hosted (open source): Download the AGPL-3.0 code and run it on your own servers. Completely free with unlimited users and projects. You manage everything.',
+				'Hosted SaaS (qastudio.dev): We manage everything - just sign up and start testing. Free tier includes 1 user and 1 project. Pro tier ($10/user/month) adds unlimited users, projects, teams, Twilio integration, and SMS testing.'
+			]
+		},
+		{
+			question: 'Is the self-hosted version really unlimited?',
+			answer: [
+				'Yes! The self-hosted version is AGPL-3.0 open source with no artificial limits. Add unlimited users, create unlimited projects and test cases. The only costs are your hosting infrastructure (typically $10-30/month on cloud providers).'
+			]
+		},
+		{
+			question: "What's included in Pro Support?",
+			answer: [
+				'Pro Support ($99/month) includes priority email support with 48-hour response SLA, setup assistance, migration help from other tools, custom feature requests, and a private Slack channel for your team.'
+			]
+		},
+		{
+			question: 'Can I try Pro Support before paying?',
+			answer: [
+				"Yes! We offer a 30-day free trial of Pro Support. Contact us and we'll set you up with full access to evaluate the support experience."
+			]
+		},
+		{
+			question: 'What are the hosting costs?',
+			answer: [
+				'Hosting costs depend on your infrastructure. A typical small team setup costs $10-30/month on cloud providers like DigitalOcean or AWS. You can also run it on-premises for free if you have existing servers.'
+			]
+		},
+		{
+			question: 'How does Enterprise pricing work?',
+			answer: [
+				'Enterprise pricing is customized based on your needs - team size, support requirements, custom development, and SLA expectations. Contact our sales team for a quote.'
+			]
+		},
+		{
+			question: 'Can I get a refund?',
+			answer: [
+				"Yes. We offer a 30-day money-back guarantee on Pro Support subscriptions. If you're not satisfied, we'll refund your payment, no questions asked."
+			]
+		}
+	];
 </script>
 
-<svelte:head>
-	<title>Pricing - QA Studio</title>
-	<meta
-		name="description"
-		content="QA Studio pricing: Self-hosted open source (unlimited users, free forever) or hosted SaaS (free: 1 user/project, Pro: $10/user/month for teams)."
-	/>
-</svelte:head>
+<JsonLd
+	schema={{
+		'@type': 'FAQPage',
+		mainEntity: faqs.map((faq) => ({
+			'@type': 'Question',
+			name: faq.question,
+			acceptedAnswer: { '@type': 'Answer', text: faq.answer.join(' ') }
+		}))
+	}}
+/>
 
 <!-- Hero Section -->
 <section
@@ -558,82 +608,28 @@
 		<div class="mx-auto max-w-3xl">
 			<h2 class="mb-12 text-center text-3xl font-bold lg:text-4xl">Pricing Questions</h2>
 
-			<div class="space-y-6">
-				<!-- FAQ 1 -->
-				<div class="rounded-xl bg-surface-50 p-6 dark:bg-surface-800">
-					<h3 class="mb-2 text-lg font-bold">
-						What's the difference between self-hosted and hosted SaaS?
-					</h3>
-					<p class="text-surface-600 dark:text-surface-400">
-						<strong>Self-hosted (open source):</strong> Download the AGPL-3.0 code and
-						run it on your own servers. Completely free with unlimited users and
-						projects. You manage everything.<br /><br />
-						<strong>Hosted SaaS (qastudio.dev):</strong> We manage everything - just sign
-						up and start testing. Free tier includes 1 user and 1 project. Pro tier ($10/user/month)
-						adds unlimited users, projects, teams, Twilio integration, and SMS testing.
-					</p>
-				</div>
-
-				<!-- FAQ 2 -->
-				<div class="rounded-xl bg-surface-50 p-6 dark:bg-surface-800">
-					<h3 class="mb-2 text-lg font-bold">
-						Is the self-hosted version really unlimited?
-					</h3>
-					<p class="text-surface-600 dark:text-surface-400">
-						Yes! The self-hosted version is AGPL-3.0 open source with no artificial
-						limits. Add unlimited users, create unlimited projects and test cases. The
-						only costs are your hosting infrastructure (typically $10-30/month on cloud
-						providers).
-					</p>
-				</div>
-
-				<!-- FAQ 3 -->
-				<div class="rounded-xl bg-surface-50 p-6 dark:bg-surface-800">
-					<h3 class="mb-2 text-lg font-bold">What's included in Pro Support?</h3>
-					<p class="text-surface-600 dark:text-surface-400">
-						Pro Support ($99/month) includes priority email support with 48-hour
-						response SLA, setup assistance, migration help from other tools, custom
-						feature requests, and a private Slack channel for your team.
-					</p>
-				</div>
-
-				<!-- FAQ 4 -->
-				<div class="rounded-xl bg-surface-50 p-6 dark:bg-surface-800">
-					<h3 class="mb-2 text-lg font-bold">Can I try Pro Support before paying?</h3>
-					<p class="text-surface-600 dark:text-surface-400">
-						Yes! We offer a 30-day free trial of Pro Support. Contact us and we'll set
-						you up with full access to evaluate the support experience.
-					</p>
-				</div>
-
-				<!-- FAQ 5 -->
-				<div class="rounded-xl bg-surface-50 p-6 dark:bg-surface-800">
-					<h3 class="mb-2 text-lg font-bold">What are the hosting costs?</h3>
-					<p class="text-surface-600 dark:text-surface-400">
-						Hosting costs depend on your infrastructure. A typical small team setup
-						costs $10-30/month on cloud providers like DigitalOcean or AWS. You can also
-						run it on-premises for free if you have existing servers.
-					</p>
-				</div>
-
-				<!-- FAQ 6 -->
-				<div class="rounded-xl bg-surface-50 p-6 dark:bg-surface-800">
-					<h3 class="mb-2 text-lg font-bold">How does Enterprise pricing work?</h3>
-					<p class="text-surface-600 dark:text-surface-400">
-						Enterprise pricing is customized based on your needs - team size, support
-						requirements, custom development, and SLA expectations. Contact our sales
-						team for a quote.
-					</p>
-				</div>
-
-				<!-- FAQ 7 -->
-				<div class="rounded-xl bg-surface-50 p-6 dark:bg-surface-800">
-					<h3 class="mb-2 text-lg font-bold">Can I get a refund?</h3>
-					<p class="text-surface-600 dark:text-surface-400">
-						Yes. We offer a 30-day money-back guarantee on Pro Support subscriptions. If
-						you're not satisfied, we'll refund your payment, no questions asked.
-					</p>
-				</div>
+			<div class="space-y-4">
+				{#each faqs as faq, i (faq.question)}
+					<details
+						class="group rounded-container border border-surface-200-800 bg-surface-50-950 transition-shadow open:shadow-md"
+						open={i === 0}
+					>
+						<summary
+							class="flex cursor-pointer list-none items-center justify-between gap-4 p-6 text-lg font-bold [&::-webkit-details-marker]:hidden"
+						>
+							<h3>{faq.question}</h3>
+							<ChevronDown
+								class="h-5 w-5 shrink-0 text-surface-500 transition-transform group-open:rotate-180"
+								aria-hidden="true"
+							/>
+						</summary>
+						<div class="space-y-3 px-6 pb-6 text-surface-600-400">
+							{#each faq.answer as paragraph (paragraph)}
+								<p>{paragraph}</p>
+							{/each}
+						</div>
+					</details>
+				{/each}
 			</div>
 		</div>
 	</div>
@@ -659,7 +655,7 @@
 				</a>
 				<a
 					href="/contact-sales"
-					class="btn w-full border-white bg-transparent btn-lg text-white hover:bg-white/10 sm:w-auto"
+					class="btn w-full border-2 border-white/80 bg-transparent btn-lg text-white hover:bg-white/10 sm:w-auto"
 				>
 					Contact Sales
 				</a>
