@@ -149,7 +149,7 @@
 				<div class="mb-6">
 					<h2 class="mb-3 text-sm font-medium">Current Members</h2>
 					<div class="flex -space-x-2">
-						{#each invitation.team.members.slice(0, 5) as member}
+						{#each invitation.team.members.slice(0, 5) as member (member.id)}
 							<Avatar class="h-10 w-10 border-2 border-surface-50-950">
 								{#if member.imageUrl}
 									<Avatar.Image src={member.imageUrl} alt={member.email} />

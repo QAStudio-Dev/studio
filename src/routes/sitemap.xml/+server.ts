@@ -3,11 +3,12 @@ import { readdir, readFile, access } from 'fs/promises';
 import { join } from 'path';
 import matter from 'gray-matter';
 import { constants } from 'fs';
+import { SITE_URL } from '$lib/site';
 
 // Prerender this at build time so blog files are available
 export const prerender = true;
 
-const site = 'https://qastudio.dev';
+const site = SITE_URL;
 
 // Recursively find all .md files in a directory
 async function findMarkdownFiles(dir: string): Promise<string[]> {

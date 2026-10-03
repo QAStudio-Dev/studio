@@ -261,7 +261,7 @@
 			<h2 class="mb-4 h3">Pending Invitations</h2>
 
 			<div class="space-y-3">
-				{#each team.invitations as invitation}
+				{#each team.invitations as invitation (invitation.id)}
 					<div
 						class="rounded-container border border-surface-200-800 p-4 hover:bg-surface-100-900"
 					>

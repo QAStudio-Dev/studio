@@ -20,7 +20,8 @@ const PRIVATE_PATH_PREFIXES = [
 	'/invitations',
 	'/change-password',
 	'/reset-password',
-	'/setup-password'
+	'/setup-password',
+	'/user-profile'
 ];
 
 export const load: LayoutServerLoad = async (event) => {

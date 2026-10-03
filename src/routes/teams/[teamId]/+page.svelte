@@ -269,7 +269,7 @@
 
 				{#if team.projects.length > 0}
 					<div class="space-y-3">
-						{#each team.projects as project}
+						{#each team.projects as project (project.id)}
 							<a
 								href="/projects/{project.id}"
 								class="block rounded-container p-4 transition-colors hover:bg-surface-100-900"
@@ -307,7 +307,7 @@
 				</div>
 
 				<div class="space-y-3">
-					{#each team.members as member}
+					{#each team.members as member (member.id)}
 						<div class="flex items-center gap-3">
 							<Avatar class="h-10 w-10">
 								{#if member.imageUrl}

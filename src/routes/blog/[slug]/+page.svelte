@@ -26,7 +26,7 @@
 			headline: post.title,
 			description: post.description,
 			datePublished: post.date,
-			author: { '@type': 'Person', name: post.author },
+			...(post.author && { author: { '@type': 'Person', name: post.author } }),
 			publisher: {
 				'@type': 'Organization',
 				name: 'QA Studio',
@@ -36,7 +36,7 @@
 				}
 			},
 			mainEntityOfPage: { '@type': 'WebPage', '@id': postUrl },
-			keywords: post.tags?.join(', '),
+			...(post.tags?.length && { keywords: post.tags.join(', ') }),
 			...(post.cover && { image: new URL(post.cover, site).href })
 		},
 		{

@@ -1,4 +1,5 @@
 import type { RequestHandler } from './$types';
+import { SITE_URL } from '$lib/site';
 
 const robotsTxt = `# https://www.robotstxt.org/robotstxt.html
 User-agent: *
@@ -6,7 +7,8 @@ Allow: /
 
 # Disallow authenticated routes
 Disallow: /dashboard
-Disallow: /projects
+Disallow: /projects/
+Disallow: /projects$
 Disallow: /teams/
 Disallow: /settings
 Disallow: /reports
@@ -19,13 +21,10 @@ Disallow: /reset-password
 Disallow: /setup-password
 Disallow: /user-profile
 Disallow: /invitations/
+Allow: /api/openapi
 Disallow: /api/
 
-# Allow public pages
-Allow: /docs
-Allow: /blog
-
-Sitemap: https://qastudio.dev/sitemap.xml
+Sitemap: ${SITE_URL}/sitemap.xml
 `;
 
 export const GET: RequestHandler = async () => {

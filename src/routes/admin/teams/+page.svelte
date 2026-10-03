@@ -150,7 +150,7 @@
 					</tr>
 				</thead>
 				<tbody class="divide-y divide-surface-200 dark:divide-surface-800">
-					{#each data.teams as team}
+					{#each data.teams as team (team.id)}
 						<tr class="hover:bg-surface-50-950/50">
 							<td class="px-6 py-4">
 								<div>
@@ -198,7 +198,7 @@
 	<div class="mt-8 card p-6">
 		<h2 class="mb-4 text-xl font-bold">Enterprise Inquiries</h2>
 		<div class="space-y-4">
-			{#each data.inquiries as inquiry}
+			{#each data.inquiries as inquiry (inquiry.id)}
 				<div class="rounded-lg border border-surface-200 p-4 dark:border-surface-800">
 					<div class="mb-3 flex items-start justify-between">
 						<div>
@@ -240,9 +240,7 @@
 	<div
 		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
 		onclick={(e) => handleBackdropClick(e, closeUpgradeModal)}
-		role="button"
-		tabindex="-1"
-		aria-label="Close modal"
+		role="presentation"
 	>
 		<div
 			class="max-h-[90vh] w-full max-w-2xl overflow-y-auto card p-8"
@@ -348,9 +346,7 @@
 	<div
 		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
 		onclick={(e) => handleBackdropClick(e, closeInquiryModal)}
-		role="button"
-		tabindex="-1"
-		aria-label="Close modal"
+		role="presentation"
 	>
 		<div
 			class="w-full max-w-2xl card p-8"

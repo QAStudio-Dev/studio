@@ -111,11 +111,11 @@
 				<div class="mb-4 flex items-center justify-between">
 					<span class="text-surface-600-400">Current Status</span>
 					<span
-						class="badge preset-filled-{statusInfo.color === 'error'
-							? 'error'
+						class="badge {statusInfo.color === 'error'
+							? 'preset-filled-error-500'
 							: statusInfo.color === 'warning'
-								? 'warning'
-								: 'surface'}"
+								? 'preset-filled-warning-500'
+								: 'preset-filled-surface-500'}"
 					>
 						{subscription?.status || 'Unknown'}
 					</span>
@@ -190,9 +190,9 @@
 			{#if isAdmin}
 				<button
 					onclick={openBillingPortal}
-					class="btn w-full preset-filled-{statusInfo.color === 'error'
-						? 'error'
-						: 'primary'}"
+					class="btn w-full {statusInfo.color === 'error'
+						? 'preset-filled-error-500'
+						: 'preset-filled-primary-500'}"
 					disabled={loading}
 				>
 					{loading ? 'Loading...' : statusInfo.action}

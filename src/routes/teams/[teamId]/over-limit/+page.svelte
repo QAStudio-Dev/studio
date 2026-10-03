@@ -110,7 +110,7 @@
 
 		<!-- Member List -->
 		<div class="mb-6 space-y-3">
-			{#each removableMembers as member}
+			{#each removableMembers as member (member.id)}
 				{@const isSelected = selectedToRemove.includes(member.id)}
 				{@const canSelect = isSelected || selectedToRemove.length < membersToRemove}
 

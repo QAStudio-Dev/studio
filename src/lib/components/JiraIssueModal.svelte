@@ -223,6 +223,8 @@
 	}
 </script>
 
+<svelte:window onkeydown={(e) => e.key === 'Escape' && open && !loading && handleClose()} />
+
 {#if open}
 	<!-- Backdrop -->
 	<button
@@ -234,6 +236,9 @@
 	<!-- Dialog -->
 	<div class="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center p-4">
 		<div
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="jira-modal-title"
 			class="pointer-events-auto max-h-[90vh] w-full max-w-2xl overflow-y-auto card border border-surface-200-800 bg-surface-50-950 p-6 shadow-2xl"
 		>
 			<div class="mb-6 flex items-start justify-between">
@@ -252,7 +257,7 @@
 							/>
 							<path d="M11.5 11.3h7.5l-.1 8.9H11.5z" />
 						</svg>
-						<h2 class="text-2xl font-bold">Create Jira Issue</h2>
+						<h2 id="jira-modal-title" class="text-2xl font-bold">Create Jira Issue</h2>
 					</div>
 					<p class="text-surface-600-400">
 						Create a new issue in Jira linked to this test

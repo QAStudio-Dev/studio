@@ -282,7 +282,7 @@ export default defineConfig({
 		</div>
 	{:else}
 		<div class="space-y-4">
-			{#each apiKeys as apiKey}
+			{#each apiKeys as apiKey (apiKey.id)}
 				<div class="card p-6">
 					<div class="flex items-start justify-between">
 						<div class="flex-1">

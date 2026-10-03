@@ -30,7 +30,10 @@
 
 	$effect(() => {
 		const requested = page.url.hash.slice(1) || page.url.searchParams.get('tab');
-		if (requested && ['profile', 'api-keys', 'team', 'integrations'].includes(requested)) {
+		const validTabs = user.team
+			? ['profile', 'api-keys', 'team', 'integrations']
+			: ['profile', 'api-keys', 'integrations'];
+		if (requested && validTabs.includes(requested)) {
 			activeTab = requested;
 		}
 	});

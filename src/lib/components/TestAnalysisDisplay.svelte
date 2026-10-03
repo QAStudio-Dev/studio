@@ -78,7 +78,7 @@
 	<!-- Root Cause -->
 	<div class="space-y-2">
 		<h4 class="h4 text-primary-500">Root Cause</h4>
-		<p class="text-surface-600-400-token">{analysis.rootCause}</p>
+		<p class="text-surface-600-400">{analysis.rootCause}</p>
 	</div>
 
 	<!-- Suggested Fix -->
@@ -111,7 +111,7 @@
 	<div class="space-y-2">
 		<div class="flex items-center justify-between text-sm">
 			<span class="font-semibold">Confidence Score</span>
-			<span class="text-surface-600-400-token">{Math.round(analysis.confidence * 100)}%</span>
+			<span class="text-surface-600-400">{Math.round(analysis.confidence * 100)}%</span>
 		</div>
 		<div class="h-2 w-full overflow-hidden rounded-full bg-surface-300-700">
 			<div
@@ -122,7 +122,7 @@
 				style="width: {analysis.confidence * 100}%"
 			></div>
 		</div>
-		<p class="text-surface-600-400-token text-xs">
+		<p class="text-xs text-surface-600-400">
 			{#if analysis.confidence >= 0.9}
 				Very high confidence - This fix should resolve the issue
 			{:else if analysis.confidence >= 0.7}
@@ -149,7 +149,7 @@
 	{/if}
 
 	<!-- Metadata -->
-	<div class="text-surface-600-400-token border-t border-surface-200-800 pt-4 text-xs">
+	<div class="border-t border-surface-200-800 pt-4 text-xs text-surface-600-400">
 		Analyzed {new Date(analysis.analyzedAt).toLocaleString()}
 	</div>
 </div>
