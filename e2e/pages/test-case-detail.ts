@@ -104,10 +104,10 @@ export class TestCaseDetailPage extends BasePage {
 	}
 
 	async assertDescriptionVisible(text: string) {
-		const descriptionCard = this.page.locator('.card p.text-surface-600-300', {
-			hasText: text
+		const descriptionCard = this.page.locator('.card', {
+			has: this.page.getByRole('heading', { name: 'Description' })
 		});
-		await expect(descriptionCard.first()).toBeVisible();
+		await expect(descriptionCard.getByText(text)).toBeVisible();
 	}
 
 	async assertStepsVisible(text: string) {

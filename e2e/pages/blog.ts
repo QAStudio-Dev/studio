@@ -24,8 +24,8 @@ export class BlogPage extends BasePage {
 		this.searchInput = page.locator('input[type="text"]');
 		this.searchResultCount = page.locator('p:has-text("Found")');
 		this.clearSearchButton = page.locator('button:has-text("Clear search")');
-		this.rssLink = page.locator('a[href="/rss.xml"]');
-		this.atomLink = page.locator('a[href="/atom.xml"]');
+		this.rssLink = page.getByRole('main').getByRole('link', { name: 'RSS Feed' });
+		this.atomLink = page.getByRole('main').getByRole('link', { name: 'Atom Feed' });
 		this.blogPosts = page.locator('.card');
 		this.noPostsMessage = page.locator('text=No blog posts yet');
 		this.noResultsMessage = page.locator('text=/No posts found matching/');
