@@ -60,7 +60,7 @@
 	}
 </script>
 
-<div class="bg-surface-100-800 space-y-6 card rounded-container p-6">
+<div class="space-y-6 card rounded-container bg-surface-100-900 p-6">
 	<!-- Header -->
 	<div class="flex flex-wrap items-center justify-between gap-4">
 		<div class="flex items-center gap-3">
@@ -78,7 +78,7 @@
 	<!-- Root Cause -->
 	<div class="space-y-2">
 		<h4 class="h4 text-primary-500">Root Cause</h4>
-		<p class="text-surface-600-300-token">{analysis.rootCause}</p>
+		<p class="text-surface-600-400-token">{analysis.rootCause}</p>
 	</div>
 
 	<!-- Suggested Fix -->
@@ -100,7 +100,7 @@
 					{/if}
 				</button>
 			</div>
-			<div class="code-block bg-surface-200-700 overflow-x-auto rounded-container p-4">
+			<div class="code-block overflow-x-auto rounded-container bg-surface-200-800 p-4">
 				<pre class="text-sm"><code class="language-typescript">{analysis.fixCode}</code
 					></pre>
 			</div>
@@ -111,9 +111,9 @@
 	<div class="space-y-2">
 		<div class="flex items-center justify-between text-sm">
 			<span class="font-semibold">Confidence Score</span>
-			<span class="text-surface-600-300-token">{Math.round(analysis.confidence * 100)}%</span>
+			<span class="text-surface-600-400-token">{Math.round(analysis.confidence * 100)}%</span>
 		</div>
-		<div class="bg-surface-300-600 h-2 w-full overflow-hidden rounded-full">
+		<div class="h-2 w-full overflow-hidden rounded-full bg-surface-300-700">
 			<div
 				class="h-full rounded-full transition-all duration-300"
 				class:bg-success-500={analysis.confidence >= 0.8}
@@ -122,7 +122,7 @@
 				style="width: {analysis.confidence * 100}%"
 			></div>
 		</div>
-		<p class="text-surface-600-300-token text-xs">
+		<p class="text-surface-600-400-token text-xs">
 			{#if analysis.confidence >= 0.9}
 				Very high confidence - This fix should resolve the issue
 			{:else if analysis.confidence >= 0.7}
@@ -149,7 +149,7 @@
 	{/if}
 
 	<!-- Metadata -->
-	<div class="text-surface-600-300-token border-surface-300-600 border-t pt-4 text-xs">
+	<div class="text-surface-600-400-token border-t border-surface-200-800 pt-4 text-xs">
 		Analyzed {new Date(analysis.analyzedAt).toLocaleString()}
 	</div>
 </div>

@@ -42,15 +42,15 @@
 
 	function getStatusBadge(status: string) {
 		const statusMap: Record<string, { class: string; label: string }> = {
-			ACTIVE: { class: 'preset-filled-success', label: 'Active' },
-			TRIALING: { class: 'preset-filled-primary', label: 'Trial' },
-			PAST_DUE: { class: 'preset-filled-warning', label: 'Past Due' },
-			CANCELED: { class: 'preset-filled-error', label: 'Canceled' },
-			INCOMPLETE: { class: 'preset-filled-warning', label: 'Incomplete' },
-			UNPAID: { class: 'preset-filled-error', label: 'Unpaid' }
+			ACTIVE: { class: 'preset-filled-success-500', label: 'Active' },
+			TRIALING: { class: 'preset-filled-primary-500', label: 'Trial' },
+			PAST_DUE: { class: 'preset-filled-warning-500', label: 'Past Due' },
+			CANCELED: { class: 'preset-filled-error-500', label: 'Canceled' },
+			INCOMPLETE: { class: 'preset-filled-warning-500', label: 'Incomplete' },
+			UNPAID: { class: 'preset-filled-error-500', label: 'Unpaid' }
 		};
 
-		return statusMap[status] || { class: 'preset-filled-surface', label: status };
+		return statusMap[status] || { class: 'preset-filled-surface-500', label: status };
 	}
 
 	function formatDate(date: string | Date) {
@@ -69,7 +69,7 @@
 			<div>
 				<h1 class="mb-2 text-3xl font-bold">{team.name}</h1>
 				{#if team.description}
-					<p class="text-surface-600-300">{team.description}</p>
+					<p class="text-surface-600-400">{team.description}</p>
 				{/if}
 			</div>
 
@@ -84,7 +84,7 @@
 
 	<!-- Payment Status Alerts -->
 	{#if team.subscription?.status === 'PAST_DUE'}
-		<div class="alert preset-filled-warning mb-6">
+		<div class="alert mb-6 preset-filled-warning-500">
 			<AlertCircle class="h-5 w-5" />
 			<div class="flex-1">
 				<p class="font-medium">Payment Failed</p>
@@ -96,7 +96,7 @@
 			{#if currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'}
 				<button
 					onclick={openBillingPortal}
-					class="preset-filled-warning btn"
+					class="btn preset-filled-warning-500"
 					disabled={loading}
 				>
 					{loading ? 'Loading...' : 'Update Payment'}
@@ -104,7 +104,7 @@
 			{/if}
 		</div>
 	{:else if team.subscription?.status === 'CANCELED' || team.subscription?.status === 'UNPAID'}
-		<div class="alert preset-filled-error mb-6">
+		<div class="alert mb-6 preset-filled-error-500">
 			<AlertCircle class="h-5 w-5" />
 			<div class="flex-1">
 				<p class="font-medium">Subscription Canceled</p>
@@ -116,7 +116,7 @@
 			{#if currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'}
 				<button
 					onclick={openBillingPortal}
-					class="preset-filled-error btn"
+					class="btn preset-filled-error-500"
 					disabled={loading}
 				>
 					{loading ? 'Loading...' : 'Reactivate Subscription'}
@@ -124,7 +124,7 @@
 			{/if}
 		</div>
 	{:else if team.subscription?.status === 'INCOMPLETE'}
-		<div class="alert preset-filled-warning mb-6">
+		<div class="alert mb-6 preset-filled-warning-500">
 			<AlertCircle class="h-5 w-5" />
 			<div class="flex-1">
 				<p class="font-medium">Payment Incomplete</p>
@@ -136,7 +136,7 @@
 			{#if currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'}
 				<button
 					onclick={openBillingPortal}
-					class="preset-filled-warning btn"
+					class="btn preset-filled-warning-500"
 					disabled={loading}
 				>
 					{loading ? 'Loading...' : 'Complete Setup'}
@@ -147,7 +147,7 @@
 
 	<!-- Over Seat Limit Alert -->
 	{#if team.overSeatLimit && team.subscription}
-		<div class="alert preset-filled-error mb-6">
+		<div class="alert mb-6 preset-filled-error-500">
 			<AlertCircle class="h-5 w-5" />
 			<div class="flex-1">
 				<p class="font-medium">Team Over Seat Limit</p>
@@ -166,7 +166,7 @@
 				</p>
 			</div>
 			{#if currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'}
-				<a href="/teams/{team.id}/over-limit" class="preset-filled-error btn">
+				<a href="/teams/{team.id}/over-limit" class="btn preset-filled-error-500">
 					Resolve Now
 				</a>
 			{/if}
@@ -175,7 +175,7 @@
 
 	<!-- Checkout Status Alert -->
 	{#if checkoutStatus === 'success'}
-		<div class="alert preset-filled-success mb-6">
+		<div class="alert mb-6 preset-filled-success-500">
 			<CheckCircle class="h-5 w-5" />
 			<div>
 				<p class="font-medium">Payment Successful!</p>
@@ -183,7 +183,7 @@
 			</div>
 		</div>
 	{:else if checkoutStatus === 'canceled'}
-		<div class="alert preset-filled-warning mb-6">
+		<div class="alert mb-6 preset-filled-warning-500">
 			<AlertCircle class="h-5 w-5" />
 			<div>
 				<p class="font-medium">Checkout Canceled</p>
@@ -193,7 +193,7 @@
 	{/if}
 
 	{#if error}
-		<div class="alert preset-filled-error mb-6">
+		<div class="alert mb-6 preset-filled-error-500">
 			<AlertCircle class="h-5 w-5" />
 			<p>{error}</p>
 		</div>
@@ -212,14 +212,14 @@
 				{#if team.subscription}
 					<div class="space-y-4">
 						<div class="flex items-center justify-between">
-							<span class="text-surface-600-300">Status</span>
+							<span class="text-surface-600-400">Status</span>
 							<span class="badge {getStatusBadge(team.subscription.status).class}">
 								{getStatusBadge(team.subscription.status).label}
 							</span>
 						</div>
 
 						<div class="flex items-center justify-between">
-							<span class="text-surface-600-300">Seats</span>
+							<span class="text-surface-600-400">Seats</span>
 							<span class="font-medium"
 								>{team.subscription.seats} / {team.members.length} used</span
 							>
@@ -227,7 +227,7 @@
 
 						{#if team.subscription.currentPeriodEnd}
 							<div class="flex items-center justify-between">
-								<span class="text-surface-600-300">
+								<span class="text-surface-600-400">
 									{team.subscription.cancelAtPeriodEnd
 										? 'Expires on'
 										: 'Next billing date'}
@@ -250,7 +250,7 @@
 					</div>
 				{:else}
 					<div class="py-8 text-center">
-						<p class="text-surface-600-300 mb-4">No active subscription</p>
+						<p class="mb-4 text-surface-600-400">No active subscription</p>
 						{#if currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER'}
 							<a href="/teams/new" class="btn preset-filled"> Upgrade to Pro </a>
 						{/if}
@@ -262,7 +262,7 @@
 			<div class="card p-6">
 				<div class="mb-4 flex items-center justify-between">
 					<h2 class="h3">Recent Projects</h2>
-					<a href="/projects/new" class="preset-filled-primary btn btn-sm">
+					<a href="/projects/new" class="btn preset-filled-primary-500 btn-sm">
 						New Project
 					</a>
 				</div>
@@ -272,16 +272,16 @@
 						{#each team.projects as project}
 							<a
 								href="/projects/{project.id}"
-								class="hover:bg-surface-100-800 block rounded-container p-4 transition-colors"
+								class="block rounded-container p-4 transition-colors hover:bg-surface-100-900"
 							>
 								<div class="flex items-center justify-between">
 									<div>
 										<h3 class="font-medium">{project.name}</h3>
-										<p class="text-surface-600-300 text-sm">
+										<p class="text-sm text-surface-600-400">
 											Key: {project.key}
 										</p>
 									</div>
-									<span class="text-surface-600-300 text-sm">
+									<span class="text-sm text-surface-600-400">
 										{formatDate(project.createdAt)}
 									</span>
 								</div>
@@ -289,7 +289,7 @@
 						{/each}
 					</div>
 				{:else}
-					<p class="text-surface-600-300 py-8 text-center">No projects yet</p>
+					<p class="py-8 text-center text-surface-600-400">No projects yet</p>
 				{/if}
 			</div>
 		</div>
@@ -301,7 +301,9 @@
 				<div class="mb-4 flex items-center gap-3">
 					<Users class="h-5 w-5" />
 					<h2 class="h3">Members</h2>
-					<span class="preset-filled-surface ml-auto badge">{team.members.length}</span>
+					<span class="ml-auto badge preset-filled-surface-500"
+						>{team.members.length}</span
+					>
 				</div>
 
 				<div class="space-y-3">
@@ -322,11 +324,11 @@
 										? `${member.firstName} ${member.lastName}`
 										: member.email}
 								</p>
-								<p class="text-surface-600-300 text-sm">{member.role}</p>
+								<p class="text-sm text-surface-600-400">{member.role}</p>
 							</div>
 
 							{#if member.id === currentUser?.id}
-								<span class="preset-filled-primary badge text-xs">You</span>
+								<span class="badge preset-filled-primary-500 text-xs">You</span>
 							{/if}
 						</div>
 					{/each}
@@ -345,11 +347,11 @@
 
 				<div class="space-y-3">
 					<div class="flex items-center justify-between">
-						<span class="text-surface-600-300">Projects</span>
+						<span class="text-surface-600-400">Projects</span>
 						<span class="text-xl font-bold">{team.projects.length}</span>
 					</div>
 					<div class="flex items-center justify-between">
-						<span class="text-surface-600-300">Members</span>
+						<span class="text-surface-600-400">Members</span>
 						<span class="text-xl font-bold">{team.members.length}</span>
 					</div>
 				</div>

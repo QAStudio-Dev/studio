@@ -71,7 +71,7 @@
 
 <div class="container mx-auto max-w-4xl p-8">
 	<!-- Header Alert -->
-	<div class="alert preset-filled-warning mb-8">
+	<div class="alert mb-8 preset-filled-warning-500">
 		<AlertTriangle class="h-6 w-6" />
 		<div>
 			<h1 class="mb-1 h3">Team Over Seat Limit</h1>
@@ -90,7 +90,7 @@
 	</div>
 
 	{#if error}
-		<div class="alert preset-filled-error mb-6">
+		<div class="alert mb-6 preset-filled-error-500">
 			<AlertTriangle class="h-5 w-5" />
 			<p>{error}</p>
 		</div>
@@ -103,7 +103,7 @@
 			<h2 class="h3">Select Members to Remove</h2>
 		</div>
 
-		<p class="text-surface-600-300 mb-6">
+		<p class="mb-6 text-surface-600-400">
 			Selected: <strong>{selectedToRemove.length}</strong> of
 			<strong>{membersToRemove}</strong> required
 		</p>
@@ -116,9 +116,9 @@
 
 				<button
 					onclick={() => canSelect && toggleMember(member.id)}
-					class="hover:bg-surface-100-800 w-full rounded-container border-2 p-4 text-left transition-all"
+					class="w-full rounded-container border-2 p-4 text-left transition-all hover:bg-surface-100-900"
 					class:border-error-500={isSelected}
-					class:border-surface-200-700={!isSelected}
+					class:border-surface-200-800={!isSelected}
 					class:opacity-50={!canSelect}
 					disabled={!canSelect}
 					type="button"
@@ -128,7 +128,7 @@
 							class="flex h-6 w-6 items-center justify-center rounded border-2"
 							class:bg-error-500={isSelected}
 							class:border-error-500={isSelected}
-							class:border-surface-300-600={!isSelected}
+							class:border-surface-200-800={!isSelected}
 						>
 							{#if isSelected}
 								<svg
@@ -158,8 +158,8 @@
 
 						<div class="min-w-0 flex-1">
 							<p class="font-medium">{getMemberName(member)}</p>
-							<p class="text-surface-600-300 text-sm">{member.email}</p>
-							<p class="text-surface-600-300 mt-1 text-xs">{member.role}</p>
+							<p class="text-sm text-surface-600-400">{member.email}</p>
+							<p class="mt-1 text-xs text-surface-600-400">{member.role}</p>
 						</div>
 					</div>
 				</button>
@@ -169,7 +169,7 @@
 			{#if members.find((m) => m.id === currentUserId)}
 				{@const currentMember = members.find((m) => m.id === currentUserId)!}
 				<div
-					class="bg-surface-100-800 border-surface-200-700 w-full rounded-container border-2 p-4 opacity-50"
+					class="w-full rounded-container border-2 border-surface-200-800 bg-surface-100-900 p-4 opacity-50"
 				>
 					<div class="flex items-center gap-3">
 						<div class="flex h-6 w-6 items-center justify-center"></div>
@@ -189,23 +189,23 @@
 
 						<div class="min-w-0 flex-1">
 							<p class="font-medium">{getMemberName(currentMember)} (You)</p>
-							<p class="text-surface-600-300 text-sm">{currentMember.email}</p>
-							<p class="text-surface-600-300 mt-1 text-xs">{currentMember.role}</p>
+							<p class="text-sm text-surface-600-400">{currentMember.email}</p>
+							<p class="mt-1 text-xs text-surface-600-400">{currentMember.role}</p>
 						</div>
 
-						<span class="preset-filled-primary badge text-xs">Cannot Remove</span>
+						<span class="badge preset-filled-primary-500 text-xs">Cannot Remove</span>
 					</div>
 				</div>
 			{/if}
 		</div>
 
 		<!-- Actions -->
-		<div class="border-surface-200-700 flex items-center justify-between gap-4 border-t pt-6">
+		<div class="flex items-center justify-between gap-4 border-t border-surface-200-800 pt-6">
 			<a href="/teams/{team.id}" class="btn preset-outlined"> Cancel </a>
 
 			<button
 				onclick={removeMembers}
-				class="preset-filled-error btn"
+				class="btn preset-filled-error-500"
 				disabled={!isValid || loading}
 			>
 				{loading
@@ -224,21 +224,21 @@
 
 		<div class="space-y-2">
 			<div class="flex items-center justify-between">
-				<span class="text-surface-600-300">Current Plan</span>
+				<span class="text-surface-600-400">Current Plan</span>
 				<span class="font-medium">{seatsNeeded} seat{seatsNeeded !== 1 ? 's' : ''}</span>
 			</div>
 			<div class="flex items-center justify-between">
-				<span class="text-surface-600-300">Current Members</span>
+				<span class="text-surface-600-400">Current Members</span>
 				<span class="font-medium">{currentMembers}</span>
 			</div>
 			<div class="flex items-center justify-between">
-				<span class="text-surface-600-300">Must Remove</span>
+				<span class="text-surface-600-400">Must Remove</span>
 				<span class="font-medium text-error-500">{membersToRemove}</span>
 			</div>
 		</div>
 
-		<div class="border-surface-200-700 mt-6 border-t pt-6">
-			<p class="text-surface-600-300 text-sm">
+		<div class="mt-6 border-t border-surface-200-800 pt-6">
+			<p class="text-sm text-surface-600-400">
 				Need more seats? You can upgrade your subscription from the
 				<a href="/teams/{team.id}" class="text-primary-500 hover:underline">team settings</a
 				>.

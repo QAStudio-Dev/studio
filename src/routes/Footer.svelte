@@ -1,16 +1,47 @@
 <script lang="ts">
-	// Get current year dynamically
 	const currentYear = new Date().getFullYear();
+
+	type FooterLink = { label: string; href: string; external?: boolean };
+
+	const linkGroups: { title: string; links: FooterLink[] }[] = [
+		{
+			title: 'Product',
+			links: [
+				{ label: 'Features', href: '/features' },
+				{ label: 'Pricing', href: '/pricing' },
+				{ label: 'API Documentation', href: '/docs' },
+				{ label: 'Enterprise', href: '/contact-sales' }
+			]
+		},
+		{
+			title: 'Resources',
+			links: [
+				{ label: 'Blog', href: '/blog' },
+				{ label: 'GitHub', href: 'https://github.com/QAStudio-Dev/studio', external: true },
+				{ label: 'Community', href: 'https://discord.gg/rw3UfdB9pN', external: true },
+				{ label: 'RSS Feed', href: '/rss.xml' }
+			]
+		},
+		{
+			title: 'Company',
+			links: [
+				{ label: 'About', href: '/about' },
+				{ label: 'Contact', href: '/contact' },
+				{ label: 'Privacy Policy', href: '/privacy' },
+				{ label: 'Terms of Service', href: '/terms' }
+			]
+		}
+	];
 </script>
 
-<footer class="border-t border-surface-300-700 bg-surface-50-950">
+<footer class="border-t border-surface-200-800 bg-surface-50-950">
 	<div class="container mx-auto px-4 py-12">
 		<div class="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
 			<!-- Brand Section -->
 			<div class="lg:col-span-1">
-				<div class="mb-4 flex items-center gap-2">
-					<img src="/full.svg" alt="QA Studio" class="h-6" />
-				</div>
+				<a href="/" class="mb-4 inline-flex items-center gap-2" aria-label="QA Studio home">
+					<img src="/full.svg" alt="QA Studio" class="h-6" width="100" height="24" />
+				</a>
 				<p class="mb-4 text-sm text-surface-600-400">
 					Modern test management built by QA engineers, for QA engineers.
 				</p>
@@ -59,151 +90,46 @@
 				</div>
 			</div>
 
-			<!-- Product Links -->
-			<div>
-				<h3 class="mb-4 text-sm font-bold">Product</h3>
-				<ul class="space-y-2 text-sm">
-					<li>
-						<a
-							href="/docs"
-							class="text-surface-600-400 transition-colors hover:text-primary-500"
-						>
-							API Documentation
-						</a>
-					</li>
-					<li>
-						<a
-							href="/projects"
-							class="text-surface-600-400 transition-colors hover:text-primary-500"
-						>
-							Projects
-						</a>
-					</li>
-					<!-- <li>
-						<a
-							href="https://github.com"
-							target="_blank"
-							rel="noopener noreferrer"
-							class="text-surface-600-400 transition-colors hover:text-primary-500"
-						>
-							Self-Hosting Guide
-						</a>
-					</li> -->
-					<!-- <li>
-						<a href="/" class="text-surface-600-400 transition-colors hover:text-primary-500">
-							Pricing
-						</a>
-					</li> -->
-				</ul>
-			</div>
-
-			<!-- Resources Links -->
-			<div>
-				<h3 class="mb-4 text-sm font-bold">Resources</h3>
-				<ul class="space-y-2 text-sm">
-					<li>
-						<a
-							href="/blog"
-							class="text-surface-600-400 transition-colors hover:text-primary-500"
-						>
-							Blog
-						</a>
-					</li>
-					<li>
-						<a
-							href="https://github.com"
-							target="_blank"
-							rel="noopener noreferrer"
-							class="text-surface-600-400 transition-colors hover:text-primary-500"
-						>
-							GitHub
-						</a>
-					</li>
-					<li>
-						<a
-							href="/sitemap.xml"
-							class="text-surface-600-400 transition-colors hover:text-primary-500"
-						>
-							Sitemap
-						</a>
-					</li>
-					<!-- <li>
-						<a
-							href="/blog"
-							class="text-surface-600-400 transition-colors hover:text-primary-500"
-						>
-							Changelog
-						</a>
-					</li> -->
-					<!-- <li>
-						<a
-							href="https://discord.com"
-							target="_blank"
-							rel="noopener noreferrer"
-							class="text-surface-600-400 transition-colors hover:text-primary-500"
-						>
-							Community
-						</a>
-					</li> -->
-				</ul>
-			</div>
-
-			<!-- Company Links -->
-			<div>
-				<h3 class="mb-4 text-sm font-bold">Company</h3>
-				<ul class="space-y-2 text-sm">
-					<li>
-						<a
-							href="/about"
-							class="text-surface-600-400 transition-colors hover:text-primary-500"
-						>
-							About
-						</a>
-					</li>
-					<li>
-						<a
-							href="/contact"
-							class="text-surface-600-400 transition-colors hover:text-primary-500"
-						>
-							Contact
-						</a>
-					</li>
-					<li>
-						<a
-							href="/privacy"
-							class="text-surface-600-400 transition-colors hover:text-primary-500"
-						>
-							Privacy Policy
-						</a>
-					</li>
-					<li>
-						<a
-							href="/terms"
-							class="text-surface-600-400 transition-colors hover:text-primary-500"
-						>
-							Terms of Service
-						</a>
-					</li>
-				</ul>
-			</div>
+			{#each linkGroups as group (group.title)}
+				<nav aria-label={group.title}>
+					<h2 class="mb-4 text-sm font-bold">{group.title}</h2>
+					<ul class="space-y-2 text-sm">
+						{#each group.links as link (link.href)}
+							<li>
+								<a
+									href={link.href}
+									class="text-surface-600-400 transition-colors hover:text-primary-500"
+									{...link.external
+										? { target: '_blank', rel: 'noopener noreferrer' }
+										: {}}
+								>
+									{link.label}
+								</a>
+							</li>
+						{/each}
+					</ul>
+				</nav>
+			{/each}
 		</div>
 
 		<!-- Bottom Bar -->
-		<div class="mt-8 border-t border-surface-300-700 pt-8">
+		<div class="mt-8 border-t border-surface-200-800 pt-8">
 			<div class="flex flex-col items-center justify-between gap-4 text-sm md:flex-row">
 				<div class="flex items-center gap-2 text-surface-600-400">
 					<span>© {currentYear} QA Studio</span>
 					<span class="text-surface-400-600">•</span>
 					<span>Built with ❤️ by QA Engineers</span>
 				</div>
-				<!-- <div class="flex items-center gap-1 text-xs text-surface-600-400">
-					<span class="rounded-full bg-success-500/10 px-2 py-1 text-success-500">
-						✓ Open Source
+				<div class="flex items-center gap-4 text-surface-600-400">
+					<span
+						class="rounded-full bg-success-500/10 px-2.5 py-1 text-xs font-medium text-success-700-300"
+					>
+						Open Source · AGPL-3.0
 					</span>
-					<span class="rounded-full bg-primary-500/10 px-2 py-1 text-primary-500">
-						v1.0.0
-					</span>
-				</div> -->
+					<a href="/sitemap.xml" class="transition-colors hover:text-primary-500"
+						>Sitemap</a
+					>
+				</div>
 			</div>
 		</div>
 	</div>

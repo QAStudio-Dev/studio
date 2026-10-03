@@ -107,6 +107,13 @@
 		mobileMenuOpen = false;
 	});
 
+	const publicLinks = [
+		{ label: 'Features', href: '/features' },
+		{ label: 'Pricing', href: '/pricing' },
+		{ label: 'Docs', href: '/docs' },
+		{ label: 'Blog', href: '/blog' }
+	];
+
 	let isActive = $derived.by(() => {
 		/**
 		 * Determines if a route is active.
@@ -123,14 +130,18 @@
 </script>
 
 <header
-	class="sticky top-0 z-50 border-b border-surface-300-700 bg-surface-50-950 backdrop-blur-sm"
+	class="sticky top-0 z-50 border-b border-surface-200-800 bg-surface-50-950/85 backdrop-blur-md"
 >
 	<div class="container mx-auto px-4">
 		<div class="flex h-16 items-center justify-between">
 			<!-- Logo/Brand -->
 			<div class="flex items-center gap-6">
-				<a href="/" class="flex items-center gap-2 transition-opacity hover:opacity-80">
-					<img src="/full.svg" alt="QA Studio Logo" class="h-8" />
+				<a
+					href="/"
+					class="flex items-center gap-2 transition-opacity hover:opacity-80"
+					aria-label="QA Studio home"
+				>
+					<img src="/full.svg" alt="QA Studio" class="h-8" width="133" height="32" />
 				</a>
 
 				<!-- Project Selector (next to logo) -->
@@ -148,7 +159,7 @@
 							<!-- Has projects - show selector -->
 							<Popover.Provider value={popover}>
 								<Popover.Trigger
-									class="flex items-center gap-2 rounded-base border border-surface-300-700 px-3 py-1.5 transition-colors hover:bg-surface-200-800"
+									class="flex items-center gap-2 rounded-base border border-surface-200-800 px-3 py-1.5 transition-colors hover:bg-surface-200-800"
 								>
 									<span class="text-sm font-medium">
 										{#if selectedProjectId}
@@ -176,13 +187,13 @@
 								</Popover.Trigger>
 								<Popover.Positioner>
 									<Popover.Content
-										class="mt-2 max-h-96 w-64 overflow-y-auto rounded-container border border-surface-300-700 bg-surface-100-900 p-2 shadow-xl"
+										class="mt-2 max-h-96 w-64 overflow-y-auto rounded-container border border-surface-200-800 bg-surface-100-900 p-2 shadow-xl"
 									>
 										<!-- View all projects link -->
 										<a
 											href="/projects"
 											onclick={() => popover().setOpen(false)}
-											class="mb-2 block w-full rounded-base border-b border-surface-300-700 px-3 py-2 pb-2 text-left font-medium text-primary-500 transition-colors hover:bg-surface-200-800"
+											class="mb-2 block w-full rounded-base border-b border-surface-200-800 px-3 py-2 pb-2 text-left font-medium text-primary-500 transition-colors hover:bg-surface-200-800"
 										>
 											📁 View All Projects
 										</a>
@@ -200,7 +211,7 @@
 											>
 												<div class="flex flex-col">
 													<span class="font-medium">{project.name}</span>
-													<span class="text-surface-500-400 text-xs"
+													<span class="text-xs text-surface-500"
 														>{project.key}</span
 													>
 												</div>
@@ -293,18 +304,20 @@
 						</a>
 					{/if}
 
-					<!-- API Docs (always visible) -->
 					{#if !isAuthenticated}
-						<a
-							href="/docs"
-							class="rounded-base px-3 py-2 text-sm transition-colors {isActive(
-								'/docs'
-							)
-								? 'bg-primary-500 text-white'
-								: 'hover:bg-surface-200-800'}"
-						>
-							API Docs
-						</a>
+						{#each publicLinks as link (link.href)}
+							<a
+								href={link.href}
+								aria-current={isActive(link.href) ? 'page' : undefined}
+								class="rounded-base px-3 py-2 text-sm font-medium transition-colors {isActive(
+									link.href
+								)
+									? 'text-primary-600-400'
+									: 'text-surface-700-300 hover:bg-surface-200-800 hover:text-surface-950-50'}"
+							>
+								{link.label}
+							</a>
+						{/each}
 					{/if}
 				</nav>
 			</div>
@@ -318,9 +331,12 @@
 				{#if !isAuthenticated}
 					<a
 						href="/login"
-						class="rounded-base bg-primary-500 px-4 py-2 text-white transition-colors hover:bg-primary-600"
+						class="hidden rounded-base px-3 py-2 text-sm font-medium text-surface-700-300 transition-colors hover:bg-surface-200-800 sm:inline-flex"
 					>
 						Sign In
+					</a>
+					<a href="/signup" class="btn preset-filled-primary-500 btn-sm font-semibold">
+						Get Started
 					</a>
 				{:else if user}
 					<!-- User Menu -->
@@ -340,14 +356,19 @@
 						</Popover.Trigger>
 						<Popover.Positioner>
 							<Popover.Content
-								class="mt-2 w-48 rounded-container border border-surface-300-700 bg-surface-100-900 p-2 shadow-xl"
+								class="mt-2 w-48 rounded-container border border-surface-200-800 bg-surface-100-900 p-2 shadow-xl"
 							>
-								<div class="mb-2 border-b border-surface-300-700 px-3 py-2">
-									<p class="text-sm font-medium">
-										{user.firstName}
-										{user.lastName}
+								<div class="mb-2 border-b border-surface-200-800 px-3 py-2">
+									{#if user.firstName || user.lastName}
+										<p class="truncate text-sm font-medium">
+											{[user.firstName, user.lastName]
+												.filter(Boolean)
+												.join(' ')}
+										</p>
+									{/if}
+									<p class="truncate text-xs text-surface-600-400">
+										{user.email}
 									</p>
-									<p class="text-surface-500-400 text-xs">{user.email}</p>
 								</div>
 								<a
 									href="/settings"
@@ -407,7 +428,7 @@
 
 		<!-- Mobile Menu -->
 		{#if mobileMenuOpen}
-			<div class="border-t border-surface-300-700 py-4 lg:hidden">
+			<div class="border-t border-surface-200-800 py-4 lg:hidden">
 				<nav class="flex flex-col gap-1">
 					<!-- Project Selector in Mobile Menu -->
 					{#if isAuthenticated}
@@ -423,7 +444,7 @@
 								</a>
 							{:else}
 								<!-- Project Selector -->
-								<div class="rounded-base border border-surface-300-700 p-2">
+								<div class="rounded-base border border-surface-200-800 p-2">
 									<div
 										class="mb-2 px-1 text-xs font-semibold text-surface-500 uppercase"
 									>
@@ -448,7 +469,7 @@
 												<span class="text-sm font-medium"
 													>{project.name}</span
 												>
-												<span class="text-surface-500-400 text-xs"
+												<span class="text-xs text-surface-500"
 													>{project.key}</span
 												>
 											</div>
@@ -537,19 +558,38 @@
 						</a>
 					{/if}
 
-					<!-- Divider -->
-					<div class="my-2 h-px bg-surface-300-700"></div>
-
-					<!-- API Docs -->
-					<a
-						href="/docs"
-						onclick={closeMobileMenu}
-						class="rounded-base px-4 py-2 transition-colors {isActive('/docs')
-							? 'bg-primary-500 text-white'
-							: 'hover:bg-surface-200-800'}"
-					>
-						API Docs
-					</a>
+					{#if isAuthenticated}
+						<div class="my-2 h-px bg-surface-300-700"></div>
+						<a
+							href="/docs"
+							onclick={closeMobileMenu}
+							class="rounded-base px-4 py-2 transition-colors {isActive('/docs')
+								? 'bg-primary-500 text-white'
+								: 'hover:bg-surface-200-800'}"
+						>
+							API Docs
+						</a>
+					{:else}
+						{#each publicLinks as link (link.href)}
+							<a
+								href={link.href}
+								onclick={closeMobileMenu}
+								class="rounded-base px-4 py-2 transition-colors {isActive(link.href)
+									? 'bg-primary-500 text-white'
+									: 'hover:bg-surface-200-800'}"
+							>
+								{link.label}
+							</a>
+						{/each}
+						<div class="my-2 h-px bg-surface-300-700"></div>
+						<a
+							href="/login"
+							onclick={closeMobileMenu}
+							class="rounded-base px-4 py-2 transition-colors hover:bg-surface-200-800"
+						>
+							Sign In
+						</a>
+					{/if}
 				</nav>
 			</div>
 		{/if}

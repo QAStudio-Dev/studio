@@ -53,7 +53,7 @@
 	ondragstart={handleDragStart}
 	ondragend={handleDragEndLocal}
 	data-testcase-id={testCase.id}
-	class="group border-surface-200-700 rounded-base border p-2 transition-all hover:border-primary-500 {isDragging
+	class="group rounded-base border border-surface-200-800 p-2 transition-all hover:border-primary-500 {isDragging
 		? 'opacity-50'
 		: ''}"
 >

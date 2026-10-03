@@ -21,7 +21,7 @@
 		{/if}
 	</button>
 {:else if !hasMore}
-	<div class="text-surface-600-300 py-2 text-center text-sm">No more items to load</div>
+	<div class="py-2 text-center text-sm text-surface-600-400">No more items to load</div>
 {/if}
 
 <style>

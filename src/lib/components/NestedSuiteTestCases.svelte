@@ -78,7 +78,7 @@
 					e.preventDefault();
 					onCreateTestCase(suite.id);
 				}}
-				class="bg-surface-50-900 mb-3 rounded-container border border-primary-500 p-3"
+				class="mb-3 rounded-container border border-primary-500 bg-surface-50-950 p-3"
 			>
 				<div class="flex gap-2">
 					<input
@@ -143,7 +143,7 @@
 				{#if suite.testCases?.length && creatingTestCase !== suite.id}
 					<button
 						onclick={() => onStartCreatingTestCase(suite.id)}
-						class="hover:bg-surface-100-800 text-surface-600-300 mt-1 flex w-full items-center justify-center gap-2 rounded-base p-2 text-sm transition-colors hover:text-primary-500"
+						class="mt-1 flex w-full items-center justify-center gap-2 rounded-base p-2 text-sm text-surface-600-400 transition-colors hover:bg-surface-100-900 hover:text-primary-500"
 					>
 						<Plus class="h-4 w-4" />
 						<span>Add test case</span>

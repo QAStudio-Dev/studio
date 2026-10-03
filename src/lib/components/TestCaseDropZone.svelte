@@ -33,11 +33,11 @@
 	class="min-h-[60px] rounded-container transition-all {isOver
 		? 'border-2 border-dashed border-primary-500 bg-primary-500/10'
 		: isDragging
-			? 'border-surface-300-600 border-2 border-dashed'
+			? 'border-2 border-dashed border-surface-200-800'
 			: ''} {isEmpty ? 'flex items-center justify-center' : ''}"
 >
 	{#if isEmpty}
-		<div class="text-surface-600-300 py-4 text-center">
+		<div class="py-4 text-center text-surface-600-400">
 			<p class="mb-2 text-sm">
 				{isOver ? 'Drop test case here' : 'No test cases yet'}
 			</p>

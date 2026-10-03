@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Calendar, ArrowRight } from '@lucide/svelte';
+	import { JsonLd } from 'svelte-meta-tags';
+	import { SITE_URL } from '$lib/site';
 
 	let { data } = $props();
 	let { posts } = $derived(data);
@@ -67,7 +69,60 @@
 
 		return `${directions[directionIndex]} ${colorCombos[colorIndex]}`;
 	}
+
+	const site = SITE_URL;
 </script>
+
+<JsonLd
+	schema={[
+		{
+			'@type': 'Organization',
+			'@id': `${site}/#organization`,
+			name: 'QA Studio',
+			url: site,
+			logo: `${site}/android-chrome-512x512.png`,
+			sameAs: [
+				'https://github.com/QAStudio-Dev/studio',
+				'https://www.linkedin.com/company/qa-studio-dev',
+				'https://discord.gg/rw3UfdB9pN'
+			]
+		},
+		{
+			'@type': 'WebSite',
+			'@id': `${site}/#website`,
+			name: 'QA Studio',
+			url: site,
+			publisher: { '@id': `${site}/#organization` }
+		},
+		{
+			'@type': 'SoftwareApplication',
+			name: 'QA Studio',
+			url: site,
+			applicationCategory: 'DeveloperApplication',
+			operatingSystem: 'Web, Linux, macOS, Windows (self-hosted via Docker)',
+			description:
+				'Open source test management and automated test reporting platform with Playwright integration, test case management, test runs, and AI-powered failure analysis.',
+			license: 'https://www.gnu.org/licenses/agpl-3.0.html',
+			offers: [
+				{ '@type': 'Offer', name: 'Free', price: '0', priceCurrency: 'USD' },
+				{ '@type': 'Offer', name: 'Self-Hosted', price: '0', priceCurrency: 'USD' },
+				{
+					'@type': 'Offer',
+					name: 'Pro',
+					price: '10',
+					priceCurrency: 'USD',
+					priceSpecification: {
+						'@type': 'UnitPriceSpecification',
+						price: '10',
+						priceCurrency: 'USD',
+						unitText: 'user/month'
+					}
+				}
+			],
+			publisher: { '@id': `${site}/#organization` }
+		}
+	]}
+/>
 
 <!-- Hero Section with Animated Background -->
 <div

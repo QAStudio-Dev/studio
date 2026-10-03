@@ -402,6 +402,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>SMS Messages - QA Studio</title>
+</svelte:head>
+
 <div class="container mx-auto max-w-7xl px-4 py-8">
 	<!-- Header -->
 	<div class="mb-6">
@@ -414,7 +418,7 @@
 				</div>
 				<div class="flex-1">
 					<h1 class="mb-2 text-4xl font-bold">SMS Messages</h1>
-					<p class="text-surface-600-300 text-lg">
+					<p class="text-lg text-surface-600-400">
 						Send and receive SMS messages for testing and automation
 					</p>
 				</div>
@@ -441,14 +445,14 @@
 
 	{#if loading}
 		<div class="card p-6 text-center">
-			<p class="text-surface-600-300">Loading...</p>
+			<p class="text-surface-600-400">Loading...</p>
 		</div>
 	{:else if !twilioEnabled}
 		<!-- Not Configured -->
 		<div class="card p-8 text-center">
 			<AlertCircle class="mx-auto mb-4 h-12 w-12 text-warning-500" />
 			<h2 class="mb-2 text-2xl font-bold">Twilio Not Configured</h2>
-			<p class="text-surface-600-300 mb-6">
+			<p class="mb-6 text-surface-600-400">
 				You need to configure Twilio credentials before you can send or receive SMS
 				messages.
 			</p>
@@ -514,7 +518,7 @@
 							required
 							disabled={sending}
 						/>
-						<p class="text-surface-500-400 mt-1 text-xs">
+						<p class="mt-1 text-xs text-surface-500">
 							Must be in E.164 format (e.g., +15551234567)
 						</p>
 					</div>
@@ -534,7 +538,7 @@
 							maxlength="1600"
 							required
 							disabled={sending}></textarea>
-						<div class="text-surface-500-400 mt-1 flex justify-between text-xs">
+						<div class="mt-1 flex justify-between text-xs text-surface-500">
 							<span>Max 1600 characters for SMS</span>
 							<span>{messageBody.length} / 1600</span>
 						</div>
@@ -582,12 +586,12 @@
 				{/if}
 
 				{#if loadingMessages && messages.length === 0}
-					<div class="text-surface-600-300 py-8 text-center">
+					<div class="py-8 text-center text-surface-600-400">
 						<RefreshCw class="mx-auto mb-2 h-8 w-8 animate-spin" />
 						<p>Loading messages...</p>
 					</div>
 				{:else if messages.length === 0}
-					<div class="text-surface-600-300 py-8 text-center">
+					<div class="py-8 text-center text-surface-600-400">
 						<MessageSquare class="mx-auto mb-2 h-8 w-8" />
 						<p>No messages yet</p>
 						<p class="text-sm">Send your first SMS to get started</p>
@@ -596,7 +600,7 @@
 					<div class="space-y-2">
 						{#each messages.slice(0, 5) as message}
 							<div
-								class="bg-surface-50-900 rounded-container border border-surface-200-800 p-3 transition-all hover:border-primary-500/30"
+								class="rounded-container border border-surface-200-800 bg-surface-50-950 p-3 transition-all hover:border-primary-500/30"
 							>
 								<div class="mb-2 flex items-start justify-between">
 									<div class="flex items-center gap-2">
@@ -643,9 +647,7 @@
 											</button>
 										{/if}
 									</div>
-									<div
-										class="text-surface-500-400 flex items-center gap-1 text-xs"
-									>
+									<div class="flex items-center gap-1 text-xs text-surface-500">
 										<Clock class="h-3 w-3" />
 										{formatDate(message.createdAt)}
 									</div>
@@ -661,7 +663,7 @@
 									<span class="font-medium">
 										{message.direction === 'OUTBOUND' ? 'To:' : 'From:'}
 									</span>
-									<span class="text-surface-600-300">
+									<span class="text-surface-600-400">
 										{message.direction === 'OUTBOUND'
 											? message.to
 											: message.from}
@@ -669,7 +671,7 @@
 								</div>
 
 								{#if message.body}
-									<p class="text-surface-700-200 line-clamp-2 text-sm">
+									<p class="line-clamp-2 text-sm text-surface-700-300">
 										{message.body}
 									</p>
 								{/if}
@@ -683,7 +685,7 @@
 						{/each}
 
 						{#if messages.length > 5}
-							<p class="text-surface-500-400 pt-2 text-center text-xs">
+							<p class="pt-2 text-center text-xs text-surface-500">
 								Showing {Math.min(5, messages.length)} of {messages.length} messages
 							</p>
 						{/if}
@@ -700,7 +702,7 @@
 				<div class="overflow-x-auto">
 					<table class="w-full">
 						<thead class="border-b border-surface-200-800">
-							<tr class="text-surface-600-300 text-left text-sm">
+							<tr class="text-left text-sm text-surface-600-400">
 								<th class="pb-3 font-medium">Direction</th>
 								<th class="pb-3 font-medium">From / To</th>
 								<th class="pb-3 font-medium">Message</th>
@@ -731,7 +733,7 @@
 													? message.to
 													: message.from}
 											</div>
-											<div class="text-surface-500-400 text-xs">
+											<div class="text-xs text-surface-500">
 												{message.direction === 'OUTBOUND'
 													? `From: ${message.from}`
 													: `To: ${message.to}`}
@@ -744,7 +746,7 @@
 												{message.body}
 											</p>
 										{:else}
-											<span class="text-surface-500-400 text-sm italic"
+											<span class="text-sm text-surface-500 italic"
 												>No message body</span
 											>
 										{/if}
@@ -765,7 +767,7 @@
 													{message.status}
 												</span>
 											{:else}
-												<span class="text-surface-500-400 text-sm">-</span>
+												<span class="text-sm text-surface-500">-</span>
 											{/if}
 
 											{#if message.direction === 'OUTBOUND'}
@@ -804,10 +806,10 @@
 										{/if}
 									</td>
 									<td class="py-3">
-										<div class="text-surface-600-300 text-sm">
+										<div class="text-sm text-surface-600-400">
 											{formatDate(message.createdAt)}
 										</div>
-										<div class="text-surface-500-400 text-xs">
+										<div class="text-xs text-surface-500">
 											{new Date(message.createdAt).toLocaleTimeString()}
 										</div>
 									</td>

@@ -103,9 +103,9 @@
 			<div class="flex items-start justify-between">
 				<div>
 					<h1 class="mb-2 text-4xl font-bold" data-testid="welcome-heading">
-						Welcome back, {user.firstName || 'there'}!
+						{user.firstName ? `Welcome back, ${user.firstName}!` : 'Welcome back!'}
 					</h1>
-					<p class="text-surface-600-300 text-lg" data-testid="team-info">
+					<p class="text-lg text-surface-600-400" data-testid="team-info">
 						{#if user.team}
 							Team: {user.team.name}
 							{#if subscription.hasActiveSubscription}
@@ -160,7 +160,7 @@
 						<FolderOpen class="h-12 w-12 text-primary-500" />
 					</div>
 					<h2 class="mb-2 text-3xl font-bold">Let's get started!</h2>
-					<p class="text-surface-600-300 mb-8 text-lg">
+					<p class="mb-8 text-lg text-surface-600-400">
 						Create your first project to start managing test cases and tracking results.
 					</p>
 				</div>
@@ -184,8 +184,8 @@
 				</div>
 
 				{#if !subscription.hasActiveSubscription}
-					<div class="bg-surface-50-900 mt-8 rounded-container p-4">
-						<p class="text-surface-600-300 mb-2 text-sm">
+					<div class="mt-8 rounded-container bg-surface-50-950 p-4">
+						<p class="mb-2 text-sm text-surface-600-400">
 							<strong>Free plan:</strong> 1 project · Unlimited test cases
 						</p>
 						<a href="/teams/new" class="text-sm text-primary-500 hover:underline">
@@ -207,9 +207,9 @@
 							>{stats.totalProjects}</span
 						>
 					</div>
-					<h3 class="text-surface-600-300 text-sm font-medium">Projects</h3>
+					<h3 class="text-sm font-medium text-surface-600-400">Projects</h3>
 					{#if !subscription.hasActiveSubscription}
-						<p class="text-surface-500-400 mt-1 text-xs" data-testid="project-usage">
+						<p class="mt-1 text-xs text-surface-500" data-testid="project-usage">
 							{stats.totalProjects} / {subscription.projectLimit} used
 						</p>
 					{/if}
@@ -225,7 +225,7 @@
 							>{stats.totalTestCases}</span
 						>
 					</div>
-					<h3 class="text-surface-600-300 text-sm font-medium">Test Cases</h3>
+					<h3 class="text-sm font-medium text-surface-600-400">Test Cases</h3>
 				</div>
 
 				<!-- Test Runs -->
@@ -238,7 +238,7 @@
 							>{stats.totalTestRuns}</span
 						>
 					</div>
-					<h3 class="text-surface-600-300 text-sm font-medium">Test Runs</h3>
+					<h3 class="text-sm font-medium text-surface-600-400">Test Runs</h3>
 				</div>
 
 				<!-- Pass Rate -->
@@ -251,7 +251,7 @@
 							>{stats.passRate}%</span
 						>
 					</div>
-					<h3 class="text-surface-600-300 text-sm font-medium">Pass Rate</h3>
+					<h3 class="text-sm font-medium text-surface-600-400">Pass Rate</h3>
 				</div>
 			</div>
 
@@ -276,7 +276,7 @@
 						<div class="space-y-4">
 							{#each projects as project}
 								<div
-									class="group hover:bg-surface-100-800 border-surface-200-700 relative block rounded-container border p-4 transition-colors"
+									class="group relative block rounded-container border border-surface-200-800 p-4 transition-colors hover:bg-surface-100-900"
 									data-testid="project-item"
 									data-project-id={project.id}
 								>
@@ -285,7 +285,7 @@
 										onclick={(e) =>
 											requestDeleteProject(e, project.id, project.name)}
 										disabled={deletingProjectId === project.id}
-										class="text-surface-600-300 absolute top-4 right-4 z-10 rounded-container p-2 opacity-0 transition-colors group-hover:opacity-100 hover:bg-error-500/10 hover:text-error-500"
+										class="absolute top-4 right-4 z-10 rounded-container p-2 text-surface-600-400 opacity-0 transition-colors group-hover:opacity-100 hover:bg-error-500/10 hover:text-error-500"
 										title="Delete project"
 										data-testid="delete-project-button"
 									>
@@ -318,7 +318,7 @@
 												</div>
 												{#if project.description}
 													<p
-														class="text-surface-600-300 mb-3 text-sm"
+														class="mb-3 text-sm text-surface-600-400"
 														data-testid="project-description"
 													>
 														{project.description}
@@ -326,7 +326,7 @@
 												{/if}
 
 												<div
-													class="text-surface-600-300 flex items-center gap-6 text-sm"
+													class="flex items-center gap-6 text-sm text-surface-600-400"
 												>
 													<div class="flex items-center gap-2">
 														<TestTube2 class="h-4 w-4" />
@@ -343,7 +343,7 @@
 												</div>
 											</div>
 											<!-- TODO: not block the delete button on hover -->
-											<!-- <div class="text-right text-sm text-surface-500-400">
+											<!-- <div class="text-right text-sm text-surface-500">
 											{formatDate(project.updatedAt)}
 										</div> -->
 										</div>
@@ -363,7 +363,7 @@
 							{#each stats.recentResults as result}
 								{@const StatusIcon = getStatusIcon(result.status)}
 								<div
-									class="border-surface-200-700 border-b pb-4 last:border-0 last:pb-0"
+									class="border-b border-surface-200-800 pb-4 last:border-0 last:pb-0"
 									data-testid="recent-result-item"
 								>
 									<div class="flex items-start gap-3">
@@ -381,13 +381,13 @@
 												{result.testCase.title}
 											</p>
 											<p
-												class="text-surface-600-300 truncate text-xs"
+												class="truncate text-xs text-surface-600-400"
 												data-testid="result-run-info"
 											>
 												{result.testRun.project.key} · {result.testRun.name}
 											</p>
 											<p
-												class="text-surface-500-400 mt-1 text-xs"
+												class="mt-1 text-xs text-surface-500"
 												data-testid="result-executed-at"
 											>
 												{formatDate(result.executedAt)}
@@ -400,7 +400,7 @@
 					{:else}
 						<div class="py-8 text-center" data-testid="no-results-empty-state">
 							<Clock class="mx-auto mb-2 h-12 w-12 text-surface-400" />
-							<p class="text-surface-600-300 text-sm">No test results yet</p>
+							<p class="text-sm text-surface-600-400">No test results yet</p>
 						</div>
 					{/if}
 				</div>
@@ -418,7 +418,7 @@
 							</div>
 							<div class="flex-1">
 								<h3 class="mb-1 text-lg font-bold">Unlock Pro Features</h3>
-								<p class="text-surface-600-300 text-sm">
+								<p class="text-sm text-surface-600-400">
 									Unlimited projects · AI-powered failure analysis · Priority
 									support
 								</p>
@@ -457,7 +457,7 @@
 					<Dialog.Title id="delete-project-title" class="mb-2 text-xl font-bold">
 						Delete "{deleteTarget.name}"?
 					</Dialog.Title>
-					<Dialog.Description class="text-surface-600-300 mb-6 text-sm">
+					<Dialog.Description class="mb-6 text-sm text-surface-600-400">
 						This will permanently delete all test suites, test cases, test runs, and
 						test results in this project. This action cannot be undone.
 					</Dialog.Description>

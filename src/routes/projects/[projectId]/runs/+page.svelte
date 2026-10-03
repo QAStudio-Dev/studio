@@ -182,7 +182,7 @@
 	<!-- Header -->
 	<div class="mb-8" data-testid="test-runs-header">
 		<h1 class="mb-2 text-4xl font-bold">Test Runs</h1>
-		<p class="text-surface-600-300 text-lg">View and manage all test execution runs</p>
+		<p class="text-lg text-surface-600-400">View and manage all test execution runs</p>
 	</div>
 
 	<!-- Search and Filters -->
@@ -229,7 +229,7 @@
 
 		<!-- Stats -->
 		<div
-			class="text-surface-600-300 flex items-center gap-4 text-sm"
+			class="flex items-center gap-4 text-sm text-surface-600-400"
 			data-testid="filter-stats"
 		>
 			<span data-testid="results-count">Showing {testRuns.length} of {total} test runs</span>
@@ -262,7 +262,7 @@
 		<div class="card p-12 text-center" data-testid="no-runs-empty-state">
 			<Play class="mx-auto mb-4 h-16 w-16 text-surface-400" />
 			<h2 class="mb-2 text-xl font-bold">No test runs found</h2>
-			<p class="text-surface-600-300">
+			<p class="text-surface-600-400">
 				{#if search || selectedProject || selectedStatus}
 					Try adjusting your filters
 				{:else}
@@ -301,12 +301,12 @@
 								{/if}
 							</div>
 							{#if testRun.description}
-								<p class="text-surface-600-300 mb-2" data-testid="run-description">
+								<p class="mb-2 text-surface-600-400" data-testid="run-description">
 									{testRun.description}
 								</p>
 							{/if}
 							<div
-								class="text-surface-600-300 flex items-center gap-4 text-sm"
+								class="flex items-center gap-4 text-sm text-surface-600-400"
 								data-testid="run-metadata"
 							>
 								<span data-testid="run-project"
@@ -333,14 +333,14 @@
 								>
 									{getPassRate(testRun.stats)}%
 								</div>
-								<div class="text-surface-600-300 text-xs">Pass Rate</div>
+								<div class="text-xs text-surface-600-400">Pass Rate</div>
 							</div>
 						{/if}
 					</div>
 
 					<!-- Test Results Stats -->
 					<div
-						class="border-surface-200-700 mb-4 flex items-center gap-6 border-t pt-4"
+						class="mb-4 flex items-center gap-6 border-t border-surface-200-800 pt-4"
 						data-testid="run-stats"
 					>
 						<div class="flex items-center gap-2">
@@ -348,31 +348,31 @@
 							<span class="font-semibold" data-testid="run-passed-count"
 								>{testRun.stats.passed}</span
 							>
-							<span class="text-surface-600-300 text-sm">Passed</span>
+							<span class="text-sm text-surface-600-400">Passed</span>
 						</div>
 						<div class="flex items-center gap-2">
 							<XCircle class="h-5 w-5 text-error-500" />
 							<span class="font-semibold" data-testid="run-failed-count"
 								>{testRun.stats.failed}</span
 							>
-							<span class="text-surface-600-300 text-sm">Failed</span>
+							<span class="text-sm text-surface-600-400">Failed</span>
 						</div>
 						<div class="flex items-center gap-2">
 							<AlertCircle class="h-5 w-5 text-warning-500" />
 							<span class="font-semibold" data-testid="run-blocked-count"
 								>{testRun.stats.blocked}</span
 							>
-							<span class="text-surface-600-300 text-sm">Blocked</span>
+							<span class="text-sm text-surface-600-400">Blocked</span>
 						</div>
 						<div class="flex items-center gap-2">
 							<Circle class="h-5 w-5 text-surface-500" />
 							<span class="font-semibold" data-testid="run-skipped-count"
 								>{testRun.stats.skipped}</span
 							>
-							<span class="text-surface-600-300 text-sm">Skipped</span>
+							<span class="text-sm text-surface-600-400">Skipped</span>
 						</div>
 						<div class="ml-auto flex items-center gap-2">
-							<span class="text-surface-600-300 text-sm">Total:</span>
+							<span class="text-sm text-surface-600-400">Total:</span>
 							<span class="font-semibold" data-testid="run-total-count"
 								>{testRun.stats.total}</span
 							>
@@ -381,7 +381,7 @@
 
 					<!-- Timestamps -->
 					<div
-						class="text-surface-600-300 flex items-center gap-6 text-xs"
+						class="flex items-center gap-6 text-xs text-surface-600-400"
 						data-testid="run-timestamps"
 					>
 						<div class="flex items-center gap-2">

@@ -311,12 +311,12 @@
 	<title>Authenticators - QA Studio</title>
 </svelte:head>
 
-<div class="container mx-auto space-y-6 p-8">
+<div class="container mx-auto space-y-6 px-4 py-8">
 	<!-- Header -->
 	<div class="flex items-center justify-between">
 		<div>
-			<h1 class="text-3xl font-bold">Authenticator Tokens</h1>
-			<p class="mt-2 text-surface-600 dark:text-surface-400">
+			<h1 class="text-4xl font-bold">Authenticator Tokens</h1>
+			<p class="mt-2 text-lg text-surface-600-400">
 				Shared 2FA tokens for your team: {data.teamName}
 			</p>
 		</div>
@@ -353,7 +353,7 @@
 					<!-- Token Header -->
 					<div class="flex items-start justify-between">
 						<div class="flex-1">
-							<h3 class="text-lg font-semibold">{token.name}</h3>
+							<h3 class="text-lg font-semibold wrap-break-word">{token.name}</h3>
 							{#if token.issuer}
 								<p class="text-sm text-surface-600 dark:text-surface-400">
 									{token.issuer}
@@ -383,15 +383,20 @@
 
 					<!-- TOTP Code Display -->
 					{#if totpCodes[token.id]}
-						<div class="space-y-2 rounded-lg bg-surface-100 p-4 dark:bg-surface-800">
+						<div
+							class="space-y-3 rounded-container border border-primary-500/20 bg-primary-500/5 p-4"
+						>
 							<div class="flex items-center justify-between">
-								<div class="font-mono text-3xl font-bold tracking-wider">
+								<div
+									class="font-mono text-3xl font-bold tracking-[0.2em] text-primary-700-300 tabular-nums"
+								>
 									{totpCodes[token.id].code}
 								</div>
 								<button
 									onclick={() => copyCode(totpCodes[token.id].code, token.name)}
-									class="btn preset-tonal"
+									class="btn-icon preset-tonal-primary"
 									title="Copy code"
+									aria-label="Copy code for {token.name}"
 								>
 									<Copy class="h-4 w-4" />
 								</button>
@@ -402,12 +407,20 @@
 								class="flex items-center gap-2 text-sm text-surface-600 dark:text-surface-400"
 							>
 								<Clock class="h-4 w-4" />
-								<span>Expires in {totpCodes[token.id].timeRemaining}s</span>
+								<span class="tabular-nums"
+									>Expires in {totpCodes[token.id].timeRemaining}s</span
+								>
 								<div
-									class="h-1.5 flex-1 rounded-full bg-surface-300 dark:bg-surface-700"
+									class="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-500/15"
 								>
 									<div
-										class="h-1.5 rounded-full bg-primary-500 transition-all"
+										class="h-1.5 rounded-full transition-all {totpCodes[
+											token.id
+										].timeRemaining <= 5
+											? 'bg-error-500'
+											: totpCodes[token.id].timeRemaining <= 10
+												? 'bg-warning-500'
+												: 'bg-primary-500'}"
 										style="width: {(totpCodes[token.id].timeRemaining /
 											token.period) *
 											100}%"
@@ -416,7 +429,7 @@
 							</div>
 						</div>
 					{:else}
-						<div class="rounded-lg bg-surface-100 p-4 dark:bg-surface-800">
+						<div class="rounded-container bg-surface-500/5 p-4">
 							<div class="animate-pulse space-y-2">
 								<div class="h-8 rounded bg-surface-300 dark:bg-surface-700"></div>
 								<div
@@ -579,7 +592,7 @@
 						<button
 							type="button"
 							onclick={closeModal}
-							class="preset-tonal-surface-500 btn"
+							class="btn preset-tonal-surface"
 							disabled={isSubmitting}
 						>
 							Cancel
@@ -598,7 +611,7 @@
 			<!-- Close button for QR tab -->
 			{#if activeTab === 'qr'}
 				<div class="flex justify-end">
-					<button type="button" onclick={closeModal} class="preset-tonal-surface-500 btn">
+					<button type="button" onclick={closeModal} class="btn preset-tonal-surface">
 						Cancel
 					</button>
 				</div>

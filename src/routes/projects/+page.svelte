@@ -51,7 +51,7 @@
 		<div class="mb-6 flex items-start justify-between">
 			<div>
 				<h1 class="mb-2 text-4xl font-bold">Projects</h1>
-				<p class="text-surface-600-300 text-lg">Manage your test projects and suites</p>
+				<p class="text-lg text-surface-600-400">Manage your test projects and suites</p>
 			</div>
 			{#if canCreateProject}
 				<a href="/projects/new" class="btn preset-filled-primary-500">
@@ -67,7 +67,7 @@
 						<Plus class="mr-2 h-4 w-4" />
 						New Project
 					</button>
-					<p class="text-surface-600-300 mt-2 text-sm">
+					<p class="mt-2 text-sm text-surface-600-400">
 						Free plan: {projects.length}/{projectLimit} project used
 					</p>
 					<a href="/teams/new" class="text-sm text-primary-500 hover:underline">
@@ -86,7 +86,7 @@
 							<FolderOpen class="h-5 w-5 text-primary-500" />
 						</div>
 						<div>
-							<p class="text-surface-600-300 text-sm">Total Projects</p>
+							<p class="text-sm text-surface-600-400">Total Projects</p>
 							<p class="text-2xl font-bold">{projects.length}</p>
 						</div>
 					</div>
@@ -98,7 +98,7 @@
 							<TestTube2 class="h-5 w-5 text-secondary-500" />
 						</div>
 						<div>
-							<p class="text-surface-600-300 text-sm">Total Test Cases</p>
+							<p class="text-sm text-surface-600-400">Total Test Cases</p>
 							<p class="text-2xl font-bold">
 								{projects.reduce((sum, p) => sum + p._count.testCases, 0)}
 							</p>
@@ -112,7 +112,7 @@
 							<PlayCircle class="h-5 w-5 text-tertiary-500" />
 						</div>
 						<div>
-							<p class="text-surface-600-300 text-sm">Total Test Runs</p>
+							<p class="text-sm text-surface-600-400">Total Test Runs</p>
 							<p class="text-2xl font-bold">
 								{projects.reduce((sum, p) => sum + p._count.testRuns, 0)}
 							</p>
@@ -126,12 +126,12 @@
 							<Users class="h-5 w-5 text-success-500" />
 						</div>
 						<div>
-							<p class="text-surface-600-300 text-sm">Team</p>
+							<p class="text-sm text-surface-600-400">Team</p>
 							<p class="text-lg font-bold">
 								{#if hasTeam && user.team}
 									{user.team.name}
 								{:else}
-									<span class="text-surface-600-300 text-sm">No team</span>
+									<span class="text-sm text-surface-600-400">No team</span>
 								{/if}
 							</p>
 						</div>
@@ -146,7 +146,7 @@
 		<div class="card p-12 text-center">
 			<FolderOpen class="mx-auto mb-4 h-16 w-16 text-surface-400" />
 			<h2 class="mb-2 text-2xl font-bold">No projects yet</h2>
-			<p class="text-surface-600-300 mb-6">
+			<p class="mb-6 text-surface-600-400">
 				Create your first project to start organizing your test cases
 			</p>
 			{#if canCreateProject}
@@ -174,7 +174,7 @@
 					<button
 						onclick={(e) => handleDeleteProject(e, project.id, project.name)}
 						disabled={deletingProjectId === project.id}
-						class="text-surface-600-300 absolute top-4 right-4 rounded-container p-2 opacity-0 transition-colors group-hover:opacity-100 hover:bg-error-500/10 hover:text-error-500"
+						class="absolute top-4 right-4 rounded-container p-2 text-surface-600-400 opacity-0 transition-colors group-hover:opacity-100 hover:bg-error-500/10 hover:text-error-500"
 						title="Delete project"
 					>
 						{#if deletingProjectId === project.id}
@@ -206,12 +206,12 @@
 						</div>
 
 						{#if project.description}
-							<p class="text-surface-600-300 mb-4 line-clamp-2 text-sm">
+							<p class="mb-4 line-clamp-2 text-sm text-surface-600-400">
 								{project.description}
 							</p>
 						{/if}
 
-						<div class="text-surface-600-300 flex items-center gap-4 text-sm">
+						<div class="flex items-center gap-4 text-sm text-surface-600-400">
 							<div class="flex items-center gap-1">
 								<TestTube2 class="h-4 w-4" />
 								<span>{project._count.testCases} tests</span>
@@ -223,7 +223,7 @@
 						</div>
 
 						<div
-							class="border-surface-200-700 text-surface-600-300 mt-4 flex items-center justify-between border-t pt-4 text-xs"
+							class="mt-4 flex items-center justify-between border-t border-surface-200-800 pt-4 text-xs text-surface-600-400"
 						>
 							<span>
 								by {project.creator.firstName || project.creator.email}

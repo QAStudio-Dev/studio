@@ -17,16 +17,16 @@
 
 	function getCategoryTonalClass(category: AnalysisCategory): string {
 		const classes: Record<AnalysisCategory, string> = {
-			STALE_LOCATOR: 'badge preset-tonal-warning-500',
-			TIMING_ISSUE: 'badge preset-tonal-tertiary-500',
-			NETWORK_ERROR: 'badge preset-tonal-error-500',
-			ASSERTION_FAILURE: 'badge preset-tonal-secondary-500',
-			DATA_ISSUE: 'badge preset-tonal-primary-500',
-			ENVIRONMENT_ISSUE: 'badge preset-tonal-warning-500',
-			CONFIGURATION_ERROR: 'badge preset-tonal-error-500',
-			OTHER: 'badge preset-tonal-surface-500'
+			STALE_LOCATOR: 'badge preset-tonal-warning',
+			TIMING_ISSUE: 'badge preset-tonal-tertiary',
+			NETWORK_ERROR: 'badge preset-tonal-error',
+			ASSERTION_FAILURE: 'badge preset-tonal-secondary',
+			DATA_ISSUE: 'badge preset-tonal-primary',
+			ENVIRONMENT_ISSUE: 'badge preset-tonal-warning',
+			CONFIGURATION_ERROR: 'badge preset-tonal-error',
+			OTHER: 'badge preset-tonal-surface'
 		};
-		return classes[category] || 'badge preset-tonal-surface-500';
+		return classes[category] || 'badge preset-tonal-surface';
 	}
 
 	function getCategoryFilledClass(category: AnalysisCategory): string {
@@ -97,7 +97,7 @@
 					<Sparkles class="h-8 w-8 text-primary-500" />
 					AI Healing Dashboard
 				</h1>
-				<p class="text-surface-600-300 mt-2">
+				<p class="mt-2 text-surface-600-400">
 					Project: <span class="font-semibold">{project.name}</span>
 				</p>
 			</div>
@@ -105,12 +105,12 @@
 
 		{#if stats.totalAnalyzed === 0}
 			<!-- Empty State -->
-			<div class="bg-surface-100-800 space-y-4 card rounded-container p-12 text-center">
+			<div class="space-y-4 card rounded-container bg-surface-100-900 p-12 text-center">
 				<div class="flex justify-center">
 					<AlertCircle class="h-16 w-16 text-surface-400-600" />
 				</div>
 				<h2 class="h2">No AI Analyses Yet</h2>
-				<p class="text-surface-600-300 mx-auto max-w-lg">
+				<p class="mx-auto max-w-lg text-surface-600-400">
 					AI trace analyses will appear here once you start analyzing test failures. Run
 					tests with trace files and use the "Analyze Trace" button on failed tests.
 				</p>
@@ -124,7 +124,7 @@
 				>
 					<div class="flex items-center justify-between">
 						<div>
-							<p class="text-surface-600-300 text-sm">Total Analyzed</p>
+							<p class="text-sm text-surface-600-400">Total Analyzed</p>
 							<p class="text-3xl font-bold text-primary-500">{stats.totalAnalyzed}</p>
 						</div>
 						<Activity class="h-10 w-10 text-primary-500 opacity-50" />
@@ -137,7 +137,7 @@
 				>
 					<div class="flex items-center justify-between">
 						<div>
-							<p class="text-surface-600-300 text-sm">Avg Confidence</p>
+							<p class="text-sm text-surface-600-400">Avg Confidence</p>
 							<p class="text-3xl font-bold text-success-500">
 								{Math.round(stats.avgConfidence * 100)}%
 							</p>
@@ -152,7 +152,7 @@
 				>
 					<div class="flex items-center justify-between">
 						<div>
-							<p class="text-surface-600-300 text-sm">Fixes Applied</p>
+							<p class="text-sm text-surface-600-400">Fixes Applied</p>
 							<p class="text-3xl font-bold text-tertiary-500">{stats.fixesApplied}</p>
 						</div>
 						<CheckCircle class="h-10 w-10 text-tertiary-500 opacity-50" />
@@ -165,19 +165,19 @@
 				>
 					<div class="flex items-center justify-between">
 						<div>
-							<p class="text-surface-600-300 text-sm">Est. Time Saved</p>
+							<p class="text-sm text-surface-600-400">Est. Time Saved</p>
 							<p class="text-3xl font-bold text-warning-500">
 								{Math.round(stats.totalAnalyzed * 0.5)}h
 							</p>
 						</div>
 						<Clock class="h-10 w-10 text-warning-500 opacity-50" />
 					</div>
-					<p class="text-surface-600-300 mt-2 text-xs">~30min per analysis</p>
+					<p class="mt-2 text-xs text-surface-600-400">~30min per analysis</p>
 				</div>
 			</div>
 
 			<!-- Category Breakdown -->
-			<div class="bg-surface-100-800 card rounded-container p-6">
+			<div class="card rounded-container bg-surface-100-900 p-6">
 				<h2 class="mb-6 flex items-center gap-2 h2">
 					<Target class="h-6 w-6" />
 					Failure Categories
@@ -192,11 +192,11 @@
 									<span class="font-semibold">{formatCategory(category)}</span>
 								</div>
 								<div class="flex items-center gap-3">
-									<span class="text-surface-600-300">{count} failures</span>
+									<span class="text-surface-600-400">{count} failures</span>
 									<span class="font-bold">{percentage.toFixed(1)}%</span>
 								</div>
 							</div>
-							<div class="bg-surface-300-600 h-3 w-full overflow-hidden rounded-full">
+							<div class="h-3 w-full overflow-hidden rounded-full bg-surface-300-700">
 								<div
 									class="h-full rounded-full transition-all duration-500"
 									class:bg-warning-500={category === 'STALE_LOCATOR'}
@@ -217,7 +217,7 @@
 
 			<!-- Most Problematic Tests -->
 			{#if stats.mostProblematicTests.length > 0}
-				<div class="bg-surface-100-800 card rounded-container p-6">
+				<div class="card rounded-container bg-surface-100-900 p-6">
 					<h2 class="mb-6 flex items-center gap-2 h2">
 						<AlertCircle class="h-6 w-6 text-error-500" />
 						Most Problematic Tests
@@ -226,7 +226,7 @@
 					<div class="space-y-3">
 						{#each stats.mostProblematicTests as test}
 							<div
-								class="bg-surface-200-700 border-surface-300-600 rounded-container border p-4 transition-colors hover:border-primary-500"
+								class="rounded-container border border-surface-200-800 bg-surface-200-800 p-4 transition-colors hover:border-primary-500"
 							>
 								<div class="flex items-start justify-between gap-4">
 									<div class="min-w-0 flex-1">
@@ -234,10 +234,10 @@
 											{test.testCase.title}
 										</h3>
 										<div class="mt-2 flex flex-wrap items-center gap-3">
-											<span class="text-surface-600-300 text-sm">
+											<span class="text-sm text-surface-600-400">
 												{test.failureCount} failures
 											</span>
-											<span class="text-surface-600-300 text-sm">
+											<span class="text-sm text-surface-600-400">
 												{Math.round(test.avgConfidence * 100)}% confidence
 											</span>
 											<div class="flex items-center gap-1">
@@ -255,7 +255,7 @@
 									</div>
 									<a
 										href="/projects/{project.id}/test-cases/{test.testCase.id}"
-										class="preset-filled-surface btn btn-sm"
+										class="btn preset-filled-surface-500 btn-sm"
 									>
 										View Test
 									</a>
@@ -268,13 +268,13 @@
 
 			<!-- Recent Analyses -->
 			{#if stats.recentAnalyses.length > 0}
-				<div class="bg-surface-100-800 card rounded-container p-6">
+				<div class="card rounded-container bg-surface-100-900 p-6">
 					<h2 class="mb-6 h2">Recent Analyses</h2>
 
 					<div class="space-y-3">
 						{#each stats.recentAnalyses as analysis}
 							<div
-								class="bg-surface-200-700 border-surface-300-600 rounded-container border p-4 transition-colors hover:border-primary-500"
+								class="rounded-container border border-surface-200-800 bg-surface-200-800 p-4 transition-colors hover:border-primary-500"
 							>
 								<div class="flex items-start justify-between gap-4">
 									<div class="min-w-0 flex-1">
@@ -293,11 +293,11 @@
 										<h3 class="truncate font-semibold">
 											{analysis.testCase.title}
 										</h3>
-										<p class="text-surface-600-300 mt-1 line-clamp-2 text-sm">
+										<p class="mt-1 line-clamp-2 text-sm text-surface-600-400">
 											{analysis.rootCause}
 										</p>
 										<div
-											class="text-surface-600-300 mt-2 flex items-center gap-4 text-xs"
+											class="mt-2 flex items-center gap-4 text-xs text-surface-600-400"
 										>
 											<span>Run: {analysis.testRun.name}</span>
 											<span>{formatDate(analysis.analyzedAt)}</span>
@@ -310,7 +310,7 @@
 									</div>
 									<a
 										href="/projects/{project.id}/runs/{analysis.testRun.id}"
-										class="preset-filled-surface btn btn-sm"
+										class="btn preset-filled-surface-500 btn-sm"
 									>
 										View Details
 									</a>

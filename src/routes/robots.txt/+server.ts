@@ -6,9 +6,17 @@ Allow: /
 
 # Disallow authenticated routes
 Disallow: /dashboard
-Disallow: /projects/
+Disallow: /projects
 Disallow: /teams/
 Disallow: /settings
+Disallow: /reports
+Disallow: /sms
+Disallow: /authenticators
+Disallow: /onboarding
+Disallow: /admin
+Disallow: /change-password
+Disallow: /reset-password
+Disallow: /setup-password
 Disallow: /user-profile
 Disallow: /invitations/
 Disallow: /api/

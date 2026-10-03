@@ -74,7 +74,7 @@
 				</div>
 			</div>
 			<h1 class="mb-4 text-4xl font-bold">Thank You!</h1>
-			<p class="text-surface-600-300 mb-8 text-lg">
+			<p class="mb-8 text-lg text-surface-600-400">
 				We've received your inquiry and our team will contact you within 1 business day.
 			</p>
 			<a href="/" class="btn preset-filled-primary-500"> Return to Home </a>
@@ -87,7 +87,7 @@
 			>
 				Enterprise Solutions
 			</h1>
-			<p class="text-surface-600-300 mx-auto max-w-2xl text-lg">
+			<p class="mx-auto max-w-2xl text-lg text-surface-600-400">
 				Get a custom quote tailored to your organization's needs
 			</p>
 		</div>
@@ -107,9 +107,9 @@
 					</ul>
 				</div>
 
-				<div class="bg-surface-50-900 card p-6">
+				<div class="card bg-surface-50-950 p-6">
 					<h3 class="mb-4 text-lg font-semibold">Why Enterprise?</h3>
-					<div class="text-surface-600-300 space-y-3 text-sm">
+					<div class="space-y-3 text-sm text-surface-600-400">
 						<p>
 							<strong>Custom Pricing:</strong> Pay only for what you need with flexible
 							contract terms
@@ -243,7 +243,7 @@
 									disabled={loading}
 								/>
 							</div>
-							<p class="text-surface-600-300 mt-2 text-sm">
+							<p class="mt-2 text-sm text-surface-600-400">
 								How many team members will use QA Studio?
 							</p>
 						</label>
@@ -291,7 +291,7 @@
 							{/if}
 						</button>
 
-						<p class="text-surface-600-300 text-center text-sm">
+						<p class="text-center text-sm text-surface-600-400">
 							We'll respond within 1 business day
 						</p>
 					</form>

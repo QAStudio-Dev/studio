@@ -25,14 +25,13 @@
 	let { data } = $props();
 	let { user } = $derived(data);
 
-	// Get active tab from URL hash (e.g., #api-keys) or default to 'profile'
+	// Get active tab from URL hash (#api-keys) or query (?tab=api-keys), default to 'profile'
 	let activeTab = $state('profile');
 
-	// Sync active tab with URL hash
 	$effect(() => {
-		const hash = page.url.hash.slice(1); // Remove # character
-		if (hash && ['profile', 'api-keys', 'team', 'integrations'].includes(hash)) {
-			activeTab = hash;
+		const requested = page.url.hash.slice(1) || page.url.searchParams.get('tab');
+		if (requested && ['profile', 'api-keys', 'team', 'integrations'].includes(requested)) {
+			activeTab = requested;
 		}
 	});
 
@@ -372,18 +371,18 @@
 	<!-- Header -->
 	<div class="mb-8" data-testid="settings-header">
 		<h1 class="mb-2 text-4xl font-bold">Settings</h1>
-		<p class="text-surface-600-300 text-lg">Manage your account, API keys, and team settings</p>
+		<p class="text-lg text-surface-600-400">Manage your account, API keys, and team settings</p>
 	</div>
 
 	<!-- Tabs -->
 	<Tabs value={activeTab} onValueChange={(details) => handleTabChange(details.value)}>
 		<Tabs.List
-			class="border-surface-200-700 mb-6 flex gap-2 border-b"
+			class="mb-6 flex gap-2 border-b border-surface-200-800"
 			data-testid="settings-tabs"
 		>
 			<Tabs.Trigger
 				value="profile"
-				class="hover:bg-surface-100-800 flex items-center gap-2 rounded-t-base px-4 py-3 transition-colors data-[state=active]:bg-primary-500 data-[state=active]:text-white"
+				class="flex items-center gap-2 rounded-t-base px-4 py-3 transition-colors hover:bg-surface-100-900 data-[state=active]:bg-primary-500 data-[state=active]:text-white"
 				data-testid="profile-tab"
 			>
 				<User class="h-4 w-4" />
@@ -392,7 +391,7 @@
 
 			<Tabs.Trigger
 				value="api-keys"
-				class="hover:bg-surface-100-800 flex items-center gap-2 rounded-t-base px-4 py-3 transition-colors data-[state=active]:bg-primary-500 data-[state=active]:text-white"
+				class="flex items-center gap-2 rounded-t-base px-4 py-3 transition-colors hover:bg-surface-100-900 data-[state=active]:bg-primary-500 data-[state=active]:text-white"
 				data-testid="api-keys-tab"
 			>
 				<Key class="h-4 w-4" />
@@ -402,7 +401,7 @@
 			{#if user.team}
 				<Tabs.Trigger
 					value="team"
-					class="hover:bg-surface-100-800 flex items-center gap-2 rounded-t-base px-4 py-3 transition-colors data-[state=active]:bg-primary-500 data-[state=active]:text-white"
+					class="flex items-center gap-2 rounded-t-base px-4 py-3 transition-colors hover:bg-surface-100-900 data-[state=active]:bg-primary-500 data-[state=active]:text-white"
 					data-testid="team-tab"
 				>
 					<Users class="h-4 w-4" />
@@ -412,7 +411,7 @@
 
 			<Tabs.Trigger
 				value="integrations"
-				class="hover:bg-surface-100-800 flex items-center gap-2 rounded-t-base px-4 py-3 transition-colors data-[state=active]:bg-primary-500 data-[state=active]:text-white"
+				class="flex items-center gap-2 rounded-t-base px-4 py-3 transition-colors hover:bg-surface-100-900 data-[state=active]:bg-primary-500 data-[state=active]:text-white"
 				data-testid="integrations-tab"
 			>
 				<Plug class="h-4 w-4" />
@@ -464,13 +463,13 @@
 							Account Information
 						</h3>
 						<div class="space-y-3 text-sm">
-							<div class="flex justify-between border-b border-surface-300-700 pb-2">
+							<div class="flex justify-between border-b border-surface-200-800 pb-2">
 								<span class="text-surface-600 dark:text-surface-400">Email</span>
 								<span class="font-medium" data-testid="account-email"
 									>{user.email}</span
 								>
 							</div>
-							<div class="flex justify-between border-b border-surface-300-700 pb-2">
+							<div class="flex justify-between border-b border-surface-200-800 pb-2">
 								<span class="text-surface-600 dark:text-surface-400"
 									>First Name</span
 								>
@@ -478,14 +477,14 @@
 									>{user.firstName || 'Not set'}</span
 								>
 							</div>
-							<div class="flex justify-between border-b border-surface-300-700 pb-2">
+							<div class="flex justify-between border-b border-surface-200-800 pb-2">
 								<span class="text-surface-600 dark:text-surface-400">Last Name</span
 								>
 								<span class="font-medium" data-testid="account-last-name"
 									>{user.lastName || 'Not set'}</span
 								>
 							</div>
-							<div class="flex justify-between border-b border-surface-300-700 pb-2">
+							<div class="flex justify-between border-b border-surface-200-800 pb-2">
 								<span class="text-surface-600 dark:text-surface-400">Role</span>
 								<span class="font-medium" data-testid="account-role"
 									>{user.role}</span
@@ -493,7 +492,7 @@
 							</div>
 							{#if user.teamId}
 								<div
-									class="flex justify-between border-b border-surface-300-700 pb-2"
+									class="flex justify-between border-b border-surface-200-800 pb-2"
 								>
 									<span class="text-surface-600 dark:text-surface-400">Team</span>
 									<a
@@ -522,7 +521,7 @@
 				<div class="mb-6 flex items-center justify-between">
 					<div>
 						<h2 class="text-2xl font-bold">API Keys</h2>
-						<p class="text-surface-600-300 mt-1">
+						<p class="mt-1 text-surface-600-400">
 							Manage API keys for programmatic access to QA Studio
 						</p>
 					</div>
@@ -534,7 +533,7 @@
 
 				<!-- Quick Overview -->
 				<div
-					class="bg-surface-50-900 mb-6 rounded-container border border-primary-500/20 p-6"
+					class="mb-6 rounded-container border border-primary-500/20 bg-surface-50-950 p-6"
 				>
 					<div class="mb-4 flex items-start gap-4">
 						<div
@@ -544,11 +543,11 @@
 						</div>
 						<div class="flex-1">
 							<h3 class="mb-2 font-bold">Full API Keys Management</h3>
-							<p class="text-surface-600-300 mb-4 text-sm">
+							<p class="mb-4 text-sm text-surface-600-400">
 								Access the dedicated API Keys page for complete management
 								including:
 							</p>
-							<ul class="text-surface-600-300 space-y-2 text-sm">
+							<ul class="space-y-2 text-sm text-surface-600-400">
 								<li class="flex items-center gap-2">
 									<Check class="h-4 w-4 text-success-500" />
 									<span>Create and manage API keys</span>
@@ -576,10 +575,10 @@
 
 				<!-- Current API Keys Summary -->
 				{#if user.apiKeys.length === 0}
-					<div class="border-surface-200-700 rounded-container border p-8 text-center">
+					<div class="rounded-container border border-surface-200-800 p-8 text-center">
 						<Key class="mx-auto mb-4 h-12 w-12 text-surface-400" />
 						<h3 class="mb-2 text-lg font-bold">No API Keys Yet</h3>
-						<p class="text-surface-600-300 mb-4 text-sm">
+						<p class="mb-4 text-sm text-surface-600-400">
 							Create your first API key to get started with API access
 						</p>
 						<a href="/settings/api-keys" class="btn preset-filled-primary-500">
@@ -594,16 +593,16 @@
 						</h3>
 						<div class="space-y-2">
 							{#each user.apiKeys.slice(0, 3) as apiKey}
-								<div class="border-surface-200-700 rounded-container border p-3">
+								<div class="rounded-container border border-surface-200-800 p-3">
 									<div class="mb-1 font-medium">{apiKey.name}</div>
-									<div class="text-surface-600-300 font-mono text-xs">
+									<div class="font-mono text-xs text-surface-600-400">
 										{apiKey.prefix}••••••••••••••••
 									</div>
 								</div>
 							{/each}
 						</div>
 						{#if user.apiKeys.length > 3}
-							<div class="text-surface-600-300 mt-3 text-center text-sm">
+							<div class="mt-3 text-center text-sm text-surface-600-400">
 								And {user.apiKeys.length - 3} more key{user.apiKeys.length - 3 !== 1
 									? 's'
 									: ''}
@@ -630,7 +629,7 @@
 							<div>
 								<h2 class="text-2xl font-bold">{user.team.name}</h2>
 								{#if user.team.description}
-									<p class="text-surface-600-300 mt-1">{user.team.description}</p>
+									<p class="mt-1 text-surface-600-400">{user.team.description}</p>
 								{/if}
 							</div>
 							{#if user.team.subscription}
@@ -643,16 +642,16 @@
 
 						{#if user.team.subscription}
 							<div
-								class="border-surface-200-700 grid gap-4 border-t pt-4 md:grid-cols-2"
+								class="grid gap-4 border-t border-surface-200-800 pt-4 md:grid-cols-2"
 							>
 								<div>
-									<div class="text-surface-600-300 text-sm">Plan</div>
+									<div class="text-sm text-surface-600-400">Plan</div>
 									<div class="font-semibold">
 										{getSubscriptionPlanName(user.team.subscription.status)}
 									</div>
 								</div>
 								<div>
-									<div class="text-surface-600-300 mb-1 text-sm">Seats</div>
+									<div class="mb-1 text-sm text-surface-600-400">Seats</div>
 									<div class="flex items-center gap-2">
 										<span class="font-semibold"
 											>{user.team.subscription.seats}</span
@@ -667,21 +666,21 @@
 												Update
 											</button>
 										{:else}
-											<span class="text-surface-600-300 text-xs italic"
+											<span class="text-xs text-surface-600-400 italic"
 												>(Contact subscription owner to update)</span
 											>
 										{/if}
 									</div>
 								</div>
 								<div>
-									<div class="text-surface-600-300 text-sm">
+									<div class="text-sm text-surface-600-400">
 										Attachment Retention
 									</div>
 									<div class="font-semibold">30 days</div>
 								</div>
 								{#if user.team.subscription.currentPeriodEnd}
 									<div>
-										<div class="text-surface-600-300 text-sm">
+										<div class="text-sm text-surface-600-400">
 											{user.team.subscription.cancelAtPeriodEnd
 												? 'Cancels On'
 												: 'Renews On'}
@@ -694,14 +693,14 @@
 							</div>
 						{:else}
 							<div
-								class="border-surface-200-700 grid gap-4 border-t pt-4 md:grid-cols-2"
+								class="grid gap-4 border-t border-surface-200-800 pt-4 md:grid-cols-2"
 							>
 								<div>
-									<div class="text-surface-600-300 text-sm">Plan</div>
+									<div class="text-sm text-surface-600-400">Plan</div>
 									<div class="font-semibold">Free</div>
 								</div>
 								<div>
-									<div class="text-surface-600-300 text-sm">
+									<div class="text-sm text-surface-600-400">
 										Attachment Retention
 									</div>
 									<div class="font-semibold">7 days</div>
@@ -728,7 +727,7 @@
 						<div class="space-y-3">
 							{#each user.team.members as member}
 								<div
-									class="border-surface-200-700 flex items-center gap-4 rounded-container border p-4"
+									class="flex items-center gap-4 rounded-container border border-surface-200-800 p-4"
 								>
 									<div class="flex-1">
 										<div class="font-semibold">
@@ -736,7 +735,7 @@
 												? `${member.firstName} ${member.lastName || ''}`
 												: member.email}
 										</div>
-										<div class="text-surface-600-300 text-sm">
+										<div class="text-sm text-surface-600-400">
 											{member.email}
 										</div>
 									</div>
@@ -752,7 +751,7 @@
 					{#if user.team.subscription && user.role === 'OWNER'}
 						<div class="card p-6">
 							<h3 class="mb-4 text-xl font-bold">Billing</h3>
-							<p class="text-surface-600-300 mb-4">
+							<p class="mb-4 text-surface-600-400">
 								Manage your subscription, update payment methods, and view invoices
 								through the Stripe Customer Portal.
 							</p>
@@ -770,9 +769,9 @@
 							</button>
 						</div>
 					{:else if user.team.subscription}
-						<div class="bg-surface-100-800 card p-6">
+						<div class="card bg-surface-100-900 p-6">
 							<h3 class="mb-2 text-xl font-bold">Billing</h3>
-							<p class="text-surface-600-300 text-sm">
+							<p class="text-sm text-surface-600-400">
 								Only the subscription owner can access billing settings. Contact
 								your team's subscription owner to manage billing, update payment
 								methods, or change seat count.
@@ -788,7 +787,7 @@
 								<h4 class="mb-1 font-semibold">
 									{user.team.members.length === 1 ? 'Delete Team' : 'Leave Team'}
 								</h4>
-								<p class="text-surface-600-300 text-sm">
+								<p class="text-sm text-surface-600-400">
 									{#if user.team.members.length === 1}
 										You are the only member. Leaving will permanently delete the
 										team and all associated data (projects, test cases, test
@@ -836,7 +835,7 @@
 						<Crown class="h-12 w-12 text-primary-500" />
 					</div>
 					<h2 class="mb-2 text-3xl font-bold">Unlock Team Features</h2>
-					<p class="text-surface-600-300 mx-auto mb-8 max-w-2xl text-lg">
+					<p class="mx-auto mb-8 max-w-2xl text-lg text-surface-600-400">
 						Create a team to collaborate with others, manage unlimited projects, and
 						access advanced features.
 					</p>
@@ -879,7 +878,7 @@
 				<!-- Header -->
 				<div class="card p-6">
 					<h2 class="mb-2 text-2xl font-bold">Integrations</h2>
-					<p class="text-surface-600-300">
+					<p class="text-surface-600-400">
 						Connect QA Studio with your favorite tools to receive notifications and
 						automate workflows
 					</p>
@@ -892,7 +891,7 @@
 					<div class="grid gap-4 md:grid-cols-2">
 						<!-- Slack Integration -->
 						{#if !user.team?.integrations?.some((i) => i.type === 'SLACK')}
-							<div class="border-surface-200-700 rounded-container border p-4">
+							<div class="rounded-container border border-surface-200-800 p-4">
 								<div class="mb-3 flex items-start gap-3">
 									<div
 										class="flex h-12 w-12 items-center justify-center rounded-container bg-[#4A154B]"
@@ -909,7 +908,7 @@
 									</div>
 									<div class="flex-1">
 										<h4 class="mb-1 font-bold">Slack</h4>
-										<p class="text-surface-600-300 text-sm">
+										<p class="text-sm text-surface-600-400">
 											Send test results and notifications to Slack channels
 										</p>
 									</div>
@@ -943,7 +942,7 @@
 
 						<!-- Jira Integration -->
 						{#if !user.team?.integrations?.some((i) => i.type === 'JIRA')}
-							<div class="border-surface-200-700 rounded-container border p-4">
+							<div class="rounded-container border border-surface-200-800 p-4">
 								<div class="mb-3 flex items-start gap-3">
 									<div
 										class="flex h-12 w-12 items-center justify-center rounded-container bg-[#0052CC]"
@@ -960,7 +959,7 @@
 									</div>
 									<div class="flex-1">
 										<h4 class="mb-1 font-bold">Jira</h4>
-										<p class="text-surface-600-300 text-sm">
+										<p class="text-sm text-surface-600-400">
 											Create and track issues from test failures
 										</p>
 									</div>
@@ -984,7 +983,7 @@
 
 						<!-- Twilio Integration -->
 						{#if !user.team?.twilioEnabled}
-							<div class="border-surface-200-700 rounded-container border p-4">
+							<div class="rounded-container border border-surface-200-800 p-4">
 								<div class="mb-3 flex items-start gap-3">
 									<div
 										class="flex h-12 w-12 items-center justify-center rounded-container bg-[#F22F46]"
@@ -1008,7 +1007,7 @@
 												PRO
 											</span>
 										</h4>
-										<p class="text-surface-600-300 text-sm">
+										<p class="text-sm text-surface-600-400">
 											Send and receive SMS for testing workflows
 										</p>
 									</div>
@@ -1041,7 +1040,7 @@
 						{/if}
 
 						<!-- More integrations coming soon -->
-						<div class="border-surface-200-700 rounded-container border p-4 opacity-50">
+						<div class="rounded-container border border-surface-200-800 p-4 opacity-50">
 							<div class="mb-3 flex items-start gap-3">
 								<div
 									class="flex h-12 w-12 items-center justify-center rounded-container bg-surface-200-800"
@@ -1050,7 +1049,7 @@
 								</div>
 								<div class="flex-1">
 									<h4 class="mb-1 font-bold">More Coming Soon</h4>
-									<p class="text-surface-600-300 text-sm">
+									<p class="text-sm text-surface-600-400">
 										GitHub, Microsoft Teams, Discord, and more
 									</p>
 								</div>
@@ -1071,7 +1070,7 @@
 							<!-- Twilio Integration -->
 							{#if user.team?.twilioEnabled}
 								<div
-									class="border-surface-200-700 group relative rounded-container border p-4"
+									class="group relative rounded-container border border-surface-200-800 p-4"
 								>
 									<!-- Action buttons -->
 									<div
@@ -1080,7 +1079,7 @@
 										<!-- Configure button -->
 										<a
 											href="/settings/integrations/twilio"
-											class="text-surface-600-300 rounded-container p-2 transition-colors hover:bg-primary-500/10 hover:text-primary-500"
+											class="rounded-container p-2 text-surface-600-400 transition-colors hover:bg-primary-500/10 hover:text-primary-500"
 											title="Configure Twilio"
 										>
 											<SettingsIcon class="h-4 w-4" />
@@ -1098,18 +1097,18 @@
 											</span>
 										</div>
 
-										<div class="text-surface-600-300 mb-2 text-sm">
+										<div class="mb-2 text-sm text-surface-600-400">
 											Type: SMS Messaging
 										</div>
 
 										{#if user.team.twilioPhoneNumber}
-											<div class="text-surface-600-300 mb-2 text-sm">
+											<div class="mb-2 text-sm text-surface-600-400">
 												Phone: {user.team.twilioPhoneNumber}
 											</div>
 										{/if}
 
 										<div
-											class="text-surface-600-300 flex items-center gap-4 text-xs"
+											class="flex items-center gap-4 text-xs text-surface-600-400"
 										>
 											<div>Connected</div>
 										</div>
@@ -1121,7 +1120,7 @@
 							{#each user.team?.integrations || [] as integration}
 								{@const StatusIcon = getStatusIcon(integration.status)}
 								<div
-									class="border-surface-200-700 group relative rounded-container border p-4"
+									class="group relative rounded-container border border-surface-200-800 p-4"
 								>
 									<!-- Action buttons -->
 									<div
@@ -1134,7 +1133,7 @@
 													integration.id,
 													integration.config
 												)}
-											class="text-surface-600-300 rounded-container p-2 transition-colors hover:bg-primary-500/10 hover:text-primary-500"
+											class="rounded-container p-2 text-surface-600-400 transition-colors hover:bg-primary-500/10 hover:text-primary-500"
 											title="Configure notifications"
 										>
 											<SettingsIcon class="h-4 w-4" />
@@ -1148,7 +1147,7 @@
 													integration.name
 												)}
 											disabled={deletingIntegrationId === integration.id}
-											class="text-surface-600-300 rounded-container p-2 transition-colors hover:bg-error-500/10 hover:text-error-500"
+											class="rounded-container p-2 text-surface-600-400 transition-colors hover:bg-error-500/10 hover:text-error-500"
 											title="Remove integration"
 										>
 											{#if deletingIntegrationId === integration.id}
@@ -1174,12 +1173,12 @@
 											</span>
 										</div>
 
-										<div class="text-surface-600-300 mb-2 text-sm">
+										<div class="mb-2 text-sm text-surface-600-400">
 											Type: {integration.type}
 										</div>
 
 										<div
-											class="text-surface-600-300 flex items-center gap-4 text-xs"
+											class="flex items-center gap-4 text-xs text-surface-600-400"
 										>
 											<div>
 												Connected: {new Date(
@@ -1229,7 +1228,7 @@
 			</div>
 
 			<!-- Description -->
-			<p class="text-surface-600-300 mb-6">
+			<p class="mb-6 text-surface-600-400">
 				Configure which events trigger notifications. Notifications will be sent to your
 				configured channel or webhook.
 			</p>
@@ -1238,16 +1237,16 @@
 			<div class="space-y-3">
 				{#each Object.entries(notificationSettings) as [event, enabled]}
 					<label
-						class="border-surface-200-700 flex cursor-pointer items-start gap-3 rounded-container border p-4 transition-colors hover:bg-surface-100-900"
+						class="flex cursor-pointer items-start gap-3 rounded-container border border-surface-200-800 p-4 transition-colors hover:bg-surface-100-900"
 					>
 						<input
 							type="checkbox"
 							bind:checked={notificationSettings[event]}
-							class="mt-1 h-4 w-4 rounded border-surface-300-700"
+							class="mt-1 h-4 w-4 rounded border-surface-200-800"
 						/>
 						<div class="flex-1">
 							<div class="mb-1 font-semibold">{getEventLabel(event)}</div>
-							<div class="text-surface-600-300 text-sm">
+							<div class="text-sm text-surface-600-400">
 								{getEventDescription(event)}
 							</div>
 						</div>
@@ -1292,13 +1291,13 @@
 	<!-- Dialog -->
 	<div class="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center p-4">
 		<div
-			class="border-surface-200-700 pointer-events-auto w-full max-w-md overflow-y-auto card border bg-surface-50-950 p-6 shadow-2xl"
+			class="pointer-events-auto w-full max-w-md overflow-y-auto card border border-surface-200-800 bg-surface-50-950 p-6 shadow-2xl"
 		>
 			<div class="mb-4 flex items-center justify-between">
 				<h2 class="text-xl font-bold">Update Seat Count</h2>
 				<button
 					onclick={() => (showSeatUpdateDialog = false)}
-					class="text-surface-500-400 hover:text-surface-900-50 rounded-base p-1 transition-colors"
+					class="rounded-base p-1 text-surface-500 transition-colors hover:text-surface-950-50"
 					aria-label="Close"
 				>
 					<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1313,7 +1312,7 @@
 			</div>
 
 			<div class="mb-4">
-				<p class="text-surface-600-300 mb-4 text-sm">
+				<p class="mb-4 text-sm text-surface-600-400">
 					Current team members: <strong>{user.team?.members.length || 0}</strong>
 				</p>
 
@@ -1322,7 +1321,7 @@
 					type="number"
 					bind:value={newSeats}
 					min={user.team?.members.length || 1}
-					class="w-full rounded-base border border-surface-300-700 bg-surface-100-900 px-3 py-2"
+					class="w-full rounded-base border border-surface-200-800 bg-surface-100-900 px-3 py-2"
 				/>
 
 				{#if newSeats < (user.team?.members.length || 0)}
@@ -1332,7 +1331,7 @@
 					</p>
 				{/if}
 
-				<p class="text-surface-500-400 mt-2 text-xs">
+				<p class="mt-2 text-xs text-surface-500">
 					Changes will be prorated on your next invoice.
 				</p>
 			</div>

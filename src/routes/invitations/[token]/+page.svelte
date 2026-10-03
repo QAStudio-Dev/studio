@@ -62,10 +62,10 @@
 
 	function getRoleBadge(role: string) {
 		const badges: Record<string, { class: string; icon: any }> = {
-			ADMIN: { class: 'preset-filled-error', icon: Shield },
-			MANAGER: { class: 'preset-filled-warning', icon: Shield },
-			TESTER: { class: 'preset-filled-primary', icon: UserCheck },
-			VIEWER: { class: 'preset-filled-surface', icon: Users }
+			ADMIN: { class: 'preset-filled-error-500', icon: Shield },
+			MANAGER: { class: 'preset-filled-warning-500', icon: Shield },
+			TESTER: { class: 'preset-filled-primary-500', icon: UserCheck },
+			VIEWER: { class: 'preset-filled-surface-500', icon: Users }
 		};
 		return badges[role] || badges.TESTER;
 	}
@@ -91,29 +91,29 @@
 					<Users class="h-8 w-8 text-primary-500" />
 				</div>
 				<h1 class="mb-2 text-2xl font-bold">You've been invited!</h1>
-				<p class="text-surface-600-300">Join {invitation.team.name} on QA Studio</p>
+				<p class="text-surface-600-400">Join {invitation.team.name} on QA Studio</p>
 			</div>
 
 			{#if error}
-				<div class="alert preset-filled-error mb-6">
+				<div class="alert mb-6 preset-filled-error-500">
 					<AlertCircle class="h-5 w-5" />
 					<p>{error}</p>
 				</div>
 			{/if}
 
 			<!-- Team Info -->
-			<div class="mb-6 rounded-container border border-surface-300-700 bg-surface-50-950 p-6">
+			<div class="mb-6 rounded-container border border-surface-200-800 bg-surface-50-950 p-6">
 				<h2 class="mb-4 font-medium">Team Details</h2>
 
 				<div class="space-y-3">
 					<div class="flex items-center justify-between">
-						<span class="text-surface-600-300">Team Name</span>
+						<span class="text-surface-600-400">Team Name</span>
 						<span class="font-medium">{invitation.team.name}</span>
 					</div>
 
 					{#if invitation.team.description}
 						<div class="flex items-start justify-between gap-4">
-							<span class="text-surface-600-300">Description</span>
+							<span class="text-surface-600-400">Description</span>
 							<span class="max-w-xs text-right font-medium"
 								>{invitation.team.description}</span
 							>
@@ -121,24 +121,24 @@
 					{/if}
 
 					<div class="flex items-center justify-between">
-						<span class="text-surface-600-300">Your Role</span>
+						<span class="text-surface-600-400">Your Role</span>
 						<span class="badge {getRoleBadge(invitation.role).class}">
 							{invitation.role}
 						</span>
 					</div>
 
 					<div class="flex items-center justify-between">
-						<span class="text-surface-600-300">Team Members</span>
+						<span class="text-surface-600-400">Team Members</span>
 						<span class="font-medium">{invitation.team.members.length}</span>
 					</div>
 
 					<div class="flex items-center justify-between">
-						<span class="text-surface-600-300">Invited To</span>
+						<span class="text-surface-600-400">Invited To</span>
 						<span class="font-medium">{invitation.email}</span>
 					</div>
 
 					<div class="flex items-center justify-between">
-						<span class="text-surface-600-300">Expires</span>
+						<span class="text-surface-600-400">Expires</span>
 						<span class="font-medium">{formatDate(invitation.expiresAt)}</span>
 					</div>
 				</div>
@@ -173,7 +173,7 @@
 			<!-- Role Description -->
 			<div class="mb-6 rounded-container bg-surface-100-900 p-4">
 				<h3 class="mb-2 text-sm font-medium">As a {invitation.role}, you'll be able to:</h3>
-				<ul class="text-surface-600-300 space-y-1 text-sm">
+				<ul class="space-y-1 text-sm text-surface-600-400">
 					{#if invitation.role === 'ADMIN'}
 						<li>• Full system access</li>
 						<li>• Manage users, teams, and all projects</li>
@@ -220,7 +220,7 @@
 						<AlertCircle class="mt-0.5 h-5 w-5 flex-shrink-0 text-warning-500" />
 						<div>
 							<h3 class="mb-1 font-medium text-warning-500">Sign in required</h3>
-							<p class="text-surface-600-300 mb-3 text-sm">
+							<p class="mb-3 text-sm text-surface-600-400">
 								You need to sign in or create an account to accept this invitation.
 								{#if invitation.email}
 									Make sure to use the email address: <strong
@@ -245,7 +245,7 @@
 		</div>
 
 		<!-- Footer Note -->
-		<p class="text-surface-600-300 mt-4 text-center text-sm">
+		<p class="mt-4 text-center text-sm text-surface-600-400">
 			By accepting, you agree to join this team and collaborate with its members
 		</p>
 	</div>

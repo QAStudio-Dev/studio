@@ -76,6 +76,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>New Project - QA Studio</title>
+</svelte:head>
+
 <div class="container mx-auto max-w-3xl px-4 py-12">
 	<!-- Header -->
 	<div class="mb-8">
@@ -85,13 +89,13 @@
 			</div>
 			<div>
 				<h1 class="text-3xl font-bold">Create New Project</h1>
-				<p class="text-surface-600-300">Organize your test cases by project</p>
+				<p class="text-surface-600-400">Organize your test cases by project</p>
 			</div>
 		</div>
 	</div>
 
 	{#if error}
-		<div class="alert preset-filled-error mb-6">
+		<div class="alert mb-6 preset-filled-error-500">
 			<AlertCircle class="h-5 w-5" />
 			<p>{error}</p>
 		</div>
@@ -107,11 +111,11 @@
 				</div>
 				<div class="flex-1">
 					<h2 class="mb-2 text-2xl font-bold">Upgrade to Create More Projects</h2>
-					<p class="text-surface-600-300 mb-4">
+					<p class="mb-4 text-surface-600-400">
 						You've reached the free plan limit of 1 project. Upgrade to Pro to create
 						unlimited projects and unlock powerful features:
 					</p>
-					<ul class="text-surface-700-200 mb-6 space-y-2">
+					<ul class="mb-6 space-y-2 text-surface-700-300">
 						<li class="flex items-center gap-2">
 							<div class="h-1.5 w-1.5 rounded-full bg-primary-500"></div>
 							<span>Unlimited projects</span>
@@ -182,7 +186,7 @@
 					maxlength="10"
 					required
 				/>
-				<p class="text-surface-600-300 mt-2 text-sm">
+				<p class="mt-2 text-sm text-surface-600-400">
 					2-10 uppercase letters or numbers. Used to identify test cases (e.g., {key ||
 						'PROJ'}-123)
 				</p>
@@ -226,8 +230,8 @@
 	</div>
 
 	<!-- Help Text -->
-	<div class="bg-surface-50-900 mt-6 rounded-container p-4 text-sm">
-		<p class="text-surface-600-300">
+	<div class="mt-6 rounded-container bg-surface-50-950 p-4 text-sm">
+		<p class="text-surface-600-400">
 			<strong>💡 Tip:</strong> Choose a short, memorable project key. It will be used as a prefix
 			for all test cases in this project.
 		</p>

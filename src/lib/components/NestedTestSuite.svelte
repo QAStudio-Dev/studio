@@ -98,7 +98,7 @@
 		draggable="true"
 		ondragstart={(e) => onDragStart?.(e, suite)}
 		ondragend={onDragEnd}
-		class="hover:bg-surface-100-800 flex w-full items-center gap-2 rounded-base px-3 py-2 transition-colors"
+		class="flex w-full items-center gap-2 rounded-base px-3 py-2 transition-colors hover:bg-surface-100-900"
 		style={indentStyle}
 	>
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -119,7 +119,7 @@
 					e.stopPropagation();
 					toggleSuite(suite.id, true);
 				}}
-				class="hover:bg-surface-100-800 flex items-center rounded p-0.5"
+				class="flex items-center rounded p-0.5 hover:bg-surface-100-900"
 				title={isExpanded ? 'Collapse' : 'Expand'}
 			>
 				{#if isExpanded}
@@ -132,7 +132,7 @@
 			<!-- Suite name button - scrolls to suite -->
 			<button
 				onclick={() => toggleSuite(suite.id, false)}
-				class="hover:bg-surface-100-800 py-0.1 flex min-w-0 flex-1 items-center gap-2 rounded px-1 text-left"
+				class="py-0.1 flex min-w-0 flex-1 items-center gap-2 rounded px-1 text-left hover:bg-surface-100-900"
 				title={suite.name}
 			>
 				<FolderOpen class="h-4 w-4 flex-shrink-0 text-primary-500" />
@@ -143,7 +143,7 @@
 					{suite.testCases?.length || 0}
 				</span>
 				<!-- {#if childSuites.length > 0}
-					<span class="text-surface-600-300 flex-shrink-0 text-xs">
+					<span class="text-surface-600-400 flex-shrink-0 text-xs">
 						({childSuites.length}
 						{childSuites.length === 1 ? 'suite' : 'suites'})
 					</span>

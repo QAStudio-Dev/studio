@@ -232,7 +232,7 @@ export default defineConfig({
 		<div class="mb-6 flex items-start justify-between">
 			<div>
 				<h1 class="mb-2 text-4xl font-bold">API Keys</h1>
-				<p class="text-surface-600-300 text-lg">
+				<p class="text-lg text-surface-600-400">
 					Manage API keys for integrating with QA Studio
 				</p>
 			</div>
@@ -257,7 +257,7 @@ export default defineConfig({
 				<AlertCircle class="mt-0.5 h-5 w-5 flex-shrink-0 text-primary-500" />
 				<div class="text-sm">
 					<p class="mb-1 font-medium">Security Notice</p>
-					<p class="text-surface-600-300">
+					<p class="text-surface-600-400">
 						API keys provide full access to your account. Keep them secure and never
 						share them in public repositories. You'll only see the full key once when
 						you create it.
@@ -272,7 +272,7 @@ export default defineConfig({
 		<div class="card p-12 text-center">
 			<Key class="mx-auto mb-4 h-16 w-16 text-surface-400" />
 			<h2 class="mb-2 text-2xl font-bold">No API keys yet</h2>
-			<p class="text-surface-600-300 mb-6">
+			<p class="mb-6 text-surface-600-400">
 				Create an API key to integrate with CI/CD pipelines, test runners, and other tools
 			</p>
 			<button onclick={() => (showCreateDialog = true)} class="btn preset-filled-primary-500">
@@ -296,11 +296,11 @@ export default defineConfig({
 								{/if}
 							</div>
 
-							<div class="text-surface-600-300 mb-3 font-mono text-sm">
+							<div class="mb-3 font-mono text-sm text-surface-600-400">
 								{apiKey.prefix}••••••••••••••••••••••••
 							</div>
 
-							<div class="text-surface-600-300 flex flex-wrap gap-4 text-sm">
+							<div class="flex flex-wrap gap-4 text-sm text-surface-600-400">
 								<div class="flex items-center gap-2">
 									<Calendar class="h-4 w-4" />
 									<span>Created {formatDate(apiKey.createdAt)}</span>
@@ -354,12 +354,12 @@ export default defineConfig({
 	<!-- Dialog -->
 	<div class="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center p-4">
 		<div
-			class="border-surface-200-700 pointer-events-auto w-full max-w-lg card border bg-surface-50-950 p-8 shadow-2xl"
+			class="pointer-events-auto w-full max-w-lg card border border-surface-200-800 bg-surface-50-950 p-8 shadow-2xl"
 		>
 			<h2 class="mb-6 text-2xl font-bold">Create API Key</h2>
 
 			{#if error}
-				<div class="alert preset-filled-error mb-4">
+				<div class="alert mb-4 preset-filled-error-500">
 					<AlertCircle class="h-5 w-5" />
 					<p>{error}</p>
 				</div>
@@ -383,7 +383,7 @@ export default defineConfig({
 						required
 						maxlength="100"
 					/>
-					<p class="text-surface-600-300 mt-1 text-sm">
+					<p class="mt-1 text-sm text-surface-600-400">
 						A descriptive name to help you identify this key
 					</p>
 				</label>
@@ -397,7 +397,7 @@ export default defineConfig({
 						<option value={180}>180 days</option>
 						<option value={365}>1 year</option>
 					</select>
-					<p class="text-surface-600-300 mt-1 text-sm">
+					<p class="mt-1 text-sm text-surface-600-400">
 						For security, consider setting an expiration date
 					</p>
 				</label>
@@ -439,7 +439,7 @@ export default defineConfig({
 	<!-- Dialog -->
 	<div class="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center p-4">
 		<div
-			class="border-surface-200-700 pointer-events-auto w-full max-w-2xl card border bg-surface-50-950 p-8 shadow-2xl"
+			class="pointer-events-auto w-full max-w-2xl card border border-surface-200-800 bg-surface-50-950 p-8 shadow-2xl"
 		>
 			<div class="mb-4 flex items-center gap-3">
 				<CheckCircle2 class="h-8 w-8 text-success-500" />
@@ -451,7 +451,7 @@ export default defineConfig({
 					<AlertCircle class="mt-0.5 h-5 w-5 flex-shrink-0 text-warning-500" />
 					<div class="text-sm">
 						<p class="mb-1 font-medium">Important: Save this key now!</p>
-						<p class="text-surface-600-300">
+						<p class="text-surface-600-400">
 							This is the only time you'll see the full API key. Make sure to copy it
 							and store it securely.
 						</p>
@@ -483,7 +483,7 @@ export default defineConfig({
 				</div>
 			</label>
 
-			<div class="bg-surface-50-900 mb-6 rounded-container p-4">
+			<div class="mb-6 rounded-container bg-surface-50-950 p-4">
 				<p class="mb-2 text-sm font-medium">Example usage:</p>
 				<pre class="overflow-x-auto text-xs"><code
 						>curl https://qastudio.com/api/results \
@@ -516,12 +516,12 @@ export default defineConfig({
 	<!-- Dialog -->
 	<div class="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center p-4">
 		<div
-			class="border-surface-200-700 pointer-events-auto max-h-[90vh] w-full max-w-4xl overflow-y-auto card border bg-surface-50-950 p-8 shadow-2xl"
+			class="pointer-events-auto max-h-[90vh] w-full max-w-4xl overflow-y-auto card border border-surface-200-800 bg-surface-50-950 p-8 shadow-2xl"
 		>
 			<div class="mb-6 flex items-start justify-between">
 				<div>
 					<h2 class="mb-2 text-2xl font-bold">Playwright Configuration Example</h2>
-					<p class="text-surface-600-300">
+					<p class="text-surface-600-400">
 						Complete <code class="rounded bg-surface-200-800 px-1.5 py-0.5 text-sm"
 							>playwright.config.ts</code
 						> with QA Studio reporter
@@ -565,14 +565,14 @@ export default defineConfig({
 								<p class="mb-1 font-medium">
 									Create or update <code>playwright.config.ts</code>
 								</p>
-								<p class="text-surface-600-300">Copy the configuration below</p>
+								<p class="text-surface-600-400">Copy the configuration below</p>
 							</div>
 						</li>
 						<li class="flex gap-2">
 							<span class="font-bold text-primary-500">3.</span>
 							<div>
 								<p class="mb-1 font-medium">Update the configuration</p>
-								<ul class="text-surface-600-300 mt-1 ml-4 list-disc space-y-1">
+								<ul class="mt-1 ml-4 list-disc space-y-1 text-surface-600-400">
 									<li>
 										Replace <code>YOUR_PROJECT_KEY</code> with your project key (e.g.,
 										'PROJ')
@@ -610,7 +610,7 @@ export default defineConfig({
 					</button>
 				</div>
 				<div
-					class="max-h-96 overflow-auto rounded-container border border-surface-300-700 bg-surface-900"
+					class="max-h-96 overflow-auto rounded-container border border-surface-200-800 bg-surface-900"
 				>
 					<pre class="p-4 text-xs leading-relaxed text-surface-50"><code
 							>{getPlaywrightConfig(
@@ -624,10 +624,10 @@ export default defineConfig({
 
 			<!-- Environment Variables Section -->
 			<div
-				class="mb-6 rounded-container border border-surface-300-700 bg-surface-100-900 p-4"
+				class="mb-6 rounded-container border border-surface-200-800 bg-surface-100-900 p-4"
 			>
 				<h3 class="mb-3 text-sm font-semibold">Optional: Using Environment Variables</h3>
-				<p class="text-surface-600-300 mb-3 text-sm">
+				<p class="mb-3 text-sm text-surface-600-400">
 					For better security, store your API key in environment variables:
 				</p>
 
@@ -675,7 +675,7 @@ ENVIRONMENT=QA</code
 
 			<!-- CI/CD Integration -->
 			<div
-				class="mb-6 rounded-container border border-surface-300-700 bg-surface-100-900 p-4"
+				class="mb-6 rounded-container border border-surface-200-800 bg-surface-100-900 p-4"
 			>
 				<h3 class="mb-3 text-sm font-semibold">CI/CD Integration Examples</h3>
 

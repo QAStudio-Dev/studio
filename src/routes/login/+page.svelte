@@ -457,8 +457,11 @@
 			</div>
 
 			<!-- Footer -->
-			<p class="mt-8 text-center text-xs text-surface-500 dark:text-surface-500">
-				By signing in, you agree to our Terms of Service and Privacy Policy
+			<p class="mt-8 text-center text-xs text-surface-600-400">
+				By signing in, you agree to our
+				<a href="/terms" class="underline hover:text-primary-500">Terms of Service</a>
+				and
+				<a href="/privacy" class="underline hover:text-primary-500">Privacy Policy</a>
 			</p>
 		</div>
 	</div>

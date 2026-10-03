@@ -164,7 +164,7 @@
 				</div>
 				<div class="flex-1">
 					<h1 class="mb-2 text-4xl font-bold">Twilio SMS Integration</h1>
-					<p class="text-surface-600-300 text-lg">
+					<p class="text-lg text-surface-600-400">
 						Send and receive SMS messages for automated testing and verification
 						workflows
 					</p>
@@ -182,7 +182,7 @@
 			<span class="rounded-base bg-primary-500 px-2 py-1 text-xs font-semibold text-white">
 				PRO / ENTERPRISE
 			</span>
-			<span class="text-surface-600-300 text-sm">
+			<span class="text-sm text-surface-600-400">
 				This feature requires a Pro or Enterprise plan
 			</span>
 		</div>
@@ -190,7 +190,7 @@
 
 	{#if loading}
 		<div class="card p-6 text-center">
-			<p class="text-surface-600-300">Loading configuration...</p>
+			<p class="text-surface-600-400">Loading configuration...</p>
 		</div>
 	{:else}
 		<!-- Configuration Form -->
@@ -241,7 +241,7 @@
 						autocomplete="off"
 						required
 					/>
-					<p class="text-surface-500-400 mt-1 text-xs">
+					<p class="mt-1 text-xs text-surface-500">
 						Find this in your Twilio Console under Account Info
 					</p>
 				</div>
@@ -261,7 +261,7 @@
 						autocomplete="off"
 						required
 					/>
-					<p class="text-surface-500-400 mt-1 text-xs">
+					<p class="mt-1 text-xs text-surface-500">
 						Your Auth Token will be encrypted before storage
 					</p>
 				</div>
@@ -280,7 +280,7 @@
 						class="input w-full"
 						required
 					/>
-					<p class="text-surface-500-400 mt-1 text-xs">
+					<p class="mt-1 text-xs text-surface-500">
 						Must be in E.164 format (e.g., +15551234567). This is your Twilio phone
 						number.
 					</p>
@@ -290,7 +290,7 @@
 				<div>
 					<label for="messagingUrl" class="mb-1 block text-sm font-medium">
 						Messaging Service SID or Webhook URL
-						<span class="text-surface-500-400">(Optional)</span>
+						<span class="text-surface-500">(Optional)</span>
 					</label>
 					<input
 						id="messagingUrl"
@@ -299,7 +299,7 @@
 						placeholder="MGxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx or https://..."
 						class="input w-full"
 					/>
-					<p class="text-surface-500-400 mt-1 text-xs">
+					<p class="mt-1 text-xs text-surface-500">
 						Optional: Use a Messaging Service SID for advanced features
 					</p>
 				</div>
@@ -335,7 +335,7 @@
 			<div class="space-y-4">
 				<div>
 					<h3 class="mb-2 font-semibold">1. Get Your Twilio Credentials</h3>
-					<p class="text-surface-600-300 mb-2 text-sm">
+					<p class="mb-2 text-sm text-surface-600-400">
 						Visit your
 						<a
 							href="https://console.twilio.com/"
@@ -352,7 +352,7 @@
 
 				<div>
 					<h3 class="mb-2 font-semibold">2. Purchase a Phone Number</h3>
-					<p class="text-surface-600-300 text-sm">
+					<p class="text-sm text-surface-600-400">
 						If you don't have one, purchase a phone number from Twilio's Phone Numbers
 						section. Make sure it has SMS capabilities enabled.
 					</p>
@@ -360,7 +360,7 @@
 
 				<div>
 					<h3 class="mb-2 font-semibold">3. Configure Webhook (Optional)</h3>
-					<p class="text-surface-600-300 mb-2 text-sm">
+					<p class="mb-2 text-sm text-surface-600-400">
 						To receive incoming SMS messages, configure your Twilio phone number's
 						webhook URL to:
 					</p>
@@ -376,13 +376,13 @@
 						<h3 class="font-semibold">4. Complete A2P 10DLC Registration (US Only)</h3>
 						<button
 							onclick={() => (showA2PModal = true)}
-							class="preset-tonal-primary-500 btn flex items-center gap-1 btn-sm"
+							class="btn flex items-center gap-1 preset-tonal-primary btn-sm"
 						>
 							<HelpCircle class="h-4 w-4" />
 							See Form Examples
 						</button>
 					</div>
-					<p class="text-surface-600-300 mb-2 text-sm">
+					<p class="mb-2 text-sm text-surface-600-400">
 						If you're sending SMS to US numbers, you must register for A2P
 						(Application-to-Person) 10DLC to avoid filtering and ensure deliverability.
 					</p>
@@ -397,7 +397,7 @@
 					</div>
 
 					<div class="space-y-2 text-sm">
-						<p class="text-surface-600-300">
+						<p class="text-surface-600-400">
 							In the Twilio Console, go to <strong
 								>Messaging → Regulatory Compliance → Campaigns</strong
 							> and create a new campaign. Click "See Form Examples" above for detailed
@@ -405,7 +405,7 @@
 						</p>
 
 						<div class="rounded-container bg-surface-100-900 p-3">
-							<p class="text-surface-600-300 mb-2 text-xs">
+							<p class="mb-2 text-xs text-surface-600-400">
 								<strong>Need help?</strong> See Twilio's official A2P registration guide:
 							</p>
 							<a
@@ -423,7 +423,7 @@
 
 				<div>
 					<h3 class="mb-2 font-semibold">5. Start Testing</h3>
-					<p class="text-surface-600-300 text-sm">
+					<p class="text-sm text-surface-600-400">
 						Once A2P registration is complete (for US numbers), use the Twilio SMS API
 						to send test messages and verify your integration is working correctly.
 					</p>
@@ -471,7 +471,7 @@
 									value="Definitely Not a Test Company LLC"
 									onclick={(e) => e.currentTarget.select()}
 								/>
-								<p class="text-surface-500-400 mt-2 text-xs">
+								<p class="mt-2 text-xs text-surface-500">
 									Click to select, then copy. Replace with your actual business
 									name.
 								</p>
@@ -492,14 +492,14 @@
 									value="Low Volume Mixed"
 									onclick={(e) => e.currentTarget.select()}
 								/>
-								<p class="text-surface-500-400 mt-2 text-xs">
+								<p class="mt-2 text-xs text-surface-500">
 									<strong>Recommended for QA/Testing:</strong> "Low Volume Mixed" is
 									the best choice for testing purposes as it covers multiple message
 									types and has the fastest approval time.
 								</p>
 							</div>
 
-							<div class="text-surface-600-300 space-y-2 text-sm">
+							<div class="space-y-2 text-sm text-surface-600-400">
 								<p><strong>Other common use cases:</strong></p>
 								<ul class="ml-4 list-disc space-y-1">
 									<li>
@@ -532,7 +532,7 @@
 								>This campaign sends one-time passcodes to the end users when they
 								try to log into our company's website.</textarea
 							>
-							<p class="text-surface-500-400 mt-2 text-xs">
+							<p class="mt-2 text-xs text-surface-500">
 								Click to select all text, then copy. Replace "company's website"
 								with your actual use case.
 							</p>
@@ -542,14 +542,14 @@
 					<!-- Sample Messages -->
 					<div>
 						<h3 class="mb-3 text-lg font-bold">Sample Messages (5 Required)</h3>
-						<p class="text-surface-600-300 mb-3 text-sm">
+						<p class="mb-3 text-sm text-surface-600-400">
 							Click on each message to select and copy. You need to provide 5
 							different examples.
 						</p>
 
 						<div class="space-y-3">
 							<div class="rounded-container bg-surface-100-900 p-3">
-								<div class="text-surface-500-400 mb-1 text-xs font-medium">
+								<div class="mb-1 text-xs font-medium text-surface-500">
 									Sample Message #1
 								</div>
 								<input
@@ -562,7 +562,7 @@
 							</div>
 
 							<div class="rounded-container bg-surface-100-900 p-3">
-								<div class="text-surface-500-400 mb-1 text-xs font-medium">
+								<div class="mb-1 text-xs font-medium text-surface-500">
 									Sample Message #2
 								</div>
 								<input
@@ -575,7 +575,7 @@
 							</div>
 
 							<div class="rounded-container bg-surface-100-900 p-3">
-								<div class="text-surface-500-400 mb-1 text-xs font-medium">
+								<div class="mb-1 text-xs font-medium text-surface-500">
 									Sample Message #3
 								</div>
 								<input
@@ -588,7 +588,7 @@
 							</div>
 
 							<div class="rounded-container bg-surface-100-900 p-3">
-								<div class="text-surface-500-400 mb-1 text-xs font-medium">
+								<div class="mb-1 text-xs font-medium text-surface-500">
 									Sample Message #4
 								</div>
 								<input
@@ -601,7 +601,7 @@
 							</div>
 
 							<div class="rounded-container bg-surface-100-900 p-3">
-								<div class="text-surface-500-400 mb-1 text-xs font-medium">
+								<div class="mb-1 text-xs font-medium text-surface-500">
 									Sample Message #5
 								</div>
 								<input
@@ -619,7 +619,7 @@
 					<div>
 						<h3 class="mb-3 text-lg font-bold">Message Contents</h3>
 						<div class="rounded-container bg-surface-100-900 p-4">
-							<p class="text-surface-600-300 mb-3 text-sm">
+							<p class="mb-3 text-sm text-surface-600-400">
 								Check all that apply to your messages:
 							</p>
 							<div class="space-y-2">
@@ -646,7 +646,7 @@
 									<span class="text-sm">Messages include age-gated content.</span>
 								</label>
 							</div>
-							<p class="text-surface-500-400 mt-3 text-xs">
+							<p class="mt-3 text-xs text-surface-500">
 								<strong>For 2FA/verification codes:</strong> Typically none of these boxes
 								need to be checked unless your codes include links or phone numbers.
 							</p>
@@ -673,7 +673,7 @@
 								data rates may apply. Reply STOP to opt-out at any time or HELP for
 								assistance." Users must click "I Agree" to complete opt-in.</textarea
 							>
-							<p class="text-surface-500-400 mt-2 text-xs">
+							<p class="mt-2 text-xs text-surface-500">
 								Click to select and copy. This is a complete, realistic example you
 								can adapt to your actual opt-in process.
 							</p>
@@ -694,7 +694,7 @@
 								value="SUBSCRIBE, START"
 								onclick={(e) => e.currentTarget.select()}
 							/>
-							<p class="text-surface-500-400 mt-2 text-xs">
+							<p class="mt-2 text-xs text-surface-500">
 								Click to select and copy. For 2FA/verification codes, you can leave
 								this blank in Twilio's form if users don't text keywords to opt-in.
 							</p>
@@ -714,7 +714,7 @@
 								>Acme Corporation: You are now opted-in. For help, reply HELP. To
 								opt-out, reply STOP.</textarea
 							>
-							<p class="text-surface-500-400 mt-2 text-xs">
+							<p class="mt-2 text-xs text-surface-500">
 								Click to select and copy. Replace "Acme Corporation" with your
 								company name. Must include HELP and STOP instructions.
 							</p>
@@ -733,7 +733,7 @@
 								>
 									Need More Help?
 								</p>
-								<p class="text-surface-600-300 mb-3 text-sm">
+								<p class="mb-3 text-sm text-surface-600-400">
 									For detailed guidance and screenshots of the actual Twilio A2P
 									registration form:
 								</p>

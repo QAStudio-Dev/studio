@@ -17,16 +17,19 @@ export default new API(import.meta.glob('./**/*.ts'), {
 
 ## Authentication
 
-Most endpoints require authentication via Clerk. Include your session token in the Authorization header:
+Most endpoints require an API key. Create one under **Settings → API Keys**, then send it with every request using either header:
 
 \`\`\`
-Authorization: Bearer <your-session-token>
+Authorization: Bearer <your-api-key>
+X-API-Key: <your-api-key>
 \`\`\`
+
+Requests made from the QA Studio web app are authenticated with your session cookie automatically.
 
 ## Base URL
 
 Production: \`https://qastudio.dev/api\`
-Development: \`http://localhost:5173/api\`
+Development: \`http://localhost:3000/api\`
 		`
 	},
 	servers: [
@@ -35,7 +38,7 @@ Development: \`http://localhost:5173/api\`
 			description: 'Production server'
 		},
 		{
-			url: 'http://localhost:5173/api',
+			url: 'http://localhost:3000/api',
 			description: 'Development server'
 		}
 	],
