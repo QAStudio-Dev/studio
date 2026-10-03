@@ -38,14 +38,14 @@ export class AuthPage extends BasePage {
 		this.successMessage = page.locator('.success, .text-success-500');
 
 		// Login page
-		this.forgotPasswordLink = page.locator('a[href*="forgot-password"]');
-		this.signupLink = page.locator('a[href*="signup"]');
+		this.forgotPasswordLink = page.getByRole('main').locator('a[href*="forgot-password"]');
+		this.signupLink = page.getByRole('main').getByRole('link', { name: 'Sign up for free' });
 
 		// Signup page
 		this.firstNameInput = page.locator('input[name="firstName"]');
 		this.lastNameInput = page.locator('input[name="lastName"]');
 		this.confirmPasswordInput = page.locator('input[name="confirmPassword"]');
-		this.loginLink = page.locator('a[href*="login"]');
+		this.loginLink = page.getByRole('main').getByRole('link', { name: 'Sign in' });
 
 		// Password reset
 		this.newPasswordInput = page.locator('input[name="newPassword"], input[name="password"]');
