@@ -229,9 +229,10 @@ npm run dev
 ### PR Review Process
 
 1. **Automated checks** - CI runs formatting (`npm run format`), type checking (`npm run check`), and tests — run these locally before pushing (see step 3 above)
-2. **Code review** - A maintainer will review your code
-3. **Feedback** - Address any requested changes
-4. **Approval** - Once approved, a maintainer will merge
+2. **CodeRabbit** - PRs are reviewed by CodeRabbit using [`.coderabbit.yaml`](.coderabbit.yaml). Path-specific review guidance lives there; coding standards are also read from `AGENTS.md`, `claude.md`, and `docs/`. Draft PRs and titles containing `WIP` or `DO NOT MERGE` are skipped. Use `@coderabbitai summary` in the PR description to fill in the high-level summary placeholder.
+3. **Code review** - A maintainer will review your code
+4. **Feedback** - Address any requested changes
+5. **Approval** - Once approved, a maintainer will merge
 
 **Tips for faster reviews:**
 
