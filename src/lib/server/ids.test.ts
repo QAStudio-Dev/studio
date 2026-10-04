@@ -8,6 +8,7 @@ import {
 	generateEnvironmentId,
 	generateMilestoneId,
 	generateAttachmentId,
+	generateTestStepId,
 	generateTeamId,
 	generateUserId
 } from './ids';
@@ -54,6 +55,11 @@ describe('ID Generators', () => {
 			expect(id).toHaveLength(4);
 		});
 
+		it('should generate test step IDs with correct length (8 chars)', () => {
+			const id = generateTestStepId();
+			expect(id).toHaveLength(8);
+		});
+
 		it('should generate team IDs with correct length (6 chars)', () => {
 			const id = generateTeamId();
 			expect(id).toHaveLength(6);
@@ -85,6 +91,11 @@ describe('ID Generators', () => {
 
 		it('should generate attachment IDs with only alphanumeric characters', () => {
 			const id = generateAttachmentId();
+			expect(id).toMatch(alphanumericRegex);
+		});
+
+		it('should generate test step IDs with only alphanumeric characters', () => {
+			const id = generateTestStepId();
 			expect(id).toMatch(alphanumericRegex);
 		});
 
@@ -248,6 +259,7 @@ describe('ID Generators', () => {
 			expect(typeof generateTestRunId()).toBe('string');
 			expect(typeof generateTestCaseId()).toBe('string');
 			expect(typeof generateAttachmentId()).toBe('string');
+			expect(typeof generateTestStepId()).toBe('string');
 		});
 
 		it('should never return empty strings', () => {

@@ -1,18 +1,27 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { waitUntil } from '@vercel/functions';
 import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
 import { notifyTestRunCompleted, notifyTestRunFailed } from '$lib/server/integrations';
+import { deleteCache, CacheKeys } from '$lib/server/redis';
+
+function continueAfterResponse(task: Promise<unknown>): void {
+	try {
+		waitUntil(task);
+	} catch {
+		void task;
+	}
+}
 
 /**
  * POST /api/runs/[runId]/complete
- * Mark a test run as completed and send notifications
+ * Mark a test run as completed and send notifications in the background
  */
 export const POST: RequestHandler = async (event) => {
 	const userId = await requireApiAuth(event);
 	const { runId } = event.params;
 
-	// Get test run with project and results
 	const testRun = await db.testRun.findUnique({
 		where: { id: runId },
 		include: {
@@ -23,11 +32,6 @@ export const POST: RequestHandler = async (event) => {
 					teamId: true,
 					createdBy: true
 				}
-			},
-			results: {
-				select: {
-					status: true
-				}
 			}
 		}
 	});
@@ -36,7 +40,6 @@ export const POST: RequestHandler = async (event) => {
 		throw error(404, { message: 'Test run not found' });
 	}
 
-	// Check access
 	const user = await db.user.findUnique({
 		where: { id: userId },
 		select: { teamId: true }
@@ -50,7 +53,6 @@ export const POST: RequestHandler = async (event) => {
 		throw error(403, { message: 'You do not have access to this test run' });
 	}
 
-	// Update test run status
 	const updatedTestRun = await db.testRun.update({
 		where: { id: runId },
 		data: {
@@ -59,45 +61,61 @@ export const POST: RequestHandler = async (event) => {
 		}
 	});
 
-	// Calculate stats
-	const passed = testRun.results.filter((r) => r.status === 'PASSED').length;
-	const failed = testRun.results.filter((r) => r.status === 'FAILED').length;
-	const skipped = testRun.results.filter((r) => r.status === 'SKIPPED').length;
-	const total = testRun.results.length;
-	// Pass rate excludes skipped tests (industry standard)
+	const statusCounts = await db.testResult.groupBy({
+		by: ['status'],
+		where: { testRunId: runId },
+		_count: { status: true }
+	});
+
+	const countByStatus = Object.fromEntries(
+		statusCounts.map((row) => [row.status, row._count.status])
+	) as Record<string, number>;
+
+	const passed = countByStatus.PASSED ?? 0;
+	const failed = countByStatus.FAILED ?? 0;
+	const skipped = countByStatus.SKIPPED ?? 0;
+	const total = statusCounts.reduce((sum, row) => sum + row._count.status, 0);
 	const executedTests = passed + failed;
 	const passRate = executedTests > 0 ? Math.round((passed / executedTests) * 100) : 0;
 
-	// Send notifications if team exists
-	if (testRun.project.teamId) {
-		try {
-			// Send test run failed notification if there are failures
-			if (failed > 0) {
-				await notifyTestRunFailed(testRun.project.teamId, {
-					id: testRun.id,
-					name: testRun.name,
-					projectId: testRun.projectId,
-					projectName: testRun.project.name,
-					failedCount: failed
-				});
-			}
+	await deleteCache([
+		CacheKeys.testRun(runId),
+		CacheKeys.testResults(runId),
+		CacheKeys.project(testRun.projectId)
+	]);
 
-			// Always send test run completed notification
-			await notifyTestRunCompleted(testRun.project.teamId, {
-				id: testRun.id,
-				name: testRun.name,
-				projectId: testRun.projectId,
-				projectName: testRun.project.name,
-				passRate,
-				total,
-				passed,
-				failed,
-				skipped
-			});
-		} catch (notificationError) {
-			console.error('Failed to send notifications:', notificationError);
-			// Don't fail the request
-		}
+	if (testRun.project.teamId) {
+		const teamId = testRun.project.teamId;
+		const notificationPayload = {
+			id: testRun.id,
+			name: testRun.name,
+			projectId: testRun.projectId,
+			projectName: testRun.project.name
+		};
+
+		continueAfterResponse(
+			(async () => {
+				try {
+					if (failed > 0) {
+						await notifyTestRunFailed(teamId, {
+							...notificationPayload,
+							failedCount: failed
+						});
+					}
+
+					await notifyTestRunCompleted(teamId, {
+						...notificationPayload,
+						passRate,
+						total,
+						passed,
+						failed,
+						skipped
+					});
+				} catch (notificationError) {
+					console.error('Failed to send notifications:', notificationError);
+				}
+			})()
+		);
 	}
 
 	return json({

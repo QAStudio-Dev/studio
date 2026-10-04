@@ -30,14 +30,26 @@ vi.mock('$lib/server/db', () => ({
 		testRun: {
 			findUnique: vi.fn()
 		},
+		user: {
+			findUnique: vi.fn()
+		},
 		testCase: {
-			create: vi.fn()
+			create: vi.fn(),
+			findMany: vi.fn()
 		},
 		testResult: {
-			create: vi.fn()
+			create: vi.fn(),
+			findFirst: vi.fn()
 		},
 		testStepResult: {
 			createMany: vi.fn()
+		},
+		testSuite: {
+			findFirst: vi.fn(),
+			create: vi.fn()
+		},
+		attachment: {
+			create: vi.fn()
 		}
 	}
 }));
@@ -48,7 +60,9 @@ vi.mock('$lib/server/api-auth', () => ({
 
 vi.mock('$lib/server/blob-storage', () => ({
 	uploadAttachment: vi.fn(),
-	deleteAttachment: vi.fn()
+	deleteAttachment: vi.fn(),
+	uploadToBlob: vi.fn(),
+	generateAttachmentPath: vi.fn()
 }));
 
 vi.mock('$lib/server/integrations', () => ({
@@ -57,13 +71,18 @@ vi.mock('$lib/server/integrations', () => ({
 
 vi.mock('$lib/server/ids', () => ({
 	generateTestCaseId: vi.fn(() => 'TC_test123'),
-	generateTestResultId: vi.fn(() => 'TR_test123')
+	generateTestResultId: vi.fn(() => 'TR_test123'),
+	generateTestSuiteId: vi.fn(() => 'TS_test123'),
+	generateAttachmentId: vi.fn(() => 'AT_test123')
 }));
 
 vi.mock('$lib/server/redis', () => ({
 	getCachedValue: vi.fn(),
 	setCachedValue: vi.fn()
 }));
+
+import { db } from '$lib/server/db';
+import resultsEndpoint, { Input } from './POST';
 
 describe('POST /api/results - Duplicate Detection', () => {
 	beforeEach(() => {
@@ -518,6 +537,70 @@ describe('POST /api/results - Duplicate Detection', () => {
 			expect(response.processedCount).toBe(0);
 			expect(response.errors).toHaveLength(totalSubmitted);
 			expect(response.results).toHaveLength(0);
+		});
+
+		it('should accept optional reporter testCaseId on each result', () => {
+			const parsed = Input.parse({
+				testRunId: 'run1',
+				results: [
+					{
+						testCaseId: 'ab12',
+						title: 'Login',
+						fullTitle: 'Auth > Login',
+						status: 'passed' as const,
+						duration: 100,
+						retry: 0
+					}
+				]
+			});
+
+			expect(parsed.results[0].testCaseId).toBe('ab12');
+			expect(parsed.results[0].title).toBe('Login');
+		});
+
+		it('should reuse an existing test case when testCaseId matches', async () => {
+			vi.mocked(db.testRun.findUnique).mockResolvedValue({
+				id: 'run1',
+				projectId: 'proj1',
+				project: {
+					id: 'proj1',
+					name: 'App',
+					teamId: 'team1',
+					createdBy: 'user123'
+				}
+			} as any);
+			vi.mocked(db.user.findUnique).mockResolvedValue({ teamId: 'team1' } as any);
+			vi.mocked(db.testCase.findMany).mockResolvedValue([
+				{ id: 'ab12', title: 'Login', suiteId: 'suite1' }
+			] as any);
+			vi.mocked(db.testSuite.findFirst).mockResolvedValue({
+				id: 'suite1',
+				name: 'Auth'
+			} as any);
+			vi.mocked(db.testResult.create).mockResolvedValue({ id: 'TR_test123' } as any);
+			vi.mocked(db.testStepResult.createMany).mockResolvedValue({ count: 0 } as any);
+
+			const response = await resultsEndpoint.default(
+				{
+					testRunId: 'run1',
+					results: [
+						{
+							testCaseId: 'ab12',
+							title: 'Login',
+							fullTitle: 'Auth > Login',
+							status: 'passed',
+							duration: 100,
+							retry: 0
+						}
+					]
+				} as any,
+				{} as any
+			);
+
+			expect(db.testCase.create).not.toHaveBeenCalled();
+			expect(response.processedCount).toBe(1);
+			expect(response.results[0].testCaseId).toBe('ab12');
+			expect(response.results[0].created).toBe(false);
 		});
 	});
 

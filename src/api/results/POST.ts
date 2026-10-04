@@ -2,14 +2,13 @@ import { Endpoint, z, error } from 'sveltekit-api';
 import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
 import { uploadToBlob, generateAttachmentPath } from '$lib/server/blob-storage';
-import { sendNotification, notifyTestRunCompleted } from '$lib/server/integrations';
 import {
 	generateTestCaseId,
 	generateTestResultId,
 	generateTestSuiteId,
 	generateAttachmentId
 } from '$lib/server/ids';
-import { deleteCache, CacheKeys } from '$lib/server/redis';
+import { mapStatus, parseDateTime, processTestSteps, type TestStepInput } from './steps';
 
 // Define location schema for reuse
 const LocationSchema = z.object({
@@ -17,19 +16,6 @@ const LocationSchema = z.object({
 	line: z.number(),
 	column: z.number().optional()
 });
-
-// Define recursive step schema with proper typing
-type TestStepInput = {
-	title: string;
-	category?: 'hook' | 'test.step' | 'pw:api' | 'expect' | 'fixture' | 'other';
-	status?: 'passed' | 'failed' | 'skipped' | 'timedout';
-	startTime?: string;
-	duration?: number;
-	error?: string;
-	stackTrace?: string;
-	location?: z.infer<typeof LocationSchema>;
-	steps?: TestStepInput[];
-};
 
 const BaseTestStep = z.object({
 	title: z.string().describe('Step title'),
@@ -60,6 +46,10 @@ export const Input = z.object({
 	results: z
 		.array(
 			z.object({
+				testCaseId: z
+					.string()
+					.optional()
+					.describe('Existing QA Studio test case ID when known'),
 				title: z.string().describe('Test case title'),
 				fullTitle: z
 					.string()
@@ -241,90 +231,8 @@ function getExtensionFromMimeType(mimeType: string): string {
 	return mimeToExt[mimeType.toLowerCase()] || 'bin';
 }
 
-/**
- * Parse and validate ISO 8601 date string
- */
-function parseDateTime(dateString: string | undefined): Date | null {
-	if (!dateString) return null;
-	const date = new Date(dateString);
-	// Check if date is valid
-	return isNaN(date.getTime()) ? null : date;
-}
-
-/**
- * Map test/step status to TestStatus enum with validation
- */
-function mapStatus(
-	status: string | undefined,
-	logWarning = false
-): 'PASSED' | 'FAILED' | 'SKIPPED' {
-	const normalized = status?.toLowerCase();
-	switch (normalized) {
-		case 'passed':
-			return 'PASSED';
-		case 'failed':
-		case 'timedout': // lowercase (API standard)
-			return 'FAILED';
-		case 'skipped':
-		case 'interrupted':
-			return 'SKIPPED';
-		default:
-			if (logWarning && status) {
-				console.warn(`Unknown status "${status}" defaulting to SKIPPED`);
-			}
-			return 'SKIPPED';
-	}
-}
-
-/**
- * Helper function to recursively process test steps and save to database
- * Step numbering is scoped to each parent level (restarts at 0 for each nesting level)
- * Errors in individual steps are logged but don't fail the entire result
- */
-async function processTestSteps(
-	steps: TestStepInput[],
-	testResultId: string,
-	parentStepId: string | null = null
-): Promise<void> {
-	if (!steps || steps.length === 0) return;
-
-	for (let i = 0; i < steps.length; i++) {
-		const step = steps[i];
-
-		try {
-			// Create the step record
-			const stepRecord = await db.testStepResult.create({
-				data: {
-					testResultId,
-					parentStepId,
-					stepNumber: i, // Scoped to parent level
-					title: step.title || 'Untitled Step',
-					category: step.category || null,
-					status: mapStatus(step.status, true),
-					duration: step.duration || null,
-					startTime: parseDateTime(step.startTime),
-					error: step.error || null,
-					stackTrace: step.stackTrace || null,
-					location: step.location || undefined
-				}
-			});
-
-			// Recursively process nested steps
-			if (step.steps && Array.isArray(step.steps) && step.steps.length > 0) {
-				await processTestSteps(step.steps, testResultId, stepRecord.id);
-			}
-		} catch (err: any) {
-			console.error(
-				`Failed to process step ${i} for testResultId ${testResultId}:`,
-				err.message,
-				step
-			);
-			// Continue processing remaining steps instead of failing entire result
-		}
-	}
-}
-
 type TestResultData = {
+	testCaseId?: string;
 	title: string;
 	fullTitle?: string;
 	duration?: number;
@@ -643,6 +551,41 @@ async function findOrCreateSuiteHierarchy(
 	return parentId;
 }
 
+type CaseRef = { id: string; title: string; suiteId: string | null };
+
+const TITLE_LOOKUP_CHUNK_SIZE = 50;
+
+function caseLookupKey(title: string, suiteId: string | null): string {
+	return `${suiteId ?? 'null'}:${title.toLowerCase()}`;
+}
+
+function rememberCase(
+	tc: CaseRef,
+	caseById: Map<string, CaseRef>,
+	casesByTitleSuite: Map<string, CaseRef[]>
+): void {
+	caseById.set(tc.id, tc);
+	const key = caseLookupKey(tc.title, tc.suiteId);
+	const existing = casesByTitleSuite.get(key);
+	if (!existing) {
+		casesByTitleSuite.set(key, [tc]);
+		return;
+	}
+	if (!existing.some((item) => item.id === tc.id)) {
+		existing.push(tc);
+	}
+}
+
+function findCaseByTitleSuite(
+	title: string,
+	suiteId: string | null,
+	casesByTitleSuite: Map<string, CaseRef[]>
+): CaseRef | undefined {
+	const matches = casesByTitleSuite.get(caseLookupKey(title, suiteId));
+	if (!matches || matches.length === 0) return undefined;
+	return matches.find((tc) => tc.title === title) ?? matches[0];
+}
+
 export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 	async (input, evt): Promise<any> => {
 		const startTime = Date.now();
@@ -651,20 +594,15 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 			`[Results API] Processing ${input.results.length} results for run ${input.testRunId}`
 		);
 
-		// Verify test run access
 		const testRun = await db.testRun.findUnique({
 			where: { id: input.testRunId },
 			include: {
 				project: {
-					include: {
-						team: true,
-						testCases: {
-							select: {
-								id: true,
-								title: true,
-								suiteId: true
-							}
-						}
+					select: {
+						id: true,
+						name: true,
+						teamId: true,
+						createdBy: true
 					}
 				}
 			}
@@ -674,12 +612,11 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 			throw Error[404];
 		}
 
-		// Get user with team info
 		const user = await db.user.findUnique({
-			where: { id: userId }
+			where: { id: userId },
+			select: { teamId: true }
 		});
 
-		// Check access
 		const hasAccess =
 			testRun.project.createdBy === userId ||
 			(testRun.project.teamId && user?.teamId === testRun.project.teamId);
@@ -688,7 +625,6 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 			throw Error[403];
 		}
 
-		// Process results
 		const processedResults: Array<{
 			testCaseId: string;
 			testResultId: string;
@@ -706,235 +642,147 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 		}> = [];
 		let duplicateCount = 0;
 
-		// Initialize suite cache for batch operations
-		// This prevents N+1 queries when multiple tests share the same suite hierarchy
 		const suiteCache: SuiteCache = {};
+		const caseById = new Map<string, CaseRef>();
+		const casesByTitleSuite = new Map<string, CaseRef[]>();
+		const cacheCase = (tc: CaseRef) => rememberCase(tc, caseById, casesByTitleSuite);
 
-		// Process results sequentially
-		// NOTE: While this is a loop with individual DB operations, it's necessary because:
-		// 1. We need to check for existing test cases before creating new ones
-		// 2. Suite cache eliminates most N+1 queries for suite hierarchy
-		// 3. Test cases are pre-loaded in memory for fast lookups
-		// 4. Future optimization: Consider using Prisma transactions for atomic batches
+		const requestedIds = [
+			...new Set(
+				input.results
+					.map((result) => result.testCaseId)
+					.filter((id): id is string => Boolean(id))
+			)
+		];
+		if (requestedIds.length > 0) {
+			const existingById = await db.testCase.findMany({
+				where: { projectId: testRun.projectId, id: { in: requestedIds } },
+				select: { id: true, title: true, suiteId: true }
+			});
+			existingById.forEach(cacheCase);
+		}
+
+		type PreparedResult = {
+			result: (typeof input.results)[number];
+			status: 'PASSED' | 'FAILED' | 'SKIPPED';
+			suiteId: string | null;
+			testTitle: string;
+		};
+		const prepared: PreparedResult[] = [];
+
 		for (const result of input.results) {
+			let suiteId: string | null = null;
+			let testTitle = result.title || 'Untitled Test';
+
+			if (result.fullTitle) {
+				const parts = result.fullTitle.split('>').map((s) => s.trim());
+				if (parts.length > 1) {
+					testTitle = parts[parts.length - 1];
+					suiteId = await findOrCreateSuiteHierarchy(
+						parts.slice(0, -1),
+						testRun.projectId,
+						userId,
+						suiteCache
+					);
+				}
+			}
+
+			prepared.push({
+				result,
+				status: mapStatus(result.status),
+				suiteId,
+				testTitle
+			});
+		}
+
+		const titles = [...new Set(prepared.map((item) => item.testTitle))];
+		for (let i = 0; i < titles.length; i += TITLE_LOOKUP_CHUNK_SIZE) {
+			const titleChunk = titles.slice(i, i + TITLE_LOOKUP_CHUNK_SIZE);
+			const existingByTitle = await db.testCase.findMany({
+				where: {
+					projectId: testRun.projectId,
+					OR: titleChunk.map((title) => ({
+						title: { equals: title, mode: 'insensitive' as const }
+					}))
+				},
+				select: { id: true, title: true, suiteId: true }
+			});
+			existingByTitle.forEach(cacheCase);
+		}
+
+		for (const item of prepared) {
 			try {
-				// Map Playwright status to QA Studio status
-				const status = mapStatus(result.status);
+				let testCase: CaseRef | undefined;
+				let created = false;
 
-				// Parse the fullTitle to extract suite hierarchy
-				let suiteId: string | null = null;
-				let testTitle = result.title || 'Untitled Test';
-
-				if (result.fullTitle) {
-					const parts = result.fullTitle.split('>').map((s) => s.trim());
-					if (parts.length > 1) {
-						// Last part is the test title, everything else is suite hierarchy
-						testTitle = parts[parts.length - 1];
-						const suitePath = parts.slice(0, -1);
-
-						// Create or find the suite hierarchy (with caching)
-						suiteId = await findOrCreateSuiteHierarchy(
-							suitePath,
-							testRun.projectId,
-							userId,
-							suiteCache
+				if (item.result.testCaseId) {
+					testCase = caseById.get(item.result.testCaseId);
+					if (!testCase) {
+						console.warn(
+							`[Results API] Unknown testCaseId "${item.result.testCaseId}" for "${item.result.title}"; matching by title and suite instead`
 						);
 					}
 				}
 
-				// Try to find matching test case by title and suite
-				const testCase = testRun.project.testCases.find(
-					(tc) =>
-						tc.title.toLowerCase() === testTitle.toLowerCase() && tc.suiteId === suiteId
-				);
+				if (!testCase) {
+					testCase = findCaseByTitleSuite(
+						item.testTitle,
+						item.suiteId,
+						casesByTitleSuite
+					);
+				}
 
 				if (!testCase) {
-					// Create a new test case if it doesn't exist
 					const newTestCase = await db.testCase.create({
 						data: {
 							id: generateTestCaseId(),
-							title: testTitle,
+							title: item.testTitle,
 							projectId: testRun.projectId,
-							suiteId: suiteId,
+							suiteId: item.suiteId,
 							createdBy: userId,
 							priority: 'MEDIUM',
 							type: 'FUNCTIONAL',
 							automationStatus: 'AUTOMATED'
 						}
 					});
+					testCase = {
+						id: newTestCase.id,
+						title: newTestCase.title,
+						suiteId: newTestCase.suiteId
+					};
+					cacheCase(testCase);
+					created = true;
+				}
 
-					// Create test result with attachments and steps
-					const { testResult, attachmentCount, isNew } = await createTestResultWithSteps(
-						newTestCase.id,
-						input.testRunId,
-						userId,
-						status,
-						result,
-						attachmentErrors
-					);
+				const { testResult, attachmentCount, isNew } = await createTestResultWithSteps(
+					testCase.id,
+					input.testRunId,
+					userId,
+					item.status,
+					item.result,
+					attachmentErrors
+				);
 
-					if (!isNew) {
-						duplicateCount++;
-					} else {
-						// Only count new results in processedResults
-						// Duplicates are reported separately in duplicatesSkipped
-						processedResults.push({
-							testCaseId: newTestCase.id,
-							testResultId: testResult.id,
-							title: result.title,
-							status,
-							duration: result.duration || null,
-							created: true,
-							attachmentCount
-						});
-					}
+				if (!isNew) {
+					duplicateCount++;
 				} else {
-					// Create test result with attachments and steps
-					const { testResult, attachmentCount, isNew } = await createTestResultWithSteps(
-						testCase.id,
-						input.testRunId,
-						userId,
-						status,
-						result,
-						attachmentErrors
-					);
-
-					if (!isNew) {
-						duplicateCount++;
-					} else {
-						// Only count new results in processedResults
-						// Duplicates are reported separately in duplicatesSkipped
-						processedResults.push({
-							testCaseId: testCase.id,
-							testResultId: testResult.id,
-							title: result.title,
-							status,
-							duration: result.duration || null,
-							created: false,
-							attachmentCount
-						});
-					}
+					processedResults.push({
+						testCaseId: testCase.id,
+						testResultId: testResult.id,
+						title: item.result.title,
+						status: item.status,
+						duration: item.result.duration || null,
+						created,
+						attachmentCount
+					});
 				}
 			} catch (err: any) {
 				errors.push({
-					testTitle: result.title,
+					testTitle: item.result.title,
 					error: err.message || 'Unknown error'
 				});
 			}
 		}
-
-		// Send notifications asynchronously (don't block response)
-		// Use setTimeout to defer execution completely outside the request cycle
-		const teamId = testRun.project.teamId;
-		if (teamId) {
-			// Capture necessary context for the background task
-			const notificationContext = {
-				teamId,
-				testRunId: input.testRunId,
-				testRunName: testRun.name,
-				testRunStatus: testRun.status,
-				projectId: testRun.projectId,
-				projectName: testRun.project.name,
-				failedTests: processedResults.filter((r) => r.status === 'FAILED')
-			};
-
-			// Defer notifications to next tick - completely detached from request lifecycle
-			setTimeout(async () => {
-				try {
-					// Calculate stats for the test run
-					const allResults = await db.testResult.findMany({
-						where: { testRunId: notificationContext.testRunId },
-						select: { status: true }
-					});
-
-					const passed = allResults.filter((r) => r.status === 'PASSED').length;
-					const failed = allResults.filter((r) => r.status === 'FAILED').length;
-					const skipped = allResults.filter((r) => r.status === 'SKIPPED').length;
-					const total = allResults.length;
-					// Pass rate excludes skipped tests (industry standard)
-					const executedTests = passed + failed;
-					const passRate =
-						executedTests > 0 ? Math.round((passed / executedTests) * 100) : 0;
-
-					// Check if we should send completion notification
-					const isComplete = notificationContext.testRunStatus === 'COMPLETED';
-
-					if (isComplete) {
-						// Send test run completed notification
-						const result = await notifyTestRunCompleted(notificationContext.teamId, {
-							id: notificationContext.testRunId,
-							name: notificationContext.testRunName,
-							projectId: notificationContext.projectId,
-							projectName: notificationContext.projectName,
-							passRate,
-							total,
-							passed,
-							failed,
-							skipped
-						});
-
-						if (!result.success && result.errors && result.errors.length > 0) {
-							console.error('Test run completion notification failed:', {
-								testRunId: notificationContext.testRunId,
-								testRunName: notificationContext.testRunName,
-								integrationsSent: result.integrationsSent,
-								integrationsFailed: result.integrationsFailed,
-								errors: result.errors
-							});
-						}
-					}
-
-					// Send individual test case failure notifications
-					const baseUrl = process.env.PUBLIC_BASE_URL || 'https://qastudio.dev';
-					for (const failedTest of notificationContext.failedTests) {
-						const result = await sendNotification(notificationContext.teamId, {
-							event: 'TEST_CASE_FAILED',
-							title: `❌ Test Failed: ${failedTest.title}`,
-							message: `*Test Run:* ${notificationContext.testRunName}\n*Project:* ${notificationContext.projectName}`,
-							url: `${baseUrl}/projects/${notificationContext.projectId}/runs/${notificationContext.testRunId}`,
-							color: '#ff0000',
-							fields: [
-								{
-									name: '⏱️ Duration',
-									value: failedTest.duration ? `${failedTest.duration}ms` : 'N/A',
-									inline: true
-								},
-								{
-									name: '🔄 Status',
-									value: 'Failed',
-									inline: true
-								}
-							]
-						});
-
-						if (!result.success && result.errors && result.errors.length > 0) {
-							console.error('Test case failure notification failed:', {
-								testCaseTitle: failedTest.title,
-								testRunId: notificationContext.testRunId,
-								integrationsSent: result.integrationsSent,
-								integrationsFailed: result.integrationsFailed,
-								errors: result.errors
-							});
-						}
-					}
-				} catch (notificationError: any) {
-					// Don't fail the request if notifications fail
-					console.error('Failed to send notifications:', {
-						error: notificationError.message || 'Unknown error',
-						testRunId: notificationContext.testRunId,
-						testRunName: notificationContext.testRunName,
-						stack: notificationError.stack
-					});
-				}
-			}, 0); // Execute on next tick
-		}
-
-		// Invalidate caches for test run, results, and project (counts may have changed)
-		await deleteCache([
-			CacheKeys.testRun(input.testRunId),
-			CacheKeys.testResults(input.testRunId),
-			CacheKeys.project(testRun.projectId)
-		]);
 
 		const response = {
 			processedCount: processedResults.length,
@@ -946,11 +794,7 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 
 		const duration = Date.now() - startTime;
 		const responseSize = JSON.stringify(response).length;
-
-		// Calculate total attachments uploaded
 		const totalAttachments = processedResults.reduce((sum, r) => sum + r.attachmentCount, 0);
-
-		// Log summary with duplicate and attachment info
 		const stats = [];
 		if (duplicateCount > 0) {
 			stats.push(`${duplicateCount} duplicates skipped`);
