@@ -553,8 +553,37 @@ async function findOrCreateSuiteHierarchy(
 
 type CaseRef = { id: string; title: string; suiteId: string | null };
 
+const TITLE_LOOKUP_CHUNK_SIZE = 50;
+
 function caseLookupKey(title: string, suiteId: string | null): string {
 	return `${suiteId ?? 'null'}:${title.toLowerCase()}`;
+}
+
+function rememberCase(
+	tc: CaseRef,
+	caseById: Map<string, CaseRef>,
+	casesByTitleSuite: Map<string, CaseRef[]>
+): void {
+	caseById.set(tc.id, tc);
+	const key = caseLookupKey(tc.title, tc.suiteId);
+	const existing = casesByTitleSuite.get(key);
+	if (!existing) {
+		casesByTitleSuite.set(key, [tc]);
+		return;
+	}
+	if (!existing.some((item) => item.id === tc.id)) {
+		existing.push(tc);
+	}
+}
+
+function findCaseByTitleSuite(
+	title: string,
+	suiteId: string | null,
+	casesByTitleSuite: Map<string, CaseRef[]>
+): CaseRef | undefined {
+	const matches = casesByTitleSuite.get(caseLookupKey(title, suiteId));
+	if (!matches || matches.length === 0) return undefined;
+	return matches.find((tc) => tc.title === title) ?? matches[0];
 }
 
 export default new Endpoint({ Input, Output, Error, Modifier }).handle(
@@ -615,12 +644,8 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 
 		const suiteCache: SuiteCache = {};
 		const caseById = new Map<string, CaseRef>();
-		const casesByTitleSuite = new Map<string, CaseRef>();
-
-		const rememberCase = (tc: CaseRef) => {
-			caseById.set(tc.id, tc);
-			casesByTitleSuite.set(caseLookupKey(tc.title, tc.suiteId), tc);
-		};
+		const casesByTitleSuite = new Map<string, CaseRef[]>();
+		const cacheCase = (tc: CaseRef) => rememberCase(tc, caseById, casesByTitleSuite);
 
 		const requestedIds = [
 			...new Set(
@@ -634,7 +659,7 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 				where: { projectId: testRun.projectId, id: { in: requestedIds } },
 				select: { id: true, title: true, suiteId: true }
 			});
-			existingById.forEach(rememberCase);
+			existingById.forEach(cacheCase);
 		}
 
 		type PreparedResult = {
@@ -671,17 +696,18 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 		}
 
 		const titles = [...new Set(prepared.map((item) => item.testTitle))];
-		if (titles.length > 0) {
+		for (let i = 0; i < titles.length; i += TITLE_LOOKUP_CHUNK_SIZE) {
+			const titleChunk = titles.slice(i, i + TITLE_LOOKUP_CHUNK_SIZE);
 			const existingByTitle = await db.testCase.findMany({
 				where: {
 					projectId: testRun.projectId,
-					OR: titles.map((title) => ({
+					OR: titleChunk.map((title) => ({
 						title: { equals: title, mode: 'insensitive' as const }
 					}))
 				},
 				select: { id: true, title: true, suiteId: true }
 			});
-			existingByTitle.forEach(rememberCase);
+			existingByTitle.forEach(cacheCase);
 		}
 
 		for (const item of prepared) {
@@ -691,10 +717,19 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 
 				if (item.result.testCaseId) {
 					testCase = caseById.get(item.result.testCaseId);
+					if (!testCase) {
+						console.warn(
+							`[Results API] Unknown testCaseId "${item.result.testCaseId}" for "${item.result.title}"; matching by title and suite instead`
+						);
+					}
 				}
 
 				if (!testCase) {
-					testCase = casesByTitleSuite.get(caseLookupKey(item.testTitle, item.suiteId));
+					testCase = findCaseByTitleSuite(
+						item.testTitle,
+						item.suiteId,
+						casesByTitleSuite
+					);
 				}
 
 				if (!testCase) {
@@ -715,7 +750,7 @@ export default new Endpoint({ Input, Output, Error, Modifier }).handle(
 						title: newTestCase.title,
 						suiteId: newTestCase.suiteId
 					};
-					rememberCase(testCase);
+					cacheCase(testCase);
 					created = true;
 				}
 

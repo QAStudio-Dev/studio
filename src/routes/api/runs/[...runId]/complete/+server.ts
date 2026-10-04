@@ -1,9 +1,18 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { waitUntil } from '@vercel/functions';
 import { db } from '$lib/server/db';
 import { requireApiAuth } from '$lib/server/api-auth';
 import { notifyTestRunCompleted, notifyTestRunFailed } from '$lib/server/integrations';
 import { deleteCache, CacheKeys } from '$lib/server/redis';
+
+function continueAfterResponse(task: Promise<unknown>): void {
+	try {
+		waitUntil(task);
+	} catch {
+		void task;
+	}
+}
 
 /**
  * POST /api/runs/[runId]/complete
@@ -84,27 +93,29 @@ export const POST: RequestHandler = async (event) => {
 			projectName: testRun.project.name
 		};
 
-		void (async () => {
-			try {
-				if (failed > 0) {
-					await notifyTestRunFailed(teamId, {
-						...notificationPayload,
-						failedCount: failed
-					});
-				}
+		continueAfterResponse(
+			(async () => {
+				try {
+					if (failed > 0) {
+						await notifyTestRunFailed(teamId, {
+							...notificationPayload,
+							failedCount: failed
+						});
+					}
 
-				await notifyTestRunCompleted(teamId, {
-					...notificationPayload,
-					passRate,
-					total,
-					passed,
-					failed,
-					skipped
-				});
-			} catch (notificationError) {
-				console.error('Failed to send notifications:', notificationError);
-			}
-		})();
+					await notifyTestRunCompleted(teamId, {
+						...notificationPayload,
+						passRate,
+						total,
+						passed,
+						failed,
+						skipped
+					});
+				} catch (notificationError) {
+					console.error('Failed to send notifications:', notificationError);
+				}
+			})()
+		);
 	}
 
 	return json({
