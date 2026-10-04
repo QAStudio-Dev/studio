@@ -84,7 +84,7 @@
 		{#if onDelete}
 			<button
 				onclick={() => onDelete(testCase)}
-				class="preset-ghost-surface-500 btn btn-sm text-error-500 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 hover:text-error-500 focus-visible:opacity-100 max-sm:opacity-100"
+				class="preset-ghost-surface-500 btn text-error-500 opacity-0 transition-opacity btn-sm group-focus-within:opacity-100 group-hover:opacity-100 hover:text-error-500 focus-visible:opacity-100 max-sm:opacity-100"
 				title="Delete test case"
 				data-testid="delete-test-case-button"
 			>
@@ -93,7 +93,7 @@
 		{/if}
 		<a
 			href="/projects/{projectId}/cases/{testCase.id}"
-			class="preset-ghost-surface-500 btn btn-sm opacity-0 transition-opacity group-hover:opacity-100"
+			class="preset-ghost-surface-500 btn opacity-0 transition-opacity btn-sm group-hover:opacity-100"
 			title="Open full view"
 		>
 			<ExternalLink class="h-3.5 w-3.5" />

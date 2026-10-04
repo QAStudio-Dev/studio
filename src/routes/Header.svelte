@@ -335,7 +335,7 @@
 					>
 						Sign In
 					</a>
-					<a href="/signup" class="btn preset-filled-primary-500 btn-sm font-semibold">
+					<a href="/signup" class="btn preset-filled-primary-500 font-semibold btn-sm">
 						Get Started
 					</a>
 				{:else if user}

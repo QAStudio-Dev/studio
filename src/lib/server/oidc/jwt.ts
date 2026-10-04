@@ -92,7 +92,7 @@ function jwkToPem(jwk: JWK): string {
 
 		// Use Node.js crypto to create public key from JWK
 		const publicKey = crypto.createPublicKey({
-			key: jwk as unknown as crypto.JsonWebKey,
+			key: jwk as unknown as JsonWebKey,
 			format: 'jwk'
 		});
 

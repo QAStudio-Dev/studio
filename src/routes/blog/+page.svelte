@@ -113,7 +113,7 @@
 		<div class="mt-6 flex items-center justify-center gap-4">
 			<a
 				href="/rss.xml"
-				class="btn gap-2 preset-outlined-surface-200-800 btn-sm text-surface-700-300 hover:border-warning-500 hover:text-warning-600-400"
+				class="btn gap-2 preset-outlined-surface-200-800 text-surface-700-300 btn-sm hover:border-warning-500 hover:text-warning-600-400"
 				target="_blank"
 				rel="noopener noreferrer"
 			>
@@ -122,7 +122,7 @@
 			</a>
 			<a
 				href="/atom.xml"
-				class="btn gap-2 preset-outlined-surface-200-800 btn-sm text-surface-700-300 hover:border-warning-500 hover:text-warning-600-400"
+				class="btn gap-2 preset-outlined-surface-200-800 text-surface-700-300 btn-sm hover:border-warning-500 hover:text-warning-600-400"
 				target="_blank"
 				rel="noopener noreferrer"
 			>
