@@ -300,7 +300,7 @@
 										/>
 										<button
 											onclick={() => copyInviteLink(invitation.token)}
-											class="btn preset-filled-primary-500 btn-sm whitespace-nowrap"
+											class="btn preset-filled-primary-500 whitespace-nowrap btn-sm"
 											title="Copy invitation link"
 										>
 											{#if copiedId === invitation.token}

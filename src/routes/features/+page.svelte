@@ -32,7 +32,7 @@
 			</p>
 			<a
 				href="/signup"
-				class="btn preset-filled bg-white btn-lg text-primary-600 hover:bg-white/90"
+				class="btn preset-filled bg-white text-primary-600 btn-lg hover:bg-white/90"
 			>
 				Get Started Free
 				<ArrowRight class="ml-2 h-5 w-5" />
@@ -763,14 +763,14 @@
 			<div class="flex flex-col items-center justify-center gap-4 sm:flex-row">
 				<a
 					href="/signup"
-					class="btn w-full bg-white btn-lg text-primary-600 hover:bg-white/90 sm:w-auto"
+					class="btn w-full bg-white text-primary-600 btn-lg hover:bg-white/90 sm:w-auto"
 				>
 					Get Started Free
 					<ArrowRight class="ml-2 h-5 w-5" />
 				</a>
 				<a
 					href="/docs"
-					class="btn w-full border-2 border-white/80 bg-transparent btn-lg text-white hover:bg-white/10 sm:w-auto"
+					class="btn w-full border-2 border-white/80 bg-transparent text-white btn-lg hover:bg-white/10 sm:w-auto"
 				>
 					View Documentation
 				</a>

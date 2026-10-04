@@ -772,7 +772,7 @@
 
 											{#if message.direction === 'OUTBOUND'}
 												<button
-													class="preset-ghost btn btn-sm opacity-0 transition-opacity group-hover:opacity-100"
+													class="preset-ghost btn opacity-0 transition-opacity btn-sm group-hover:opacity-100"
 													onclick={() =>
 														refreshMessageStatus(message.messageSid)}
 													disabled={refreshState[message.messageSid]
