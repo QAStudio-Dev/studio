@@ -28,6 +28,9 @@ export const generateMilestoneId = customAlphabet(alphabet, 3);
 // Attachments: 4 characters (14.7 million combinations)
 export const generateAttachmentId = customAlphabet(alphabet, 4);
 
+// Test steps: 8 characters (218 trillion combinations) - bulk-inserted per result
+export const generateTestStepId = customAlphabet(alphabet, 8);
+
 // Teams: 6 characters (56 billion combinations) - globally unique
 export const generateTeamId = customAlphabet(alphabet, 6);
 

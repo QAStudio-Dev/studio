@@ -31,7 +31,8 @@ vi.mock('$lib/server/db', () => ({
 			findUnique: vi.fn()
 		},
 		testCase: {
-			create: vi.fn()
+			create: vi.fn(),
+			findMany: vi.fn()
 		},
 		testResult: {
 			create: vi.fn()
@@ -518,6 +519,20 @@ describe('POST /api/results - Duplicate Detection', () => {
 			expect(response.processedCount).toBe(0);
 			expect(response.errors).toHaveLength(totalSubmitted);
 			expect(response.results).toHaveLength(0);
+		});
+
+		it('should accept optional reporter testCaseId on each result', () => {
+			const result = {
+				testCaseId: 'ab12',
+				title: 'Login',
+				fullTitle: 'Auth > Login',
+				status: 'passed' as const,
+				duration: 100,
+				retry: 0
+			};
+
+			expect(result.testCaseId).toBe('ab12');
+			expect(result.title).toBe('Login');
 		});
 	});
 
