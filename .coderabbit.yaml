@@ -13,6 +13,8 @@ reviews:
   high_level_summary_placeholder: '@coderabbitai summary'
   poem: true
   review_status: true
+  review_details: false
+  review_progress: true
   commit_status: true
   collapse_walkthrough: false
 
@@ -32,12 +34,13 @@ reviews:
     - path: 'src/routes/api/**/*.ts'
       instructions: |
         SvelteKit API route review checklist:
-        - Authentication check (requireAuth from $lib/server/auth)
-        - Team membership validation (requireTeamMember) for team-scoped resources
-        - Input validation (JSON parsing, type checking)
+        - Session auth: `const userId = await requireAuth(event)` from `$lib/server/auth` (async; do not treat as sync)
+        - Do not use Clerk. Identity comes from `event.locals.userId` set in `src/hooks.server.ts`
+        - There is no `requireTeamMember`. Scope access with `requireProjectAccess` / `requireTestCaseAccess` / `requireTestResultAccess` from `$lib/server/authorization`, or `hasProjectAccess` from `$lib/server/access-control`
+        - Cookie-session mutations need CSRF via `requireCsrfForSession` from `$lib/server/sessions`
+        - Input validation (JSON parsing, type checking, Zod where used)
         - Proper error handling with try-catch and appropriate HTTP status codes
-        - Use locals.userId for authenticated user ID (not locals.auth())
-        - Resource access should be scoped to userId or teamId
+        - Resource queries must be scoped to the authenticated user or their team
 
     - path: 'src/api/**/*.ts'
       instructions: |
@@ -45,10 +48,13 @@ reviews:
         - Input/Output/Query schemas defined with Zod
         - Use .describe() on all Zod fields for OpenAPI documentation
         - Use .nullish() for optional foreign key fields (not just .optional())
-        - Authentication via requireApiAuth from $lib/server/api-auth
+        - Authentication via `requireApiAuth` from `$lib/server/api-auth`
+        - Preferred auth: `Authorization: Bearer <api_key>`. `x-api-key` is legacy and still accepted
+        - Do not require Clerk session APIs; `locals.auth()` is leftover compatibility only
         - Modifier function includes tags, summary, and description for OpenAPI
         - Error object defines all possible HTTP error responses
         - Route directory structure MUST match between src/api and src/routes/api (especially parameter naming like [...projectId] vs [projectId])
+        - Authorize with `$lib/server/authorization` helpers after auth
 
     - path: 'src/lib/server/**/*.ts'
       instructions: |
@@ -58,17 +64,34 @@ reviews:
         - Use Prisma from $prisma/client for types (NOT @prisma/client)
         - Proper error handling and logging
         - Sensitive operations should use encryption from $lib/server/encryption
+        - Multi-tenant checks must use project.createdBy or matching teamId; never trust client-supplied team IDs alone
+        - Redis/cache helpers in `$lib/server/redis` are optional; code must work when KV_* env vars are unset
+
+    - path: 'src/lib/server/oidc/**/*.ts'
+      instructions: |
+        SSO/OIDC review:
+        - Do not log tokens, authorization codes, or client secrets
+        - Validate issuer, audience, and nonce/state as implemented in existing providers
+        - Keep TOTP/secret material encrypted with `$lib/server/encryption`
+
+    - path: 'src/hooks.server.ts'
+      instructions: |
+        Hook review:
+        - Public vs authenticated route lists must stay in sync with actual API auth
+        - Session loading uses `$lib/server/sessions`, not Clerk
+        - Do not block public reporter ingest routes that authenticate via API key
 
     - path: '**/*.svelte'
       instructions: |
         Svelte 5 component review checklist:
         - Use runes: $state, $derived, $effect, $props (NOT let declarations for reactive state)
-        - Use Skeleton UI components from @skeletonlabs/skeleton-svelte
+        - Use Skeleton UI v5 components from @skeletonlabs/skeleton-svelte (Dialog, Portal, Tabs, Accordion, Avatar, Switch, Popover)
         - Button classes: btn preset-filled-primary-500, preset-outlined-surface-500, etc.
         - Modal backgrounds must use bg-surface-50-950 (card class alone is insufficient)
         - Modals need accessibility: role="dialog", aria-modal="true", aria-labelledby, Escape key handler
         - Check for accessibility (ARIA labels, semantic HTML)
         - Mobile responsiveness (44px touch targets, proper font sizes)
+        - Do not import generated `$lib/paraglide` modules in a way that assumes they are committed; they are compiled locally
 
     - path: 'prisma/schema.prisma'
       instructions: |
@@ -78,6 +101,7 @@ reviews:
         - Multi-tenant data should be scoped via teamId or userId
         - Use appropriate field types (DateTime, String, etc.)
         - Consider adding @@index for common query patterns
+        - Never suggest prisma migrate reset or db push --force-reset
 
     - path: 'e2e/**/*.ts'
       instructions: |
@@ -87,6 +111,7 @@ reviews:
         - Use meaningful test descriptions
         - Avoid hardcoded waits (use proper Playwright locators/assertions)
         - Check for proper authentication setup using helpers from e2e/helpers/
+        - Default playwright.config.ts may target production; local-only assumptions need webServer + credentials
 
     - path: 'scripts/**/*.ts'
       instructions: |
@@ -104,6 +129,20 @@ reviews:
         - Use vi.mocked() for type-safe mocks
         - Mock with full object shapes that match actual types
         - Test error cases, not just happy paths
+
+    - path: '**/*.{test,spec}.ts'
+      instructions: |
+        Colocated Vitest tests (in addition to src/__tests__/):
+        - Avoid 'as any' type assertions - use proper Prisma types with satisfies
+        - Use vi.mocked() for type-safe mocks
+        - Mock with full object shapes that match actual types
+        - Test error cases, not just happy paths
+
+    - path: 'messages/**/*.json'
+      instructions: |
+        Paraglide/i18n message files:
+        - Keep keys in sync across locales when adding copy
+        - Do not hardcode user-facing strings in Svelte if a message key already exists
 
   # Exclude generated/config files from detailed review
   path_filters:
@@ -123,7 +162,6 @@ reviews:
       enabled: false
     github-checks:
       enabled: true
-    # Security scanning
     gitleaks:
       enabled: true
 
@@ -134,3 +172,18 @@ knowledge_base:
   opt_out: false
   learnings:
     scope: auto
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - 'AGENTS.md'
+      - 'claude.md'
+      - 'CONTRIBUTING.md'
+      - 'docs/**/*.md'
+  automatic_linking_mode: auto
+  linked_repositories:
+    - repository: QAStudio-Dev/mcp-server
+      instructions: 'MCP server that calls the public QA Studio HTTP API. Prefer Bearer API keys; X-API-Key is legacy.'
+    - repository: QAStudio-Dev/playwright-reporter
+      instructions: 'Playwright reporter posting runs, results, and attachments to the public API.'
+    - repository: QAStudio-Dev/playwright-reporter-python
+      instructions: 'pytest plugin posting runs, results, and attachments to the public API.'
