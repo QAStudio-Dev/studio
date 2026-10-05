@@ -22,7 +22,6 @@
 	// State
 	let testRuns = $state<any[]>([]);
 	let loading = $state(true);
-	let initialLoad = $state(true);
 	let page = $state(1);
 	let limit = $state(20);
 	let total = $state(0);
@@ -90,25 +89,14 @@
 
 		fetchTestRuns();
 		fetchProjects();
-		initialLoad = false;
 	});
 
-	// Watch for filter changes
-	$effect(() => {
-		// Reset to page 1 when filters change
-		if (selectedProject || selectedStatus || selectedEnvironment || selectedMilestone) {
-			page = 1;
-			fetchTestRuns();
-		}
-	});
-
-	// Watch for page changes
-	$effect(() => {
-		// Fetch when page changes (but not on initial load which is handled by onMount)
-		if (!initialLoad && page >= 1) {
-			fetchTestRuns();
-		}
-	});
+	// Reset to the first page when a filter changes. Page changes are fetched
+	// from goToPage so this does not subscribe to `page` and undo pagination.
+	function handleFilterChange() {
+		page = 1;
+		fetchTestRuns();
+	}
 
 	// Handle search with debounce
 	function handleSearch() {
@@ -126,9 +114,9 @@
 
 	// Pagination
 	function goToPage(newPage: number) {
-		if (newPage >= 1 && newPage <= totalPages) {
-			page = newPage;
-		}
+		if (newPage < 1 || newPage > totalPages || newPage === page) return;
+		page = newPage;
+		fetchTestRuns();
 	}
 
 	// Status badge styling
@@ -205,6 +193,7 @@
 			<select
 				class="select w-full lg:w-48"
 				bind:value={selectedProject}
+				onchange={handleFilterChange}
 				data-testid="project-filter"
 			>
 				<option value="">All Projects</option>
@@ -217,6 +206,7 @@
 			<select
 				class="select w-full lg:w-48"
 				bind:value={selectedStatus}
+				onchange={handleFilterChange}
 				data-testid="status-filter"
 			>
 				<option value="">All Statuses</option>
