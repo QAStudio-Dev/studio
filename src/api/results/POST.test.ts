@@ -658,10 +658,26 @@ describe('POST /api/results - Duplicate Detection', () => {
 			const response = await submitSingleResult();
 
 			expect(db.testResult.create).toHaveBeenCalledTimes(2);
+			expect(vi.mocked(db.testResult.create).mock.calls[0][0].data.id).toBe('Ab12');
+			expect(vi.mocked(db.testResult.create).mock.calls[1][0].data.id).toBe('Cd34Ef56');
 			expect(response.processedCount).toBe(1);
 			expect(response.duplicatesSkipped).toBe(0);
 			expect(response.errors).toBeUndefined();
 			expect(response.results[0].testResultId).toBe('Cd34Ef56');
+		});
+
+		it('returns an error after five consecutive primary-key collisions', async () => {
+			mockAuthorizedRun();
+			vi.mocked(db.testResult.findFirst).mockResolvedValue(null);
+			const errorMessage = 'Unique constraint failed on the constraint: `TestResult_pkey`';
+			vi.mocked(db.testResult.create).mockRejectedValue(
+				prismaUniqueError(undefined, errorMessage)
+			);
+
+			const response = await submitSingleResult();
+
+			expect(db.testResult.create).toHaveBeenCalledTimes(5);
+			expect(response.errors).toEqual([{ testTitle: 'Login', error: errorMessage }]);
 		});
 
 		it('treats the same case/run/retry as a skipped duplicate', async () => {

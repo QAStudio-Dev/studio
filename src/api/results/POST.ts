@@ -326,7 +326,7 @@ async function createTestResultWithSteps(
 			if (isIdUniqueConflict(error) && attempts < MAX_ID_RETRIES - 1) {
 				attempts++;
 				console.warn(
-					`Test result ID collision detected - retrying (attempt ${attempts + 1})`
+					`Test result ID collision detected for run ${testRunId}, case ${testCaseId} - retrying (attempt ${attempts + 1})`
 				);
 				continue;
 			}
