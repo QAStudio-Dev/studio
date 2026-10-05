@@ -82,7 +82,60 @@ vi.mock('$lib/server/redis', () => ({
 }));
 
 import { db } from '$lib/server/db';
+import { generateTestResultId } from '$lib/server/ids';
 import resultsEndpoint, { Input } from './POST';
+
+function prismaUniqueError(target: string | string[] | undefined, message?: string) {
+	const error = new Error(
+		message ?? `Unique constraint failed on the constraint: ${JSON.stringify(target)}`
+	) as Error & { code: string; meta?: { target?: string | string[] } };
+	error.code = 'P2002';
+	if (target !== undefined) {
+		error.meta = { target };
+	}
+	return error;
+}
+
+async function submitSingleResult() {
+	return resultsEndpoint.default(
+		{
+			testRunId: 'run1',
+			results: [
+				{
+					testCaseId: 'ab12',
+					title: 'Login',
+					fullTitle: 'Auth > Login',
+					status: 'passed',
+					duration: 100,
+					retry: 0
+				}
+			]
+		} as any,
+		{} as any
+	);
+}
+
+function mockAuthorizedRun() {
+	vi.mocked(db.testRun.findUnique).mockResolvedValue({
+		id: 'run1',
+		projectId: 'proj1',
+		project: {
+			id: 'proj1',
+			name: 'App',
+			teamId: 'team1',
+			createdBy: 'user123'
+		}
+	} as any);
+	vi.mocked(db.user.findUnique).mockResolvedValue({ teamId: 'team1' } as any);
+	vi.mocked(db.testCase.findMany).mockResolvedValue([
+		{ id: 'ab12', title: 'Login', suiteId: 'suite1' }
+	] as any);
+	vi.mocked(db.testSuite.findFirst).mockResolvedValue({
+		id: 'suite1',
+		name: 'Auth'
+	} as any);
+	vi.mocked(db.testStepResult.createMany).mockResolvedValue({ count: 0 } as any);
+}
 
 describe('POST /api/results - Duplicate Detection', () => {
 	beforeEach(() => {
@@ -559,26 +612,8 @@ describe('POST /api/results - Duplicate Detection', () => {
 		});
 
 		it('should reuse an existing test case when testCaseId matches', async () => {
-			vi.mocked(db.testRun.findUnique).mockResolvedValue({
-				id: 'run1',
-				projectId: 'proj1',
-				project: {
-					id: 'proj1',
-					name: 'App',
-					teamId: 'team1',
-					createdBy: 'user123'
-				}
-			} as any);
-			vi.mocked(db.user.findUnique).mockResolvedValue({ teamId: 'team1' } as any);
-			vi.mocked(db.testCase.findMany).mockResolvedValue([
-				{ id: 'ab12', title: 'Login', suiteId: 'suite1' }
-			] as any);
-			vi.mocked(db.testSuite.findFirst).mockResolvedValue({
-				id: 'suite1',
-				name: 'Auth'
-			} as any);
+			mockAuthorizedRun();
 			vi.mocked(db.testResult.create).mockResolvedValue({ id: 'TR_test123' } as any);
-			vi.mocked(db.testStepResult.createMany).mockResolvedValue({ count: 0 } as any);
 
 			const response = await resultsEndpoint.default(
 				{
@@ -601,6 +636,50 @@ describe('POST /api/results - Duplicate Detection', () => {
 			expect(response.processedCount).toBe(1);
 			expect(response.results[0].testCaseId).toBe('ab12');
 			expect(response.results[0].created).toBe(false);
+		});
+	});
+
+	describe('primary key collisions', () => {
+		it('retries with a new id when TestResult_pkey is already taken', async () => {
+			mockAuthorizedRun();
+			vi.mocked(db.testResult.findFirst).mockResolvedValue(null);
+			vi.mocked(generateTestResultId)
+				.mockReturnValueOnce('Ab12')
+				.mockReturnValueOnce('Cd34Ef56');
+			vi.mocked(db.testResult.create)
+				.mockRejectedValueOnce(
+					prismaUniqueError(
+						undefined,
+						'Unique constraint failed on the constraint: `TestResult_pkey`'
+					)
+				)
+				.mockResolvedValueOnce({ id: 'Cd34Ef56' } as any);
+
+			const response = await submitSingleResult();
+
+			expect(db.testResult.create).toHaveBeenCalledTimes(2);
+			expect(response.processedCount).toBe(1);
+			expect(response.duplicatesSkipped).toBe(0);
+			expect(response.errors).toBeUndefined();
+			expect(response.results[0].testResultId).toBe('Cd34Ef56');
+		});
+
+		it('treats the same case/run/retry as a skipped duplicate', async () => {
+			mockAuthorizedRun();
+			vi.mocked(db.testResult.create).mockRejectedValueOnce(
+				prismaUniqueError(['testCaseId', 'testRunId', 'retry'])
+			);
+			vi.mocked(db.testResult.findFirst).mockResolvedValue({
+				id: 'existing1',
+				attachments: []
+			} as any);
+
+			const response = await submitSingleResult();
+
+			expect(db.testResult.create).toHaveBeenCalledTimes(1);
+			expect(response.processedCount).toBe(0);
+			expect(response.duplicatesSkipped).toBe(1);
+			expect(response.errors).toBeUndefined();
 		});
 	});
 

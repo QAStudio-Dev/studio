@@ -8,6 +8,7 @@ import {
 	generateTestSuiteId,
 	generateAttachmentId
 } from '$lib/server/ids';
+import { isIdUniqueConflict } from '$lib/server/prisma-unique';
 import { mapStatus, parseDateTime, processTestSteps, type TestStepInput } from './steps';
 
 // Define location schema for reuse
@@ -265,39 +266,43 @@ async function createTestResultWithSteps(
 	attachmentErrors: any[]
 ): Promise<{ testResult: any; attachmentCount: number; isNew: boolean }> {
 	const retry = result.retry ?? 0;
+	const MAX_ID_RETRIES = 5;
 
 	let testResult;
-	let isNew = true;
+	const isNew = true;
+	let attempts = 0;
 
-	try {
-		// Try to create new test result
-		testResult = await db.testResult.create({
-			data: {
-				id: generateTestResultId(),
-				testCaseId,
-				testRunId,
-				status,
-				fullTitle: result.fullTitle,
-				duration: result.duration || 0,
-				errorMessage: result.errorMessage || result.error,
-				stackTrace: result.stackTrace,
-				errorSnippet: result.errorSnippet,
-				errorLocation: result.errorLocation,
-				startTime: parseDateTime(result.startTime),
-				endTime: parseDateTime(result.endTime),
-				retry,
-				projectName: result.projectName || 'default',
-				metadata: result.metadata,
-				consoleOutput: result.consoleOutput,
-				executedBy: userId,
-				executedAt: new Date()
+	while (true) {
+		try {
+			testResult = await db.testResult.create({
+				data: {
+					id: generateTestResultId(),
+					testCaseId,
+					testRunId,
+					status,
+					fullTitle: result.fullTitle,
+					duration: result.duration || 0,
+					errorMessage: result.errorMessage || result.error,
+					stackTrace: result.stackTrace,
+					errorSnippet: result.errorSnippet,
+					errorLocation: result.errorLocation,
+					startTime: parseDateTime(result.startTime),
+					endTime: parseDateTime(result.endTime),
+					retry,
+					projectName: result.projectName || 'default',
+					metadata: result.metadata,
+					consoleOutput: result.consoleOutput,
+					executedBy: userId,
+					executedAt: new Date()
+				}
+			});
+			break;
+		} catch (error: any) {
+			if (error.code !== 'P2002') {
+				throw error;
 			}
-		});
-	} catch (error: any) {
-		// Handle unique constraint violation (reporter retry/concurrent creation)
-		if (error.code === 'P2002') {
-			// Duplicate detected - fetch and return existing result
-			// This is expected when the reporter retries after a timeout
+
+			// Same test case + run + retry already exists (reporter retry / concurrent upload)
 			const existingResult = await db.testResult.findFirst({
 				where: {
 					testCaseId,
@@ -316,10 +321,18 @@ async function createTestResultWithSteps(
 					isNew: false
 				};
 			}
-		}
 
-		// Re-throw if not a unique constraint violation or if we couldn't find the existing result
-		throw error;
+			// Global primary-key collision — retry with a new result ID
+			if (isIdUniqueConflict(error) && attempts < MAX_ID_RETRIES - 1) {
+				attempts++;
+				console.warn(
+					`Test result ID collision detected - retrying (attempt ${attempts + 1})`
+				);
+				continue;
+			}
+
+			throw error;
+		}
 	}
 
 	// Process attachments if any
