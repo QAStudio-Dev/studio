@@ -94,7 +94,7 @@
     "@vercel/functions": "^3.9.11",
     "adm-zip": "^0.6.1",
     "bcrypt": "^6.0.0",
-    "dotenv": "^17.4.2",
+    "dotenv": "^18.0.5",
     "gray-matter": "^4.0.3",
     "html5-qrcode": "^2.3.8",
     "marked": "^18.0.14",
