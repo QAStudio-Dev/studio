@@ -12,18 +12,24 @@ const MODEL = 'gpt-5-mini';
  * gpt-5-mini counts hidden reasoning tokens against max_completion_tokens.
  * A cap around 2000 can be spent entirely on reasoning, which returns
  * empty content with finish_reason "length".
+ *
+ * Initial caps stay near the size of these concise answers so concurrent
+ * requests do not reserve a large token-rate budget. The retry cap is only
+ * used when a response is cut off.
  */
-const MAX_COMPLETION_TOKENS = 16000;
+const COMPLETION_TOKEN_CAPS = {
+	diagnosis: 4000,
+	summary: 6000,
+	patterns: 8000
+} as const;
 const RETRY_MAX_COMPLETION_TOKENS = 32000;
 
 async function createCompletion(
 	system: string,
 	prompt: string,
-	options?: { maxCompletionTokens?: number; reasoningEffort?: 'low' | 'minimal' }
+	maxCompletionTokens: number,
+	reasoningEffort: 'low' | 'minimal' = 'low'
 ): Promise<string> {
-	const maxCompletionTokens = options?.maxCompletionTokens ?? MAX_COMPLETION_TOKENS;
-	const reasoningEffort = options?.reasoningEffort ?? 'low';
-
 	const completion = await openai.chat.completions.create({
 		model: MODEL,
 		messages: [
@@ -34,27 +40,29 @@ async function createCompletion(
 		reasoning_effort: reasoningEffort
 	});
 
-	const content = completion.choices[0]?.message?.content?.trim();
-	if (content) {
-		return content;
+	const choice = completion.choices[0];
+	const content = choice?.message?.content?.trim() ?? '';
+	const finishReason = choice?.finish_reason;
+
+	// "length" means the generation limit was hit, so any text is incomplete.
+	// Retry once with a larger budget. Do not return a truncated retry.
+	if (finishReason === 'length') {
+		if (maxCompletionTokens < RETRY_MAX_COMPLETION_TOKENS) {
+			const reasoningTokens = completion.usage?.completion_tokens_details?.reasoning_tokens;
+			console.warn(
+				`[OpenAI] Completion hit the token limit (reasoning_tokens=${reasoningTokens ?? 'unknown'}, max_completion_tokens=${maxCompletionTokens}, content_chars=${content.length}). Retrying.`
+			);
+			return createCompletion(system, prompt, RETRY_MAX_COMPLETION_TOKENS, 'minimal');
+		}
+
+		throw new Error(`No content in OpenAI response. Finish reason: ${finishReason}`);
 	}
 
-	const finishReason = completion.choices[0]?.finish_reason;
-	const reasoningTokens = completion.usage?.completion_tokens_details?.reasoning_tokens;
-
-	// Reasoning consumed the budget before any visible text. Retry once with a
-	// larger cap and less thinking so the answer can still be produced.
-	if (finishReason === 'length' && maxCompletionTokens < RETRY_MAX_COMPLETION_TOKENS) {
-		console.warn(
-			`[OpenAI] Empty completion (finish_reason=length, reasoning_tokens=${reasoningTokens ?? 'unknown'}, max_completion_tokens=${maxCompletionTokens}). Retrying.`
-		);
-		return createCompletion(system, prompt, {
-			maxCompletionTokens: RETRY_MAX_COMPLETION_TOKENS,
-			reasoningEffort: 'minimal'
-		});
+	if (!content) {
+		throw new Error(`No content in OpenAI response. Finish reason: ${finishReason}`);
 	}
 
-	throw new Error(`No content in OpenAI response. Finish reason: ${finishReason}`);
+	return content;
 }
 
 /**
@@ -101,7 +109,8 @@ Keep your response concise and actionable.`;
 	try {
 		return await createCompletion(
 			'You are an expert QA engineer who helps diagnose test failures. Provide clear, actionable insights.',
-			prompt
+			prompt,
+			COMPLETION_TOKEN_CAPS.diagnosis
 		);
 	} catch (error) {
 		console.error('OpenAI diagnosis error:', error);
@@ -157,7 +166,8 @@ Keep your response concise and actionable (under 300 words).`;
 	try {
 		return await createCompletion(
 			'You are an expert QA engineer who analyzes test results and identifies patterns. Provide clear, strategic insights.',
-			prompt
+			prompt,
+			COMPLETION_TOKEN_CAPS.summary
 		);
 	} catch (error) {
 		console.error('OpenAI summary error:', error);
@@ -203,7 +213,8 @@ Be concise and focus on actionable insights.`;
 	try {
 		return await createCompletion(
 			'You are an expert QA engineer who identifies patterns in test failures. Focus on finding root causes.',
-			prompt
+			prompt,
+			COMPLETION_TOKEN_CAPS.patterns
 		);
 	} catch (error) {
 		console.error('OpenAI pattern analysis error:', error);

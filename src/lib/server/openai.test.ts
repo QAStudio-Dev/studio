@@ -62,7 +62,7 @@ describe('OpenAI chat completions', () => {
 		expect(createMock).toHaveBeenCalledWith(
 			expect.objectContaining({
 				model: 'gpt-5-mini',
-				max_completion_tokens: 16000,
+				max_completion_tokens: 8000,
 				reasoning_effort: 'low'
 			})
 		);
@@ -88,7 +88,7 @@ describe('OpenAI chat completions', () => {
 		expect(createMock).toHaveBeenNthCalledWith(
 			1,
 			expect.objectContaining({
-				max_completion_tokens: 16000,
+				max_completion_tokens: 8000,
 				reasoning_effort: 'low'
 			})
 		);
@@ -99,6 +99,59 @@ describe('OpenAI chat completions', () => {
 				reasoning_effort: 'minimal'
 			})
 		);
+	});
+
+	it('retries a truncated completion instead of returning partial text', async () => {
+		createMock
+			.mockResolvedValueOnce(completion('Overall health is', 'length', 6000))
+			.mockResolvedValueOnce(
+				completion('Overall health is poor because checkout times out.', 'stop', 40)
+			);
+
+		const summary = await summarizeTestRun({
+			testRunName: 'Nightly',
+			totalTests: 4,
+			passed: 1,
+			failed: 3,
+			blocked: 0,
+			skipped: 0,
+			failedTests: []
+		});
+
+		expect(summary).toBe('Overall health is poor because checkout times out.');
+		expect(createMock).toHaveBeenNthCalledWith(
+			1,
+			expect.objectContaining({
+				max_completion_tokens: 6000,
+				reasoning_effort: 'low'
+			})
+		);
+		expect(createMock).toHaveBeenNthCalledWith(
+			2,
+			expect.objectContaining({
+				max_completion_tokens: 32000,
+				reasoning_effort: 'minimal'
+			})
+		);
+	});
+
+	it('does not return a truncated retry as a finished summary', async () => {
+		createMock
+			.mockResolvedValueOnce(completion('Partial summary', 'length'))
+			.mockResolvedValueOnce(completion('Still cut off mid-sentence', 'length'));
+
+		await expect(
+			summarizeTestRun({
+				testRunName: 'Nightly',
+				totalTests: 4,
+				passed: 1,
+				failed: 3,
+				blocked: 0,
+				skipped: 0,
+				failedTests: []
+			})
+		).rejects.toThrow('Failed to generate AI summary');
+		expect(createMock).toHaveBeenCalledTimes(2);
 	});
 
 	it('does not retry a second time when the larger budget is also empty', async () => {
@@ -149,5 +202,11 @@ describe('OpenAI chat completions', () => {
 				errorMessage: 'Element not found'
 			})
 		).resolves.toBe('The button was not visible.');
+		expect(createMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				max_completion_tokens: 4000,
+				reasoning_effort: 'low'
+			})
+		);
 	});
 });
