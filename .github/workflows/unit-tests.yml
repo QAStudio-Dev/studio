@@ -35,6 +35,10 @@ jobs:
           DATABASE_URL: postgresql://user:pass@localhost:5432/db
         run: npx prisma generate
 
+      # Component tests (*.svelte.test.ts) run in Vitest browser mode.
+      - name: Install Playwright browser for component tests
+        run: npx playwright install --with-deps chromium
+
       - name: Run unit tests with coverage
         run: npm run test:unit -- --run --coverage
 
