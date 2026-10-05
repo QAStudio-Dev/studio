@@ -20,7 +20,7 @@
 				lang: language,
 				themes: {
 					light: 'github-light',
-					dark: 'github-light'
+					dark: 'github-dark'
 				}
 			});
 		} catch (error) {
@@ -79,10 +79,10 @@
 		background-color: #f6f8fa !important;
 	}
 
-	/* Dark theme colors - use light background for readability */
+	/* Dark theme colors */
 	:global([data-mode='dark'] .code-block-wrapper .shiki),
 	:global([data-mode='dark'] .code-block-wrapper pre) {
-		background-color: #ffffff !important;
-		border: 1px solid #e1e4e8;
+		background-color: #0d1117 !important;
+		border: 1px solid #30363d;
 	}
 </style>

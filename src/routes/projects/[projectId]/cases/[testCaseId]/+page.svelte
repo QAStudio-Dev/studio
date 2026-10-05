@@ -688,7 +688,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 														</div>
 													{:else if aiDiagnoses.has(result.id)}
 														<div
-															class="rounded-container border-2 border-primary-500 bg-primary-50-950 p-2"
+															class="rounded-container border border-primary-500/20 bg-primary-500/10 p-2"
 														>
 															<div
 																class="mb-2 flex items-center justify-between gap-2"
@@ -728,7 +728,7 @@ ${testCase.expectedResult || 'See test case for details'}`;
 																</button>
 															</div>
 															<div
-																class="prose prose-sm max-w-none text-xs whitespace-pre-wrap text-surface-900 dark:text-surface-50"
+																class="text-surface-900-50 text-xs leading-relaxed whitespace-pre-wrap"
 															>
 																{aiDiagnoses.get(result.id)
 																	?.diagnosis}

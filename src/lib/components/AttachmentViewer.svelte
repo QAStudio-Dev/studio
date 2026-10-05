@@ -393,7 +393,7 @@
 	/* Basic prose styling for markdown with light/dark mode support */
 	.prose {
 		line-height: 1.75;
-		color: light-dark(rgb(var(--color-surface-900)), rgb(var(--color-surface-50)));
+		color: light-dark(var(--color-surface-900), var(--color-surface-50));
 	}
 
 	.prose :global(h1),
@@ -404,7 +404,7 @@
 		margin-top: 1.5em;
 		margin-bottom: 0.5em;
 		line-height: 1.25;
-		color: light-dark(rgb(var(--color-surface-950)), rgb(var(--color-surface-50)));
+		color: light-dark(var(--color-surface-950), var(--color-surface-50));
 	}
 
 	.prose :global(h1) {
@@ -423,8 +423,8 @@
 	}
 
 	.prose :global(code) {
-		background-color: light-dark(rgb(var(--color-surface-100)), rgb(var(--color-surface-800)));
-		color: light-dark(rgb(var(--color-error-600)), rgb(var(--color-error-400)));
+		background-color: light-dark(var(--color-surface-100), var(--color-surface-800));
+		color: light-dark(var(--color-error-600), var(--color-error-400));
 		padding: 0.125rem 0.375rem;
 		border-radius: 0.25rem;
 		font-size: 0.875em;
@@ -432,13 +432,13 @@
 	}
 
 	.prose :global(pre) {
-		background-color: light-dark(rgb(var(--color-surface-100)), rgb(var(--color-surface-800)));
-		color: light-dark(rgb(var(--color-surface-900)), rgb(var(--color-surface-100)));
+		background-color: light-dark(var(--color-surface-100), var(--color-surface-800));
+		color: light-dark(var(--color-surface-900), var(--color-surface-100));
 		padding: 1rem;
 		border-radius: 0.5rem;
 		overflow-x: auto;
 		margin: 1rem 0;
-		border: 1px solid light-dark(rgb(var(--color-surface-200)), rgb(var(--color-surface-700)));
+		border: 1px solid light-dark(var(--color-surface-200), var(--color-surface-700));
 	}
 
 	.prose :global(pre code) {
@@ -459,33 +459,31 @@
 	}
 
 	.prose :global(a) {
-		color: rgb(var(--color-primary-500));
+		color: var(--color-primary-500);
 		text-decoration: underline;
 	}
 
 	.prose :global(a:hover) {
-		color: rgb(var(--color-primary-600));
+		color: var(--color-primary-600);
 	}
 
 	.prose :global(blockquote) {
-		border-left: 4px solid
-			light-dark(rgb(var(--color-surface-300)), rgb(var(--color-surface-600)));
+		border-left: 4px solid light-dark(var(--color-surface-300), var(--color-surface-600));
 		padding-left: 1rem;
 		margin: 1rem 0;
 		font-style: italic;
-		color: light-dark(rgb(var(--color-surface-600)), rgb(var(--color-surface-400)));
+		color: light-dark(var(--color-surface-600), var(--color-surface-400));
 	}
 
 	.prose :global(hr) {
 		border: 0;
-		border-top: 1px solid
-			light-dark(rgb(var(--color-surface-300)), rgb(var(--color-surface-700)));
+		border-top: 1px solid light-dark(var(--color-surface-300), var(--color-surface-700));
 		margin: 2rem 0;
 	}
 
 	.prose :global(strong) {
 		font-weight: 600;
-		color: light-dark(rgb(var(--color-surface-950)), rgb(var(--color-surface-50)));
+		color: light-dark(var(--color-surface-950), var(--color-surface-50));
 	}
 
 	.prose :global(table) {
@@ -497,12 +495,12 @@
 	.prose :global(th),
 	.prose :global(td) {
 		padding: 0.5rem;
-		border: 1px solid light-dark(rgb(var(--color-surface-300)), rgb(var(--color-surface-700)));
+		border: 1px solid light-dark(var(--color-surface-300), var(--color-surface-700));
 		text-align: left;
 	}
 
 	.prose :global(th) {
-		background-color: light-dark(rgb(var(--color-surface-100)), rgb(var(--color-surface-800)));
+		background-color: light-dark(var(--color-surface-100), var(--color-surface-800));
 		font-weight: 600;
 	}
 </style>
