@@ -30,9 +30,9 @@ describe('ID Generators', () => {
 			expect(id).toHaveLength(4);
 		});
 
-		it('should generate test result IDs with correct length (4 chars)', () => {
+		it('should generate test result IDs with correct length (8 chars)', () => {
 			const id = generateTestResultId();
-			expect(id).toHaveLength(4);
+			expect(id).toHaveLength(8);
 		});
 
 		it('should generate test suite IDs with correct length (4 chars)', () => {
@@ -137,6 +137,17 @@ describe('ID Generators', () => {
 			// 4-char IDs have 14.7M combinations, collisions are very rare but possible
 			// Expect at least 99.9% uniqueness in 1000 generations
 			expect(ids.size).toBeGreaterThanOrEqual(iterations * 0.999);
+		});
+
+		it('should generate unique test result IDs', () => {
+			const ids = new Set();
+			const iterations = 1000;
+
+			for (let i = 0; i < iterations; i++) {
+				ids.add(generateTestResultId());
+			}
+
+			expect(ids.size).toBe(iterations);
 		});
 
 		it('should generate unique test case IDs (with allowance for rare collisions)', () => {
