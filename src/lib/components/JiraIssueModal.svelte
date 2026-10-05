@@ -275,7 +275,7 @@
 			{#if success && createdIssueKey}
 				<!-- Success Message -->
 				<div
-					class="mb-4 rounded-container border-2 border-success-500 bg-success-50-950 p-4"
+					class="mb-4 rounded-container border border-success-500/20 bg-success-500/10 p-4"
 				>
 					<div class="mb-2 flex items-center gap-2">
 						<svg

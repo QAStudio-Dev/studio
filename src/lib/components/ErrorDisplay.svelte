@@ -189,7 +189,7 @@
 
 	.stack-trace {
 		scrollbar-width: thin;
-		scrollbar-color: rgb(var(--color-surface-400)) transparent;
+		scrollbar-color: var(--color-surface-400) transparent;
 	}
 
 	.stack-trace::-webkit-scrollbar {
@@ -201,12 +201,12 @@
 	}
 
 	.stack-trace::-webkit-scrollbar-thumb {
-		background-color: rgb(var(--color-surface-400));
+		background-color: var(--color-surface-400);
 		border-radius: 4px;
 	}
 
 	.stack-trace::-webkit-scrollbar-thumb:hover {
-		background-color: rgb(var(--color-surface-500));
+		background-color: var(--color-surface-500);
 	}
 
 	.btn {

@@ -706,9 +706,11 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 							</button>
 						</div>
 						<div
-							class="rounded-container border border-primary-200-800 bg-primary-50-950 p-4"
+							class="rounded-container border border-primary-500/20 bg-primary-500/10 p-4"
 						>
-							<div class="prose prose-sm max-w-none text-sm whitespace-pre-wrap">
+							<div
+								class="text-surface-900-50 text-sm leading-relaxed whitespace-pre-wrap"
+							>
 								{runSummary.summary}
 							</div>
 						</div>
@@ -720,10 +722,10 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 									<h3 class="font-semibold">Failure Pattern Analysis</h3>
 								</div>
 								<div
-									class="rounded-container border border-warning-200-800 bg-warning-50-950 p-4"
+									class="rounded-container border border-warning-500/20 bg-warning-500/10 p-4"
 								>
 									<div
-										class="prose prose-sm max-w-none text-sm whitespace-pre-wrap"
+										class="text-surface-900-50 text-sm leading-relaxed whitespace-pre-wrap"
 									>
 										{runSummary.patternAnalysis}
 									</div>
@@ -995,7 +997,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 												{#if result.status === 'FAILED'}
 													{#if loadingDiagnosis.has(result.id)}
 														<div
-															class="rounded-container border border-primary-200-800 bg-primary-50-950 p-4"
+															class="rounded-container border border-primary-500/20 bg-primary-500/10 p-4"
 														>
 															<div
 																class="flex items-center gap-3 text-primary-500"
@@ -1010,7 +1012,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 														</div>
 													{:else if aiDiagnoses.has(result.id)}
 														<div
-															class="rounded-container border-2 border-primary-500 bg-primary-50-950 p-4"
+															class="rounded-container border border-primary-500/20 bg-primary-500/10 p-4"
 														>
 															<div
 																class="mb-3 flex items-center justify-between gap-2"
@@ -1050,7 +1052,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 																</button>
 															</div>
 															<div
-																class="prose prose-sm max-w-none text-sm whitespace-pre-wrap text-surface-900 dark:text-surface-50"
+																class="text-surface-900-50 text-sm leading-relaxed whitespace-pre-wrap"
 															>
 																{aiDiagnoses.get(result.id)
 																	?.diagnosis}
@@ -1061,7 +1063,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 													<!-- Trace Analysis Display -->
 													{#if loadingTraceAnalysis.has(result.id)}
 														<div
-															class="rounded-container border border-primary-200-800 bg-primary-50-950 p-4"
+															class="rounded-container border border-primary-500/20 bg-primary-500/10 p-4"
 														>
 															<div
 																class="flex items-center gap-3 text-primary-500"
@@ -1082,7 +1084,7 @@ ${result.testCase.expectedResult || 'See test case for details'}`;
 														/>
 													{:else if traceAnalysisError.has(result.id)}
 														<div
-															class="rounded-container border border-error-500 bg-error-50-950 p-4"
+															class="rounded-container border border-error-500/20 bg-error-500/10 p-4"
 														>
 															<p class="text-sm text-error-500">
 																{traceAnalysisError.get(result.id)}
