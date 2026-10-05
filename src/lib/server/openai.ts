@@ -6,6 +6,65 @@ export const openai = new OpenAI({
 	apiKey: OPENAI_SECRET_KEY
 });
 
+const MODEL = 'gpt-5-mini';
+
+/**
+ * gpt-5-mini counts hidden reasoning tokens against max_completion_tokens.
+ * A cap around 2000 can be spent entirely on reasoning, which returns
+ * empty content with finish_reason "length".
+ *
+ * Initial caps stay near the size of these concise answers so concurrent
+ * requests do not reserve a large token-rate budget. The retry cap is only
+ * used when a response is cut off.
+ */
+const COMPLETION_TOKEN_CAPS = {
+	diagnosis: 4000,
+	summary: 6000,
+	patterns: 8000
+} as const;
+const RETRY_MAX_COMPLETION_TOKENS = 32000;
+
+async function createCompletion(
+	system: string,
+	prompt: string,
+	maxCompletionTokens: number,
+	reasoningEffort: 'low' | 'minimal' = 'low'
+): Promise<string> {
+	const completion = await openai.chat.completions.create({
+		model: MODEL,
+		messages: [
+			{ role: 'system', content: system },
+			{ role: 'user', content: prompt }
+		],
+		max_completion_tokens: maxCompletionTokens,
+		reasoning_effort: reasoningEffort
+	});
+
+	const choice = completion.choices[0];
+	const content = choice?.message?.content?.trim() ?? '';
+	const finishReason = choice?.finish_reason;
+
+	// "length" means the generation limit was hit, so any text is incomplete.
+	// Retry once with a larger budget. Do not return a truncated retry.
+	if (finishReason === 'length') {
+		if (maxCompletionTokens < RETRY_MAX_COMPLETION_TOKENS) {
+			const reasoningTokens = completion.usage?.completion_tokens_details?.reasoning_tokens;
+			console.warn(
+				`[OpenAI] Completion hit the token limit (reasoning_tokens=${reasoningTokens ?? 'unknown'}, max_completion_tokens=${maxCompletionTokens}, content_chars=${content.length}). Retrying.`
+			);
+			return createCompletion(system, prompt, RETRY_MAX_COMPLETION_TOKENS, 'minimal');
+		}
+
+		throw new Error(`No content in OpenAI response. Finish reason: ${finishReason}`);
+	}
+
+	if (!content) {
+		throw new Error(`No content in OpenAI response. Finish reason: ${finishReason}`);
+	}
+
+	return content;
+}
+
 /**
  * Diagnose a failed test and provide insights on what might have gone wrong
  */
@@ -48,30 +107,11 @@ ${errorContext ? 'Use the error context to understand the page state when the fa
 Keep your response concise and actionable.`;
 
 	try {
-		const completion = await openai.chat.completions.create({
-			model: 'gpt-5-mini',
-			messages: [
-				{
-					role: 'system',
-					content:
-						'You are an expert QA engineer who helps diagnose test failures. Provide clear, actionable insights.'
-				},
-				{
-					role: 'user',
-					content: prompt
-				}
-			],
-			max_completion_tokens: 2000
-		});
-
-		const diagnosis = completion.choices[0]?.message?.content;
-		if (!diagnosis) {
-			throw new Error(
-				`No content in OpenAI response. Finish reason: ${completion.choices[0]?.finish_reason}`
-			);
-		}
-
-		return diagnosis;
+		return await createCompletion(
+			'You are an expert QA engineer who helps diagnose test failures. Provide clear, actionable insights.',
+			prompt,
+			COMPLETION_TOKEN_CAPS.diagnosis
+		);
 	} catch (error) {
 		console.error('OpenAI diagnosis error:', error);
 		throw new Error('Failed to generate AI diagnosis');
@@ -124,30 +164,11 @@ Provide:
 Keep your response concise and actionable (under 300 words).`;
 
 	try {
-		const completion = await openai.chat.completions.create({
-			model: 'gpt-5-mini',
-			messages: [
-				{
-					role: 'system',
-					content:
-						'You are an expert QA engineer who analyzes test results and identifies patterns. Provide clear, strategic insights.'
-				},
-				{
-					role: 'user',
-					content: prompt
-				}
-			],
-			max_completion_tokens: 2000
-		});
-
-		const summary = completion.choices[0]?.message?.content;
-		if (!summary) {
-			throw new Error(
-				`No content in OpenAI response. Finish reason: ${completion.choices[0]?.finish_reason}`
-			);
-		}
-
-		return summary;
+		return await createCompletion(
+			'You are an expert QA engineer who analyzes test results and identifies patterns. Provide clear, strategic insights.',
+			prompt,
+			COMPLETION_TOKEN_CAPS.summary
+		);
 	} catch (error) {
 		console.error('OpenAI summary error:', error);
 		throw new Error('Failed to generate AI summary');
@@ -190,30 +211,11 @@ Analyze these failures and provide:
 Be concise and focus on actionable insights.`;
 
 	try {
-		const completion = await openai.chat.completions.create({
-			model: 'gpt-5-mini',
-			messages: [
-				{
-					role: 'system',
-					content:
-						'You are an expert QA engineer who identifies patterns in test failures. Focus on finding root causes.'
-				},
-				{
-					role: 'user',
-					content: prompt
-				}
-			],
-			max_completion_tokens: 2000
-		});
-
-		const analysis = completion.choices[0]?.message?.content;
-		if (!analysis) {
-			throw new Error(
-				`No content in OpenAI response. Finish reason: ${completion.choices[0]?.finish_reason}`
-			);
-		}
-
-		return analysis;
+		return await createCompletion(
+			'You are an expert QA engineer who identifies patterns in test failures. Focus on finding root causes.',
+			prompt,
+			COMPLETION_TOKEN_CAPS.patterns
+		);
 	} catch (error) {
 		console.error('OpenAI pattern analysis error:', error);
 		throw new Error('Failed to analyze failure patterns');

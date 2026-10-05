@@ -122,8 +122,7 @@ export const POST: RequestHandler = async (event) => {
 			`[AI Summary] ${regenerate ? 'Regenerating' : 'Generating'} summary for test run: ${testRunId}`
 		);
 
-		// Generate summary
-		const summary = await summarizeTestRun({
+		const summaryPromise = summarizeTestRun({
 			testRunName: testRun.name,
 			totalTests: stats.total,
 			passed: stats.passed,
@@ -131,32 +130,39 @@ export const POST: RequestHandler = async (event) => {
 			blocked: stats.blocked,
 			skipped: stats.skipped,
 			failedTests
+		}).then((summary) => {
+			console.log(`[AI Summary] Generated summary (${summary?.length || 0} chars)`);
+			return summary;
 		});
 
-		console.log(`[AI Summary] Generated summary (${summary?.length || 0} chars)`);
-
-		// If there are multiple failures, analyze patterns
-		let patternAnalysis: string | null = null;
+		// Pattern analysis is extra context. A failure here must not discard a summary
+		// that already succeeded (for example when the model returns finish_reason "length").
+		let patternPromise: Promise<string | null> = Promise.resolve(null);
 		if (stats.failed >= 3) {
 			console.log(`[AI Summary] Analyzing patterns for ${stats.failed} failures`);
-
-			const failuresForPattern = testRun.results
-				.filter((r) => r.status === 'FAILED')
-				.map((r) => ({
-					testCaseTitle: r.testCase.title,
-					errorMessage: r.errorMessage || undefined,
-					testType: r.testCase.type,
-					suiteName: r.testCase.suite?.name
-				}));
-
-			patternAnalysis = await analyzeFailurePatterns({
-				failures: failuresForPattern
-			});
-
-			console.log(
-				`[AI Summary] Pattern analysis complete (${patternAnalysis?.length || 0} chars)`
-			);
+			patternPromise = analyzeFailurePatterns({
+				failures: testRun.results
+					.filter((r) => r.status === 'FAILED')
+					.map((r) => ({
+						testCaseTitle: r.testCase.title,
+						errorMessage: r.errorMessage || undefined,
+						testType: r.testCase.type,
+						suiteName: r.testCase.suite?.name
+					}))
+			})
+				.then((analysis) => {
+					console.log(
+						`[AI Summary] Pattern analysis complete (${analysis?.length || 0} chars)`
+					);
+					return analysis;
+				})
+				.catch((patternError) => {
+					console.error('[AI Summary] Pattern analysis failed:', patternError);
+					return null;
+				});
 		}
+
+		const [summary, patternAnalysis] = await Promise.all([summaryPromise, patternPromise]);
 
 		if (!summary) {
 			throw new Error('OpenAI returned empty summary');
