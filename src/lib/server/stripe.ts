@@ -6,7 +6,7 @@ if (!STRIPE_SECRET_KEY) {
 }
 
 export const stripe = new Stripe(STRIPE_SECRET_KEY, {
-	apiVersion: '2026-08-26.dahlia',
+	apiVersion: '2026-09-30.endive',
 	typescript: true
 });
 
@@ -28,7 +28,9 @@ export async function createCheckoutSession(params: CheckoutSessionParams) {
 
 	const session = await stripe.checkout.sessions.create({
 		mode: 'subscription',
-		payment_method_types: ['card'],
+		// Stripe API 2026-09-30.endive removed payment_method_types. This filters
+		// the dynamic method list down to cards, matching the previous card-only checkout.
+		allowed_payment_method_types: ['card'],
 		customer_email: customerEmail,
 		line_items: [
 			{
