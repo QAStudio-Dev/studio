@@ -8,6 +8,7 @@ import { redis, isCacheEnabled } from '$lib/server/redis';
 import { createAuditLog } from '$lib/server/audit';
 import { sendWelcomeEmail } from '$lib/server/email';
 import { RATE_LIMIT_CONFIG } from '$lib/config';
+import { rejectBots } from '$lib/server/bot-protection';
 
 /**
  * Rate limiting for signup attempts
@@ -88,6 +89,8 @@ async function checkRateLimit(email: string): Promise<boolean> {
 
 export const POST: RequestHandler = async (event) => {
 	try {
+		await rejectBots();
+
 		const {
 			email,
 			password,
