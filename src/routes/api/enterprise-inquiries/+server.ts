@@ -9,6 +9,7 @@ import { getAuthenticatedUser } from '$lib/server/auth';
 import { sendEnterpriseInquiryEmail } from '$lib/server/email';
 import { z } from 'zod';
 import { RATE_LIMIT_CONFIG } from '$lib/config';
+import { rejectBots } from '$lib/server/bot-protection';
 
 /**
  * Zod schema for validating enterprise inquiry request body
@@ -156,6 +157,8 @@ async function checkRateLimit(email: string): Promise<boolean> {
  * POST /api/enterprise-inquiries
  */
 export const POST: RequestHandler = async (event) => {
+	await rejectBots();
+
 	// Get user if authenticated (optional for this endpoint)
 	const user = await getAuthenticatedUser(event);
 
