@@ -1,5 +1,21 @@
-import { Page, Locator, Response } from '@playwright/test';
+import { Page, Locator, type Request } from '@playwright/test';
 import { BasePage } from './base';
+
+export type OpenApiSpec = {
+	openapi?: string;
+	info: {
+		title?: string;
+		version?: string;
+		[key: string]: unknown;
+	};
+	paths: Record<string, unknown>;
+	[key: string]: unknown;
+};
+
+export type OpenApiSpecResult = {
+	status: number;
+	spec: OpenApiSpec;
+};
 
 /**
  * Page Object for the API Documentation page (/docs)
@@ -55,21 +71,38 @@ export class DocsPage extends BasePage {
 	}
 
 	/**
-	 * Navigate to docs and wait for OpenAPI spec to load
-	 * Sets up response listener BEFORE navigation to avoid race conditions
+	 * Navigate to docs and return the OpenAPI spec fetched by this navigation.
+	 * Ignores an in-flight /api/openapi response from a previous load, and reads
+	 * the body before waiting for the page to settle.
 	 */
-	async navigateAndWaitForSpec(): Promise<Response | null> {
-		// Set up response listener BEFORE navigating to avoid race condition
+	async navigateAndWaitForSpec(): Promise<OpenApiSpecResult> {
+		const requestsForThisNavigation = new Set<Request>();
+		const trackSpecRequest = (request: Request) => {
+			if (request.url().includes('/api/openapi')) {
+				requestsForThisNavigation.add(request);
+			}
+		};
+		this.page.on('request', trackSpecRequest);
+
 		const responsePromise = this.page.waitForResponse(
-			(response) => response.url().includes('/api/openapi'),
+			(response) => requestsForThisNavigation.has(response.request()),
 			{ timeout: 10000 }
 		);
+		// Parse as soon as the response arrives. A later navigation drops the body.
+		const resultPromise = responsePromise.then(async (response) => {
+			const spec = (await response.json()) as OpenApiSpec;
+			return { status: response.status(), spec };
+		});
+		void resultPromise.catch(() => {});
 
-		await this.goto('/docs');
-		const response = await responsePromise;
-		await this.waitForPageLoad();
-
-		return response;
+		try {
+			await this.goto('/docs');
+			const result = await resultPromise;
+			await this.waitForPageLoad();
+			return result;
+		} finally {
+			this.page.off('request', trackSpecRequest);
+		}
 	}
 
 	/**
