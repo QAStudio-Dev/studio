@@ -29,18 +29,15 @@ test.describe('API Documentation Page', () => {
 
 	test.describe('OpenAPI Specification', () => {
 		test('should fetch OpenAPI spec successfully', async ({ page }) => {
-			// Create new page instance to properly catch the initial request
 			const freshDocsPage = new DocsPage(page);
-			const response = await freshDocsPage.navigateAndWaitForSpec();
+			const { status } = await freshDocsPage.navigateAndWaitForSpec();
 
-			expect(response).not.toBeNull();
-			expect(response?.status()).toBe(200);
+			expect(status).toBe(200);
 		});
 
 		test('should return valid OpenAPI spec structure', async ({ page }) => {
 			const freshDocsPage = new DocsPage(page);
-			const response = await freshDocsPage.navigateAndWaitForSpec();
-			const spec = await response!.json();
+			const { spec } = await freshDocsPage.navigateAndWaitForSpec();
 			const validation = freshDocsPage.validateOpenAPISpec(spec);
 
 			expect(validation.valid).toBe(true);
@@ -52,15 +49,13 @@ test.describe('API Documentation Page', () => {
 
 		test('should have OpenAPI version 3.x', async ({ page }) => {
 			const freshDocsPage = new DocsPage(page);
-			const response = await freshDocsPage.navigateAndWaitForSpec();
-			const spec = await response!.json();
+			const { spec } = await freshDocsPage.navigateAndWaitForSpec();
 			expect(spec.openapi).toMatch(/^3\./);
 		});
 
 		test('should have API title and version', async ({ page }) => {
 			const freshDocsPage = new DocsPage(page);
-			const response = await freshDocsPage.navigateAndWaitForSpec();
-			const spec = await response!.json();
+			const { spec } = await freshDocsPage.navigateAndWaitForSpec();
 			expect(spec.info.title).toBeTruthy();
 			expect(spec.info.version).toBeTruthy();
 			expect(typeof spec.info.title).toBe('string');
@@ -69,8 +64,7 @@ test.describe('API Documentation Page', () => {
 
 		test('should have paths defined', async ({ page }) => {
 			const freshDocsPage = new DocsPage(page);
-			const response = await freshDocsPage.navigateAndWaitForSpec();
-			const spec = await response!.json();
+			const { spec } = await freshDocsPage.navigateAndWaitForSpec();
 			expect(spec.paths).toBeDefined();
 			expect(Object.keys(spec.paths).length).toBeGreaterThan(0);
 		});
@@ -137,8 +131,7 @@ test.describe('API Documentation Page', () => {
 
 		test('should have attachments endpoints', async ({ page }) => {
 			const freshDocsPage = new DocsPage(page);
-			const response = await freshDocsPage.navigateAndWaitForSpec();
-			const spec = await response!.json();
+			const { spec } = await freshDocsPage.navigateAndWaitForSpec();
 			const paths = Object.keys(spec.paths);
 
 			// Check if attachments endpoint exists
