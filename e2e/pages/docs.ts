@@ -72,10 +72,15 @@ export class DocsPage extends BasePage {
 
 	/**
 	 * Navigate to docs and return the OpenAPI spec fetched by this navigation.
-	 * Ignores an in-flight /api/openapi response from a previous load, and reads
-	 * the body before waiting for the page to settle.
+	 * The previous document is unloaded first so a late Swagger fetch cannot be
+	 * attributed to this navigation. The body is read as soon as the response
+	 * arrives, before the page is allowed to settle.
 	 */
 	async navigateAndWaitForSpec(): Promise<OpenApiSpecResult> {
+		// Swagger UI fetches /api/openapi after a dynamic import. Unload the
+		// current document before listening so that fetch cannot be captured.
+		await this.page.goto('about:blank');
+
 		const requestsForThisNavigation = new Set<Request>();
 		const trackSpecRequest = (request: Request) => {
 			if (request.url().includes('/api/openapi')) {
@@ -90,6 +95,11 @@ export class DocsPage extends BasePage {
 		);
 		// Parse as soon as the response arrives. A later navigation drops the body.
 		const resultPromise = responsePromise.then(async (response) => {
+			if (!response.ok()) {
+				throw new Error(
+					`OpenAPI spec failed to load: ${response.status()} ${response.statusText()}`
+				);
+			}
 			const spec = (await response.json()) as OpenApiSpec;
 			return { status: response.status(), spec };
 		});
